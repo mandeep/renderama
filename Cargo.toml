@@ -1,0 +1,6 @@
+[package]
+name = "renderfoot"
+version = "0.1.0"
+authors = ["mandeep <mandeep@users.noreply.github.com>"]
+
+[dependencies]
