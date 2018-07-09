@@ -8,8 +8,8 @@ fn main() {
 
     let mut buffer = image::ImageBuffer::new(width, height);
 
-    for x in 0..height {
-        for y in 0..width {
+    for x in 0..width {
+        for y in 0..height {
             let red = (255.99 * (x as f64 / width as f64)) as u8;
             let green = (255.99 * (y as f64 / height as f64)) as u8;
             let blue = (255.99 * 0.2) as u8;
