@@ -5,16 +5,35 @@ use std::fs::File;
 
 use nalgebra::core::Vector3;
 
+mod ray;
+
+
+fn color(ray: &ray::Ray) -> Vector3<f64> {
+    let unit_direction: Vector3<f64> = ray.direction.normalize();
+    let point: f64 = 0.5 * (unit_direction.y + 1.0);
+
+    (1.0 - point) * Vector3::new(1.0, 1.0, 1.0) + point * Vector3::new(0.5, 0.7, 1.0)
+}
+
+
 fn main() {
-    let (width, height): (u32, u32) = (1600, 1600);
+    let (width, height): (u32, u32) = (1600, 1200);
 
     let mut buffer = image::ImageBuffer::new(width, height);
 
+    let lower_left_corner = Vector3::new(-2.0, -1.0, -1.0);
+    let horizontal = Vector3::new(4.0, 0.0, 0.0);
+    let vertical = Vector3::new(0.0, 2.0, 0.0);
+    let origin = Vector3::new(0.0, 0.0, 0.0);
+
     for x in 0..width {
         for y in 0..height {
-            let coordinate: Vector3<f64> = Vector3::new(x as f64 / width as f64,
-                                                        y as f64 / width as f64,
-                                                        0.2);
+            let u = x as f64 / width as f64;
+            let v = y as f64 / height as f64;
+
+            let ray = ray::Ray::new(origin, lower_left_corner + u * horizontal + v * vertical);
+            let coordinate = color(&ray);
+
             let red = (255.99 * coordinate.x) as u8;
             let green = (255.99 * coordinate.y) as u8;
             let blue = (255.99 * coordinate.z) as u8;
