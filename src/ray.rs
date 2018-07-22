@@ -10,8 +10,9 @@ pub struct Ray {
 
 
 impl Ray {
-    pub fn new(origin: Vector3<f64>, direction: Vector3<f64>) -> Ray {
-        Ray { origin: origin, direction: direction }
+    /// Create a new Ray with origin at `a` and direction towards `b`
+    pub fn new(a: Vector3<f64>, b: Vector3<f64>) -> Ray {
+        Ray { origin: a, direction: b }
     }
 
     pub fn color(&self) -> Vector3<f64> {
