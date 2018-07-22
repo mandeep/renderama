@@ -8,14 +8,6 @@ use nalgebra::core::Vector3;
 mod ray;
 
 
-fn color(ray: &ray::Ray) -> Vector3<f64> {
-    let unit_direction: Vector3<f64> = ray.direction.normalize();
-    let point: f64 = 0.5 * (unit_direction.y + 1.0);
-
-    (1.0 - point) * Vector3::new(1.0, 1.0, 1.0) + point * Vector3::new(0.5, 0.7, 1.0)
-}
-
-
 fn main() {
     let (width, height): (u32, u32) = (1600, 1200);
 
@@ -32,7 +24,7 @@ fn main() {
             let v = y as f64 / height as f64;
 
             let ray = ray::Ray::new(origin, lower_left_corner + u * horizontal + v * vertical);
-            let coordinate = color(&ray);
+            let coordinate = ray.color();
 
             let red = (255.99 * coordinate.x) as u8;
             let green = (255.99 * coordinate.y) as u8;
