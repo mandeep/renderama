@@ -26,9 +26,9 @@ fn main() {
             let ray = ray::Ray::new(origin, lower_left_corner + u * horizontal + v * vertical);
             let coordinate = ray.color();
 
-            let red = (255.99 * coordinate.x) as u8;
-            let green = (255.99 * coordinate.y) as u8;
-            let blue = (255.99 * coordinate.z) as u8;
+            let red = (255.0 * coordinate.x) as u8;
+            let green = (255.0 * coordinate.y) as u8;
+            let blue = (255.0 * coordinate.z) as u8;
             buffer.put_pixel(x, y, image::Rgb([red, green, blue]));
         }
     }
