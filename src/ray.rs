@@ -31,10 +31,10 @@ impl Ray {
     }
 
     pub fn hit_sphere(&self, center: &Vector3<f64>, radius: f64) -> bool {
-        let origin_center: Vector3<f64> = self.origin - center;
+        let sphere_center: Vector3<f64> = self.origin - center;
         let a: f64 = self.direction.dot(&self.direction);
-        let b: f64 = 2.0 * origin_center.dot(&self.direction);
-        let c: f64 = origin_center.dot(&origin_center) - (radius * radius);
+        let b: f64 = 2.0 * sphere_center.dot(&self.direction);
+        let c: f64 = sphere_center.dot(&sphere_center) - (radius * radius);
         let discriminant: f64 = b * b - 4.0 * a * c;
 
         return discriminant > 0.0;
