@@ -9,7 +9,7 @@ mod ray;
 
 
 fn main() {
-    let (width, height): (u32, u32) = (1600, 1200);
+    let (width, height): (u32, u32) = (1600, 800);
 
     let mut buffer = image::ImageBuffer::new(width, height);
 
