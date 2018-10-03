@@ -32,10 +32,6 @@ impl Hitable for World {
             }
         }
 
-        if hit_anything {
-            Some(record)
-        } else {
-            None
-        }
+        if hit_anything { return Some(record); } else { return None; }
     }
 }
