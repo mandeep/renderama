@@ -59,12 +59,12 @@ fn main() {
         let x = i % width as usize;
         let y = (i - x) / width as usize;
 
-        for _ in 0..samples {
+        (0..samples).for_each(|_| {
             let u = (x as f64 + rand::random::<f64>()) / width as f64;
             let v = (y as f64 + rand::random::<f64>()) / height as f64;
             let ray = camera.get_ray(u, v);
             coordinate += color(&ray, &world);
-        }
+        });
 
         coordinate /= samples as f64;
         let red = (255.0 * coordinate.x.sqrt()) as u8;
@@ -74,10 +74,10 @@ fn main() {
     });
 
 
-    for (x, y, pixel) in buffer.enumerate_pixels_mut() {
-        let index = y * width + x;
-        *pixel = pixels[index as usize];
-    }
+    buffer.enumerate_pixels_mut().for_each(|(x, y, pixel)| {
+        let index = (y * width + x) as usize;
+        *pixel = pixels[index];
+    });
 
     image::ImageRgb8(buffer).flipv().save("render.png").unwrap();
 }
