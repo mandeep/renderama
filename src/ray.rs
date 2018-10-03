@@ -16,8 +16,10 @@ impl Ray {
     }
 
     pub fn color(&self) -> Vector3<f64> {
-        if self.hit_sphere(&Vector3::new(0.0, 0.0, -1.0), 0.5) {
-            return Vector3::new(1.0, 0.0, 0.0);
+        let point: f64 = self.hit_sphere(&Vector3::new(0.0, 0.0, -1.0), 0.5);
+        if point > 0.0 {
+            let normal = (self.point_at_perimeter(point) - Vector3::new(0.0, 0.0, -1.0)).normalize();
+            return 0.5 * normal.map(|coordinate| coordinate + 1.0);
         }
 
         let unit_direction: Vector3<f64> = self.direction.normalize();
@@ -30,13 +32,17 @@ impl Ray {
         self.origin + point * self.direction
     }
 
-    pub fn hit_sphere(&self, center: &Vector3<f64>, radius: f64) -> bool {
+    pub fn hit_sphere(&self, center: &Vector3<f64>, radius: f64) -> f64 {
         let sphere_center: Vector3<f64> = self.origin - center;
         let a: f64 = self.direction.dot(&self.direction);
         let b: f64 = 2.0 * sphere_center.dot(&self.direction);
         let c: f64 = sphere_center.dot(&sphere_center) - (radius * radius);
         let discriminant: f64 = b * b - 4.0 * a * c;
 
-        return discriminant > 0.0;
+        if discriminant < 0.0 {
+            return -1.0;
+        } else {
+            return (-b - discriminant.sqrt()) / (2.0 * a);
+        }
     }
 }
