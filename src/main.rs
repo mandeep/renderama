@@ -1,6 +1,7 @@
 extern crate image;
 extern crate nalgebra;
 extern crate rand;
+extern crate rayon;
 
 mod camera;
 mod hitable;
@@ -11,9 +12,9 @@ use camera::Camera;
 use hitable::{Hitable, HitableList, HitRecord};
 use nalgebra::core::Vector3;
 use ray::Ray;
+use rayon::prelude::*;
 use sphere::Sphere;
 use std::f64;
-use std::fs::File;
 
 
 fn color(ray: &Ray, world: &Hitable) -> Vector3<f64> {
@@ -52,25 +53,31 @@ fn main() {
     world.push(Box::new(Sphere::new(Vector3::new(0.0, 0.0, -1.0), 0.5)));
     world.push(Box::new(Sphere::new(Vector3::new(0.0, -100.5, -1.0), 100.0)));
 
-    for x in 0..width {
-        for y in 0..height {
-            let mut coordinate: Vector3<f64> = Vector3::zeros();
+    let mut pixels = vec![image::Rgb([0, 0, 0]); (width * height) as usize];
+    pixels.par_iter_mut().enumerate().for_each(|(i, pixel)| {
+        let mut coordinate: Vector3<f64> = Vector3::zeros();
+        let x = i % width as usize;
+        let y = (i - x) / width as usize;
 
-            for sample in 0..samples {
-                let u = (x as f64 + rand::random::<f64>()) / width as f64;
-                let v = (y as f64 + rand::random::<f64>()) / height as f64;
-                let ray = camera.get_ray(u, v);
-                coordinate += color(&ray, &world);
-            }
-
-            coordinate /= samples as f64;
-            let red = (255.0 * coordinate.x.sqrt()) as u8;
-            let green = (255.0 * coordinate.y.sqrt()) as u8;
-            let blue = (255.0 * coordinate.z.sqrt()) as u8;
-            buffer.put_pixel(x, y, image::Rgb([red, green, blue]));
+        for _ in 0..samples {
+            let u = (x as f64 + rand::random::<f64>()) / width as f64;
+            let v = (y as f64 + rand::random::<f64>()) / height as f64;
+            let ray = camera.get_ray(u, v);
+            coordinate += color(&ray, &world);
         }
+
+        coordinate /= samples as f64;
+        let red = (255.0 * coordinate.x.sqrt()) as u8;
+        let green = (255.0 * coordinate.y.sqrt()) as u8;
+        let blue = (255.0 * coordinate.z.sqrt()) as u8;
+        *pixel = image::Rgb([red, green, blue]);
+    });
+
+
+    for (x, y, pixel) in buffer.enumerate_pixels_mut() {
+        let index = y * width + x;
+        *pixel = pixels[index as usize];
     }
 
-    let ref mut render = File::create("render.png").unwrap();
-    image::ImageRgb8(buffer).flipv().save(render, image::PNG).unwrap();
+    image::ImageRgb8(buffer).flipv().save("render.png").unwrap();
 }
