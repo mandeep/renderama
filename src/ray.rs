@@ -18,9 +18,8 @@ impl Ray {
     pub fn color(self, world: &Hitable) -> Vector3<f64> {
         let mut hit_record = HitRecord::new(f64::MAX);
         if world.hit(&self, 0.0, f64::MAX, &mut hit_record) {
-            return 0.5 * Vector3::new(hit_record.normal.x + 1.0,
-                                      hit_record.normal.y + 1.0,
-                                      hit_record.normal.z + 1.0);
+            let normal: Vector3<f64> = hit_record.normal;
+            return 0.5 * normal.map(|coordinate| coordinate + 1.0);
         }
         let unit_direction: Vector3<f64> = self.direction.normalize();
         let point: f64 = 0.5 * (unit_direction.y + 1.0);
