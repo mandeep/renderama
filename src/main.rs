@@ -1,11 +1,14 @@
 extern crate image;
 extern crate nalgebra;
 
-use std::fs::File;
-
-use nalgebra::core::Vector3;
-
+mod hitable;
 mod ray;
+mod sphere;
+
+use std::fs::File;
+use nalgebra::core::Vector3;
+use hitable::HitableList;
+use sphere::Sphere;
 
 
 fn main() {
@@ -18,13 +21,17 @@ fn main() {
     let vertical = Vector3::new(0.0, 2.0, 0.0);
     let origin = Vector3::new(0.0, 0.0, 0.0);
 
+    let mut world = HitableList::new();
+    world.push(Box::new(Sphere::new(Vector3::new(0.0, 0.0, -1.0), 0.5)));
+    world.push(Box::new(Sphere::new(Vector3::new(0.0, -100.5, -1.0), 100.0)));
+
     for x in 0..width {
         for y in 0..height {
             let u = x as f64 / width as f64;
             let v = y as f64 / height as f64;
 
             let ray = ray::Ray::new(origin, lower_left_corner + u * horizontal + v * vertical);
-            let coordinate = ray.color();
+            let coordinate = ray.color(&world);
 
             let red = (255.0 * coordinate.x) as u8;
             let green = (255.0 * coordinate.y) as u8;
@@ -33,6 +40,6 @@ fn main() {
         }
     }
 
-    let ref mut render = File::create("output.png").unwrap();
+    let ref mut render = File::create("render.png").unwrap();
     image::ImageRgb8(buffer).flipv().save(render, image::PNG).unwrap();
 }
