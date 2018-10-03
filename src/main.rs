@@ -57,7 +57,7 @@ fn main() {
     pixels.par_iter_mut().enumerate().for_each(|(i, pixel)| {
         let mut coordinate: Vector3<f64> = Vector3::zeros();
         let x = i % width as usize;
-        let y = (i - x) / width as usize;
+        let y = i / width as usize;
 
         (0..samples).for_each(|_| {
             let u = (x as f64 + rand::random::<f64>()) / width as f64;
