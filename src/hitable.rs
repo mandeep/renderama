@@ -19,7 +19,7 @@ impl HitRecord {
 }
 
 
-pub trait Hitable {
+pub trait Hitable: Send + Sync {
     fn hit(&self, ray: &Ray, position_min: f64, position_max: f64, hit_record: &mut HitRecord)
         -> bool;
 }
