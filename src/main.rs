@@ -67,10 +67,8 @@ fn main() {
         });
 
         coordinate /= samples as f64;
-        let red = (255.0 * coordinate.x.sqrt()) as u8;
-        let green = (255.0 * coordinate.y.sqrt()) as u8;
-        let blue = (255.0 * coordinate.z.sqrt()) as u8;
-        *pixel = image::Rgb([red, green, blue]);
+        (0..3).for_each(|i| coordinate[i] = 255.0 * coordinate[i].sqrt());
+        *pixel = image::Rgb([coordinate.x as u8, coordinate.y as u8, coordinate.z as u8]);
     });
 
 
