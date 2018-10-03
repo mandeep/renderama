@@ -28,7 +28,7 @@ impl Ray {
         (1.0 - point) * Vector3::new(1.0, 1.0, 1.0) + point * Vector3::new(0.5, 0.7, 1.0)
     }
 
-    pub fn point_at_perimeter(&self, point: f64) -> Vector3<f64> {
+    pub fn point_at_parameter(&self, point: f64) -> Vector3<f64> {
         self.origin + point * self.direction
     }
 }
