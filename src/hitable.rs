@@ -26,7 +26,7 @@ pub trait Hitable {
 
 
 pub struct HitableList {
-    pub list: Vec<Box<Hitable>>
+    pub list: Vec<Box<dyn Hitable>>
 }
 
 
@@ -35,7 +35,7 @@ impl HitableList {
         HitableList { list: Vec::new() }
     }
 
-    pub fn push(&mut self, hitable: Box<Hitable>) {
+    pub fn push(&mut self, hitable: Box<dyn Hitable>) {
         self.list.push(hitable);
     }
 }
