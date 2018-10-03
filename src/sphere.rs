@@ -34,7 +34,7 @@ impl Hitable for Sphere {
             for root in roots {
                 if root < position_max && root > position_min {
                     hit_record.position = root;
-                    hit_record.point = ray.point_at_perimeter(hit_record.position);
+                    hit_record.point = ray.point_at_parameter(hit_record.position);
                     hit_record.normal = (hit_record.point - self.center) / self.radius;
                     return true;
                 }
