@@ -18,8 +18,7 @@ impl Sphere {
 
 
 impl Hitable for Sphere {
-    fn hit(&self, ray: &Ray, position_min: f64, position_max: f64, hit_record: &mut HitRecord)
-            -> bool {
+    fn hit(&self, ray: &Ray, position_min: f64, position_max: f64) -> Option<HitRecord> {
         let sphere_center: Vector3<f64> = ray.origin - self.center;
         let a: f64 = ray.direction.dot(&ray.direction);
         let b: f64 = sphere_center.dot(&ray.direction);
@@ -33,14 +32,13 @@ impl Hitable for Sphere {
 
             for root in roots {
                 if root < position_max && root > position_min {
-                    hit_record.position = root;
-                    hit_record.point = ray.point_at_parameter(hit_record.position);
-                    hit_record.normal = (hit_record.point - self.center) / self.radius;
-                    return true;
+                    let point = ray.point_at_parameter(root);
+                    let normal = (point - self.center) / self.radius;
+                    return Some(HitRecord::new(root, point, normal));
                 }
             }
 
         }
-        false
+        None
     }
 }
