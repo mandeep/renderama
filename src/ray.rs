@@ -14,7 +14,7 @@ impl Ray {
         Ray { origin: a, direction: b }
     }
 
-    pub fn point_at_parameter(&self, point: f64) -> Vector3<f64> {
-        self.origin + point * self.direction
+    pub fn point_at_parameter(&self, parameter: f64) -> Vector3<f64> {
+        self.origin + parameter * self.direction
     }
 }
