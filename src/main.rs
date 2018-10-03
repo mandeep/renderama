@@ -8,10 +8,34 @@ mod ray;
 mod sphere;
 
 use camera::Camera;
-use hitable::HitableList;
+use hitable::{Hitable, HitableList, HitRecord};
 use nalgebra::core::Vector3;
+use ray::Ray;
 use sphere::Sphere;
+use std::f64;
 use std::fs::File;
+
+
+fn color(ray: &Ray, world: &Hitable) -> Vector3<f64> {
+    let mut hit_record = HitRecord::new(f64::MAX);
+
+    let x = rand::random::<f64>();
+    let y = rand::random::<f64>();
+    let z = rand::random::<f64>();
+
+    let distribution = 1.0 / (x * x + y * y + z * z).sqrt();
+    let random_unit_sphere_point = distribution * Vector3::new(x, y, z);
+
+    if world.hit(ray, 0.001, f64::MAX, &mut hit_record) {
+        let target: Vector3<f64> = hit_record.point + hit_record.normal + random_unit_sphere_point;
+        return 0.5 * color(&Ray::new(hit_record.point, target - hit_record.point), world);
+    }
+
+    let unit_direction: Vector3<f64> = ray.direction.normalize();
+    let point: f64 = 0.5 * (unit_direction.y + 1.0);
+
+    (1.0 - point) * Vector3::new(1.0, 1.0, 1.0) + point * Vector3::new(0.5, 0.7, 1.0)
+}
 
 
 fn main() {
@@ -36,13 +60,13 @@ fn main() {
                 let u = (x as f64 + rand::random::<f64>()) / width as f64;
                 let v = (y as f64 + rand::random::<f64>()) / height as f64;
                 let ray = camera.get_ray(u, v);
-                coordinate += ray.color(&world);
+                coordinate += color(&ray, &world);
             }
 
             coordinate /= samples as f64;
-            let red = (255.0 * coordinate.x) as u8;
-            let green = (255.0 * coordinate.y) as u8;
-            let blue = (255.0 * coordinate.z) as u8;
+            let red = (255.0 * coordinate.x.sqrt()) as u8;
+            let green = (255.0 * coordinate.y.sqrt()) as u8;
+            let blue = (255.0 * coordinate.z.sqrt()) as u8;
             buffer.put_pixel(x, y, image::Rgb([red, green, blue]));
         }
     }
