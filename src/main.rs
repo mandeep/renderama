@@ -15,7 +15,7 @@ use std::fs::File;
 
 
 fn main() {
-    let (width, height): (u32, u32) = (1600, 800);
+    let (width, height): (u32, u32) = (1920, 960);
     let samples: u32 = 100;
 
     let mut buffer = image::ImageBuffer::new(width, height);
