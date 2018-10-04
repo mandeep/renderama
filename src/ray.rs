@@ -1,5 +1,8 @@
-use std::f64;
+use hitable::Hitable;
 use nalgebra::core::Vector3;
+use rand;
+use std::f64;
+use world::World;
 
 
 pub struct Ray {
@@ -17,4 +20,29 @@ impl Ray {
     pub fn point_at_parameter(&self, parameter: f64) -> Vector3<f64> {
         self.origin + parameter * self.direction
     }
+}
+
+
+pub fn compute_color(ray: &Ray, world: &World) -> Vector3<f64> {
+        let x = rand::random::<f64>();
+        let y = rand::random::<f64>();
+        let z = rand::random::<f64>();
+
+        let distribution = 1.0 / (x * x + y * y + z * z).sqrt();
+        let random_unit_sphere_point = distribution * Vector3::new(x, y, z);
+
+        match world.hit(ray, 0.001, f64::MAX) {
+            Some(hit_record) => {
+                let target: Vector3<f64> = hit_record.point +
+                                           hit_record.normal +
+                                           random_unit_sphere_point;
+                return 0.5 * compute_color(&Ray::new(hit_record.point, target - hit_record.point), world);
+            }
+            None => {
+                let unit_direction: Vector3<f64> = ray.direction.normalize();
+                let point: f64 = 0.5 * (unit_direction.y + 1.0);
+
+                return (1.0 - point) * Vector3::new(1.0, 1.0, 1.0) + point * Vector3::new(0.5, 0.7, 1.0);
+            }
+        }
 }
