@@ -21,7 +21,6 @@ fn main() {
     let (width, height): (u32, u32) = (1920, 960);
     let samples: u32 = 100;
 
-    let mut buffer = image::ImageBuffer::new(width, height);
     let camera = Camera::new(Vector3::new(-2.0, -1.0, -1.0),
                              Vector3::new(4.0, 0.0, 0.0),
                              Vector3::new(0.0, 2.0, 0.0),
@@ -49,6 +48,8 @@ fn main() {
         *pixel = image::Rgb([coordinate.x as u8, coordinate.y as u8, coordinate.z as u8]);
     });
 
+
+    let mut buffer = image::ImageBuffer::new(width, height);
 
     buffer.enumerate_pixels_mut().for_each(|(x, y, pixel)| {
         let index = (y * width + x) as usize;
