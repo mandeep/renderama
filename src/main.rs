@@ -11,7 +11,7 @@ mod sphere;
 mod world;
 
 use camera::Camera;
-use materials::{Lambertian, Metal};
+use materials::{Dielectric, Lambertian, Metal};
 use nalgebra::core::Vector3;
 use rayon::prelude::*;
 use sphere::Sphere;
@@ -40,6 +40,18 @@ fn main() {
         Vector3::new(-0.6, 0.0, -1.0),
         0.5,
         Box::new(Metal::new(Vector3::new(0.5, 0.5, 0.5), 0.5))
+    )));
+
+    world.add(Box::new(Sphere::new(
+        Vector3::new(0.0, 0.0, -2.0),
+        0.5,
+        Box::new(Dielectric::new(1.5))
+    )));
+
+    world.add(Box::new(Sphere::new(
+        Vector3::new(0.0, 0.0, -2.0),
+        -0.49,
+        Box::new(Dielectric::new(1.5))
     )));
 
     world.add(Box::new(Sphere::new(
