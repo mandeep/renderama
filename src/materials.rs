@@ -95,13 +95,15 @@ impl Material for Metal {
 
 #[derive(Clone)]
 pub struct Dielectric {
-    pub refractive_index: f64
+    pub albedo: Vector3<f64>,
+    pub refractive_index: f64,
+    pub fuzz: f64
 }
 
 
 impl Dielectric {
-    pub fn new(index: f64) -> Dielectric {
-        Dielectric { refractive_index: index }
+    pub fn new(albedo: Vector3<f64>, index: f64, fuzz: f64) -> Dielectric {
+        Dielectric { albedo: albedo, refractive_index: index, fuzz: fuzz }
     }
 }
 
@@ -113,25 +115,17 @@ impl Material for Dielectric {
 
     fn scatter(&self, ray: &Ray, record: &HitRecord) -> Option<(Vector3<f64>, Ray)> {
         let reflected: Vector3<f64> = reflect(&ray.direction, &record.normal);
-        let attenuation = Vector3::new(1.0, 1.0, 1.0);
         let incident: f64 = ray.direction.dot(&record.normal);
 
-        let outward_normal = if incident > 0.0 {
-               -record.normal
+        let (outward_normal, refractive_index, cosine) = if incident > 0.0 {
+               (-record.normal,
+                self.refractive_index,
+                self.refractive_index * ray.direction.dot(&record.normal) / ray.direction.norm())
             } else {
-                record.normal
-            };
+               (record.normal,
+                1.0 / self.refractive_index,
+                -ray.direction.dot(&record.normal) / ray.direction.norm())
 
-        let refractive_index = if incident > 0.0 {
-                self.refractive_index
-            } else {
-                1.0 / self.refractive_index
-            };
-
-        let cosine = if incident > 0.0 {
-                self.refractive_index * ray.direction.dot(&record.normal) / ray.direction.norm()
-            } else {
-                -ray.direction.dot(&record.normal) / ray.direction.norm()
             };
 
         let refracted = refract(&ray.direction, &outward_normal, refractive_index);
@@ -141,9 +135,12 @@ impl Material for Dielectric {
         };
 
         if rand::random::<f64>() < reflect_probability {
-            return Some((attenuation, Ray::new(record.point, reflected)));
+            return Some((self.albedo,
+                         Ray::new(record.point, reflected + self.fuzz * random_point_in_sphere())));
         } else {
-            return Some((attenuation, Ray::new(record.point, refracted.unwrap())));
+            return Some((self.albedo, Ray::new(record.point,
+                                               refracted.unwrap() +
+                                                   self.fuzz * random_point_in_sphere())));
         }
     }
 }

@@ -41,25 +41,25 @@ fn main() {
     world.add(Sphere::new(
         Vector3::new(-0.6, 0.0, -1.0),
         0.5,
-        Metal::new(Vector3::new(0.5, 0.5, 0.5), 0.5),
+        Metal::new(Vector3::new(0.5, 0.5, 0.5), 0.1),
     ));
 
     world.add(Sphere::new(
         Vector3::new(0.0, 0.0, -2.0),
-        0.8,
-        Dielectric::new(1.5))
+        0.7,
+        Dielectric::new(Vector3::new(0.9, 0.9, 0.9), 1.5, 0.1))
     );
 
     world.add(Sphere::new(
         Vector3::new(0.0, 0.0, -2.0),
-        -0.79,
-        Dielectric::new(1.5))
+        -0.69,
+        Dielectric::new(Vector3::new(0.9, 0.9, 0.9), 1.5, 0.1))
     );
 
     world.add(Sphere::new(
         Vector3::new(0.0, -100.5, -1.0),
         100.0,
-        Lambertian::new(Vector3::new(0.75, 0.75, 0.75)))
+        Lambertian::new(Vector3::new(0.5, 0.5, 0.5)))
     );
 
     let mut pixels = vec![image::Rgb([0, 0, 0]); (width * height) as usize];
