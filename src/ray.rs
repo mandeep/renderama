@@ -34,7 +34,27 @@ pub fn random_point_in_sphere() -> Vector3<f64> {
     random_unit_sphere_point
 }
 
-                return (1.0 - point) * Vector3::new(1.0, 1.0, 1.0) + point * Vector3::new(0.5, 0.7, 1.0);
+
+pub fn compute_color(ray: &Ray, world: &World, depth: i32) -> Vector3<f64> {
+    match world.hit(ray, 0.001, f64::MAX) {
+        Some(hit_record) => {
+            if depth < 50 {
+                match hit_record.material.scatter(ray, &hit_record) {
+                    Some((attenuation, scattered)) => {
+                        return attenuation.component_mul(
+                            &compute_color(&scattered, world, depth + 1));
+                    }
+                    None => { return Vector3::zeros(); }
+                }
+            } else {
+                return Vector3::zeros();
             }
         }
+        None => {
+            let unit_direction: Vector3<f64> = ray.direction.normalize();
+            let point: f64 = 0.5 * (unit_direction.y + 1.0);
+
+            return (1.0 - point) * Vector3::new(1.0, 1.0, 1.0) + point * Vector3::new(0.5, 0.7, 1.0);
+        }
+    }
 }
