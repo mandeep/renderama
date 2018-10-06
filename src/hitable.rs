@@ -7,7 +7,7 @@ pub struct HitRecord {
     pub parameter: f64,
     pub point: Vector3<f64>,
     pub normal: Vector3<f64>,
-    pub material: Box<dyn Material>
+    pub material: Box<dyn Material>,
 }
 
 

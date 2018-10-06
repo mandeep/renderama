@@ -29,17 +29,24 @@ fn main() {
                              Vector3::new(0.0, 0.0, 0.0));
 
     let mut world = World::new();
-    world.add(Box::new(Sphere::new(Vector3::new(0.6, 0.0, -1.0),
-                                   0.5,
-                                   Box::new(Lambertian::new(Vector3::new(0.75, 0.25, 0.25))))));
 
-    world.add(Box::new(Sphere::new(Vector3::new(-0.6, 0.0, -1.0),
-                                   0.5,
-                                   Box::new(Metal::new(Vector3::new(0.5, 0.5, 0.5), 0.0)))));
+    world.add(Box::new(Sphere::new(
+        Vector3::new(0.6, 0.0, -1.0),
+        0.5,
+        Box::new(Lambertian::new(Vector3::new(0.75, 0.25, 0.25))),
+    )));
 
-    world.add(Box::new(Sphere::new(Vector3::new(0.0, -100.5, -1.0),
-                                   100.0,
-                                   Box::new(Lambertian::new(Vector3::new(0.75, 0.75, 0.75))))));
+    world.add(Box::new(Sphere::new(
+        Vector3::new(-0.6, 0.0, -1.0),
+        0.5,
+        Box::new(Metal::new(Vector3::new(0.5, 0.5, 0.5), 0.5))
+    )));
+
+    world.add(Box::new(Sphere::new(
+        Vector3::new(0.0, -100.5, -1.0),
+        100.0,
+        Box::new(Lambertian::new(Vector3::new(0.75, 0.75, 0.75)))
+    )));
 
     let mut pixels = vec![image::Rgb([0, 0, 0]); (width * height) as usize];
     pixels.par_iter_mut().enumerate().for_each(|(i, pixel)| {
