@@ -12,7 +12,8 @@ pub struct Sphere {
 
 
 impl Sphere {
-    pub fn new(center: Vector3<f64>, radius: f64, material: Box<dyn Material>) -> Sphere {
+    pub fn new<M: Material + 'static>(center: Vector3<f64>, radius: f64, material: M) -> Sphere {
+        let material = Box::new(material);
         Sphere { center: center, radius: radius, material: material }
     }
 }

@@ -14,7 +14,8 @@ impl World {
         World { objects: Vec::new() }
     }
 
-    pub fn add(&mut self, object: Box<dyn Hitable>) {
+    pub fn add<H: Hitable + 'static>(&mut self, object: H) {
+        let object = Box::new(object);
         self.objects.push(object);
     }
 }
