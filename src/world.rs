@@ -1,10 +1,11 @@
 use hitable::{Hitable, HitRecord};
+use materials::Lambertian;
 use nalgebra::core::Vector3;
 use ray::Ray;
 
 
 pub struct World {
-    pub objects: Vec<Box<dyn Hitable>>
+    pub objects: Vec<Box<dyn Hitable>>,
 }
 
 
@@ -21,7 +22,10 @@ impl World {
 
 impl Hitable for World {
     fn hit(&self, ray: &Ray, position_min: f64, position_max: f64) -> Option<HitRecord> {
-        let mut record = HitRecord::new(0.0, Vector3::zeros(), Vector3::zeros());
+        let mut record = HitRecord::new(0.0,
+                                        Vector3::zeros(),
+                                        Vector3::zeros(),
+                                        Box::new(Lambertian::new(Vector3::zeros())));
         let mut hit_anything: bool = false;
         let mut closed_so_far: f64 = position_max;
 
