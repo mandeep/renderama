@@ -5,11 +5,13 @@ extern crate rayon;
 
 mod camera;
 mod hitable;
+mod materials;
 mod ray;
 mod sphere;
 mod world;
 
 use camera::Camera;
+use materials::{Lambertian, Metal};
 use nalgebra::core::Vector3;
 use rayon::prelude::*;
 use sphere::Sphere;
@@ -19,7 +21,7 @@ use world::World;
 
 fn main() {
     let (width, height): (u32, u32) = (1920, 960);
-    let samples: u32 = 100;
+    let samples: u32 = 1000;
 
     let camera = Camera::new(Vector3::new(-2.0, -1.0, -1.0),
                              Vector3::new(4.0, 0.0, 0.0),
@@ -27,8 +29,17 @@ fn main() {
                              Vector3::new(0.0, 0.0, 0.0));
 
     let mut world = World::new();
-    world.add(Box::new(Sphere::new(Vector3::new(0.0, 0.0, -1.0), 0.5)));
-    world.add(Box::new(Sphere::new(Vector3::new(0.0, -100.5, -1.0), 100.0)));
+    world.add(Box::new(Sphere::new(Vector3::new(0.6, 0.0, -1.0),
+                                   0.5,
+                                   Box::new(Lambertian::new(Vector3::new(0.75, 0.25, 0.25))))));
+
+    world.add(Box::new(Sphere::new(Vector3::new(-0.6, 0.0, -1.0),
+                                   0.5,
+                                   Box::new(Metal::new(Vector3::new(0.5, 0.5, 0.5), 0.0)))));
+
+    world.add(Box::new(Sphere::new(Vector3::new(0.0, -100.5, -1.0),
+                                   100.0,
+                                   Box::new(Lambertian::new(Vector3::new(0.75, 0.75, 0.75))))));
 
     let mut pixels = vec![image::Rgb([0, 0, 0]); (width * height) as usize];
     pixels.par_iter_mut().enumerate().for_each(|(i, pixel)| {
@@ -40,7 +51,7 @@ fn main() {
             let u = (x as f64 + rand::random::<f64>()) / width as f64;
             let v = (y as f64 + rand::random::<f64>()) / height as f64;
             let ray = camera.get_ray(u, v);
-            coordinate += ray::compute_color(&ray, &world);
+            coordinate += ray::compute_color(&ray, &world, 0);
         });
 
         coordinate /= samples as f64;
