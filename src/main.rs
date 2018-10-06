@@ -27,8 +27,8 @@ fn main() {
                              Vector3::new(0.0, 0.0, 0.0));
 
     let mut world = World::new();
-    world.objects.push(Box::new(Sphere::new(Vector3::new(0.0, 0.0, -1.0), 0.5)));
-    world.objects.push(Box::new(Sphere::new(Vector3::new(0.0, -100.5, -1.0), 100.0)));
+    world.add(Box::new(Sphere::new(Vector3::new(0.0, 0.0, -1.0), 0.5)));
+    world.add(Box::new(Sphere::new(Vector3::new(0.0, -100.5, -1.0), 100.0)));
 
     let mut pixels = vec![image::Rgb([0, 0, 0]); (width * height) as usize];
     pixels.par_iter_mut().enumerate().for_each(|(i, pixel)| {

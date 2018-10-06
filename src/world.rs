@@ -12,6 +12,10 @@ impl World {
     pub fn new() -> World {
         World { objects: Vec::new() }
     }
+
+    pub fn add(&mut self, object: Box<dyn Hitable>) {
+        self.objects.push(object);
+    }
 }
 
 
