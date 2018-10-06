@@ -15,13 +15,15 @@ use materials::{Dielectric, Lambertian, Metal};
 use nalgebra::core::Vector3;
 use rayon::prelude::*;
 use sphere::Sphere;
+use std::env;
 use std::f64;
 use world::World;
 
 
 fn main() {
     let (width, height): (u32, u32) = (1920, 960);
-    let samples: u32 = 1000;
+    let args: Vec<String> = env::args().collect();
+    let samples: u32 = args[1].parse().unwrap();
 
     let camera = Camera::new(Vector3::new(-2.0, -1.0, -1.0),
                              Vector3::new(4.0, 0.0, 0.0),
