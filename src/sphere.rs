@@ -1,18 +1,19 @@
-use nalgebra::core::Vector3;
-
 use hitable::{Hitable, HitRecord};
+use materials::Material;
+use nalgebra::core::Vector3;
 use ray::Ray;
 
 
 pub struct Sphere {
     pub center: Vector3<f64>,
-    pub radius: f64
+    pub radius: f64,
+    pub material: Box<dyn Material>
 }
 
 
 impl Sphere {
-    pub fn new(center: Vector3<f64>, radius: f64) -> Sphere {
-        Sphere { center: center, radius: radius }
+    pub fn new(center: Vector3<f64>, radius: f64, material: Box<dyn Material>) -> Sphere {
+        Sphere { center: center, radius: radius, material: material }
     }
 }
 
@@ -34,7 +35,7 @@ impl Hitable for Sphere {
                 if root < position_max && root > position_min {
                     let point = ray.point_at_parameter(root);
                     let normal = (point - self.center) / self.radius;
-                    return Some(HitRecord::new(root, point, normal));
+                    return Some(HitRecord::new(root, point, normal, self.material.box_clone()));
                 }
             }
 
