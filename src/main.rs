@@ -13,6 +13,7 @@ mod world;
 use camera::Camera;
 use materials::{Dielectric, Lambertian, Metal};
 use nalgebra::core::Vector3;
+use rand::thread_rng;
 use rayon::prelude::*;
 use sphere::Sphere;
 use std::env;
@@ -68,11 +69,13 @@ fn main() {
         let x = i % width as usize;
         let y = i / width as usize;
 
+        let mut rng = thread_rng();
+
         (0..samples).for_each(|_| {
             let u = (x as f64 + rand::random::<f64>()) / width as f64;
             let v = (y as f64 + rand::random::<f64>()) / height as f64;
             let ray = camera.get_ray(u, v);
-            coordinate += ray::compute_color(&ray, &world, 0);
+            coordinate += ray::compute_color(&ray, &world, 0, &mut rng);
         });
 
         coordinate /= samples as f64;

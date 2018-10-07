@@ -7,7 +7,10 @@ use ray::{random_point_in_sphere, Ray};
 pub trait Material: Send + Sync {
     fn box_clone(&self) -> Box<Material>;
 
-    fn scatter(&self, ray: &Ray, record: &HitRecord) -> Option<(Vector3<f64>, Ray)>;
+    fn scatter(&self,
+               ray: &Ray,
+               record: &HitRecord,
+               rng: &mut rand::ThreadRng) -> Option<(Vector3<f64>, Ray)>;
 }
 
 
@@ -30,8 +33,12 @@ impl Material for Lambertian {
         Box::new((*self).clone())
     }
 
-    fn scatter(&self, _ray: &Ray, record: &HitRecord) -> Option<(Vector3<f64>, Ray)> {
-        let target: Vector3<f64> = record.point + record.normal + random_point_in_sphere();
+    fn scatter(&self,
+               _ray: &Ray,
+               record: &HitRecord,
+               rng: &mut rand::ThreadRng) -> Option<(Vector3<f64>, Ray)> {
+
+        let target: Vector3<f64> = record.point + record.normal + random_point_in_sphere(rng);
         Some((self.albedo, Ray::new(record.point, target - record.point)))
     }
 }
@@ -81,9 +88,13 @@ impl Material for Metal {
         Box::new((*self).clone())
     }
 
-    fn scatter(&self, ray: &Ray, record: &HitRecord) -> Option<(Vector3<f64>, Ray)> {
+    fn scatter(&self,
+               ray: &Ray,
+               record: &HitRecord,
+               rng: &mut rand::ThreadRng) -> Option<(Vector3<f64>, Ray)> {
+
         let reflected: Vector3<f64> = reflect(&ray.direction.normalize(), &record.normal);
-        let scattered = Ray::new(record.point, reflected + self.fuzz * random_point_in_sphere());
+        let scattered = Ray::new(record.point, reflected + self.fuzz * random_point_in_sphere(rng));
 
         if scattered.direction.dot(&record.normal) > 0.0 {
             return Some((self.albedo, scattered));
@@ -113,7 +124,11 @@ impl Material for Dielectric {
         Box::new((*self).clone())
     }
 
-    fn scatter(&self, ray: &Ray, record: &HitRecord) -> Option<(Vector3<f64>, Ray)> {
+    fn scatter(&self,
+               ray: &Ray,
+               record: &HitRecord,
+               rng: &mut rand::ThreadRng) -> Option<(Vector3<f64>, Ray)> {
+
         let reflected: Vector3<f64> = reflect(&ray.direction, &record.normal);
         let incident: f64 = ray.direction.dot(&record.normal);
 
@@ -136,11 +151,11 @@ impl Material for Dielectric {
 
         if rand::random::<f64>() < reflect_probability {
             return Some((self.albedo,
-                         Ray::new(record.point, reflected + self.fuzz * random_point_in_sphere())));
+                         Ray::new(record.point, reflected + self.fuzz * random_point_in_sphere(rng))));
         } else {
             return Some((self.albedo, Ray::new(record.point,
                                                refracted.unwrap() +
-                                                   self.fuzz * random_point_in_sphere())));
+                                                   self.fuzz * random_point_in_sphere(rng))));
         }
     }
 }
