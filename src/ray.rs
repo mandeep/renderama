@@ -1,6 +1,7 @@
 use hitable::Hitable;
 use nalgebra::core::Vector3;
 use rand;
+use rand::distributions::{Distribution, Normal};
 use std::f64;
 use world::World;
 
@@ -23,10 +24,11 @@ impl Ray {
 }
 
 
-pub fn random_point_in_sphere() -> Vector3<f64> {
-    let x = rand::random::<f64>();
-    let y = rand::random::<f64>();
-    let z = rand::random::<f64>();
+pub fn random_point_in_sphere(rng: &mut rand::ThreadRng) -> Vector3<f64> {
+    let normal_distribution = Normal::new(0.0, 1.0);
+    let x = normal_distribution.sample(rng);
+    let y = normal_distribution.sample(rng);
+    let z = normal_distribution.sample(rng);
 
     let distribution = 1.0 / (x * x + y * y + z * z).sqrt();
     let random_unit_sphere_point = distribution * Vector3::new(x, y, z);
@@ -35,14 +37,14 @@ pub fn random_point_in_sphere() -> Vector3<f64> {
 }
 
 
-pub fn compute_color(ray: &Ray, world: &World, depth: i32) -> Vector3<f64> {
+pub fn compute_color(ray: &Ray, world: &World, depth: i32, rng: &mut rand::ThreadRng) -> Vector3<f64> {
     match world.hit(ray, 0.001, f64::MAX) {
         Some(hit_record) => {
             if depth < 50 {
-                match hit_record.material.scatter(ray, &hit_record) {
+                match hit_record.material.scatter(ray, &hit_record, rng) {
                     Some((attenuation, scattered)) => {
                         return attenuation.component_mul(
-                            &compute_color(&scattered, world, depth + 1));
+                            &compute_color(&scattered, world, depth + 1, rng));
                     }
                     None => { return Vector3::zeros(); }
                 }
