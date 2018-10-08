@@ -1,7 +1,7 @@
 use hitable::HitRecord;
 use nalgebra::core::Vector3;
 use rand;
-use ray::{random_point_in_sphere, Ray};
+use ray::{pick_sphere_point, Ray};
 
 
 pub trait Material: Send + Sync {
@@ -38,7 +38,7 @@ impl Material for Lambertian {
                record: &HitRecord,
                rng: &mut rand::ThreadRng) -> Option<(Vector3<f64>, Ray)> {
 
-        let target: Vector3<f64> = record.point + record.normal + random_point_in_sphere(rng);
+        let target: Vector3<f64> = record.point + record.normal + pick_sphere_point(rng);
         Some((self.albedo, Ray::new(record.point, target - record.point)))
     }
 }
@@ -94,7 +94,7 @@ impl Material for Metal {
                rng: &mut rand::ThreadRng) -> Option<(Vector3<f64>, Ray)> {
 
         let reflected: Vector3<f64> = reflect(&ray.direction.normalize(), &record.normal);
-        let scattered = Ray::new(record.point, reflected + self.fuzz * random_point_in_sphere(rng));
+        let scattered = Ray::new(record.point, reflected + self.fuzz * pick_sphere_point(rng));
 
         if scattered.direction.dot(&record.normal) > 0.0 {
             return Some((self.albedo, scattered));
@@ -151,11 +151,13 @@ impl Material for Dielectric {
 
         if rand::random::<f64>() < reflect_probability {
             return Some((self.albedo,
-                         Ray::new(record.point, reflected + self.fuzz * random_point_in_sphere(rng))));
+                         Ray::new(record.point, reflected + self.fuzz * pick_sphere_point(rng))
+                         ));
         } else {
             return Some((self.albedo, Ray::new(record.point,
                                                refracted.unwrap() +
-                                                   self.fuzz * random_point_in_sphere(rng))));
+                                                   self.fuzz * pick_sphere_point(rng))
+                         ));
         }
     }
 }

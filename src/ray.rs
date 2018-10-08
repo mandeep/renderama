@@ -24,7 +24,16 @@ impl Ray {
 }
 
 
-pub fn random_point_in_sphere(rng: &mut rand::ThreadRng) -> Vector3<f64> {
+
+/// Pick a random point on the unit sphere
+///
+/// We can use a Gaussian distribution to uniformly generate points
+/// on the unit sphere. If a uniform distribution were used instead,
+/// the points would tend to aggregate to the poles of the sphere.
+///
+/// Reference: http://mathworld.wolfram.com/SpherePointPicking.html
+///
+pub fn pick_sphere_point(rng: &mut rand::ThreadRng) -> Vector3<f64> {
     let normal_distribution = Normal::new(0.0, 1.0);
     let x = normal_distribution.sample(rng);
     let y = normal_distribution.sample(rng);
