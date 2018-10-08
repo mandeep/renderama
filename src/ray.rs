@@ -30,6 +30,8 @@ impl Ray {
 /// We can use a Gaussian distribution to uniformly generate points
 /// on the unit sphere. If a uniform distribution were used instead,
 /// the points would tend to aggregate to the poles of the sphere.
+/// A vector is created from the sample points taken for each coordinate
+/// axis and the unit vector of this newly created vector is returned.
 ///
 /// Reference: http://mathworld.wolfram.com/SpherePointPicking.html
 ///
@@ -39,10 +41,7 @@ pub fn pick_sphere_point(rng: &mut rand::ThreadRng) -> Vector3<f64> {
     let y = normal_distribution.sample(rng);
     let z = normal_distribution.sample(rng);
 
-    let distribution = 1.0 / (x * x + y * y + z * z).sqrt();
-    let random_unit_sphere_point = distribution * Vector3::new(x, y, z);
-
-    random_unit_sphere_point
+    Vector3::new(x, y, z).normalize()
 }
 
 
