@@ -129,7 +129,7 @@ impl Material for Dielectric {
                record: &HitRecord,
                rng: &mut rand::ThreadRng) -> Option<(Vector3<f64>, Ray)> {
 
-        let reflected: Vector3<f64> = reflect(&ray.direction, &record.normal);
+        let reflected: Vector3<f64> = reflect(&ray.direction.normalize(), &record.normal);
         let incident: f64 = ray.direction.dot(&record.normal);
 
         let (outward_normal, refractive_index, cosine) = if incident > 0.0 {
