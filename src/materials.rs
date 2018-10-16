@@ -15,20 +15,20 @@ pub trait Material: Send + Sync {
 
 
 #[derive(Clone)]
-pub struct Lambertian {
+pub struct Diffuse {
     pub albedo: Vector3<f64>
 }
 
 
 
-impl Lambertian {
-    pub fn new(albedo: Vector3<f64>) -> Lambertian {
-        Lambertian { albedo: albedo }
+impl Diffuse {
+    pub fn new(albedo: Vector3<f64>) -> Diffuse {
+        Diffuse { albedo: albedo }
     }
 }
 
 
-impl Material for Lambertian {
+impl Material for Diffuse {
     fn box_clone(&self) -> Box<Material> {
         Box::new((*self).clone())
     }
@@ -69,21 +69,21 @@ fn schlick(cosine: f64, reference_index: f64) -> f64 {
 
 
 #[derive(Clone)]
-pub struct Metal {
+pub struct Reflective {
     pub albedo: Vector3<f64>,
     pub fuzz: f64
 }
 
 
-impl Metal {
-    pub fn new(albedo: Vector3<f64>, fuzz: f64) -> Metal {
-        Metal { albedo: albedo, fuzz: fuzz }
+impl Reflective {
+    pub fn new(albedo: Vector3<f64>, fuzz: f64) -> Reflective {
+        Reflective { albedo: albedo, fuzz: fuzz }
     }
 
 }
 
 
-impl Material for Metal {
+impl Material for Reflective {
     fn box_clone(&self) -> Box<Material> {
         Box::new((*self).clone())
     }
@@ -105,21 +105,21 @@ impl Material for Metal {
 
 
 #[derive(Clone)]
-pub struct Dielectric {
+pub struct Refractive {
     pub albedo: Vector3<f64>,
     pub refractive_index: f64,
     pub fuzz: f64
 }
 
 
-impl Dielectric {
-    pub fn new(albedo: Vector3<f64>, index: f64, fuzz: f64) -> Dielectric {
-        Dielectric { albedo: albedo, refractive_index: index, fuzz: fuzz }
+impl Refractive {
+    pub fn new(albedo: Vector3<f64>, index: f64, fuzz: f64) -> Refractive {
+        Refractive { albedo: albedo, refractive_index: index, fuzz: fuzz }
     }
 }
 
 
-impl Material for Dielectric {
+impl Material for Refractive {
     fn box_clone(&self) -> Box<Material> {
         Box::new((*self).clone())
     }

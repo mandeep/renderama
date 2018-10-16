@@ -11,7 +11,7 @@ mod sphere;
 mod world;
 
 use camera::Camera;
-use materials::{Dielectric, Lambertian, Metal};
+use materials::{Refractive, Diffuse, Reflective};
 use nalgebra::core::Vector3;
 use rand::thread_rng;
 use rayon::prelude::*;
@@ -36,31 +36,31 @@ fn main() {
     world.add(Sphere::new(
         Vector3::new(0.6, 0.0, -1.0),
         0.5,
-        Lambertian::new(Vector3::new(0.75, 0.25, 0.25))
+        Diffuse::new(Vector3::new(0.75, 0.25, 0.25))
     ));
 
     world.add(Sphere::new(
         Vector3::new(-0.6, 0.0, -1.0),
         0.5,
-        Metal::new(Vector3::new(0.5, 0.5, 0.5), 0.1),
+        Reflective::new(Vector3::new(0.5, 0.5, 0.5), 0.1),
     ));
 
     world.add(Sphere::new(
         Vector3::new(0.0, 0.2, -2.0),
         0.7,
-        Dielectric::new(Vector3::new(0.9, 0.9, 0.9), 1.5, 0.0))
+        Refractive::new(Vector3::new(0.9, 0.9, 0.9), 1.5, 0.0))
     );
 
     world.add(Sphere::new(
         Vector3::new(0.0, 0.2, -2.0),
         -0.69,
-        Dielectric::new(Vector3::new(0.9, 0.9, 0.9), 1.5, 0.0))
+        Refractive::new(Vector3::new(0.9, 0.9, 0.9), 1.5, 0.0))
     );
 
     world.add(Sphere::new(
         Vector3::new(0.0, -100.5, -1.0),
         100.0,
-        Lambertian::new(Vector3::new(0.5, 0.5, 0.5)))
+        Diffuse::new(Vector3::new(0.5, 0.5, 0.5)))
     );
 
     let mut pixels = vec![image::Rgb([0, 0, 0]); (width * height) as usize];
