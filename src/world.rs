@@ -1,5 +1,5 @@
 use hitable::{Hitable, HitRecord};
-use materials::Lambertian;
+use materials::Diffuse;
 use nalgebra::core::Vector3;
 use ray::Ray;
 
@@ -26,7 +26,7 @@ impl Hitable for World {
         let mut record = HitRecord::new(0.0,
                                         Vector3::zeros(),
                                         Vector3::zeros(),
-                                        Box::new(Lambertian::new(Vector3::zeros())));
+                                        Box::new(Diffuse::new(Vector3::zeros())));
         let mut hit_anything: bool = false;
         let mut closed_so_far: f64 = position_max;
 
