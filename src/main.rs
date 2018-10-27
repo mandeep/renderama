@@ -51,14 +51,14 @@ fn main() {
     ));
 
     world.add(Sphere::new(
-        Vector3::new(0.0, 0.2, -2.0),
-        0.7,
+        Vector3::new(0.0, 0.1, -2.0),
+        0.5,
         Refractive::new(Vector3::new(0.9, 0.9, 0.9), 1.5, 0.0))
     );
 
     world.add(Sphere::new(
-        Vector3::new(0.0, 0.2, -2.0),
-        -0.69,
+        Vector3::new(0.0, 0.1, -2.0),
+        -0.49,
         Refractive::new(Vector3::new(0.9, 0.9, 0.9), 1.5, 0.0))
     );
 
