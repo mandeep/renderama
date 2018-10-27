@@ -26,10 +26,15 @@ fn main() {
     let args: Vec<String> = env::args().collect();
     let samples: u32 = args[1].parse().unwrap();
 
-    let camera = Camera::new(Vector3::new(-2.0, -1.0, -1.0),
-                             Vector3::new(4.0, 0.0, 0.0),
-                             Vector3::new(0.0, 2.0, 0.0),
-                             Vector3::new(0.0, 0.0, 0.0));
+    let origin = Vector3::new(0.0, 3.0, 6.0);
+    let lookat = Vector3::new(0.0, 0.0, -1.5);
+    let camera = Camera::new(origin,
+                             lookat,
+                             Vector3::new(0.0, 1.0, 0.0),
+                             20.0,
+                             (width / height) as f64,
+                             0.01,
+                             10.0);
 
     let mut world = World::new();
 
