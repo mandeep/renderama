@@ -1,6 +1,7 @@
+use nalgebra::core::Vector3;
+
 use hitable::{Hitable, HitRecord};
 use materials::Diffuse;
-use nalgebra::core::Vector3;
 use ray::Ray;
 
 

@@ -1,8 +1,10 @@
-use hitable::Hitable;
+use std::f64;
+
 use nalgebra::core::Vector3;
 use rand;
 use rand::distributions::{Distribution, Normal};
-use std::f64;
+
+use hitable::Hitable;
 use world::World;
 
 

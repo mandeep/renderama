@@ -1,8 +1,9 @@
+use std::f64;
+
 use nalgebra::core::Vector3;
 use rand::thread_rng;
-use ray::{pick_sphere_point, Ray};
 
-use std::f64;
+use ray::{pick_sphere_point, Ray};
 
 
 pub struct Camera {
