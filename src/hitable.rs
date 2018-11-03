@@ -1,5 +1,6 @@
-use materials::Material;
 use nalgebra::core::Vector3;
+
+use materials::Material;
 use ray::Ray;
 
 

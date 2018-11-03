@@ -1,6 +1,7 @@
-use hitable::HitRecord;
 use nalgebra::core::Vector3;
 use rand;
+
+use hitable::HitRecord;
 use ray::{pick_sphere_point, Ray};
 
 

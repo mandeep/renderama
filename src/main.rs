@@ -10,14 +10,16 @@ mod ray;
 mod sphere;
 mod world;
 
-use camera::Camera;
-use materials::{Refractive, Diffuse, Reflective};
+use std::env;
+use std::f64;
+
 use nalgebra::core::Vector3;
 use rand::thread_rng;
 use rayon::prelude::*;
+
+use camera::Camera;
+use materials::{Refractive, Diffuse, Reflective};
 use sphere::Sphere;
-use std::env;
-use std::f64;
 use world::World;
 
 
