@@ -26,7 +26,7 @@ impl Hitable for Sphere {
         let a: f64 = ray.direction.dot(&ray.direction);
         let b: f64 = sphere_center.dot(&ray.direction);
         let c: f64 = sphere_center.dot(&sphere_center) - (self.radius * self.radius);
-        let discriminant: f64 = b * b * a * c;
+        let discriminant: f64 = b * b - a * c;
 
         if discriminant > 0.0 {
             let first_root: f64 = (-b - (b * b - a * c).sqrt()) / a;
