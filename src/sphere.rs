@@ -13,6 +13,7 @@ pub struct Sphere {
 
 
 impl Sphere {
+    /// Create a new sphere to placed into the world
     pub fn new<M: Material + 'static>(center: Vector3<f64>, radius: f64, material: M) -> Sphere {
         let material = Box::new(material);
         Sphere { center: center, radius: radius, material: material }
@@ -21,6 +22,12 @@ impl Sphere {
 
 
 impl Hitable for Sphere {
+    /// Determine if the given ray intersects with a point on the sphere
+    ///
+    /// The equation is quadratic in terms of t. We solve for t looking for
+    /// a real root. No real roots signifies a miss, one real root signifies
+    /// a hit at the boundary of the sphere, and two real roots signify a
+    /// ray hitting one point on the sphere and leaving through another point.
     fn hit(&self, ray: &Ray, position_min: f64, position_max: f64) -> Option<HitRecord> {
         let sphere_center: Vector3<f64> = ray.origin - self.center;
         let a: f64 = ray.direction.dot(&ray.direction);
@@ -28,6 +35,7 @@ impl Hitable for Sphere {
         let c: f64 = sphere_center.dot(&sphere_center) - (self.radius * self.radius);
         let discriminant: f64 = b * b - a * c;
 
+        // checking the discriminant is a fast way to determine if the root is real
         if discriminant > 0.0 {
             let first_root: f64 = (-b - (b * b - a * c).sqrt()) / a;
             let second_root: f64 = (-b + (b * b - a * c).sqrt()) / a;
