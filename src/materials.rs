@@ -5,6 +5,7 @@ use hitable::HitRecord;
 use ray::{pick_sphere_point, Ray};
 
 
+/// The Material trait is responsible for giving a color to the object implementing the trait
 pub trait Material: Send + Sync {
     fn box_clone(&self) -> Box<Material>;
 
@@ -23,6 +24,10 @@ pub struct Diffuse {
 
 
 impl Diffuse {
+    /// Create a new Diffuse material with the given albedo
+    ///
+    /// albedo is a Vector3 of the RGB values assigned to the material
+    /// where each value is a float between 0.0 and 1.0.
     pub fn new(albedo: Vector3<f64>) -> Diffuse {
         Diffuse { albedo: albedo }
     }
@@ -30,10 +35,18 @@ impl Diffuse {
 
 
 impl Material for Diffuse {
+    /// Create a new Diffuse Material on the heap
     fn box_clone(&self) -> Box<Material> {
         Box::new((*self).clone())
     }
-
+a
+    /// Retrieve the color of the given material
+    ///
+    /// For spheres, the center of the sphere is given by the record.point
+    /// plus the record.normal. We add a random point from the unit sphere
+    /// to uniformly distribute hit points on the sphere. The target minus
+    /// the record.point is used to determine the ray that is being reflected
+    /// from the surface of the material.
     fn scatter(&self,
                _ray: &Ray,
                record: &HitRecord,
