@@ -57,12 +57,26 @@ a
     }
 }
 
-
+/// Compute the reflect vector given the light vector and the normal vector of the surface
+///
+/// The law of reflection tells us that the angle between the indicent ray
+/// and the normal vector of the hit point is equal to the angle between
+/// the reflected ray and the normal vector of the hit point.
+///
+/// For derivation see Section 10.4.2 in Mathematical and Computer Programming
+/// Techniques for Computer Graphics by Peter Comininos.
 fn reflect(v: &Vector3<f64>, n: &Vector3<f64>) -> Vector3<f64> {
     v - 2.0 * v.dot(&n) * n
 }
 
 
+/// Compute the refract vector given the light vector, normal vector, and refractive_index
+///
+/// In dielectric materials some light is reflected and some refracted. We can use
+/// Snell's Law to compute the direction of the refracted light.
+///
+/// For derivation see Section 10.4.3 in Mathematical and Computer Programming
+/// Techniques for Computer Graphics by Peter Comininos.
 fn refract(v: &Vector3<f64>, n: &Vector3<f64>, refractive_index: f64) -> Option<Vector3<f64>> {
     let uv: Vector3<f64> = v.normalize();
     let direction: f64 = uv.dot(&n);
@@ -74,7 +88,14 @@ fn refract(v: &Vector3<f64>, n: &Vector3<f64>, refractive_index: f64) -> Option<
     None
 }
 
-
+/// Determine the reflectivity amount based on the angle
+///
+/// In objects like glass, reflectivity varies with the view angle. Schlick's
+/// approximation is used to compute the Fresnel factor in the specular reflection.
+///
+/// For derivation see Section 10.10.3 in Mathematical and Computer Programming
+/// Techniques for Computer Graphics by Peter Comininos and
+/// https://en.wikipedia.org/wiki/Schlick's_approximation.
 fn schlick(cosine: f64, reference_index: f64) -> f64 {
     let r0: f64 = (1.0 - reference_index) / (1.0 + reference_index);
     let r0 = r0 * r0;
