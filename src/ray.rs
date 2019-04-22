@@ -20,6 +20,7 @@ impl Ray {
         Ray { origin: a, direction: b }
     }
 
+    /// Find the point on the ray given the parameter of the direction vector
     pub fn point_at_parameter(&self, parameter: f64) -> Vector3<f64> {
         self.origin + parameter * self.direction
     }
@@ -46,7 +47,14 @@ pub fn pick_sphere_point(rng: &mut rand::ThreadRng) -> Vector3<f64> {
     Vector3::new(x, y, z).normalize()
 }
 
-
+/// Compute the color of the surface that the ray has collided with
+///
+/// If the ray hits an object in the world, the object is colored in relation
+/// to the object's material. If the ray does not record a hit, then we compute
+/// the color of the atmosphere. We recursively call compute_color to sample
+/// the color at the ray's hit point. The depth has been set to an arbitrary
+/// limit of 50 which can lead to bias rendering.
+///
 pub fn compute_color(ray: &Ray, world: &World, depth: i32, rng: &mut rand::ThreadRng) -> Vector3<f64> {
     match world.hit(ray, 0.001, f64::MAX) {
         Some(hit_record) => {
