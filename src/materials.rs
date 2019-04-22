@@ -163,6 +163,13 @@ pub struct Refractive {
 
 
 impl Refractive {
+    /// Create a new Refractive material for objects that both reflect and transmit light
+    ///
+    /// albedo is a Vector3 of the RGB values assigned to the material
+    /// where each value is a float between 0.0 and 1.0. index determines
+    /// how much of the light is refracted when entering the material.
+    /// fuzz accounts for the fuzziness of the reflections due to the size of the sphere.
+    /// Generally, the larger the sphere, the fuzzier the reflections will be.
     pub fn new(albedo: Vector3<f64>, index: f64, fuzz: f64) -> Refractive {
         Refractive { albedo: albedo, refractive_index: index, fuzz: fuzz }
     }
@@ -170,10 +177,23 @@ impl Refractive {
 
 
 impl Material for Refractive {
+    /// Create a new Refractive Material on the heap
     fn box_clone(&self) -> Box<Material> {
         Box::new((*self).clone())
     }
 
+    /// Retrieve the color of the given material
+    ///
+    /// For spheres, the center of the sphere is given by the record.point
+    /// plus the record.normal. We add a random point from the unit sphere
+    /// to uniformly distribute hit points on the sphere. A fuzziness
+    /// factor is also added in to account for the reflection fuzz due to
+    /// the size of the sphere. The target minus the record.point is used
+    /// to determine the ray that is being reflected from the surface of the material.
+    ///
+    /// See Peter Shirley's Ray Tracing in One Weekend for an overview of refractive
+    /// scattering and Section 10.3.2 in Mathematical and Computer Programming
+    /// Techniques for Computer Graphics by Peter Comininos.
     fn scatter(&self,
                ray: &Ray,
                record: &HitRecord,
