@@ -19,6 +19,15 @@ pub struct Camera {
 
 
 impl Camera {
+    /// Create a new camera with which to see the world!
+    ///
+    /// The origin determines where the eye is placed on the camera.
+    /// The lookat variable determines where in the world the eye is looking.
+    /// The view vector is responsible for determining the tilt of the camera.
+    /// FOV is the angle at which the eye is looking through the camera.
+    /// The aspect ratio is the proportial difference between the width and height.
+    /// aperture controls how big the lens of the camera is and focus distance
+    /// controls the shortest distance that the camera can focus.
     pub fn new(origin: Vector3<f64>,
                lookat: Vector3<f64>,
                view: Vector3<f64>,
@@ -47,6 +56,7 @@ impl Camera {
         Camera { lower_left_corner, horizontal, vertical, origin, u, v, w, lens_radius }
     }
 
+    /// Get the ray that is coming from the camera into the world
     pub fn get_ray(&self, s: f64, t: f64) -> Ray {
         let mut rng = thread_rng();
         let radius: Vector3<f64> = self.lens_radius * pick_sphere_point(&mut rng);
