@@ -5,16 +5,19 @@ use materials::Diffuse;
 use ray::Ray;
 
 
+/// The World struct holds all of the objects in the scene
 pub struct World {
     pub objects: Vec<Box<dyn Hitable>>,
 }
 
 
 impl World {
+    /// Create a new World to hold all of the objects in the scene
     pub fn new() -> World {
         World { objects: Vec::new() }
     }
 
+    /// Add objects to the instantiated world
     pub fn add<H: Hitable + 'static>(&mut self, object: H) {
         let object = Box::new(object);
         self.objects.push(object);
@@ -23,6 +26,7 @@ impl World {
 
 
 impl Hitable for World {
+    /// Determine if the given ray has hit any of the objects in the world
     fn hit(&self, ray: &Ray, position_min: f64, position_max: f64) -> Option<HitRecord> {
         let mut record = HitRecord::new(0.0,
                                         Vector3::zeros(),
