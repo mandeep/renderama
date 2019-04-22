@@ -39,7 +39,7 @@ impl Material for Diffuse {
     fn box_clone(&self) -> Box<Material> {
         Box::new((*self).clone())
     }
-a
+
     /// Retrieve the color of the given material
     ///
     /// For spheres, the center of the sphere is given by the record.point
