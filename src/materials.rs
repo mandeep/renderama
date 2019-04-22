@@ -111,6 +111,12 @@ pub struct Reflective {
 
 
 impl Reflective {
+    /// Create a new Reflective material for objects that reflect light only
+    ///
+    /// albedo is a Vector3 of the RGB values assigned to the material
+    /// where each value is a float between 0.0 and 1.0. fuzz accounts
+    /// for the fuzziness of the reflections due to the size of the sphere.
+    /// Generally, the larger the sphere, the fuzzier the reflections will be.
     pub fn new(albedo: Vector3<f64>, fuzz: f64) -> Reflective {
         Reflective { albedo: albedo, fuzz: fuzz }
     }
@@ -119,10 +125,19 @@ impl Reflective {
 
 
 impl Material for Reflective {
+    /// Create a new Reflective material on the heap
     fn box_clone(&self) -> Box<Material> {
         Box::new((*self).clone())
     }
 
+    /// Retrieve the color of the given material
+    ///
+    /// For spheres, the center of the sphere is given by the record.point
+    /// plus the record.normal. We add a random point from the unit sphere
+    /// to uniformly distribute hit points on the sphere. A fuzziness
+    /// factor is also added in to account for the reflection fuzz due to
+    /// the size of the sphere. The target minus the record.point is used
+    /// to determine the ray that is being reflected from the surface of the material.
     fn scatter(&self,
                ray: &Ray,
                record: &HitRecord,
