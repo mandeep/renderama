@@ -45,6 +45,7 @@ impl Hitable for Sphere {
             let second_root: f64 = (-b + (b * b - a * c).sqrt()) / a;
             let mut roots = vec![first_root, second_root];
             roots.sort_by(|a, b| a.partial_cmp(b).unwrap());
+            roots.retain(|&a| a > 0.0);
 
             for root in roots {
                 if root < position_max && root > position_min {
