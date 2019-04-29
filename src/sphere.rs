@@ -13,7 +13,11 @@ pub struct Sphere {
 
 
 impl Sphere {
-    /// Create a new sphere to placed into the world
+    /// Create a new sphere to place into the world
+    ///
+    /// We use the 'static lifetime so that we can create a Box material
+    /// within the function rather than having to pass a Box material
+    /// as an input parameter.
     pub fn new<M: Material + 'static>(center: Vector3<f64>, radius: f64, material: M) -> Sphere {
         let material = Box::new(material);
         Sphere { center: center, radius: radius, material: material }
