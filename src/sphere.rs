@@ -55,7 +55,7 @@ impl Hitable for Sphere {
 
 
             for root in roots {
-                if root < position_max && root > position_min {
+                if root > position_min && root < position_max {
                     let point = ray.point_at_parameter(root);
                     let normal = (point - self.center) / self.radius;
                     return Some(HitRecord::new(root, point, normal, self.material.box_clone()));
