@@ -53,7 +53,6 @@ impl Hitable for Sphere {
             // so we can safely disregard these hits
             roots.retain(|&root| root > 0.0);
 
-
             for root in roots {
                 if root > position_min && root < position_max {
                     let point = ray.point_at_parameter(root);
