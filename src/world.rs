@@ -18,6 +18,10 @@ impl World {
     }
 
     /// Add objects to the instantiated world
+    ///
+    /// We use a 'static lifetime so that we can Box
+    /// object inside the function rather than having to
+    /// pass object as a Boxed object as an input parameter.
     pub fn add<H: Hitable + 'static>(&mut self, object: H) {
         let object = Box::new(object);
         self.objects.push(object);
@@ -46,6 +50,6 @@ impl Hitable for World {
             }
         }
 
-        if hit_anything { return Some(record); } else { return None; }
+        return if hit_anything { Some(record) } else { None }
     }
 }
