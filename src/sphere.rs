@@ -51,7 +51,7 @@ impl Hitable for Sphere {
 
             // negative roots mean the intersection point is not in our view
             // so we can safely disregard these hits
-            roots.retain(|&a| a > 0.0);
+            roots.retain(|&root| root > 0.0);
 
 
             for root in roots {
