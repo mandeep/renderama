@@ -101,7 +101,7 @@ fn main() {
     world.add(Sphere::new(
         Vector3::new(2.0, 1.0, 0.0),
         1.0,
-        Reflective::new(Vector3::new(0.5, 0.5, 0.5), 0.1))
+        Reflective::new(Vector3::new(0.5, 0.5, 0.5), 0.05))
         );
 
     let mut pixels = vec![image::Rgb([0, 0, 0]); (width * height) as usize];
