@@ -54,7 +54,7 @@ fn main() {
                                                     b as f64 + 0.9 * rand::random::<f64>());
 
             if (center - Vector3::new(4.0, 0.2, 0.0)).norm() > 0.9 {
-                if material < 0.8 {
+                if material < 0.70 {
                     world.add(Sphere::new(center, 0.2, Diffuse::new(
                                 Vector3::new(
                                     rand::random::<f64>() * rand::random::<f64>(),
