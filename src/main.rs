@@ -8,6 +8,7 @@ mod hitable;
 mod materials;
 mod ray;
 mod sphere;
+mod texture;
 mod world;
 
 use std::env;
@@ -23,23 +24,7 @@ use sphere::Sphere;
 use world::World;
 
 
-fn main() {
-    let (width, height): (u32, u32) = (1920, 960);
-    let args: Vec<String> = env::args().collect();
-    let samples: u32 = args[1].parse().unwrap();
-
-    let origin = Vector3::new(13.0, 2.0, 3.0);
-    let lookat = Vector3::new(0.0, 0.0, 0.0);
-    let camera = Camera::new(origin,
-                             lookat,
-                             Vector3::new(0.0, 1.0, 0.0),
-                             20.0,
-                             (width / height) as f64,
-                             0.1,
-                             10.0);
-
-    let mut world = World::new();
-
+fn random_scene(world: &mut World) {
     world.add(Sphere::new(
         Vector3::new(0.0, -1000.0, 0.0),
         1000.0,
@@ -103,6 +88,26 @@ fn main() {
         1.0,
         Reflective::new(Vector3::new(0.5, 0.5, 0.5), 0.05))
         );
+}
+
+
+fn main() {
+    let (width, height): (u32, u32) = (1920, 960);
+    let args: Vec<String> = env::args().collect();
+    let samples: u32 = args[1].parse().unwrap();
+
+    let origin = Vector3::new(13.0, 2.0, 3.0);
+    let lookat = Vector3::new(0.0, 0.0, 0.0);
+    let camera = Camera::new(origin,
+                             lookat,
+                             Vector3::new(0.0, 1.0, 0.0),
+                             20.0,
+                             (width / height) as f64,
+                             0.1,
+                             10.0);
+
+    let mut world = World::new();
+    random_scene(&mut world);
 
     let mut pixels = vec![image::Rgb([0, 0, 0]); (width * height) as usize];
     pixels.par_iter_mut().enumerate().for_each(|(i, pixel)| {
