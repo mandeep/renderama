@@ -5,6 +5,9 @@ use materials::Material;
 use ray::Ray;
 
 
+use std::f64;
+
+
 pub struct Sphere {
     pub center: Vector3<f64>,
     pub radius: f64,
@@ -22,6 +25,15 @@ impl Sphere {
         let material = Box::new(material);
         Sphere { center: center, radius: radius, material: material }
     }
+}
+
+
+fn get_sphere_uv(p: &Vector3<f64>) -> (f64, f64) {
+    let phi = p.z.atan2(p.x);
+    let theta = p.y.asin();
+    let u = 1.0 - (phi + std::f64::consts::PI) / (2.0 * std::f64::consts::PI);
+    let v = (theta + std::f64::consts::PI / 2.0) / std::f64::consts::PI;
+    (u, v)
 }
 
 
@@ -57,7 +69,8 @@ impl Hitable for Sphere {
                 if root > position_min && root < position_max {
                     let point = ray.point_at_parameter(root);
                     let normal = (point - self.center) / self.radius;
-                    return Some(HitRecord::new(root, point, normal, self.material.box_clone()));
+                    let (u, v) = get_sphere_uv(&normal);
+                    return Some(HitRecord::new(root, u, v, point, normal, self.material.box_clone()));
                 }
             }
 
