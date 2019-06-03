@@ -21,6 +21,7 @@ use rayon::prelude::*;
 use camera::Camera;
 use materials::{Refractive, Diffuse, Reflective};
 use sphere::Sphere;
+use texture::{ConstantTexture, ImageTexture};
 use world::World;
 
 
@@ -28,7 +29,7 @@ fn random_scene(world: &mut World) {
     world.add(Sphere::new(
         Vector3::new(0.0, -1000.0, 0.0),
         1000.0,
-        Diffuse::new(Vector3::new(0.5, 0.5, 0.5)))
+        Diffuse::new(ConstantTexture::new(0.5, 0.5, 0.5)))
         );
 
     for a in -11..11 {
@@ -41,7 +42,7 @@ fn random_scene(world: &mut World) {
             if (center - Vector3::new(4.0, 0.2, 0.0)).norm() > 0.9 {
                 if material < 0.75 {
                     world.add(Sphere::new(center, 0.2, Diffuse::new(
-                                Vector3::new(
+                                ConstantTexture::new(
                                     rand::random::<f64>() * rand::random::<f64>(),
                                     rand::random::<f64>() * rand::random::<f64>(),
                                     rand::random::<f64>() * rand::random::<f64>()))));
@@ -68,7 +69,7 @@ fn random_scene(world: &mut World) {
     world.add(Sphere::new(
         Vector3::new(-2.0, 1.0, 0.0),
         1.0,
-        Diffuse::new(Vector3::new(0.75, 0.25, 0.25)))
+        Diffuse::new(ConstantTexture::new(0.75, 0.25, 0.25)))
         );
 
     world.add(Sphere::new(

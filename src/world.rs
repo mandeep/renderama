@@ -3,6 +3,7 @@ use nalgebra::core::Vector3;
 use hitable::{Hitable, HitRecord};
 use materials::Diffuse;
 use ray::Ray;
+use texture::ConstantTexture;
 
 
 /// The World struct holds all of the objects in the scene
@@ -35,7 +36,7 @@ impl Hitable for World {
         let mut record = HitRecord::new(0.0,
                                         Vector3::zeros(),
                                         Vector3::zeros(),
-                                        Box::new(Diffuse::new(Vector3::zeros())));
+                                        Box::new(Diffuse::new(ConstantTexture::new(0.0, 0.0, 0.0))));
         let mut hit_anything: bool = false;
         let mut closed_so_far: f64 = position_max;
 
