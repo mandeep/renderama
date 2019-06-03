@@ -3,6 +3,7 @@ use rand;
 
 use hitable::HitRecord;
 use ray::{pick_sphere_point, Ray};
+use texture::Texture;
 
 
 /// The Material trait is responsible for giving a color to the object implementing the trait
@@ -18,7 +19,7 @@ pub trait Material: Send + Sync {
 
 #[derive(Clone)]
 pub struct Diffuse {
-    pub albedo: Vector3<f64>
+    pub albedo: Box<dyn Texture>
 }
 
 
@@ -28,7 +29,8 @@ impl Diffuse {
     ///
     /// albedo is a Vector3 of the RGB values assigned to the material
     /// where each value is a float between 0.0 and 1.0.
-    pub fn new(albedo: Vector3<f64>) -> Diffuse {
+    pub fn new<T: Texture + 'static>(albedo: T) -> Diffuse {
+        let albedo = Box::new(albedo);
         Diffuse { albedo: albedo }
     }
 }
@@ -53,7 +55,7 @@ impl Material for Diffuse {
                rng: &mut rand::ThreadRng) -> Option<(Vector3<f64>, Ray)> {
 
         let target: Vector3<f64> = record.point + record.normal + pick_sphere_point(rng);
-        Some((self.albedo, Ray::new(record.point, target - record.point)))
+        Some((self.albedo.value(0.0, 0.0, &record.point), Ray::new(record.point, target - record.point)))
     }
 }
 
