@@ -8,6 +8,8 @@ use ray::Ray;
 /// once a ray has hit that geometry.
 pub struct HitRecord {
     pub parameter: f64,
+    pub u: f64,
+    pub v: f64,
     pub point: Vector3<f64>,
     pub normal: Vector3<f64>,
     pub material: Box<dyn Material>,
@@ -17,10 +19,12 @@ pub struct HitRecord {
 impl HitRecord {
     /// Create a new HitRecord for a given ray-geometry intersection.
     pub fn new(parameter: f64,
+               u: f64,
+               v: f64,
                point: Vector3<f64>,
                normal: Vector3<f64>,
                material: Box<dyn Material>) -> HitRecord {
-        HitRecord { parameter: parameter, point: point, normal: normal, material: material }
+        HitRecord { parameter: parameter, u: u, v: v, point: point, normal: normal, material: material }
     }
 }
 
