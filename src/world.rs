@@ -33,7 +33,7 @@ impl World {
 impl Hitable for World {
     /// Determine if the given ray has hit any of the objects in the world
     fn hit(&self, ray: &Ray, position_min: f64, position_max: f64) -> Option<HitRecord> {
-        let mut record = HitRecord::new(0.0,
+        let mut record = HitRecord::new(0.0, 0.0, 0.0,
                                         Vector3::zeros(),
                                         Vector3::zeros(),
                                         Box::new(Diffuse::new(ConstantTexture::new(0.0, 0.0, 0.0))));
