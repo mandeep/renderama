@@ -1,3 +1,4 @@
+use image;
 use nalgebra::core::Vector3;
 
 
@@ -48,16 +49,14 @@ impl Texture for ConstantTexture {
 #[derive(Clone)]
 /// ImageTexture is a struct for textures loaded from file
 pub struct ImageTexture {
-    data: Vec<u8>,
-    nx: u32,
-    ny: u32
+    image: image::RgbImage
 }
 
 
 /// Create a new texture from the given data and image dimensions
 impl ImageTexture {
-    pub fn new(data: Vec<u8>, nx: u32, ny: u32) -> ImageTexture {
-        ImageTexture {data: data, nx: nx, ny: ny}
+    pub fn new(filename: &str) -> ImageTexture {
+        ImageTexture {image: image::open(filename).unwrap().to_rgb()}
     }
 }
 
@@ -66,13 +65,12 @@ impl ImageTexture {
 /// converting pixel coordinates to UV coordinates
 impl Texture for ImageTexture {
     fn value(&self, u: f64, v: f64, p: &Vector3<f64>) -> Vector3<f64> {
-        let i = 0.0f64.max((u * self.nx as f64).min(self.nx as f64 - 1.0));
-        let j = 0.0f64.max((v * self.ny as f64).min(self.ny as f64 - 1.0));
+        let i = 0.0f64.max((u * self.image.width() as f64).min(self.image.width() as f64 - 1.0));
+        let j = 0.0f64.max((v * self.image.height() as f64).min(self.image.height() as f64 - 1.0));
 
-        let index = 3.0 * i + 3.0 * self.nx as f64 * j;
-        let r = self.data[index as usize] as f64 / 255.0;
-        let g = self.data[index as usize + 1] as f64 / 255.0;
-        let b = self.data[index as usize + 2] as f64 / 255.0;
+        let r = self.image.get_pixel(i as u32, j as u32)[0] as f64 / 255.0;
+        let g = self.image.get_pixel(i as u32, j as u32)[1] as f64 / 255.0;
+        let b = self.image.get_pixel(i as u32, j as u32)[2] as f64 / 255.0;
 
         Vector3::new(r, g, b)
     }
