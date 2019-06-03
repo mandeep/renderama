@@ -1,12 +1,14 @@
 use nalgebra::core::Vector3;
 
 
+/// Texture trait can be implemented so that textures can be applied to materials
 pub trait Texture: Send + Sync {
     fn value(&self, u: f64, v: f64, p: &Vector3<f64>) -> Vector3<f64>;
     fn box_clone(&self) -> Box<Texture>;
 }
 
 
+/// Implement Clone so that the Texture trait can be used along with the Material trait
 impl Clone for Box<Texture> {
     fn clone(&self) -> Box<Texture> {
         self.box_clone()
@@ -15,11 +17,13 @@ impl Clone for Box<Texture> {
 
 
 #[derive(Clone)]
+/// ConstantTexture is just a wrapping for a Vector3 of RGB values
 pub struct ConstantTexture {
     color: Vector3<f64>
 }
 
 
+/// Create a new ConstantTexture
 impl ConstantTexture {
     pub fn new(r: f64, g: f64, b: f64) -> ConstantTexture {
         ConstantTexture {color: Vector3::new(r, g, b)}
@@ -27,6 +31,9 @@ impl ConstantTexture {
 }
 
 
+/// Implement the Texture trait for ConstantTexture
+/// This allows the ConstantTexture's color to be retrieved
+/// as well as the ConstantTexture to be cloned.
 impl Texture for ConstantTexture {
     fn value(&self, u: f64, v: f64, p: &Vector3<f64>) -> Vector3<f64> {
         self.color
@@ -39,6 +46,7 @@ impl Texture for ConstantTexture {
 
 
 #[derive(Clone)]
+/// ImageTexture is a struct for textures loaded from file
 pub struct ImageTexture {
     data: Vec<u8>,
     nx: u32,
@@ -46,6 +54,7 @@ pub struct ImageTexture {
 }
 
 
+/// Create a new texture from the given data and image dimensions
 impl ImageTexture {
     pub fn new(data: Vec<u8>, nx: u32, ny: u32) -> ImageTexture {
         ImageTexture {data: data, nx: nx, ny: ny}
@@ -53,6 +62,8 @@ impl ImageTexture {
 }
 
 
+/// Determine which pixel to retrieve from the image by
+/// converting pixel coordinates to UV coordinates
 impl Texture for ImageTexture {
     fn value(&self, u: f64, v: f64, p: &Vector3<f64>) -> Vector3<f64> {
         let i = 0.0f64.max((u * self.nx as f64).min(self.nx as f64 - 1.0));
