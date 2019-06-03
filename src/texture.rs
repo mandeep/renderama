@@ -3,9 +3,42 @@ use nalgebra::core::Vector3;
 
 pub trait Texture: Send + Sync {
     fn value(&self, u: f64, v: f64, p: &Vector3<f64>) -> Vector3<f64>;
+    fn box_clone(&self) -> Box<Texture>;
 }
 
 
+impl Clone for Box<Texture> {
+    fn clone(&self) -> Box<Texture> {
+        self.box_clone()
+    }
+}
+
+
+#[derive(Clone)]
+pub struct ConstantTexture {
+    color: Vector3<f64>
+}
+
+
+impl ConstantTexture {
+    pub fn new(r: f64, g: f64, b: f64) -> ConstantTexture {
+        ConstantTexture {color: Vector3::new(r, g, b)}
+    }
+}
+
+
+impl Texture for ConstantTexture {
+    fn value(&self, u: f64, v: f64, p: &Vector3<f64>) -> Vector3<f64> {
+        self.color
+    }
+
+    fn box_clone(&self) -> Box<Texture> {
+        Box::new((*self).clone())
+    }
+}
+
+
+#[derive(Clone)]
 pub struct ImageTexture {
     data: Vec<u8>,
     nx: u32,
@@ -31,5 +64,9 @@ impl Texture for ImageTexture {
         let b = self.data[index as usize + 2] as f64 / 255.0;
 
         Vector3::new(r, g, b)
+    }
+
+    fn box_clone(&self) -> Box<Texture> {
+        Box::new((*self).clone())
     }
 }
