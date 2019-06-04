@@ -25,7 +25,9 @@ use texture::{ConstantTexture, ImageTexture};
 use world::World;
 
 
-fn random_scene(world: &mut World) {
+fn random_scene() -> World {
+    let mut world = World::new();
+
     world.add(Sphere::new(
         Vector3::new(0.0, -1000.0, 0.0),
         1000.0,
@@ -89,6 +91,22 @@ fn random_scene(world: &mut World) {
         1.0,
         Reflective::new(Vector3::new(0.5, 0.5, 0.5), 0.05))
         );
+
+    world
+}
+
+
+fn earth() -> World {
+    let mut world = World::new();
+
+    world.add(Sphere::new(
+            Vector3::new(0.0, 0.0, 0.0),
+            2.0,
+            Diffuse::new(ImageTexture::new("earthmap.png"))
+            ));
+
+    world
+
 }
 
 
@@ -107,8 +125,7 @@ fn main() {
                              0.1,
                              10.0);
 
-    let mut world = World::new();
-    random_scene(&mut world);
+    let world = earth();
 
     let mut pixels = vec![image::Rgb([0, 0, 0]); (width * height) as usize];
     pixels.par_iter_mut().enumerate().for_each(|(i, pixel)| {
