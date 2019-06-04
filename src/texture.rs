@@ -49,14 +49,14 @@ impl Texture for ConstantTexture {
 #[derive(Clone)]
 /// ImageTexture is a struct for textures loaded from file
 pub struct ImageTexture {
-    image: image::RgbImage
+    im: image::RgbImage
 }
 
 
 /// Create a new texture from the given data and image dimensions
 impl ImageTexture {
     pub fn new(filename: &str) -> ImageTexture {
-        ImageTexture {image: image::open(filename).unwrap().to_rgb()}
+        ImageTexture { im: image::open(filename).unwrap().flipv().to_rgb() }
     }
 }
 
@@ -65,14 +65,13 @@ impl ImageTexture {
 /// converting pixel coordinates to UV coordinates
 impl Texture for ImageTexture {
     fn value(&self, u: f64, v: f64, p: &Vector3<f64>) -> Vector3<f64> {
-        let i = 0.0f64.max((u * self.image.width() as f64).min(self.image.width() as f64 - 1.0));
-        let j = 0.0f64.max((v * self.image.height() as f64).min(self.image.height() as f64 - 1.0));
+        let i = 0.0f64.max((u * self.im.width() as f64).min(self.im.width() as f64 - 1.0));
 
-        let r = self.image.get_pixel(i as u32, j as u32)[0] as f64 / 255.0;
-        let g = self.image.get_pixel(i as u32, j as u32)[1] as f64 / 255.0;
-        let b = self.image.get_pixel(i as u32, j as u32)[2] as f64 / 255.0;
+        let j = 0.0f64.max((v * self.im.height() as f64).min(self.im.height() as f64 - 1.0));
 
-        Vector3::new(r, g, b)
+        let [r, g, b] = self.im.get_pixel(i as u32, j as u32).data;
+
+        Vector3::new(r as f64 / 255.0, g as f64 / 255.0, b as f64 / 255.0)
     }
 
     fn box_clone(&self) -> Box<Texture> {
