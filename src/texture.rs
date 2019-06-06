@@ -66,10 +66,10 @@ impl ImageTexture {
 impl Texture for ImageTexture {
     fn value(&self, u: f64, v: f64, p: &Vector3<f64>) -> Vector3<f64> {
         let i = 0.0f64.max((u * self.im.width() as f64).min(self.im.width() as f64 - 1.0));
-
         let j = 0.0f64.max((v * self.im.height() as f64).min(self.im.height() as f64 - 1.0));
 
         let image::Rgb([r, g, b]) = *self.im.get_pixel(i as u32, j as u32);
+
         Vector3::new(r as f64 / 255.0, g as f64 / 255.0, b as f64 / 255.0)
     }
 
