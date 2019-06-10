@@ -14,6 +14,10 @@ pub trait Material: Send + Sync {
                ray: &Ray,
                record: &HitRecord,
                rng: &mut rand::ThreadRng) -> Option<(Vector3<f64>, Ray)>;
+
+    fn emitted(&self, u: f64, v: f64, p: &Vector3<f64>) -> Vector3<f64> {
+        Vector3::new(0.0, 0.0, 0.0)
+    }
 }
 
 
@@ -231,5 +235,37 @@ impl Material for Refractive {
                                                    self.fuzz * pick_sphere_point(rng))
                          ));
         }
+    }
+}
+
+
+#[derive(Clone)]
+pub struct Light {
+    pub emit: Box<dyn Texture>
+}
+
+
+impl Light {
+    pub fn new<T: Texture + 'static>(emit: T) -> Light {
+        let emit = Box::new(emit);
+        Light { emit: emit }
+    }
+}
+
+
+impl Material for Light {
+    fn box_clone(&self) -> Box<Material> {
+        Box::new((*self).clone())
+    }
+
+    fn scatter(&self,
+               ray: &Ray,
+               record: &HitRecord,
+               rng: &mut rand::ThreadRng) -> Option<(Vector3<f64>, Ray)> {
+        None
+    }
+
+    fn emitted(&self, u: f64, v: f64, p: &Vector3<f64>) -> Vector3<f64> {
+        self.emit.value(u, v, &p)
     }
 }
