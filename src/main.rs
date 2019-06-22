@@ -15,7 +15,7 @@ mod texture;
 mod world;
 
 use std::env;
-use std::f64;
+use std::f32;
 
 use nalgebra::core::Vector3;
 use rand::thread_rng;
@@ -40,26 +40,26 @@ fn random_scene() -> World {
 
     for a in -11..11 {
         for b in -11..11 {
-            let material = rand::random::<f64>();
-            let center: Vector3<f64> = Vector3::new(a as f64 + 0.9 * rand::random::<f64>(),
+            let material = rand::random::<f32>();
+            let center: Vector3<f32> = Vector3::new(a as f32 + 0.9 * rand::random::<f32>(),
                                                     0.2,
-                                                    b as f64 + 0.9 * rand::random::<f64>());
+                                                    b as f32 + 0.9 * rand::random::<f32>());
 
             if (center - Vector3::new(4.0, 0.2, 0.0)).norm() > 0.9 {
                 if material < 0.75 {
                     world.add(Sphere::new(center, 0.2, Diffuse::new(
                                 ConstantTexture::new(
-                                    rand::random::<f64>() * rand::random::<f64>(),
-                                    rand::random::<f64>() * rand::random::<f64>(),
-                                    rand::random::<f64>() * rand::random::<f64>()))));
+                                    rand::random::<f32>() * rand::random::<f32>(),
+                                    rand::random::<f32>() * rand::random::<f32>(),
+                                    rand::random::<f32>() * rand::random::<f32>()))));
                 }
                 else if material < 0.95 {
                     world.add(Sphere::new(center, 0.2, Reflective::new(
                                 Vector3::new(
-                                    0.5 * (1.0 * rand::random::<f64>()),
-                                    0.5 * (1.0 * rand::random::<f64>()),
-                                    0.5 * (1.0 * rand::random::<f64>())),
-                                    0.5 * rand::random::<f64>())));
+                                    0.5 * (1.0 * rand::random::<f32>()),
+                                    0.5 * (1.0 * rand::random::<f32>()),
+                                    0.5 * (1.0 * rand::random::<f32>())),
+                                    0.5 * rand::random::<f32>())));
                 }
                 else {
                     world.add(Sphere::new(center, 0.2, Refractive::new(
@@ -141,7 +141,7 @@ fn main() {
                              lookat,
                              Vector3::new(0.0, 1.0, 0.0),
                              20.0,
-                             (width / height) as f64,
+                             (width / height) as f32,
                              0.1,
                              10.0);
 
@@ -149,20 +149,20 @@ fn main() {
 
     let mut pixels = vec![image::Rgb([0, 0, 0]); (width * height) as usize];
     pixels.par_iter_mut().enumerate().for_each(|(i, pixel)| {
-        let mut coordinate: Vector3<f64> = Vector3::zeros();
+        let mut coordinate: Vector3<f32> = Vector3::zeros();
         let x = i % width as usize;
         let y = i / width as usize;
 
         let mut rng = thread_rng();
 
         (0..samples).for_each(|_| {
-            let u = (x as f64 + rand::random::<f64>()) / width as f64;
-            let v = (y as f64 + rand::random::<f64>()) / height as f64;
+            let u = (x as f32 + rand::random::<f32>()) / width as f32;
+            let v = (y as f32 + rand::random::<f32>()) / height as f32;
             let ray = camera.get_ray(u, v);
             coordinate += ray::compute_color(&ray, &world, 0, &mut rng);
         });
 
-        coordinate /= samples as f64;
+        coordinate /= samples as f32;
         (0..3).for_each(|i| coordinate[i] = 255.0 * coordinate[i].sqrt());
         *pixel = image::Rgb([coordinate.x as u8, coordinate.y as u8, coordinate.z as u8]);
     });

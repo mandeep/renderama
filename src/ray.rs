@@ -1,4 +1,4 @@
-use std::f64;
+use std::f32;
 
 use nalgebra::core::Vector3;
 use rand;
@@ -9,19 +9,19 @@ use world::World;
 
 
 pub struct Ray {
-    pub origin: Vector3<f64>,
-    pub direction: Vector3<f64>
+    pub origin: Vector3<f32>,
+    pub direction: Vector3<f32>
 }
 
 
 impl Ray {
     /// Create a new Ray with origin at `a` and direction towards `b`
-    pub fn new(a: Vector3<f64>, b: Vector3<f64>) -> Ray {
+    pub fn new(a: Vector3<f32>, b: Vector3<f32>) -> Ray {
         Ray { origin: a, direction: b }
     }
 
     /// Find the point on the ray given the parameter of the direction vector
-    pub fn point_at_parameter(&self, parameter: f64) -> Vector3<f64> {
+    pub fn point_at_parameter(&self, parameter: f32) -> Vector3<f32> {
         self.origin + parameter * self.direction
     }
 }
@@ -38,11 +38,11 @@ impl Ray {
 ///
 /// Reference: http://mathworld.wolfram.com/SpherePointPicking.html
 ///
-pub fn pick_sphere_point(rng: &mut rand::ThreadRng) -> Vector3<f64> {
+pub fn pick_sphere_point(rng: &mut rand::ThreadRng) -> Vector3<f32> {
     let normal_distribution = Normal::new(0.0, 1.0);
-    let x = normal_distribution.sample(rng);
-    let y = normal_distribution.sample(rng);
-    let z = normal_distribution.sample(rng);
+    let x = normal_distribution.sample(rng) as f32;
+    let y = normal_distribution.sample(rng) as f32;
+    let z = normal_distribution.sample(rng) as f32;
 
     Vector3::new(x, y, z).normalize()
 }
@@ -55,8 +55,8 @@ pub fn pick_sphere_point(rng: &mut rand::ThreadRng) -> Vector3<f64> {
 /// the color at the ray's hit point. The depth has been set to an arbitrary
 /// limit of 50 which can lead to bias rendering.
 ///
-pub fn compute_color(ray: &Ray, world: &World, depth: i32, rng: &mut rand::ThreadRng) -> Vector3<f64> {
-    match world.hit(ray, 0.001, f64::MAX) {
+pub fn compute_color(ray: &Ray, world: &World, depth: i32, rng: &mut rand::ThreadRng) -> Vector3<f32> {
+    match world.hit(ray, 0.001, f32::MAX) {
         Some(hit_record) => {
             let emitted = hit_record.material.emitted(hit_record.u,
                                                       hit_record.v,

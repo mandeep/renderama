@@ -6,18 +6,18 @@ use ray::Ray;
 
 
 pub struct Rectangle {
-    x0: f64,
-    x1: f64,
-    y0: f64,
-    y1: f64,
-    k:  f64,
+    x0: f32,
+    x1: f32,
+    y0: f32,
+    y1: f32,
+    k:  f32,
     material: Box<dyn Material>
 }
 
 
 impl Rectangle {
 
-    pub fn new<M: Material + 'static>(x0: f64, x1: f64, y0: f64, y1: f64, k: f64,
+    pub fn new<M: Material + 'static>(x0: f32, x1: f32, y0: f32, y1: f32, k: f32,
                                   material: M) -> Rectangle {
         let material = Box::new(material);
         Rectangle { x0: x0, x1: x1, y0: y0, y1: y1, k: k, material: material }
@@ -27,7 +27,7 @@ impl Rectangle {
 
 impl Hitable for Rectangle {
 
-    fn hit(&self, ray: &Ray, position_min: f64, position_max: f64) -> Option<HitRecord> {
+    fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitRecord> {
         let t = (self.k - ray.origin.z) / ray.direction.z;
         if t < position_min || t > position_max {
             return None;

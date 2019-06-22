@@ -5,12 +5,12 @@ use materials::Material;
 use ray::Ray;
 
 
-use std::f64;
+use std::f32;
 
 
 pub struct Sphere {
-    pub center: Vector3<f64>,
-    pub radius: f64,
+    pub center: Vector3<f32>,
+    pub radius: f32,
     pub material: Box<dyn Material>
 }
 
@@ -21,18 +21,18 @@ impl Sphere {
     /// We use the 'static lifetime so that we can create a Box material
     /// within the function rather than having to pass a Box material
     /// as an input parameter.
-    pub fn new<M: Material + 'static>(center: Vector3<f64>, radius: f64, material: M) -> Sphere {
+    pub fn new<M: Material + 'static>(center: Vector3<f32>, radius: f32, material: M) -> Sphere {
         let material = Box::new(material);
         Sphere { center: center, radius: radius, material: material }
     }
 }
 
 
-fn get_sphere_uv(p: &Vector3<f64>) -> (f64, f64) {
+fn get_sphere_uv(p: &Vector3<f32>) -> (f32, f32) {
     let phi = p.z.atan2(p.x);
     let theta = p.y.asin();
-    let u = 1.0 - (phi + std::f64::consts::PI) / (2.0 * std::f64::consts::PI);
-    let v = (theta + std::f64::consts::PI / 2.0) / std::f64::consts::PI;
+    let u = 1.0 - (phi + std::f32::consts::PI) / (2.0 * std::f32::consts::PI);
+    let v = (theta + std::f32::consts::PI / 2.0) / std::f32::consts::PI;
     (u, v)
 }
 
@@ -44,17 +44,17 @@ impl Hitable for Sphere {
     /// a real root. No real roots signifies a miss, one real root signifies
     /// a hit at the boundary of the sphere, and two real roots signify a
     /// ray hitting one point on the sphere and leaving through another point.
-    fn hit(&self, ray: &Ray, position_min: f64, position_max: f64) -> Option<HitRecord> {
-        let sphere_center: Vector3<f64> = ray.origin - self.center;
-        let a: f64 = ray.direction.dot(&ray.direction);
-        let b: f64 = sphere_center.dot(&ray.direction);
-        let c: f64 = sphere_center.dot(&sphere_center) - (self.radius * self.radius);
-        let discriminant: f64 = b * b - a * c;
+    fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitRecord> {
+        let sphere_center: Vector3<f32> = ray.origin - self.center;
+        let a: f32 = ray.direction.dot(&ray.direction);
+        let b: f32 = sphere_center.dot(&ray.direction);
+        let c: f32 = sphere_center.dot(&sphere_center) - (self.radius * self.radius);
+        let discriminant: f32 = b * b - a * c;
 
         // checking the discriminant is a fast way to determine if the root is real
         if discriminant >= 0.0 {
-            let first_root: f64 = (-b - (b * b - a * c).sqrt()) / a;
-            let second_root: f64 = (-b + (b * b - a * c).sqrt()) / a;
+            let first_root: f32 = (-b - (b * b - a * c).sqrt()) / a;
+            let second_root: f32 = (-b + (b * b - a * c).sqrt()) / a;
             let mut roots = vec![first_root, second_root];
 
             // if we have two positive roots, we want the smaller one as
