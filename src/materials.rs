@@ -13,7 +13,7 @@ pub trait Material: Send + Sync {
     fn scatter(&self,
                ray: &Ray,
                record: &HitRecord,
-               rng: &mut rand::ThreadRng) -> Option<(Vector3<f64>, Ray)>;
+               rng: &mut rand::ThreadRng) -> Option<(Vector3<f32>, Ray)>;
 }
 
 
@@ -52,9 +52,9 @@ impl Material for Diffuse {
     fn scatter(&self,
                _ray: &Ray,
                record: &HitRecord,
-               rng: &mut rand::ThreadRng) -> Option<(Vector3<f64>, Ray)> {
+               rng: &mut rand::ThreadRng) -> Option<(Vector3<f32>, Ray)> {
 
-        let target: Vector3<f64> = record.point + record.normal + pick_sphere_point(rng);
+        let target: Vector3<f32> = record.point + record.normal + pick_sphere_point(rng);
         Some((self.albedo.value(record.u, record.v, &record.point), Ray::new(record.point, target - record.point)))
     }
 }
@@ -67,7 +67,7 @@ impl Material for Diffuse {
 ///
 /// For derivation see Section 10.4.2 in Mathematical and Computer Programming
 /// Techniques for Computer Graphics by Peter Comininos.
-fn reflect(v: &Vector3<f64>, n: &Vector3<f64>) -> Vector3<f64> {
+fn reflect(v: &Vector3<f32>, n: &Vector3<f32>) -> Vector3<f32> {
     v - 2.0 * v.dot(&n) * n
 }
 
@@ -79,10 +79,10 @@ fn reflect(v: &Vector3<f64>, n: &Vector3<f64>) -> Vector3<f64> {
 ///
 /// For derivation see Section 10.4.3 in Mathematical and Computer Programming
 /// Techniques for Computer Graphics by Peter Comininos.
-fn refract(v: &Vector3<f64>, n: &Vector3<f64>, refractive_index: f64) -> Option<Vector3<f64>> {
-    let uv: Vector3<f64> = v.normalize();
-    let direction: f64 = uv.dot(&n);
-    let discriminant: f64 = 1.0 - refractive_index * refractive_index * (1.0 - direction * direction);
+fn refract(v: &Vector3<f32>, n: &Vector3<f32>, refractive_index: f32) -> Option<Vector3<f32>> {
+    let uv: Vector3<f32> = v.normalize();
+    let direction: f32 = uv.dot(&n);
+    let discriminant: f32 = 1.0 - refractive_index * refractive_index * (1.0 - direction * direction);
 
     if discriminant > 0.0 {
         return Some(refractive_index * (uv - n * direction) - n * discriminant.sqrt());
@@ -98,8 +98,8 @@ fn refract(v: &Vector3<f64>, n: &Vector3<f64>, refractive_index: f64) -> Option<
 /// For derivation see Section 10.10.3 in Mathematical and Computer Programming
 /// Techniques for Computer Graphics by Peter Comininos and
 /// https://en.wikipedia.org/wiki/Schlick's_approximation.
-fn schlick(cosine: f64, reference_index: f64) -> f64 {
-    let r0: f64 = (1.0 - reference_index) / (1.0 + reference_index);
+fn schlick(cosine: f32, reference_index: f32) -> f32 {
+    let r0: f32 = (1.0 - reference_index) / (1.0 + reference_index);
     let r0 = r0 * r0;
     r0 + (1.0 - r0) * (1.0 - cosine).powf(5.0)
 }
@@ -107,8 +107,8 @@ fn schlick(cosine: f64, reference_index: f64) -> f64 {
 
 #[derive(Clone)]
 pub struct Reflective {
-    pub albedo: Vector3<f64>,
-    pub fuzz: f64
+    pub albedo: Vector3<f32>,
+    pub fuzz: f32
 }
 
 
@@ -119,7 +119,7 @@ impl Reflective {
     /// where each value is a float between 0.0 and 1.0. fuzz accounts
     /// for the fuzziness of the reflections due to the size of the sphere.
     /// Generally, the larger the sphere, the fuzzier the reflections will be.
-    pub fn new(albedo: Vector3<f64>, fuzz: f64) -> Reflective {
+    pub fn new(albedo: Vector3<f32>, fuzz: f32) -> Reflective {
         Reflective { albedo: albedo, fuzz: fuzz }
     }
 
@@ -143,9 +143,9 @@ impl Material for Reflective {
     fn scatter(&self,
                ray: &Ray,
                record: &HitRecord,
-               rng: &mut rand::ThreadRng) -> Option<(Vector3<f64>, Ray)> {
+               rng: &mut rand::ThreadRng) -> Option<(Vector3<f32>, Ray)> {
 
-        let reflected: Vector3<f64> = reflect(&ray.direction.normalize(), &record.normal);
+        let reflected: Vector3<f32> = reflect(&ray.direction.normalize(), &record.normal);
         let scattered = Ray::new(record.point, reflected + self.fuzz * pick_sphere_point(rng));
 
         if scattered.direction.dot(&record.normal) > 0.0 {
@@ -158,9 +158,9 @@ impl Material for Reflective {
 
 #[derive(Clone)]
 pub struct Refractive {
-    pub albedo: Vector3<f64>,
-    pub refractive_index: f64,
-    pub fuzz: f64
+    pub albedo: Vector3<f32>,
+    pub refractive_index: f32,
+    pub fuzz: f32
 }
 
 
@@ -172,7 +172,7 @@ impl Refractive {
     /// how much of the light is refracted when entering the material.
     /// fuzz accounts for the fuzziness of the reflections due to the size of the sphere.
     /// Generally, the larger the sphere, the fuzzier the reflections will be.
-    pub fn new(albedo: Vector3<f64>, index: f64, fuzz: f64) -> Refractive {
+    pub fn new(albedo: Vector3<f32>, index: f32, fuzz: f32) -> Refractive {
         Refractive { albedo: albedo, refractive_index: index, fuzz: fuzz }
     }
 }
@@ -199,10 +199,10 @@ impl Material for Refractive {
     fn scatter(&self,
                ray: &Ray,
                record: &HitRecord,
-               rng: &mut rand::ThreadRng) -> Option<(Vector3<f64>, Ray)> {
+               rng: &mut rand::ThreadRng) -> Option<(Vector3<f32>, Ray)> {
 
-        let reflected: Vector3<f64> = reflect(&ray.direction.normalize(), &record.normal);
-        let incident: f64 = ray.direction.dot(&record.normal);
+        let reflected: Vector3<f32> = reflect(&ray.direction.normalize(), &record.normal);
+        let incident: f32 = ray.direction.dot(&record.normal);
 
         let (outward_normal, refractive_index, cosine) = if incident > 0.0 {
                (-record.normal,
@@ -221,7 +221,7 @@ impl Material for Refractive {
             None => 1.0
         };
 
-        if rand::random::<f64>() < reflect_probability {
+        if rand::random::<f32>() < reflect_probability {
             return Some((self.albedo,
                          Ray::new(record.point, reflected + self.fuzz * pick_sphere_point(rng))
                          ));
