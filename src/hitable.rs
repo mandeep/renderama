@@ -7,22 +7,22 @@ use ray::Ray;
 /// HitRecord contains the elements necessary to render geometry
 /// once a ray has hit that geometry.
 pub struct HitRecord {
-    pub parameter: f64,
-    pub u: f64,
-    pub v: f64,
-    pub point: Vector3<f64>,
-    pub normal: Vector3<f64>,
+    pub parameter: f32,
+    pub u: f32,
+    pub v: f32,
+    pub point: Vector3<f32>,
+    pub normal: Vector3<f32>,
     pub material: Box<dyn Material>,
 }
 
 
 impl HitRecord {
     /// Create a new HitRecord for a given ray-geometry intersection.
-    pub fn new(parameter: f64,
-               u: f64,
-               v: f64,
-               point: Vector3<f64>,
-               normal: Vector3<f64>,
+    pub fn new(parameter: f32,
+               u: f32,
+               v: f32,
+               point: Vector3<f32>,
+               normal: Vector3<f32>,
                material: Box<dyn Material>) -> HitRecord {
         HitRecord { parameter: parameter, u: u, v: v, point: point, normal: normal, material: material }
     }
@@ -36,5 +36,5 @@ pub trait Hitable: Send + Sync {
     ///
     /// We use position_min and position_max to omit points on the ray
     /// near zero. This helps in reducing noise.
-    fn hit(&self, ray: &Ray, position_min: f64, position_max: f64) -> Option<HitRecord>;
+    fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitRecord>;
 }
