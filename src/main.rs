@@ -30,8 +30,12 @@ fn random_scene() -> World {
 
     world.add(Sphere::new(
         Vector3::new(0.0, -1000.0, 0.0),
+        Vector3::new(0.0, -1000.0, 0.0),
         1000.0,
-        Diffuse::new(ConstantTexture::new(0.5, 0.5, 0.5)))
+        Diffuse::new(ConstantTexture::new(0.5, 0.5, 0.5)),
+        0.0,
+        1.0
+        )
         );
 
     for a in -11..11 {
@@ -43,26 +47,32 @@ fn random_scene() -> World {
 
             if (center - Vector3::new(4.0, 0.2, 0.0)).norm() > 0.9 {
                 if material < 0.75 {
-                    world.add(Sphere::new(center, 0.2, Diffuse::new(
+                    world.add(Sphere::new(center, center, 0.2, Diffuse::new(
                                 ConstantTexture::new(
                                     rand::random::<f32>() * rand::random::<f32>(),
                                     rand::random::<f32>() * rand::random::<f32>(),
-                                    rand::random::<f32>() * rand::random::<f32>()))));
+                                    rand::random::<f32>() * rand::random::<f32>())),
+                                    0.0,
+                                    1.0
+                            ));
                 }
                 else if material < 0.95 {
-                    world.add(Sphere::new(center, 0.2, Reflective::new(
+                    world.add(Sphere::new(center, center, 0.2, Reflective::new(
                                 Vector3::new(
                                     0.5 * (1.0 * rand::random::<f32>()),
                                     0.5 * (1.0 * rand::random::<f32>()),
                                     0.5 * (1.0 * rand::random::<f32>())),
-                                    0.5 * rand::random::<f32>())));
+                                    0.5 * rand::random::<f32>()),
+                                    0.0,
+                                    1.0
+                            ));
                 }
                 else {
-                    world.add(Sphere::new(center, 0.2, Refractive::new(
-                                Vector3::new(0.9, 0.9, 0.9), 1.5, 0.0)));
+                    world.add(Sphere::new(center, center, 0.2, Refractive::new(
+                                Vector3::new(0.9, 0.9, 0.9), 1.5, 0.0), 0.0, 1.0));
 
-                    world.add(Sphere::new(center, -0.19, Refractive::new(
-                                Vector3::new(0.9, 0.9, 0.9), 1.5, 0.0)));
+                    world.add(Sphere::new(center, center, -0.19, Refractive::new(
+                                Vector3::new(0.9, 0.9, 0.9), 1.5, 0.0), 0.0, 1.0));
                 }
             }
         }
@@ -70,43 +80,102 @@ fn random_scene() -> World {
 
     world.add(Sphere::new(
         Vector3::new(-2.0, 1.0, 0.0),
+        Vector3::new(-2.0, 1.0, 0.0),
         1.0,
-        Diffuse::new(ConstantTexture::new(0.75, 0.25, 0.25)))
+        Diffuse::new(ConstantTexture::new(0.75, 0.25, 0.25)),
+        0.0,
+        1.0
+        )
         );
 
     world.add(Sphere::new(
         Vector3::new(0.0, 1.0, 0.0),
+        Vector3::new(0.0, 1.0, 0.0),
         1.0,
-        Refractive::new(Vector3::new(1.0, 1.0, 1.0), 1.5, 0.0))
+        Refractive::new(Vector3::new(1.0, 1.0, 1.0), 1.5, 0.0),
+        0.0,
+        1.0
+        )
         );
 
     world.add(Sphere::new(
+        Vector3::new(0.0, 1.0, 0.0),
         Vector3::new(0.0, 1.0, 0.0),
         -0.99,
-        Refractive::new(Vector3::new(1.0, 1.0, 1.0), 1.5, 0.0))
+        Refractive::new(Vector3::new(1.0, 1.0, 1.0), 1.5, 0.0),
+        0.0,
+        1.0
+        )
         );
 
     world.add(Sphere::new(
         Vector3::new(2.0, 1.0, 0.0),
+        Vector3::new(2.0, 1.0, 0.0),
         1.0,
-        Reflective::new(Vector3::new(0.5, 0.5, 0.5), 0.05))
+        Reflective::new(Vector3::new(0.5, 0.5, 0.5), 0.05),
+        0.0,
+        1.0
+        )
         );
 
     world
 }
 
 
-fn earth() -> World {
+fn earth_scene() -> World {
     let mut world = World::new();
 
     world.add(Sphere::new(
             Vector3::new(0.0, 0.0, 0.0),
+            Vector3::new(0.0, 0.0, 0.0),
             2.0,
-            Diffuse::new(ImageTexture::new("earthmap.png"))
-            ));
+            Diffuse::new(ImageTexture::new("earthmap.png")),
+            0.0,
+            1.0
+            )
+        );
 
     world
+}
 
+
+fn motion_scene() -> World {
+    let mut world = World::new();
+
+    world.add(Sphere::new(
+        Vector3::new(0.0, -1000.0, 0.0),
+        Vector3::new(0.0, -1000.0, 0.0),
+        1000.0,
+        Diffuse::new(ConstantTexture::new(0.5, 0.5, 0.5)),
+        0.0,
+        1.0
+        )
+        );
+
+        let center: Vector3<f32> = Vector3::new(0.9 * rand::random::<f32>(),
+                                                0.2,
+                                                0.9 * rand::random::<f32>());
+
+        world.add(Sphere::new(center, center + Vector3::new(0.0, 0.5 * rand::random::<f32>(), 0.0), 0.2, Diffuse::new(
+                    ConstantTexture::new(
+                        rand::random::<f32>() * rand::random::<f32>(),
+                        rand::random::<f32>() * rand::random::<f32>(),
+                        rand::random::<f32>() * rand::random::<f32>())),
+                        0.0,
+                        1.0
+                ));
+
+    world.add(Sphere::new(
+        Vector3::new(-2.0, 1.0, 0.0),
+        Vector3::new(-2.0, 1.0, 0.0),
+        1.0,
+        Diffuse::new(ConstantTexture::new(0.75, 0.25, 0.25)),
+        0.0,
+        1.0
+        )
+        );
+
+    world
 }
 
 
@@ -123,9 +192,11 @@ fn main() {
                              20.0,
                              (width / height) as f32,
                              0.1,
-                             10.0);
+                             10.0,
+                             0.0,
+                             1.0);
 
-    let world = earth();
+    let world = motion_scene();
 
     let mut pixels = vec![image::Rgb([0, 0, 0]); (width * height) as usize];
     pixels.par_iter_mut().enumerate().for_each(|(i, pixel)| {

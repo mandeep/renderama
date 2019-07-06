@@ -9,9 +9,12 @@ use std::f32;
 
 
 pub struct Sphere {
-    pub center: Vector3<f32>,
+    pub start_center: Vector3<f32>,
+    pub end_center: Vector3<f32>,
     pub radius: f32,
-    pub material: Box<dyn Material>
+    pub material: Box<dyn Material>,
+    pub start_time: f32,
+    pub end_time: f32
 }
 
 
@@ -21,9 +24,13 @@ impl Sphere {
     /// We use the 'static lifetime so that we can create a Box material
     /// within the function rather than having to pass a Box material
     /// as an input parameter.
-    pub fn new<M: Material + 'static>(center: Vector3<f32>, radius: f32, material: M) -> Sphere {
+    pub fn new<M: Material + 'static>(start_center: Vector3<f32>, end_center: Vector3<f32>, radius: f32, material: M, start_time: f32, end_time: f32) -> Sphere {
         let material = Box::new(material);
-        Sphere { center: center, radius: radius, material: material }
+        Sphere { start_center, end_center, radius, material, start_time, end_time }
+    }
+
+    pub fn center(&self, time: f32) -> Vector3<f32> {
+        self.start_center + ((time - self.start_time) / (self.end_time - self.start_time)) * (self.end_center - self.start_center)
     }
 }
 
@@ -45,7 +52,7 @@ impl Hitable for Sphere {
     /// a hit at the boundary of the sphere, and two real roots signify a
     /// ray hitting one point on the sphere and leaving through another point.
     fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitRecord> {
-        let sphere_center: Vector3<f32> = ray.origin - self.center;
+        let sphere_center: Vector3<f32> = ray.origin - self.center(ray.time);
         let a: f32 = ray.direction.dot(&ray.direction);
         let b: f32 = sphere_center.dot(&ray.direction);
         let c: f32 = sphere_center.dot(&sphere_center) - (self.radius * self.radius);
@@ -68,7 +75,7 @@ impl Hitable for Sphere {
             for root in roots {
                 if root > position_min && root < position_max {
                     let point = ray.point_at_parameter(root);
-                    let normal = (point - self.center) / self.radius;
+                    let normal = (point - self.center(ray.time)) / self.radius;
                     let (u, v) = get_sphere_uv(&normal);
                     return Some(HitRecord::new(root, u, v, point, normal, self.material.box_clone()));
                 }
