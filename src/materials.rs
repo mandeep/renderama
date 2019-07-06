@@ -1,5 +1,5 @@
 use nalgebra::core::Vector3;
-use rand;
+use rand::rngs;
 
 use hitable::HitRecord;
 use ray::{pick_sphere_point, Ray};
@@ -13,7 +13,7 @@ pub trait Material: Send + Sync {
     fn scatter(&self,
                ray: &Ray,
                record: &HitRecord,
-               rng: &mut rand::ThreadRng) -> Option<(Vector3<f32>, Ray)>;
+               rng: &mut rand::rngs::ThreadRng) -> Option<(Vector3<f32>, Ray)>;
 }
 
 
@@ -50,12 +50,12 @@ impl Material for Diffuse {
     /// the record.point is used to determine the ray that is being reflected
     /// from the surface of the material.
     fn scatter(&self,
-               _ray: &Ray,
+               ray: &Ray,
                record: &HitRecord,
-               rng: &mut rand::ThreadRng) -> Option<(Vector3<f32>, Ray)> {
+               rng: &mut rand::rngs::ThreadRng) -> Option<(Vector3<f32>, Ray)> {
 
         let target: Vector3<f32> = record.point + record.normal + pick_sphere_point(rng);
-        Some((self.albedo.value(record.u, record.v, &record.point), Ray::new(record.point, target - record.point)))
+        Some((self.albedo.value(record.u, record.v, &record.point), Ray::new(record.point, target - record.point, ray.time)))
     }
 }
 
@@ -143,10 +143,10 @@ impl Material for Reflective {
     fn scatter(&self,
                ray: &Ray,
                record: &HitRecord,
-               rng: &mut rand::ThreadRng) -> Option<(Vector3<f32>, Ray)> {
+               rng: &mut rand::rngs::ThreadRng) -> Option<(Vector3<f32>, Ray)> {
 
         let reflected: Vector3<f32> = reflect(&ray.direction.normalize(), &record.normal);
-        let scattered = Ray::new(record.point, reflected + self.fuzz * pick_sphere_point(rng));
+        let scattered = Ray::new(record.point, reflected + self.fuzz * pick_sphere_point(rng), ray.time);
 
         if scattered.direction.dot(&record.normal) > 0.0 {
             return Some((self.albedo, scattered));
@@ -199,7 +199,7 @@ impl Material for Refractive {
     fn scatter(&self,
                ray: &Ray,
                record: &HitRecord,
-               rng: &mut rand::ThreadRng) -> Option<(Vector3<f32>, Ray)> {
+               rng: &mut rand::rngs::ThreadRng) -> Option<(Vector3<f32>, Ray)> {
 
         let reflected: Vector3<f32> = reflect(&ray.direction.normalize(), &record.normal);
         let incident: f32 = ray.direction.dot(&record.normal);
@@ -223,12 +223,12 @@ impl Material for Refractive {
 
         if rand::random::<f32>() < reflect_probability {
             return Some((self.albedo,
-                         Ray::new(record.point, reflected + self.fuzz * pick_sphere_point(rng))
+                         Ray::new(record.point, reflected + self.fuzz * pick_sphere_point(rng), ray.time)
                          ));
         } else {
             return Some((self.albedo, Ray::new(record.point,
                                                refracted.unwrap() +
-                                                   self.fuzz * pick_sphere_point(rng))
+                                                   self.fuzz * pick_sphere_point(rng), ray.time)
                          ));
         }
     }

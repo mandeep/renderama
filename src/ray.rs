@@ -1,7 +1,7 @@
 use std::f32;
 
 use nalgebra::core::Vector3;
-use rand;
+use rand::rngs;
 use rand::distributions::{Distribution, Normal};
 
 use hitable::Hitable;
@@ -10,14 +10,15 @@ use world::World;
 
 pub struct Ray {
     pub origin: Vector3<f32>,
-    pub direction: Vector3<f32>
+    pub direction: Vector3<f32>,
+    pub time: f32
 }
 
 
 impl Ray {
     /// Create a new Ray with origin at `a` and direction towards `b`
-    pub fn new(a: Vector3<f32>, b: Vector3<f32>) -> Ray {
-        Ray { origin: a, direction: b }
+    pub fn new(a: Vector3<f32>, b: Vector3<f32>, time: f32) -> Ray {
+        Ray { origin: a, direction: b, time: 0.0 }
     }
 
     /// Find the point on the ray given the parameter of the direction vector
@@ -38,7 +39,7 @@ impl Ray {
 ///
 /// Reference: http://mathworld.wolfram.com/SpherePointPicking.html
 ///
-pub fn pick_sphere_point(rng: &mut rand::ThreadRng) -> Vector3<f32> {
+pub fn pick_sphere_point(rng: &mut rand::rngs::ThreadRng) -> Vector3<f32> {
     let normal_distribution = Normal::new(0.0, 1.0);
     let x = normal_distribution.sample(rng) as f32;
     let y = normal_distribution.sample(rng) as f32;
@@ -55,7 +56,7 @@ pub fn pick_sphere_point(rng: &mut rand::ThreadRng) -> Vector3<f32> {
 /// the color at the ray's hit point. The depth has been set to an arbitrary
 /// limit of 50 which can lead to bias rendering.
 ///
-pub fn compute_color(ray: &Ray, world: &World, depth: i32, rng: &mut rand::ThreadRng) -> Vector3<f32> {
+pub fn compute_color(ray: &Ray, world: &World, depth: i32, rng: &mut rand::rngs::ThreadRng) -> Vector3<f32> {
     match world.hit(ray, 0.001, f32::MAX) {
         Some(hit_record) => {
             if depth < 50 {
