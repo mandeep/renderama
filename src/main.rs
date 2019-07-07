@@ -118,13 +118,25 @@ fn simple_light() -> World {
     let mut world = World::new();
 
     world.add(Sphere::new(
+        Vector3::new(0.0, -1000.0, 0.0),
+        1000.0,
+        Diffuse::new(ConstantTexture::new(0.5, 0.5, 0.5)))
+        );
+
+    world.add(Sphere::new(
             Vector3::new(0.0, 2.0, 0.0),
             2.0,
             Diffuse::new(ConstantTexture::new(1.0, 0.0, 0.0))
             ));
 
+    world.add(Sphere::new(
+            Vector3::new(0.0, 7.0, 0.0),
+            2.0,
+            Light::new(ConstantTexture::new(4.0, 4.0, 4.0))
+            ));
+
     world.add(Rectangle::new(3.0, 5.0, 1.0, 3.0, -2.0,
-                             Light::new(ConstantTexture::new(5.0, 5.0, 5.0))));
+                             Light::new(ConstantTexture::new(4.0, 4.0, 4.0))));
 
     world
 }
@@ -135,14 +147,14 @@ fn main() {
     let args: Vec<String> = env::args().collect();
     let samples: u32 = args[1].parse().unwrap();
 
-    let origin = Vector3::new(13.0, 5.0, 25.0);
+    let origin = Vector3::new(13.0, 3.0, 3.0);
     let lookat = Vector3::new(0.0, 0.0, 0.0);
     let camera = Camera::new(origin,
                              lookat,
                              Vector3::new(0.0, 1.0, 0.0),
-                             20.0,
+                             50.0,
                              (width / height) as f32,
-                             0.1,
+                             0.0,
                              10.0);
 
     let world = simple_light();
