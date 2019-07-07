@@ -183,7 +183,7 @@ fn motion_scene() -> World {
 }
 
 
-fn simple_light() -> World {
+fn simple_light_scene() -> World {
     let mut world = World::new();
 
     world.add(Sphere::new(
@@ -207,7 +207,7 @@ fn simple_light() -> World {
             Light::new(ConstantTexture::new(4.0, 4.0, 4.0)), 0.0, 1.0
             ));
 
-    world.add(Rectangle::new(3.0, 5.0, 1.0, 3.0, -2.0,
+    world.add(Rectangle::new(rectangle::Plane::XY, 3.0, 5.0, 1.0, 3.0, -2.0,
                              Light::new(ConstantTexture::new(4.0, 4.0, 4.0))));
 
     world
@@ -229,7 +229,7 @@ fn main() {
                              0.0,
                              10.0, 0.0, 1.0);
 
-    let world = simple_light();
+    let world = simple_light_scene();
 
     let mut pixels = vec![image::Rgb([0, 0, 0]); (width * height) as usize];
     pixels.par_iter_mut().enumerate().for_each(|(i, pixel)| {
