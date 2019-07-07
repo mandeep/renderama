@@ -5,13 +5,13 @@ use nalgebra::core::Vector3;
 /// Texture trait can be implemented so that textures can be applied to materials
 pub trait Texture: Send + Sync {
     fn value(&self, u: f32, v: f32, p: &Vector3<f32>) -> Vector3<f32>;
-    fn box_clone(&self) -> Box<Texture>;
+    fn box_clone(&self) -> Box<dyn Texture>;
 }
 
 
 /// Implement Clone so that the Texture trait can be used along with the Material trait
-impl Clone for Box<Texture> {
-    fn clone(&self) -> Box<Texture> {
+impl Clone for Box<dyn Texture> {
+    fn clone(&self) -> Box<dyn Texture> {
         self.box_clone()
     }
 }
@@ -40,7 +40,7 @@ impl Texture for ConstantTexture {
         self.color
     }
 
-    fn box_clone(&self) -> Box<Texture> {
+    fn box_clone(&self) -> Box<dyn Texture> {
         Box::new((*self).clone())
     }
 }
@@ -73,7 +73,7 @@ impl Texture for ImageTexture {
         Vector3::new(r as f32 / 255.0, g as f32 / 255.0, b as f32 / 255.0)
     }
 
-    fn box_clone(&self) -> Box<Texture> {
+    fn box_clone(&self) -> Box<dyn Texture> {
         Box::new((*self).clone())
     }
 }
