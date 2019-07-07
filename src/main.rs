@@ -219,7 +219,7 @@ fn cornell_box_scene() -> World {
     let mut world = World::new();
 
     // add the walls of the cornell box to the world
-    world.add(FlipNormals::new(Rectangle::new(rectangle::Plane::YZ, 0.0, 555.0, 0.0, 555.0, 555.0,
+    world.add(FlipNormals::of(Rectangle::new(rectangle::Plane::YZ, 0.0, 555.0, 0.0, 555.0, 555.0,
                              Diffuse::new(ConstantTexture::new(0.12, 0.45, 0.15)))));
 
 
@@ -229,13 +229,13 @@ fn cornell_box_scene() -> World {
     world.add(Rectangle::new(rectangle::Plane::XZ, 213.0, 343.0, 227.0, 332.0, 554.0,
                              Light::new(ConstantTexture::new(15.0, 15.0, 15.0))));
 
-    world.add(FlipNormals::new(Rectangle::new(rectangle::Plane::XZ, 0.0, 555.0, 0.0, 555.0, 555.0,
+    world.add(FlipNormals::of(Rectangle::new(rectangle::Plane::XZ, 0.0, 555.0, 0.0, 555.0, 555.0,
                              Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73)))));
 
     world.add(Rectangle::new(rectangle::Plane::XZ, 0.0, 555.0, 0.0, 555.0, 0.0,
                              Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73))));
 
-    world.add(FlipNormals::new(Rectangle::new(rectangle::Plane::XY, 0.0, 555.0, 0.0, 555.0, 555.0,
+    world.add(FlipNormals::of(Rectangle::new(rectangle::Plane::XY, 0.0, 555.0, 0.0, 555.0, 555.0,
                              Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73)))));
 
     world.add(Rectangle::new(rectangle::Plane::XY, 130.0, 295.0, 0.0, 165.0, 230.0,
@@ -248,19 +248,19 @@ fn cornell_box_scene() -> World {
     world.add(Rectangle::new(rectangle::Plane::XY, p0.x, p1.x, p0.y, p1.y, p1.z,
                              Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73))));
 
-    world.add(FlipNormals::new(Rectangle::new(rectangle::Plane::XY, p0.x, p1.x, p0.y, p1.y, p0.z,
+    world.add(FlipNormals::of(Rectangle::new(rectangle::Plane::XY, p0.x, p1.x, p0.y, p1.y, p0.z,
                                               Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73)))));
 
     world.add(Rectangle::new(rectangle::Plane::XZ, p0.x, p1.x, p0.z, p1.z, p1.y,
                              Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73))));
 
-    world.add(FlipNormals::new(Rectangle::new(rectangle::Plane::XZ, p0.x, p1.x, p0.z, p1.z, p0.y,
+    world.add(FlipNormals::of(Rectangle::new(rectangle::Plane::XZ, p0.x, p1.x, p0.z, p1.z, p0.y,
                              Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73)))));
 
     world.add(Rectangle::new(rectangle::Plane::YZ, p0.y, p1.y, p0.z, p1.z, p1.x,
                              Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73))));
 
-    world.add(FlipNormals::new(Rectangle::new(rectangle::Plane::YZ, p0.y, p1.y, p0.z, p1.z, p0.x,
+    world.add(FlipNormals::of(Rectangle::new(rectangle::Plane::YZ, p0.y, p1.y, p0.z, p1.z, p0.x,
                              Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73)))));
 
     p0 = Vector3::new(265.0, 0.0, 295.0);
@@ -269,19 +269,19 @@ fn cornell_box_scene() -> World {
     world.add(Rectangle::new(rectangle::Plane::XY, p0.x, p1.x, p0.y, p1.y, p1.z,
                              Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73))));
 
-    world.add(FlipNormals::new(Rectangle::new(rectangle::Plane::XY, p0.x, p1.x, p0.y, p1.y, p0.z,
+    world.add(FlipNormals::of(Rectangle::new(rectangle::Plane::XY, p0.x, p1.x, p0.y, p1.y, p0.z,
                                               Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73)))));
 
     world.add(Rectangle::new(rectangle::Plane::XZ, p0.x, p1.x, p0.z, p1.z, p1.y,
                              Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73))));
 
-    world.add(FlipNormals::new(Rectangle::new(rectangle::Plane::XZ, p0.x, p1.x, p0.z, p1.z, p0.y,
+    world.add(FlipNormals::of(Rectangle::new(rectangle::Plane::XZ, p0.x, p1.x, p0.z, p1.z, p0.y,
                              Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73)))));
 
     world.add(Rectangle::new(rectangle::Plane::YZ, p0.y, p1.y, p0.z, p1.z, p1.x,
                              Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73))));
 
-    world.add(FlipNormals::new(Rectangle::new(rectangle::Plane::YZ, p0.y, p1.y, p0.z, p1.z, p0.x,
+    world.add(FlipNormals::of(Rectangle::new(rectangle::Plane::YZ, p0.y, p1.y, p0.z, p1.z, p0.x,
                              Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73)))));
     world
 }
