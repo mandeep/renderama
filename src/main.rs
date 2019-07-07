@@ -22,6 +22,7 @@ use rand::thread_rng;
 use rayon::prelude::*;
 
 use camera::Camera;
+use hitable::FlipNormals;
 use materials::{Diffuse, Light, Reflective, Refractive};
 use sphere::Sphere;
 use rectangle::Rectangle;
@@ -214,22 +215,94 @@ fn simple_light_scene() -> World {
 }
 
 
+fn cornell_box_scene() -> World {
+    let mut world = World::new();
+
+    // add the walls of the cornell box to the world
+    world.add(FlipNormals::new(Rectangle::new(rectangle::Plane::YZ, 0.0, 555.0, 0.0, 555.0, 555.0,
+                             Diffuse::new(ConstantTexture::new(0.12, 0.45, 0.15)))));
+
+
+    world.add(Rectangle::new(rectangle::Plane::YZ, 0.0, 555.0, 0.0, 555.0, 0.0,
+                             Diffuse::new(ConstantTexture::new(0.65, 0.05, 0.05))));
+
+    world.add(Rectangle::new(rectangle::Plane::XZ, 213.0, 343.0, 227.0, 332.0, 554.0,
+                             Light::new(ConstantTexture::new(15.0, 15.0, 15.0))));
+
+    world.add(FlipNormals::new(Rectangle::new(rectangle::Plane::XZ, 0.0, 555.0, 0.0, 555.0, 555.0,
+                             Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73)))));
+
+    world.add(Rectangle::new(rectangle::Plane::XZ, 0.0, 555.0, 0.0, 555.0, 0.0,
+                             Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73))));
+
+    world.add(FlipNormals::new(Rectangle::new(rectangle::Plane::XY, 0.0, 555.0, 0.0, 555.0, 555.0,
+                             Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73)))));
+
+    world.add(Rectangle::new(rectangle::Plane::XY, 130.0, 295.0, 0.0, 165.0, 230.0,
+                             Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73))));
+
+    // add the boxes of the cornell box to the world
+    let mut p0 = Vector3::new(130.0, 0.0, 65.0);
+    let mut p1 = Vector3::new(295.0, 165.0, 230.0);
+
+    world.add(Rectangle::new(rectangle::Plane::XY, p0.x, p1.x, p0.y, p1.y, p1.z,
+                             Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73))));
+
+    world.add(FlipNormals::new(Rectangle::new(rectangle::Plane::XY, p0.x, p1.x, p0.y, p1.y, p0.z,
+                                              Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73)))));
+
+    world.add(Rectangle::new(rectangle::Plane::XZ, p0.x, p1.x, p0.z, p1.z, p1.y,
+                             Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73))));
+
+    world.add(FlipNormals::new(Rectangle::new(rectangle::Plane::XZ, p0.x, p1.x, p0.z, p1.z, p0.y,
+                             Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73)))));
+
+    world.add(Rectangle::new(rectangle::Plane::YZ, p0.y, p1.y, p0.z, p1.z, p1.x,
+                             Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73))));
+
+    world.add(FlipNormals::new(Rectangle::new(rectangle::Plane::YZ, p0.y, p1.y, p0.z, p1.z, p0.x,
+                             Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73)))));
+
+    p0 = Vector3::new(265.0, 0.0, 295.0);
+    p1 = Vector3::new(430.0, 330.0, 460.0);
+
+    world.add(Rectangle::new(rectangle::Plane::XY, p0.x, p1.x, p0.y, p1.y, p1.z,
+                             Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73))));
+
+    world.add(FlipNormals::new(Rectangle::new(rectangle::Plane::XY, p0.x, p1.x, p0.y, p1.y, p0.z,
+                                              Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73)))));
+
+    world.add(Rectangle::new(rectangle::Plane::XZ, p0.x, p1.x, p0.z, p1.z, p1.y,
+                             Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73))));
+
+    world.add(FlipNormals::new(Rectangle::new(rectangle::Plane::XZ, p0.x, p1.x, p0.z, p1.z, p0.y,
+                             Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73)))));
+
+    world.add(Rectangle::new(rectangle::Plane::YZ, p0.y, p1.y, p0.z, p1.z, p1.x,
+                             Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73))));
+
+    world.add(FlipNormals::new(Rectangle::new(rectangle::Plane::YZ, p0.y, p1.y, p0.z, p1.z, p0.x,
+                             Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73)))));
+    world
+}
+
+
 fn main() {
     let (width, height): (u32, u32) = (1920, 960);
     let args: Vec<String> = env::args().collect();
     let samples: u32 = args[1].parse().unwrap();
 
-    let origin = Vector3::new(13.0, 3.0, 3.0);
-    let lookat = Vector3::new(0.0, 0.0, 0.0);
+    let origin = Vector3::new(278.0, 278.0, -800.0);
+    let lookat = Vector3::new(278.0, 278.0, 0.0);
     let camera = Camera::new(origin,
                              lookat,
                              Vector3::new(0.0, 1.0, 0.0),
-                             50.0,
+                             40.0,
                              (width / height) as f32,
                              0.0,
                              10.0, 0.0, 1.0);
 
-    let world = simple_light_scene();
+    let world = cornell_box_scene();
 
     let mut pixels = vec![image::Rgb([0, 0, 0]); (width * height) as usize];
     pixels.par_iter_mut().enumerate().for_each(|(i, pixel)| {
