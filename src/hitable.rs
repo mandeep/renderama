@@ -44,7 +44,7 @@ pub struct FlipNormals {
 }
 
 impl FlipNormals {
-    pub fn new<H: Hitable + 'static>(hitable: H) -> FlipNormals {
+    pub fn of<H: Hitable + 'static>(hitable: H) -> FlipNormals {
         let hitable = Box::new(hitable);
         FlipNormals { hitable }
     }
