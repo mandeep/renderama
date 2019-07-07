@@ -1,5 +1,6 @@
 use nalgebra::core::Vector3;
 
+use aabb::AABB;
 use materials::Material;
 use ray::Ray;
 
@@ -26,6 +27,7 @@ impl HitRecord {
                material: Box<dyn Material>) -> HitRecord {
         HitRecord { parameter: parameter, u: u, v: v, point: point, normal: normal, material: material }
     }
+
 }
 
 
@@ -37,6 +39,8 @@ pub trait Hitable: Send + Sync {
     /// We use position_min and position_max to omit points on the ray
     /// near zero. This helps in reducing noise.
     fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitRecord>;
+
+    fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB>;
 }
 
 pub struct FlipNormals {
