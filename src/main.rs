@@ -5,6 +5,7 @@ extern crate nalgebra;
 extern crate rand;
 extern crate rayon;
 
+mod aabb;
 mod camera;
 mod denoise;
 mod hitable;

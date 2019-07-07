@@ -1,7 +1,6 @@
 use std::f32;
 
 use nalgebra::core::Vector3;
-use rand::rngs;
 use rand::distributions::{Distribution, Normal};
 
 use hitable::Hitable;
