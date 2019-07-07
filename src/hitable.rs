@@ -38,3 +38,23 @@ pub trait Hitable: Send + Sync {
     /// near zero. This helps in reducing noise.
     fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitRecord>;
 }
+
+pub struct FlipNormals {
+    hitable: Box<dyn Hitable>,
+}
+
+impl FlipNormals {
+    pub fn new<H: Hitable + 'static>(hitable: H) -> FlipNormals {
+        let hitable = Box::new(hitable);
+        FlipNormals { hitable }
+    }
+}
+
+impl Hitable for FlipNormals {
+
+    fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitRecord> {
+        self.hitable.hit(&ray, position_min, position_max).map(|mut hit| {
+            hit.normal = -hit.normal;
+            hit})
+    }
+}
