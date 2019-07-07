@@ -56,25 +56,20 @@ pub fn pick_sphere_point(rng: &mut rand::ThreadRng) -> Vector3<f32> {
 /// limit of 50 which can lead to bias rendering.
 ///
 pub fn compute_color(ray: &Ray, world: &World, depth: i32, rng: &mut rand::ThreadRng) -> Vector3<f32> {
-    match world.hit(ray, 0.001, f32::MAX) {
-        Some(hit_record) => {
-            let emitted = hit_record.material.emitted(hit_record.u,
-                                                      hit_record.v,
-                                                      &hit_record.point);
-            if depth < 50 {
-                match hit_record.material.scatter(ray, &hit_record, rng) {
-                    Some((attenuation, scattered)) => {
-                        return emitted + attenuation.component_mul(
-                            &compute_color(&scattered, world, depth + 1, rng));
-                    }
-                    None => { return emitted; }
-                }
-            } else {
-                return emitted;
+    if let Some(hit_record) = world.hit(ray, 0.001, f32::MAX) {
+        let emitted = hit_record.material.emitted(hit_record.u,
+                                                  hit_record.v,
+                                                  &hit_record.point);
+        if depth < 50 {
+            if let Some((attenuation, scattered)) = hit_record.material
+                                                              .scatter(ray, &hit_record, rng) {
+                return emitted + attenuation.component_mul(
+                        &compute_color(&scattered, world, depth + 1, rng));
             }
         }
-        None => {
-            return Vector3::zeros();
-        }
+        return emitted;
+
+    } else {
+        return Vector3::zeros();
     }
 }
