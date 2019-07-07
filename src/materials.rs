@@ -16,7 +16,7 @@ pub trait Material: Send + Sync {
                rng: &mut rand::ThreadRng) -> Option<(Vector3<f32>, Ray)>;
 
     fn emitted(&self, u: f32, v: f32, p: &Vector3<f32>) -> Vector3<f32> {
-        Vector3::new(0.0, 0.0, 0.0)
+        Vector3::zeros()
     }
 }
 
