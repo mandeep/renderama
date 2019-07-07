@@ -37,24 +37,26 @@ impl Hitable for Rectangle {
         let mut t = 0.0;
         let mut x = 0.0;
         let mut y = 0.0;
+        let mut normal: Vector3<f32> = Vector3::zeros();
         match self.plane {
             Plane::XY => {
             t = (self.k - ray.origin.z) / ray.direction.z;
             x = ray.origin.x + t * ray.direction.x;
             y = ray.origin.y + t * ray.direction.y;
+            normal = Vector3::new(0.0, 0.0, 1.0);
 
             }
             Plane::YZ => {
             t = (self.k - ray.origin.x) / ray.direction.x;
             x = ray.origin.y + t * ray.direction.y;
             y = ray.origin.z + t * ray.direction.z;
-
+            normal = Vector3::new(1.0, 0.0, 0.0);
             }
             Plane::XZ => {
             t = (self.k - ray.origin.y) / ray.direction.y;
             x = ray.origin.x + t * ray.direction.x;
             y = ray.origin.z + t * ray.direction.z;
-
+            normal = Vector3::new(0.0, 1.0, 0.0);
             }
         }
 
@@ -71,7 +73,7 @@ impl Hitable for Rectangle {
                                     (x - self.x0) / (self.x1 - self.x0),
                                     (y - self.y0) / (self.y1 - self.y0),
                                     ray.point_at_parameter(t),
-                                    Vector3::new(0.0, 0.0, 1.0),
+                                    normal,
                                     self.material.box_clone());
 
         Some(record)
