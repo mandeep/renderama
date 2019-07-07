@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 extern crate image;
 extern crate nalgebra;
 extern crate rand;
@@ -7,6 +9,7 @@ mod camera;
 mod hitable;
 mod materials;
 mod ray;
+mod rectangle;
 mod sphere;
 mod texture;
 mod world;
@@ -19,8 +22,9 @@ use rand::thread_rng;
 use rayon::prelude::*;
 
 use camera::Camera;
-use materials::{Refractive, Diffuse, Reflective};
+use materials::{Diffuse, Light, Reflective, Refractive};
 use sphere::Sphere;
+use rectangle::Rectangle;
 use texture::{ConstantTexture, ImageTexture};
 use world::World;
 
@@ -179,24 +183,53 @@ fn motion_scene() -> World {
 }
 
 
+fn simple_light() -> World {
+    let mut world = World::new();
+
+    world.add(Sphere::new(
+        Vector3::new(0.0, -1000.0, 0.0),
+        Vector3::new(0.0, -1000.0, 0.0),
+        1000.0,
+        Diffuse::new(ConstantTexture::new(0.5, 0.5, 0.5)), 0.0, 1.0)
+        );
+
+    world.add(Sphere::new(
+            Vector3::new(0.0, 2.0, 0.0),
+            Vector3::new(0.0, 2.0, 0.0),
+            2.0,
+            Diffuse::new(ConstantTexture::new(1.0, 0.0, 0.0)), 0.0, 1.0
+            ));
+
+    world.add(Sphere::new(
+            Vector3::new(0.0, 7.0, 0.0),
+            Vector3::new(0.0, 7.0, 0.0),
+            2.0,
+            Light::new(ConstantTexture::new(4.0, 4.0, 4.0)), 0.0, 1.0
+            ));
+
+    world.add(Rectangle::new(3.0, 5.0, 1.0, 3.0, -2.0,
+                             Light::new(ConstantTexture::new(4.0, 4.0, 4.0))));
+
+    world
+}
+
+
 fn main() {
     let (width, height): (u32, u32) = (1920, 960);
     let args: Vec<String> = env::args().collect();
     let samples: u32 = args[1].parse().unwrap();
 
-    let origin = Vector3::new(13.0, 2.0, 3.0);
+    let origin = Vector3::new(13.0, 3.0, 3.0);
     let lookat = Vector3::new(0.0, 0.0, 0.0);
     let camera = Camera::new(origin,
                              lookat,
                              Vector3::new(0.0, 1.0, 0.0),
-                             20.0,
+                             50.0,
                              (width / height) as f32,
-                             0.1,
-                             10.0,
                              0.0,
-                             1.0);
+                             10.0, 0.0, 1.0);
 
-    let world = motion_scene();
+    let world = simple_light();
 
     let mut pixels = vec![image::Rgb([0, 0, 0]); (width * height) as usize];
     pixels.par_iter_mut().enumerate().for_each(|(i, pixel)| {
