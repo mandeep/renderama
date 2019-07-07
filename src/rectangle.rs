@@ -5,7 +5,14 @@ use materials::Material;
 use ray::Ray;
 
 
+pub enum Plane {
+    XY,
+    YZ,
+    XZ,
+}
+
 pub struct Rectangle {
+    plane: Plane,
     x0: f32,
     x1: f32,
     y0: f32,
@@ -14,13 +21,12 @@ pub struct Rectangle {
     material: Box<dyn Material>
 }
 
-
 impl Rectangle {
 
-    pub fn new<M: Material + 'static>(x0: f32, x1: f32, y0: f32, y1: f32, k: f32,
+    pub fn new<M: Material + 'static>(plane: Plane, x0: f32, x1: f32, y0: f32, y1: f32, k: f32,
                                   material: M) -> Rectangle {
         let material = Box::new(material);
-        Rectangle { x0: x0, x1: x1, y0: y0, y1: y1, k: k, material: material }
+        Rectangle { plane, x0, x1, y0, y1, k, material }
     }
 }
 
@@ -28,13 +34,34 @@ impl Rectangle {
 impl Hitable for Rectangle {
 
     fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitRecord> {
-        let t = (self.k - ray.origin.z) / ray.direction.z;
+        let mut t = 0.0;
+        let mut x = 0.0;
+        let mut y = 0.0;
+        match self.plane {
+            Plane::XY => {
+            t = (self.k - ray.origin.z) / ray.direction.z;
+            x = ray.origin.x + t * ray.direction.x;
+            y = ray.origin.y + t * ray.direction.y;
+
+            }
+            Plane::YZ => {
+            t = (self.k - ray.origin.x) / ray.direction.x;
+            x = ray.origin.y + t * ray.direction.y;
+            y = ray.origin.z + t * ray.direction.z;
+
+            }
+            Plane::XZ => {
+            t = (self.k - ray.origin.y) / ray.direction.y;
+            x = ray.origin.x + t * ray.direction.x;
+            y = ray.origin.z + t * ray.direction.z;
+
+            }
+        }
+
         if t < position_min || t > position_max {
             return None;
         }
 
-        let x = ray.origin.x + t * ray.direction.x;
-        let y = ray.origin.y + t * ray.direction.y;
 
         if x < self.x0 || x > self.x1 || y < self.y0 || y > self.y1 {
             return None;
