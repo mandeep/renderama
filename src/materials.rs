@@ -14,6 +14,10 @@ pub trait Material: Send + Sync {
                ray: &Ray,
                record: &HitRecord,
                rng: &mut rand::rngs::ThreadRng) -> Option<(Vector3<f32>, Ray)>;
+
+    fn emitted(&self, u: f32, v: f32, p: &Vector3<f32>) -> Vector3<f32> {
+        Vector3::zeros()
+    }
 }
 
 
@@ -56,7 +60,7 @@ impl Material for Diffuse {
 
         let target: Vector3<f32> = record.point + record.normal + pick_sphere_point(rng);
         Some((self.albedo.value(record.u, record.v, &record.point), Ray::new(record.point, target - record.point, ray.time)))
-    }
+}
 }
 
 /// Compute the reflect vector given the light vector and the normal vector of the surface
@@ -147,7 +151,6 @@ impl Material for Reflective {
 
         let reflected: Vector3<f32> = reflect(&ray.direction.normalize(), &record.normal);
         let scattered = Ray::new(record.point, reflected + self.fuzz * pick_sphere_point(rng), ray.time);
-
         if scattered.direction.dot(&record.normal) > 0.0 {
             return Some((self.albedo, scattered));
         }
@@ -231,5 +234,37 @@ impl Material for Refractive {
                                                    self.fuzz * pick_sphere_point(rng), ray.time)
                          ));
         }
+    }
+}
+
+
+#[derive(Clone)]
+pub struct Light {
+    pub emit: Box<dyn Texture>
+}
+
+
+impl Light {
+    pub fn new<T: Texture + 'static>(emit: T) -> Light {
+        let emit = Box::new(emit);
+        Light { emit: emit }
+    }
+}
+
+
+impl Material for Light {
+    fn box_clone(&self) -> Box<Material> {
+        Box::new((*self).clone())
+    }
+
+    fn scatter(&self,
+               ray: &Ray,
+               record: &HitRecord,
+               rng: &mut rand::rngs::ThreadRng) -> Option<(Vector3<f32>, Ray)> {
+        None
+    }
+
+    fn emitted(&self, u: f32, v: f32, p: &Vector3<f32>) -> Vector3<f32> {
+        self.emit.value(u, v, &p)
     }
 }
