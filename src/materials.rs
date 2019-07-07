@@ -1,5 +1,4 @@
 use nalgebra::core::Vector3;
-use rand::rngs;
 
 use hitable::HitRecord;
 use ray::{pick_sphere_point, Ray};
@@ -8,7 +7,7 @@ use texture::Texture;
 
 /// The Material trait is responsible for giving a color to the object implementing the trait
 pub trait Material: Send + Sync {
-    fn box_clone(&self) -> Box<Material>;
+    fn box_clone(&self) -> Box<dyn Material>;
 
     fn scatter(&self,
                ray: &Ray,
@@ -42,7 +41,7 @@ impl Diffuse {
 
 impl Material for Diffuse {
     /// Create a new Diffuse Material on the heap
-    fn box_clone(&self) -> Box<Material> {
+    fn box_clone(&self) -> Box<dyn Material> {
         Box::new((*self).clone())
     }
 
@@ -132,7 +131,7 @@ impl Reflective {
 
 impl Material for Reflective {
     /// Create a new Reflective material on the heap
-    fn box_clone(&self) -> Box<Material> {
+    fn box_clone(&self) -> Box<dyn Material> {
         Box::new((*self).clone())
     }
 
@@ -183,7 +182,7 @@ impl Refractive {
 
 impl Material for Refractive {
     /// Create a new Refractive Material on the heap
-    fn box_clone(&self) -> Box<Material> {
+    fn box_clone(&self) -> Box<dyn Material> {
         Box::new((*self).clone())
     }
 
