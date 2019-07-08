@@ -8,7 +8,7 @@ use ray::Ray;
 
 use std::f32;
 
-
+#[derive(Clone)]
 pub struct Sphere {
     pub start_center: Vector3<f32>,
     pub end_center: Vector3<f32>,
@@ -97,5 +97,9 @@ impl Hitable for Sphere {
         let big = aabb::AABB::new(min1, max1);
 
         Some(aabb::surrounding_box(&small, &big))
+    }
+
+    fn box_clone(&self) -> Box<dyn Hitable> {
+        Box::new(self.clone())
     }
 }
