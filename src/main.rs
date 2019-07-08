@@ -11,6 +11,7 @@ mod materials;
 mod ray;
 mod rectangle;
 mod sphere;
+mod transformations;
 mod texture;
 mod world;
 
@@ -27,6 +28,7 @@ use materials::{Diffuse, Light, Reflective, Refractive};
 use sphere::Sphere;
 use rectangle::Rectangle;
 use texture::{ConstantTexture, ImageTexture};
+use transformations::{Rotate, Translate};
 use world::World;
 
 
@@ -242,53 +244,52 @@ fn cornell_box_scene() -> World {
                              Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73))));
 
     // add the boxes of the cornell box to the world
-    let mut p0 = Vector3::new(130.0, 0.0, 65.0);
-    let mut p1 = Vector3::new(295.0, 165.0, 230.0);
+    let p0 = Vector3::new(0.0, 0.0, 0.0);
+    let mut p1 = Vector3::new(165.0, 165.0, 165.0);
 
-    world.add(Rectangle::new(rectangle::Plane::XY, p0.x, p1.x, p0.y, p1.y, p1.z,
-                             Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73))));
+    world.add(Translate::new(Vector3::new(130.0, 0.0, 65.0), Rotate::new(-18.0, Rectangle::new(rectangle::Plane::XY, p0.x, p1.x, p0.y, p1.y, p1.z,
+                             Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73))))));
 
-    world.add(FlipNormals::of(Rectangle::new(rectangle::Plane::XY, p0.x, p1.x, p0.y, p1.y, p0.z,
-                                              Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73)))));
+    world.add(Translate::new(Vector3::new(130.0, 0.0, 65.0), Rotate::new(-18.0, FlipNormals::of(Rectangle::new(rectangle::Plane::XY, p0.x, p1.x, p0.y, p1.y, p0.z,
+                                              Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73)))))));
 
-    world.add(Rectangle::new(rectangle::Plane::XZ, p0.x, p1.x, p0.z, p1.z, p1.y,
-                             Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73))));
+    world.add(Translate::new(Vector3::new(130.0, 0.0, 65.0), Rotate::new(-18.0, Rectangle::new(rectangle::Plane::XZ, p0.x, p1.x, p0.z, p1.z, p1.y,
+                             Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73))))));
 
-    world.add(FlipNormals::of(Rectangle::new(rectangle::Plane::XZ, p0.x, p1.x, p0.z, p1.z, p0.y,
-                             Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73)))));
+    world.add(Translate::new(Vector3::new(130.0, 0.0, 65.0), Rotate::new(-18.0, FlipNormals::of(Rectangle::new(rectangle::Plane::XZ, p0.x, p1.x, p0.z, p1.z, p0.y,
+                             Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73)))))));
 
-    world.add(Rectangle::new(rectangle::Plane::YZ, p0.y, p1.y, p0.z, p1.z, p1.x,
-                             Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73))));
+    world.add(Translate::new(Vector3::new(130.0, 0.0, 65.0), Rotate::new(-18.0, Rectangle::new(rectangle::Plane::YZ, p0.y, p1.y, p0.z, p1.z, p1.x,
+                             Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73))))));
 
-    world.add(FlipNormals::of(Rectangle::new(rectangle::Plane::YZ, p0.y, p1.y, p0.z, p1.z, p0.x,
-                             Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73)))));
+    world.add(Translate::new(Vector3::new(130.0, 0.0, 65.0), Rotate::new(-18.0, FlipNormals::of(Rectangle::new(rectangle::Plane::YZ, p0.y, p1.y, p0.z, p1.z, p0.x,
+                             Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73)))))));
 
-    p0 = Vector3::new(265.0, 0.0, 295.0);
-    p1 = Vector3::new(430.0, 330.0, 460.0);
+    p1 = Vector3::new(165.0, 330.0, 165.0);
 
-    world.add(Rectangle::new(rectangle::Plane::XY, p0.x, p1.x, p0.y, p1.y, p1.z,
-                             Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73))));
+    world.add(Translate::new(Vector3::new(265.0, 0.0, 295.0), Rotate::new(15.0, Rectangle::new(rectangle::Plane::XY, p0.x, p1.x, p0.y, p1.y, p1.z,
+                             Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73))))));
 
-    world.add(FlipNormals::of(Rectangle::new(rectangle::Plane::XY, p0.x, p1.x, p0.y, p1.y, p0.z,
-                                              Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73)))));
+    world.add(Translate::new(Vector3::new(265.0, 0.0, 295.0), Rotate::new(15.0, FlipNormals::of(Rectangle::new(rectangle::Plane::XY, p0.x, p1.x, p0.y, p1.y, p0.z,
+                                              Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73)))))));
 
-    world.add(Rectangle::new(rectangle::Plane::XZ, p0.x, p1.x, p0.z, p1.z, p1.y,
-                             Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73))));
+    world.add(Translate::new(Vector3::new(265.0, 0.0, 295.0), Rotate::new(15.0, Rectangle::new(rectangle::Plane::XZ, p0.x, p1.x, p0.z, p1.z, p1.y,
+                             Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73))))));
 
-    world.add(FlipNormals::of(Rectangle::new(rectangle::Plane::XZ, p0.x, p1.x, p0.z, p1.z, p0.y,
-                             Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73)))));
+    world.add(Translate::new(Vector3::new(265.0, 0.0, 295.0), Rotate::new(15.0, FlipNormals::of(Rectangle::new(rectangle::Plane::XZ, p0.x, p1.x, p0.z, p1.z, p0.y,
+                             Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73)))))));
 
-    world.add(Rectangle::new(rectangle::Plane::YZ, p0.y, p1.y, p0.z, p1.z, p1.x,
-                             Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73))));
+    world.add(Translate::new(Vector3::new(265.0, 0.0, 295.0), Rotate::new(15.0, Rectangle::new(rectangle::Plane::YZ, p0.y, p1.y, p0.z, p1.z, p1.x,
+                             Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73))))));
 
-    world.add(FlipNormals::of(Rectangle::new(rectangle::Plane::YZ, p0.y, p1.y, p0.z, p1.z, p0.x,
-                             Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73)))));
+    world.add(Translate::new(Vector3::new(265.0, 0.0, 295.0), Rotate::new(15.0, FlipNormals::of(Rectangle::new(rectangle::Plane::YZ, p0.y, p1.y, p0.z, p1.z, p0.x,
+                             Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73)))))));
     world
 }
 
 
 fn main() {
-    let (width, height): (u32, u32) = (1920, 960);
+    let (width, height): (u32, u32) = (500, 500);
     let args: Vec<String> = env::args().collect();
     let samples: u32 = args[1].parse().unwrap();
 
