@@ -41,6 +41,14 @@ pub trait Hitable: Send + Sync {
     fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitRecord>;
 
     fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB>;
+
+    fn box_clone(&self) -> Box<dyn Hitable>;
+}
+
+impl Clone for Box<dyn Hitable> {
+    fn clone(&self) -> Box<dyn Hitable> {
+        self.box_clone()
+    }
 }
 
 pub struct FlipNormals {

@@ -6,7 +6,7 @@ use materials::Diffuse;
 use ray::Ray;
 use texture::ConstantTexture;
 
-
+#[derive(Clone)]
 /// The World struct holds all of the objects in the scene
 pub struct World {
     pub objects: Vec<Box<dyn Hitable>>,
@@ -73,5 +73,9 @@ impl Hitable for World {
             }
         }
         None
+    }
+
+    fn box_clone(&self) -> Box<dyn Hitable> {
+        Box::new(self.clone())
     }
 }

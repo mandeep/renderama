@@ -3,6 +3,7 @@ use nalgebra::Vector3;
 use hitable::Hitable;
 use ray::Ray;
 
+#[derive(Clone)]
 pub struct AABB {
     pub minimum: Vector3<f32>,
     pub maximum: Vector3<f32>,

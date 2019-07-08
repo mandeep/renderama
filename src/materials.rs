@@ -4,7 +4,6 @@ use hitable::HitRecord;
 use ray::{pick_sphere_point, Ray};
 use texture::Texture;
 
-
 /// The Material trait is responsible for giving a color to the object implementing the trait
 pub trait Material: Send + Sync {
     fn box_clone(&self) -> Box<dyn Material>;
@@ -19,6 +18,11 @@ pub trait Material: Send + Sync {
     }
 }
 
+impl Clone for Box<dyn Material> {
+    fn clone(&self) -> Box<dyn Material> {
+        self.box_clone()
+    }
+}
 
 #[derive(Clone)]
 pub struct Diffuse {
