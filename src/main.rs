@@ -240,9 +240,6 @@ fn cornell_box_scene() -> World {
     world.add(FlipNormals::of(Rectangle::new(rectangle::Plane::XY, 0.0, 555.0, 0.0, 555.0, 555.0,
                              Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73)))));
 
-    world.add(Rectangle::new(rectangle::Plane::XY, 130.0, 295.0, 0.0, 165.0, 230.0,
-                             Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73))));
-
     // add the boxes of the cornell box to the world
     let p0 = Vector3::new(0.0, 0.0, 0.0);
     let mut p1 = Vector3::new(165.0, 165.0, 165.0);
@@ -289,7 +286,7 @@ fn cornell_box_scene() -> World {
 
 
 fn main() {
-    let (width, height): (u32, u32) = (500, 500);
+    let (width, height): (u32, u32) = (1000, 1000);
     let args: Vec<String> = env::args().collect();
     let samples: u32 = args[1].parse().unwrap();
 
