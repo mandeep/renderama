@@ -284,6 +284,7 @@ fn cornell_box_scene() -> World {
 
     world.add(Translate::new(Vector3::new(265.0, 0.0, 295.0), Rotate::new(15.0, FlipNormals::of(Rectangle::new(rectangle::Plane::YZ, p0.y, p1.y, p0.z, p1.z, p0.x,
                              Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73)))))));
+
     world
 }
 
