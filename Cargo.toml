@@ -8,6 +8,7 @@ image = { git = "https://github.com/image-rs/image" }
 nalgebra = "0.17.3"
 rand = "0.7.0"
 rayon = "1.0.3"
+oidn = "0.2.0"
 
 [profile.dev]
 opt-level = 2
