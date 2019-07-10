@@ -1,10 +1,9 @@
 use std::f32;
 
 use nalgebra::core::Vector3;
-use rand::{Rng, thread_rng};
+use rand::{thread_rng, Rng};
 
 use ray::{pick_sphere_point, Ray};
-
 
 pub struct Camera {
     pub lower_left_corner: Vector3<f32>,
@@ -16,9 +15,8 @@ pub struct Camera {
     w: Vector3<f32>,
     lens_radius: f32,
     start_time: f32,
-    end_time: f32
+    end_time: f32,
 }
-
 
 impl Camera {
     /// Create a new camera with which to see the world!
@@ -38,8 +36,8 @@ impl Camera {
                aperture: f32,
                focus_distance: f32,
                start_time: f32,
-               end_time: f32) -> Camera {
-
+               end_time: f32)
+               -> Camera {
         let lens_radius: f32 = aperture / 2.0;
         let theta: f32 = fov * f32::consts::PI / 180.0;
         let half_height: f32 = (theta / 2.0).tan();
@@ -49,15 +47,24 @@ impl Camera {
         let u: Vector3<f32> = view.cross(&w).normalize();
         let v: Vector3<f32> = w.cross(&u);
 
-        let lower_left_corner: Vector3<f32> = origin -
-                                              half_width * focus_distance * u -
-                                              half_height * focus_distance * v -
-                                              focus_distance * w;
+        let lower_left_corner: Vector3<f32> = origin
+                                              - half_width * focus_distance * u
+                                              - half_height * focus_distance * v
+                                              - focus_distance * w;
 
         let horizontal: Vector3<f32> = 2.0 * half_width * focus_distance * u;
         let vertical: Vector3<f32> = 2.0 * half_height * focus_distance * v;
 
-        Camera { lower_left_corner, horizontal, vertical, origin, u, v, w, lens_radius, start_time, end_time }
+        Camera { lower_left_corner,
+                 horizontal,
+                 vertical,
+                 origin,
+                 u,
+                 v,
+                 w,
+                 lens_radius,
+                 start_time,
+                 end_time }
     }
 
     /// Get the ray that is coming from the camera into the world
@@ -67,8 +74,9 @@ impl Camera {
         let offset: Vector3<f32> = self.u * radius.x + self.v * radius.y;
         let time = self.start_time + rng.gen::<f32>() * (self.end_time - self.start_time);
         Ray { origin: self.origin + offset,
-              direction: self.lower_left_corner + s * self.horizontal + t * self.vertical -
-                         self.origin - offset,
-              time: time}
+              direction: self.lower_left_corner + s * self.horizontal + t * self.vertical
+                         - self.origin
+                         - offset,
+              time: time }
     }
 }

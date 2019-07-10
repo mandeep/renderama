@@ -38,10 +38,10 @@ impl AABB {
 pub fn surrounding_box(box0: &AABB, box1: &AABB) -> AABB {
     let small = Vector3::new(box0.minimum.x.min(box1.minimum.x),
                              box0.minimum.y.min(box1.minimum.y),
-                             box0.minimum.z.min(box1.minimum.z),);
+                             box0.minimum.z.min(box1.minimum.z));
     let big = Vector3::new(box0.maximum.x.max(box1.maximum.x),
                            box0.maximum.y.max(box1.maximum.y),
-                           box0.maximum.z.max(box1.maximum.z),);
+                           box0.maximum.z.max(box1.maximum.z));
 
     AABB::new(small, big)
 }

@@ -4,7 +4,6 @@ use aabb::AABB;
 use materials::Material;
 use ray::Ray;
 
-
 /// HitRecord contains the elements necessary to render geometry
 /// once a ray has hit that geometry.
 pub struct HitRecord {
@@ -16,7 +15,6 @@ pub struct HitRecord {
     pub material: Box<dyn Material>,
 }
 
-
 impl HitRecord {
     /// Create a new HitRecord for a given ray-geometry intersection.
     pub fn new(parameter: f32,
@@ -24,12 +22,16 @@ impl HitRecord {
                v: f32,
                point: Vector3<f32>,
                normal: Vector3<f32>,
-               material: Box<dyn Material>) -> HitRecord {
-        HitRecord { parameter: parameter, u: u, v: v, point: point, normal: normal, material: material }
+               material: Box<dyn Material>)
+               -> HitRecord {
+        HitRecord { parameter: parameter,
+                    u: u,
+                    v: v,
+                    point: point,
+                    normal: normal,
+                    material: material }
     }
-
 }
-
 
 /// The Hitable trait is a trait that all hitable objects will implement.
 /// This way we can easily add different types of geometry to the renderer/
@@ -63,10 +65,12 @@ impl FlipNormals {
 }
 
 impl Hitable for FlipNormals {
-
     fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitRecord> {
-        self.hitable.hit(&ray, position_min, position_max).map(|mut hit| {
-            hit.normal = -hit.normal;
-            hit})
+        self.hitable
+            .hit(&ray, position_min, position_max)
+            .map(|mut hit| {
+                hit.normal = -hit.normal;
+                hit
+            })
     }
 }

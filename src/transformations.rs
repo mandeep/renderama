@@ -1,10 +1,10 @@
+use hitable::{HitRecord, Hitable};
 use nalgebra::Vector3;
-use hitable::{Hitable, HitRecord};
 use ray::Ray;
 
 pub struct Translate {
     offset: Vector3<f32>,
-    hitable: Box<dyn Hitable>
+    hitable: Box<dyn Hitable>,
 }
 
 impl Translate {
@@ -26,11 +26,10 @@ impl Hitable for Translate {
     }
 }
 
-
 pub struct Rotate {
     sin_theta: f32,
     cos_theta: f32,
-    hitable: Box<dyn Hitable>
+    hitable: Box<dyn Hitable>,
 }
 
 impl Rotate {
@@ -41,7 +40,9 @@ impl Rotate {
         let sin_theta = radians.sin();
         let cos_theta = radians.cos();
 
-        Rotate { sin_theta, cos_theta, hitable }
+        Rotate { sin_theta,
+                 cos_theta,
+                 hitable }
     }
 }
 
@@ -59,11 +60,11 @@ impl Hitable for Rotate {
         let rotated_ray = Ray::new(origin, direction, ray.time);
 
         if let Some(mut hit) = self.hitable.hit(&rotated_ray, position_min, position_max) {
-           hit.point[0] = self.cos_theta * hit.point[0] + self.sin_theta * hit.point[2];
-           hit.point[2] = -self.sin_theta * hit.point[0] + self.cos_theta * hit.point[2];
-           hit.normal[0] = self.cos_theta * hit.normal[0] + self.sin_theta * hit.normal[2];
-           hit.normal[2] = -self.sin_theta * hit.normal[0] + self.cos_theta * hit.normal[2];
-           Some(hit)
+            hit.point[0] = self.cos_theta * hit.point[0] + self.sin_theta * hit.point[2];
+            hit.point[2] = -self.sin_theta * hit.point[0] + self.cos_theta * hit.point[2];
+            hit.normal[0] = self.cos_theta * hit.normal[0] + self.sin_theta * hit.normal[2];
+            hit.normal[2] = -self.sin_theta * hit.normal[0] + self.cos_theta * hit.normal[2];
+            Some(hit)
         } else {
             None
         }

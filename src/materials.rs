@@ -11,7 +11,8 @@ pub trait Material: Send + Sync {
     fn scatter(&self,
                ray: &Ray,
                record: &HitRecord,
-               rng: &mut rand::rngs::ThreadRng) -> Option<(Vector3<f32>, Ray)>;
+               rng: &mut rand::rngs::ThreadRng)
+               -> Option<(Vector3<f32>, Ray)>;
 
     fn emitted(&self, u: f32, v: f32, p: &Vector3<f32>) -> Vector3<f32> {
         Vector3::zeros()
@@ -26,10 +27,8 @@ impl Clone for Box<dyn Material> {
 
 #[derive(Clone)]
 pub struct Diffuse {
-    pub albedo: Box<dyn Texture>
+    pub albedo: Box<dyn Texture>,
 }
-
-
 
 impl Diffuse {
     /// Create a new Diffuse material with the given albedo
@@ -41,7 +40,6 @@ impl Diffuse {
         Diffuse { albedo: albedo }
     }
 }
-
 
 impl Material for Diffuse {
     /// Create a new Diffuse Material on the heap
@@ -59,11 +57,12 @@ impl Material for Diffuse {
     fn scatter(&self,
                ray: &Ray,
                record: &HitRecord,
-               rng: &mut rand::rngs::ThreadRng) -> Option<(Vector3<f32>, Ray)> {
-
+               rng: &mut rand::rngs::ThreadRng)
+               -> Option<(Vector3<f32>, Ray)> {
         let target: Vector3<f32> = record.point + record.normal + pick_sphere_point(rng);
-        Some((self.albedo.value(record.u, record.v, &record.point), Ray::new(record.point, target - record.point, ray.time)))
-}
+        Some((self.albedo.value(record.u, record.v, &record.point),
+              Ray::new(record.point, target - record.point, ray.time)))
+    }
 }
 
 /// Compute the reflect vector given the light vector and the normal vector of the surface
@@ -78,7 +77,6 @@ fn reflect(v: &Vector3<f32>, n: &Vector3<f32>) -> Vector3<f32> {
     v - 2.0 * v.dot(&n) * n
 }
 
-
 /// Compute the refract vector given the light vector, normal vector, and refractive_index
 ///
 /// In dielectric materials some light is reflected and some refracted. We can use
@@ -89,7 +87,8 @@ fn reflect(v: &Vector3<f32>, n: &Vector3<f32>) -> Vector3<f32> {
 fn refract(v: &Vector3<f32>, n: &Vector3<f32>, refractive_index: f32) -> Option<Vector3<f32>> {
     let uv: Vector3<f32> = v.normalize();
     let direction: f32 = uv.dot(&n);
-    let discriminant: f32 = 1.0 - refractive_index * refractive_index * (1.0 - direction * direction);
+    let discriminant: f32 =
+        1.0 - refractive_index * refractive_index * (1.0 - direction * direction);
 
     if discriminant > 0.0 {
         return Some(refractive_index * (uv - n * direction) - n * discriminant.sqrt());
@@ -111,13 +110,11 @@ fn schlick(cosine: f32, reference_index: f32) -> f32 {
     r0 + (1.0 - r0) * (1.0 - cosine).powf(5.0)
 }
 
-
 #[derive(Clone)]
 pub struct Reflective {
     pub albedo: Vector3<f32>,
-    pub fuzz: f32
+    pub fuzz: f32,
 }
-
 
 impl Reflective {
     /// Create a new Reflective material for objects that reflect light only
@@ -127,11 +124,10 @@ impl Reflective {
     /// for the fuzziness of the reflections due to the size of the sphere.
     /// Generally, the larger the sphere, the fuzzier the reflections will be.
     pub fn new(albedo: Vector3<f32>, fuzz: f32) -> Reflective {
-        Reflective { albedo: albedo, fuzz: fuzz }
+        Reflective { albedo: albedo,
+                     fuzz: fuzz }
     }
-
 }
-
 
 impl Material for Reflective {
     /// Create a new Reflective material on the heap
@@ -150,10 +146,12 @@ impl Material for Reflective {
     fn scatter(&self,
                ray: &Ray,
                record: &HitRecord,
-               rng: &mut rand::rngs::ThreadRng) -> Option<(Vector3<f32>, Ray)> {
-
+               rng: &mut rand::rngs::ThreadRng)
+               -> Option<(Vector3<f32>, Ray)> {
         let reflected: Vector3<f32> = reflect(&ray.direction.normalize(), &record.normal);
-        let scattered = Ray::new(record.point, reflected + self.fuzz * pick_sphere_point(rng), ray.time);
+        let scattered = Ray::new(record.point,
+                                 reflected + self.fuzz * pick_sphere_point(rng),
+                                 ray.time);
         if scattered.direction.dot(&record.normal) > 0.0 {
             return Some((self.albedo, scattered));
         }
@@ -161,14 +159,12 @@ impl Material for Reflective {
     }
 }
 
-
 #[derive(Clone)]
 pub struct Refractive {
     pub albedo: Vector3<f32>,
     pub refractive_index: f32,
-    pub fuzz: f32
+    pub fuzz: f32,
 }
-
 
 impl Refractive {
     /// Create a new Refractive material for objects that both reflect and transmit light
@@ -179,10 +175,11 @@ impl Refractive {
     /// fuzz accounts for the fuzziness of the reflections due to the size of the sphere.
     /// Generally, the larger the sphere, the fuzzier the reflections will be.
     pub fn new(albedo: Vector3<f32>, index: f32, fuzz: f32) -> Refractive {
-        Refractive { albedo: albedo, refractive_index: index, fuzz: fuzz }
+        Refractive { albedo: albedo,
+                     refractive_index: index,
+                     fuzz: fuzz }
     }
 }
-
 
 impl Material for Refractive {
     /// Create a new Refractive Material on the heap
@@ -205,47 +202,45 @@ impl Material for Refractive {
     fn scatter(&self,
                ray: &Ray,
                record: &HitRecord,
-               rng: &mut rand::rngs::ThreadRng) -> Option<(Vector3<f32>, Ray)> {
-
+               rng: &mut rand::rngs::ThreadRng)
+               -> Option<(Vector3<f32>, Ray)> {
         let reflected: Vector3<f32> = reflect(&ray.direction.normalize(), &record.normal);
         let incident: f32 = ray.direction.dot(&record.normal);
 
         let (outward_normal, refractive_index, cosine) = if incident > 0.0 {
-               (-record.normal,
-                self.refractive_index,
-                self.refractive_index * ray.direction.dot(&record.normal) / ray.direction.norm())
-            } else {
-               (record.normal,
-                1.0 / self.refractive_index,
-                -ray.direction.dot(&record.normal) / ray.direction.norm())
-
-            };
+            (-record.normal,
+             self.refractive_index,
+             self.refractive_index * ray.direction.dot(&record.normal) / ray.direction.norm())
+        } else {
+            (record.normal,
+             1.0 / self.refractive_index,
+             -ray.direction.dot(&record.normal) / ray.direction.norm())
+        };
 
         let refracted = refract(&ray.direction, &outward_normal, refractive_index);
         let reflect_probability = match refracted {
             Some(_) => schlick(cosine, self.refractive_index),
-            None => 1.0
+            None => 1.0,
         };
 
         if rand::random::<f32>() < reflect_probability {
             return Some((self.albedo,
-                         Ray::new(record.point, reflected + self.fuzz * pick_sphere_point(rng), ray.time)
-                         ));
+                         Ray::new(record.point,
+                                  reflected + self.fuzz * pick_sphere_point(rng),
+                                  ray.time)));
         } else {
-            return Some((self.albedo, Ray::new(record.point,
-                                               refracted.unwrap() +
-                                                   self.fuzz * pick_sphere_point(rng), ray.time)
-                         ));
+            return Some((self.albedo,
+                         Ray::new(record.point,
+                                  refracted.unwrap() + self.fuzz * pick_sphere_point(rng),
+                                  ray.time)));
         }
     }
 }
 
-
 #[derive(Clone)]
 pub struct Light {
-    pub emit: Box<dyn Texture>
+    pub emit: Box<dyn Texture>,
 }
-
 
 impl Light {
     pub fn new<T: Texture + 'static>(emit: T) -> Light {
@@ -253,7 +248,6 @@ impl Light {
         Light { emit: emit }
     }
 }
-
 
 impl Material for Light {
     fn box_clone(&self) -> Box<Material> {
@@ -263,7 +257,8 @@ impl Material for Light {
     fn scatter(&self,
                ray: &Ray,
                record: &HitRecord,
-               rng: &mut rand::rngs::ThreadRng) -> Option<(Vector3<f32>, Ray)> {
+               rng: &mut rand::rngs::ThreadRng)
+               -> Option<(Vector3<f32>, Ray)> {
         None
     }
 
