@@ -1,10 +1,9 @@
 use nalgebra::core::Vector3;
 
 use aabb;
-use hitable::{Hitable, HitRecord};
+use hitable::{HitRecord, Hitable};
 use materials::Material;
 use ray::Ray;
-
 
 use std::f32;
 
@@ -15,9 +14,8 @@ pub struct Sphere {
     pub radius: f32,
     pub material: Box<dyn Material>,
     pub start_time: f32,
-    pub end_time: f32
+    pub end_time: f32,
 }
-
 
 impl Sphere {
     /// Create a new sphere to place into the world
@@ -25,16 +23,28 @@ impl Sphere {
     /// We use the 'static lifetime so that we can create a Box material
     /// within the function rather than having to pass a Box material
     /// as an input parameter.
-    pub fn new<M: Material + 'static>(start_center: Vector3<f32>, end_center: Vector3<f32>, radius: f32, material: M, start_time: f32, end_time: f32) -> Sphere {
+    pub fn new<M: Material + 'static>(start_center: Vector3<f32>,
+                                      end_center: Vector3<f32>,
+                                      radius: f32,
+                                      material: M,
+                                      start_time: f32,
+                                      end_time: f32)
+                                      -> Sphere {
         let material = Box::new(material);
-        Sphere { start_center, end_center, radius, material, start_time, end_time }
+        Sphere { start_center,
+                 end_center,
+                 radius,
+                 material,
+                 start_time,
+                 end_time }
     }
 
     pub fn center(&self, time: f32) -> Vector3<f32> {
-        self.start_center + ((time - self.start_time) / (self.end_time - self.start_time)) * (self.end_center - self.start_center)
+        self.start_center
+        + ((time - self.start_time) / (self.end_time - self.start_time))
+          * (self.end_center - self.start_center)
     }
 }
-
 
 fn get_sphere_uv(p: &Vector3<f32>) -> (f32, f32) {
     let phi = p.z.atan2(p.x);
@@ -43,7 +53,6 @@ fn get_sphere_uv(p: &Vector3<f32>) -> (f32, f32) {
     let v = (theta + std::f32::consts::PI / 2.0) / std::f32::consts::PI;
     (u, v)
 }
-
 
 impl Hitable for Sphere {
     /// Determine if the given ray intersects with a point on the sphere
@@ -78,10 +87,14 @@ impl Hitable for Sphere {
                     let point = ray.point_at_parameter(root);
                     let normal = (point - self.center(ray.time)) / self.radius;
                     let (u, v) = get_sphere_uv(&normal);
-                    return Some(HitRecord::new(root, u, v, point, normal, self.material.box_clone()));
+                    return Some(HitRecord::new(root,
+                                               u,
+                                               v,
+                                               point,
+                                               normal,
+                                               self.material.box_clone()));
                 }
             }
-
         }
         None
     }

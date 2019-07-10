@@ -1,7 +1,7 @@
 use rand::Rng;
 
-use aabb::{AABB, surrounding_box};
-use hitable::{Hitable, HitRecord};
+use aabb::{surrounding_box, AABB};
+use hitable::{HitRecord, Hitable};
 use ray::Ray;
 use world::World;
 
@@ -9,33 +9,51 @@ use world::World;
 pub struct BVH {
     left: Box<dyn Hitable>,
     right: Box<dyn Hitable>,
-    bbox: AABB
+    bbox: AABB,
 }
 
 impl BVH {
-
-    pub fn new(left: Box<dyn Hitable>, right: Box<dyn Hitable>, start_time: f32, end_time: f32) -> BVH {
+    pub fn new(left: Box<dyn Hitable>,
+               right: Box<dyn Hitable>,
+               start_time: f32,
+               end_time: f32)
+               -> BVH {
         let bbox = surrounding_box(&left.bounding_box(start_time, end_time).unwrap(),
                                    &right.bounding_box(start_time, end_time).unwrap());
         BVH { left, right, bbox }
-   }
+    }
 
     pub fn from(world: &mut World, start_time: f32, end_time: f32) -> BVH {
         let mut rng = rand::thread_rng();
         let axis: usize = rng.gen_range(0, 3);
 
         if axis == 0 {
-            world.objects.sort_by(|a, b| a.bounding_box(start_time, end_time).unwrap().minimum.x.partial_cmp(&b.bounding_box(start_time, end_time).unwrap().minimum.x).unwrap());
-
-        }
-
-        else if axis == 1 {
-            world.objects.sort_by(|a, b| a.bounding_box(start_time, end_time).unwrap().minimum.y.partial_cmp(&b.bounding_box(start_time, end_time).unwrap().minimum.y).unwrap());
-
-        }
-        else {
-            world.objects.sort_by(|a, b| a.bounding_box(start_time, end_time).unwrap().minimum.z.partial_cmp(&b.bounding_box(start_time, end_time).unwrap().minimum.z).unwrap());
-
+            world.objects.sort_by(|a, b| {
+                             a.bounding_box(start_time, end_time)
+                              .unwrap()
+                              .minimum
+                              .x
+                              .partial_cmp(&b.bounding_box(start_time, end_time).unwrap().minimum.x)
+                              .unwrap()
+                         });
+        } else if axis == 1 {
+            world.objects.sort_by(|a, b| {
+                             a.bounding_box(start_time, end_time)
+                              .unwrap()
+                              .minimum
+                              .y
+                              .partial_cmp(&b.bounding_box(start_time, end_time).unwrap().minimum.y)
+                              .unwrap()
+                         });
+        } else {
+            world.objects.sort_by(|a, b| {
+                             a.bounding_box(start_time, end_time)
+                              .unwrap()
+                              .minimum
+                              .z
+                              .partial_cmp(&b.bounding_box(start_time, end_time).unwrap().minimum.z)
+                              .unwrap()
+                         });
         }
 
         let objects = world.objects.clone();
@@ -56,7 +74,6 @@ impl BVH {
         }
 
         BVH::new(left.clone(), right.clone(), start_time, end_time)
-
     }
 }
 
@@ -73,11 +90,17 @@ impl Hitable for BVH {
                     } else {
                         return Some(right_record);
                     }
-                },
+                }
 
-                (Some(left_record), None) => { return Some(left_record); },
-                (None, Some(right_record)) => { return Some(right_record); },
-                (None, None) => { return None; },
+                (Some(left_record), None) => {
+                    return Some(left_record);
+                }
+                (None, Some(right_record)) => {
+                    return Some(right_record);
+                }
+                (None, None) => {
+                    return None;
+                }
             }
         }
         None
