@@ -7,18 +7,18 @@ use bvh::BVH;
 use hitable::Hitable;
 use world::World;
 
-
 pub struct Ray {
     pub origin: Vector3<f32>,
     pub direction: Vector3<f32>,
-    pub time: f32
+    pub time: f32,
 }
-
 
 impl Ray {
     /// Create a new Ray with origin at `a` and direction towards `b`
     pub fn new(a: Vector3<f32>, b: Vector3<f32>, time: f32) -> Ray {
-        Ray { origin: a, direction: b, time: 0.0 }
+        Ray { origin: a,
+              direction: b,
+              time: 0.0 }
     }
 
     /// Find the point on the ray given the parameter of the direction vector
@@ -26,8 +26,6 @@ impl Ray {
         self.origin + parameter * self.direction
     }
 }
-
-
 
 /// Pick a random point on the unit sphere
 ///
@@ -56,16 +54,23 @@ pub fn pick_sphere_point(rng: &mut rand::rngs::ThreadRng) -> Vector3<f32> {
 /// the color at the ray's hit point. The depth has been set to an arbitrary
 /// limit of 50 which can lead to bias rendering.
 ///
-pub fn compute_color(ray: &Ray, world: &BVH, depth: i32, rng: &mut rand::rngs::ThreadRng) -> Vector3<f32> {
+pub fn compute_color(ray: &Ray,
+                     world: &BVH,
+                     depth: i32,
+                     rng: &mut rand::rngs::ThreadRng)
+                     -> Vector3<f32> {
     if let Some(hit_record) = world.hit(ray, 0.001, f32::MAX) {
-        let emitted = hit_record.material.emitted(hit_record.u,
-                                                  hit_record.v,
-                                                  &hit_record.point);
+        let emitted = hit_record.material
+                                .emitted(hit_record.u, hit_record.v, &hit_record.point);
         if depth < 50 {
-            if let Some((attenuation, scattered)) = hit_record.material
-                                                              .scatter(ray, &hit_record, rng) {
-                return emitted + attenuation.component_mul(
-                        &compute_color(&scattered, world, depth + 1, rng));
+            if let Some((attenuation, scattered)) =
+                hit_record.material.scatter(ray, &hit_record, rng)
+            {
+                return emitted
+                       + attenuation.component_mul(&compute_color(&scattered,
+                                                                  world,
+                                                                  depth + 1,
+                                                                  rng));
             }
         }
         return emitted;

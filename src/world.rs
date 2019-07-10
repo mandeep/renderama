@@ -1,7 +1,7 @@
 use nalgebra::core::Vector3;
 
-use aabb::{AABB, surrounding_box};
-use hitable::{Hitable, HitRecord};
+use aabb::{surrounding_box, AABB};
+use hitable::{HitRecord, Hitable};
 use materials::Diffuse;
 use ray::Ray;
 use texture::ConstantTexture;
@@ -11,7 +11,6 @@ use texture::ConstantTexture;
 pub struct World {
     pub objects: Vec<Box<dyn Hitable>>,
 }
-
 
 impl World {
     /// Create a new World to hold all of the objects in the scene
@@ -30,14 +29,16 @@ impl World {
     }
 }
 
-
 impl Hitable for World {
     /// Determine if the given ray has hit any of the objects in the world
     fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitRecord> {
-        let mut record = HitRecord::new(0.0, 0.0, 0.0,
+        let mut record = HitRecord::new(0.0,
+                                        0.0,
+                                        0.0,
                                         Vector3::zeros(),
                                         Vector3::zeros(),
-                                        Box::new(Diffuse::new(ConstantTexture::new(0.0, 0.0, 0.0))));
+                                        Box::new(Diffuse::new(ConstantTexture::new(0.0, 0.0,
+                                                                                   0.0))));
         let mut hit_anything: bool = false;
         let mut closed_so_far: f32 = position_max;
 
@@ -52,7 +53,7 @@ impl Hitable for World {
             }
         }
 
-        return if hit_anything { Some(record) } else { None }
+        return if hit_anything { Some(record) } else { None };
     }
 
     fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB> {

@@ -1,9 +1,8 @@
 use nalgebra::core::Vector3;
 
-use hitable::{Hitable, HitRecord};
+use hitable::{HitRecord, Hitable};
 use materials::Material;
 use ray::Ray;
-
 
 pub enum Plane {
     XY,
@@ -17,22 +16,31 @@ pub struct Rectangle {
     x1: f32,
     y0: f32,
     y1: f32,
-    k:  f32,
-    material: Box<dyn Material>
+    k: f32,
+    material: Box<dyn Material>,
 }
 
 impl Rectangle {
-
-    pub fn new<M: Material + 'static>(plane: Plane, x0: f32, x1: f32, y0: f32, y1: f32, k: f32,
-                                  material: M) -> Rectangle {
+    pub fn new<M: Material + 'static>(plane: Plane,
+                                      x0: f32,
+                                      x1: f32,
+                                      y0: f32,
+                                      y1: f32,
+                                      k: f32,
+                                      material: M)
+                                      -> Rectangle {
         let material = Box::new(material);
-        Rectangle { plane, x0, x1, y0, y1, k, material }
+        Rectangle { plane,
+                    x0,
+                    x1,
+                    y0,
+                    y1,
+                    k,
+                    material }
     }
 }
 
-
 impl Hitable for Rectangle {
-
     fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitRecord> {
         let mut t = 0.0;
         let mut x = 0.0;
@@ -40,30 +48,28 @@ impl Hitable for Rectangle {
         let mut normal: Vector3<f32> = Vector3::zeros();
         match self.plane {
             Plane::XY => {
-            t = (self.k - ray.origin.z) / ray.direction.z;
-            x = ray.origin.x + t * ray.direction.x;
-            y = ray.origin.y + t * ray.direction.y;
-            normal = Vector3::new(0.0, 0.0, 1.0);
-
+                t = (self.k - ray.origin.z) / ray.direction.z;
+                x = ray.origin.x + t * ray.direction.x;
+                y = ray.origin.y + t * ray.direction.y;
+                normal = Vector3::new(0.0, 0.0, 1.0);
             }
             Plane::YZ => {
-            t = (self.k - ray.origin.x) / ray.direction.x;
-            x = ray.origin.y + t * ray.direction.y;
-            y = ray.origin.z + t * ray.direction.z;
-            normal = Vector3::new(1.0, 0.0, 0.0);
+                t = (self.k - ray.origin.x) / ray.direction.x;
+                x = ray.origin.y + t * ray.direction.y;
+                y = ray.origin.z + t * ray.direction.z;
+                normal = Vector3::new(1.0, 0.0, 0.0);
             }
             Plane::XZ => {
-            t = (self.k - ray.origin.y) / ray.direction.y;
-            x = ray.origin.x + t * ray.direction.x;
-            y = ray.origin.z + t * ray.direction.z;
-            normal = Vector3::new(0.0, 1.0, 0.0);
+                t = (self.k - ray.origin.y) / ray.direction.y;
+                x = ray.origin.x + t * ray.direction.x;
+                y = ray.origin.z + t * ray.direction.z;
+                normal = Vector3::new(0.0, 1.0, 0.0);
             }
         }
 
         if t < position_min || t > position_max {
             return None;
         }
-
 
         if x < self.x0 || x > self.x1 || y < self.y0 || y > self.y1 {
             return None;

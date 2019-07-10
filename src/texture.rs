@@ -1,13 +1,11 @@
 use image;
 use nalgebra::core::Vector3;
 
-
 /// Texture trait can be implemented so that textures can be applied to materials
 pub trait Texture: Send + Sync {
     fn value(&self, u: f32, v: f32, p: &Vector3<f32>) -> Vector3<f32>;
     fn box_clone(&self) -> Box<dyn Texture>;
 }
-
 
 /// Implement Clone so that the Texture trait can be used along with the Material trait
 impl Clone for Box<dyn Texture> {
@@ -16,21 +14,18 @@ impl Clone for Box<dyn Texture> {
     }
 }
 
-
 #[derive(Clone)]
 /// ConstantTexture is just a wrapping for a Vector3 of RGB values
 pub struct ConstantTexture {
-    color: Vector3<f32>
+    color: Vector3<f32>,
 }
-
 
 /// Create a new ConstantTexture
 impl ConstantTexture {
     pub fn new(r: f32, g: f32, b: f32) -> ConstantTexture {
-        ConstantTexture {color: Vector3::new(r, g, b)}
+        ConstantTexture { color: Vector3::new(r, g, b) }
     }
 }
-
 
 /// Implement the Texture trait for ConstantTexture
 /// This allows the ConstantTexture's color to be retrieved
@@ -45,13 +40,11 @@ impl Texture for ConstantTexture {
     }
 }
 
-
 #[derive(Clone)]
 /// ImageTexture is a struct for textures loaded from file
 pub struct ImageTexture {
-    im: image::RgbImage
+    im: image::RgbImage,
 }
-
 
 /// Create a new texture from the given data and image dimensions
 impl ImageTexture {
@@ -59,7 +52,6 @@ impl ImageTexture {
         ImageTexture { im: image::open(filename).unwrap().flipv().to_rgb() }
     }
 }
-
 
 /// Determine which pixel to retrieve from the image by
 /// converting pixel coordinates to UV coordinates
