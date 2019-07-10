@@ -22,11 +22,40 @@ impl BVH {
 
     pub fn from(world: &mut World, start_time: f32, end_time: f32) -> BVH {
         let mut rng = rand::thread_rng();
-        let axis: usize = rng.gen_range(1, 4);
+        let axis: usize = rng.gen_range(0, 3);
 
         if axis == 0 {
+            world.objects.sort_by(|a, b| a.bounding_box(start_time, end_time).unwrap().minimum.x.partial_cmp(&b.bounding_box(start_time, end_time).unwrap().minimum.x).unwrap());
 
         }
+
+        else if axis == 1 {
+            world.objects.sort_by(|a, b| a.bounding_box(start_time, end_time).unwrap().minimum.y.partial_cmp(&b.bounding_box(start_time, end_time).unwrap().minimum.y).unwrap());
+
+        }
+        else {
+            world.objects.sort_by(|a, b| a.bounding_box(start_time, end_time).unwrap().minimum.z.partial_cmp(&b.bounding_box(start_time, end_time).unwrap().minimum.z).unwrap());
+
+        }
+
+        let objects = world.objects.clone();
+        let mut left = &objects[0];
+        let mut right = &objects[0];
+
+        if world.objects.len() == 1 {
+            left = &objects[0];
+            right = &objects[0];
+        } else if world.objects.len() == 2 {
+            left = &objects[0];
+            right = &objects[1];
+        } else {
+            let right_objects = world.objects.split_off(world.objects.len() / 2);
+            let left = BVH::from(world, start_time, end_time);
+            world.objects = right_objects.clone();
+            let right = BVH::from(world, start_time, end_time);
+        }
+
+        BVH::new(left.clone(), right.clone(), start_time, end_time)
 
     }
 }
