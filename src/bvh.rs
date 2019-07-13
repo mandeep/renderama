@@ -3,7 +3,6 @@ use rand::Rng;
 use aabb::{surrounding_box, AABB};
 use hitable::{HitRecord, Hitable};
 use ray::Ray;
-use world::World;
 
 #[derive(Clone)]
 pub struct BVH {
@@ -13,22 +12,13 @@ pub struct BVH {
 }
 
 impl BVH {
-    pub fn new(left: Box<dyn Hitable>,
-               right: Box<dyn Hitable>,
-               start_time: f32,
-               end_time: f32)
-               -> BVH {
-        let bbox = surrounding_box(&left.bounding_box(start_time, end_time).unwrap(),
-                                   &right.bounding_box(start_time, end_time).unwrap());
-        BVH { left, right, bbox }
-    }
-
-    pub fn from(world: &mut World, start_time: f32, end_time: f32) -> BVH {
+    pub fn new(world: &Vec<Box<dyn Hitable>>, start_time: f32, end_time: f32) -> BVH {
+        let mut objects = world.clone();
         let mut rng = rand::thread_rng();
         let axis: usize = rng.gen_range(0, 3);
 
         if axis == 0 {
-            world.objects.sort_by(|a, b| {
+            objects.sort_by(|a, b| {
                              a.bounding_box(start_time, end_time)
                               .unwrap()
                               .minimum
@@ -37,7 +27,7 @@ impl BVH {
                               .unwrap()
                          });
         } else if axis == 1 {
-            world.objects.sort_by(|a, b| {
+            objects.sort_by(|a, b| {
                              a.bounding_box(start_time, end_time)
                               .unwrap()
                               .minimum
@@ -46,7 +36,7 @@ impl BVH {
                               .unwrap()
                          });
         } else {
-            world.objects.sort_by(|a, b| {
+            objects.sort_by(|a, b| {
                              a.bounding_box(start_time, end_time)
                               .unwrap()
                               .minimum
@@ -56,57 +46,50 @@ impl BVH {
                          });
         }
 
-        let objects = world.objects.clone();
-        let mut left = &objects[0];
-        let mut right = &objects[0];
+        let left: Box<dyn Hitable>;
+        let right: Box<dyn Hitable>;
 
-        if world.objects.len() == 1 {
-            left = &objects[0];
-            right = &objects[0];
-        } else if world.objects.len() == 2 {
-            left = &objects[0];
-            right = &objects[1];
+        if objects.len() == 1 {
+            left = objects[0].clone();
+            right = objects[0].clone();
+        } else if objects.len() == 2 {
+            left = objects[0].clone();
+            right = objects[1].clone();
         } else {
-            let right_objects = world.objects.split_off(world.objects.len() / 2);
-            let left = BVH::from(world, start_time, end_time);
-            world.objects = right_objects.clone();
-            let right = BVH::from(world, start_time, end_time);
+            let mut right_world = objects.split_off(world.len() / 2);
+            left = Box::new(BVH::new(&mut objects, start_time, end_time));
+            right = Box::new(BVH::new(&mut right_world, start_time, end_time));
         }
 
-        BVH::new(left.clone(), right.clone(), start_time, end_time)
+        let bbox = surrounding_box(&left.bounding_box(start_time, end_time).unwrap(),
+                                   &right.bounding_box(start_time, end_time).unwrap());
+
+        BVH { left, right, bbox }
     }
 }
 
 impl Hitable for BVH {
-    fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitRecord> {
-        if self.bbox.hit(ray, position_min, position_max) {
-            let left_record = self.left.hit(ray, position_min, position_max);
-            let right_record = self.right.hit(ray, position_min, position_max);
-
-            match (left_record, right_record) {
-                (Some(left_record), Some(right_record)) => {
-                    if left_record.point < right_record.point {
-                        return Some(left_record);
+    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
+        if self.bbox.hit(&ray, t_min, t_max) {
+            let left = self.left.hit(&ray, t_min, t_max);
+            let right = self.right.hit(&ray, t_min, t_max);
+            match (left, right) {
+                (Some(left), Some(right)) =>
+                    if left.parameter < right.parameter {
+                        Some(left)
                     } else {
-                        return Some(right_record);
-                    }
-                }
-
-                (Some(left_record), None) => {
-                    return Some(left_record);
-                }
-                (None, Some(right_record)) => {
-                    return Some(right_record);
-                }
-                (None, None) => {
-                    return None;
-                }
+                        Some(right)
+                    },
+                (Some(left), None) => Some(left),
+                (None, Some(right)) => Some(right),
+                _ => None
             }
+        } else {
+            None
         }
-        None
     }
 
-    fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB> {
+    fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
         Some(self.bbox.clone())
     }
 
