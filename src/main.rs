@@ -6,6 +6,7 @@ extern crate rand;
 extern crate rayon;
 
 mod camera;
+mod denoise;
 mod hitable;
 mod materials;
 mod ray;
@@ -23,6 +24,7 @@ use rand::thread_rng;
 use rayon::prelude::*;
 
 use camera::Camera;
+use denoise::denoise;
 use hitable::FlipNormals;
 use materials::{Diffuse, Light, Reflective, Refractive};
 use sphere::Sphere;
@@ -322,13 +324,18 @@ fn main() {
         *pixel = image::Rgb([coordinate.x as u8, coordinate.y as u8, coordinate.z as u8]);
     });
 
+    if args.len() > 2 && args[2] == "--denoise" {
+        let output_image = denoise(&pixels, width as usize, height as usize);
+        image::save_buffer("denoised_output.png", &output_image[..], width as u32, height as u32, image::RGB(8))
+        .expect("Failed to save output image");
 
-    let mut buffer = image::ImageBuffer::new(width, height);
+    } else {
+        let mut buffer = image::ImageBuffer::new(width, height);
 
-    buffer.enumerate_pixels_mut().for_each(|(x, y, pixel)| {
-        let index = (y * width + x) as usize;
-        *pixel = pixels[index];
-    });
-
-    image::ImageRgb8(buffer).flipv().save("render.png").unwrap();
+        buffer.enumerate_pixels_mut().for_each(|(x, y, pixel)| {
+            let index = (y * width + x) as usize;
+            *pixel = pixels[index];
+        });
+        image::ImageRgb8(buffer).flipv().save("render.png").unwrap();
+    }
 }
