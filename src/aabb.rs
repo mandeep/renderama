@@ -1,6 +1,5 @@
 use nalgebra::Vector3;
 
-use hitable::Hitable;
 use ray::Ray;
 
 #[derive(Clone)]
@@ -16,13 +15,10 @@ impl AABB {
 
     pub fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> bool {
         for i in 0..3 {
-            let inverse_direction = 1.0 / ray.direction[i];
-            let mut t0 = (self.minimum[i] - ray.origin[i]) * inverse_direction;
-            let mut t1 = (self.maximum[i] - ray.origin[i]) * inverse_direction;
-
-            if inverse_direction < 0.0 {
-                std::mem::swap(&mut t0, &mut t1);
-            }
+            let t0 = ((self.minimum[i] - ray.origin[i]) / ray.direction[i])
+                .min((self.maximum[i] - ray.origin[i]) / ray.direction[i]);
+            let t1 = ((self.minimum[i] - ray.origin[i]) / ray.direction[i])
+                .max((self.maximum[i] - ray.origin[i]) / ray.direction[i]);
 
             let tmin = t0.max(position_min);
             let tmax = t1.min(position_max);
