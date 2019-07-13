@@ -53,6 +53,7 @@ impl Clone for Box<dyn Hitable> {
     }
 }
 
+#[derive(Clone)]
 pub struct FlipNormals {
     hitable: Box<dyn Hitable>,
 }
@@ -72,5 +73,13 @@ impl Hitable for FlipNormals {
                 hit.normal = -hit.normal;
                 hit
             })
+    }
+
+    fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB> {
+        self.hitable.bounding_box(t0, t1)
+    }
+
+    fn box_clone(&self) -> Box<dyn Hitable> {
+        Box::new((*self).clone())
     }
 }
