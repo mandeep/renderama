@@ -1,15 +1,18 @@
 use nalgebra::core::Vector3;
 
+use aabb::AABB;
 use hitable::{HitRecord, Hitable};
 use materials::Material;
 use ray::Ray;
 
+#[derive(Clone)]
 pub enum Plane {
     XY,
     YZ,
     XZ,
 }
 
+#[derive(Clone)]
 pub struct Rectangle {
     plane: Plane,
     x0: f32,
@@ -83,5 +86,15 @@ impl Hitable for Rectangle {
                                     self.material.box_clone());
 
         Some(record)
+    }
+
+    fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB> {
+        let minimum = Vector3::new(self.x0, self.y0, self.k - 0.0001);
+        let maximum = Vector3::new(self.x1, self.y1, self.k + 0.0001);
+        Some(AABB::new(minimum, maximum))
+    }
+
+    fn box_clone(&self) -> Box<dyn Hitable> {
+        Box::new(*self).clone()
     }
 }
