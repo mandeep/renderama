@@ -1,7 +1,9 @@
+use aabb::AABB;
 use hitable::{HitRecord, Hitable};
 use nalgebra::Vector3;
 use ray::Ray;
 
+#[derive(Clone)]
 pub struct Translate {
     offset: Vector3<f32>,
     hitable: Box<dyn Hitable>,
@@ -23,6 +25,20 @@ impl Hitable for Translate {
         } else {
             None
         }
+    }
+
+    fn bounding_box(&self, t0: f32, t1:f32) -> Option<AABB> {
+        if let Some(mut bbox) = self.hitable.bounding_box(t0, t1) {
+            bbox.minimum += self.offset;
+            bbox.maximum += self.offset;
+            return Some(bbox);
+        }
+
+        None
+    }
+
+    fn box_clone(&self) -> Box<dyn Hitable> {
+        Box::new(*self).clone()
     }
 }
 
