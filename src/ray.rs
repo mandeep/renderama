@@ -5,7 +5,6 @@ use rand::distributions::{Distribution, Normal};
 
 use bvh::BVH;
 use hitable::Hitable;
-use world::World;
 
 pub struct Ray {
     pub origin: Vector3<f32>,
