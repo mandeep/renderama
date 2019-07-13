@@ -2,7 +2,6 @@
 name = "renderama"
 version = "0.15.0"
 authors = ["mandeep <mandeep@users.noreply.github.com>"]
-build = "build.rs"
 
 [dependencies]
 image = { git = "https://github.com/image-rs/image" }
