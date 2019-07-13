@@ -6,8 +6,8 @@ pub fn denoise(input: &Vec<image::Rgb<u8>>, width: usize, height: usize) -> Vec<
     let mut coerced_input = vec![0.0f32; 3 * input.len()];
     for (i, pixel) in input.iter().enumerate() {
         let (x, y) =  (i % width, height - 1 - (i / width));
-        for c in 0..3 {
-            coerced_input[3 * (y * width + x) + c] = pixel[c] as f32 / 255.0;
+        for rgb_index in 0..3 {
+            coerced_input[3 * (y * width + x) + rgb_index] = pixel[rgb_index] as f32 / 255.0;
         }
     }
 
