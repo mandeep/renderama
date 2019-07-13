@@ -24,6 +24,7 @@ use nalgebra::core::Vector3;
 use rand::thread_rng;
 use rayon::prelude::*;
 
+use bvh::BVH;
 use camera::Camera;
 use hitable::FlipNormals;
 use materials::{Diffuse, Light, Reflective, Refractive};
@@ -33,7 +34,7 @@ use texture::{ConstantTexture, ImageTexture};
 use transformations::{Rotate, Translate};
 use world::World;
 
-fn random_scene() -> World {
+fn random_scene() -> BVH {
     let mut world = World::new();
 
     world.add(Sphere::new(Vector3::new(0.0, -1000.0, 0.0),
@@ -126,7 +127,7 @@ fn random_scene() -> World {
                           0.0,
                           1.0));
 
-    world
+    BVH::new(&world.objects, 0.0, 1.0)
 }
 
 fn earth_scene() -> World {
@@ -142,7 +143,7 @@ fn earth_scene() -> World {
     world
 }
 
-fn motion_scene() -> World {
+fn motion_scene() -> BVH {
     let mut world = World::new();
 
     world.add(Sphere::new(Vector3::new(0.0, -1000.0, 0.0),
@@ -175,10 +176,10 @@ fn motion_scene() -> World {
                           0.0,
                           1.0));
 
-    world
+    BVH::new(&world.objects, 0.0, 1.0)
 }
 
-fn simple_light_scene() -> World {
+fn simple_light_scene() -> BVH {
     let mut world = World::new();
 
     world.add(Sphere::new(Vector3::new(0.0, -1000.0, 0.0),
@@ -210,10 +211,10 @@ fn simple_light_scene() -> World {
                              -2.0,
                              Light::new(ConstantTexture::new(4.0, 4.0, 4.0))));
 
-    world
+    BVH::new(&world.objects, 0.0, 1.0)
 }
 
-fn cornell_box_scene() -> World {
+fn cornell_box_scene() -> BVH {
     let mut world = World::new();
 
     // add the walls of the cornell box to the world
@@ -310,7 +311,7 @@ fn cornell_box_scene() -> World {
     world.add(Translate::new(Vector3::new(265.0, 0.0, 295.0), Rotate::new(15.0, FlipNormals::of(Rectangle::new(rectangle::Plane::YZ, p0.y, p1.y, p0.z, p1.z, p0.x,
                              Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73)))))));
 
-    world
+    BVH::new(&world.objects, 0.0, 1.0)
 }
 
 fn main() {
