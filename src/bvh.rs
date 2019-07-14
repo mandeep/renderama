@@ -30,9 +30,9 @@ impl BVH {
             left = objects[0].clone();
             right = objects[1].clone();
         } else {
-            let mut right_world = objects.split_off(world.len() / 2);
+            let mut right_objects = objects.split_off(world.len() / 2);
             left = Box::new(BVH::new(&mut objects, start_time, end_time));
-            right = Box::new(BVH::new(&mut right_world, start_time, end_time));
+            right = Box::new(BVH::new(&mut right_objects, start_time, end_time));
         }
 
         let bbox = surrounding_box(&left.bounding_box(start_time, end_time).unwrap(),
