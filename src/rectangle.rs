@@ -89,9 +89,24 @@ impl Hitable for Rectangle {
     }
 
     fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB> {
-        let minimum = Vector3::new(self.x0, self.y0, self.k - 0.0001);
-        let maximum = Vector3::new(self.x1, self.y1, self.k + 0.0001);
-        Some(AABB::new(minimum, maximum))
+        match self.plane {
+            Plane::XY => {
+                let minimum = Vector3::new(self.x0, self.y0, self.k - 0.0001);
+                let maximum = Vector3::new(self.x1, self.y1, self.k + 0.0001);
+                Some(AABB::new(minimum, maximum))
+            }
+            Plane::YZ => {
+                let minimum = Vector3::new(self.k - 0.0001, self.x0, self.y0);
+                let maximum = Vector3::new(self.k + 0.0001, self.x1, self.y1);
+                Some(AABB::new(minimum, maximum))
+            }
+            Plane::XZ => {
+                let minimum = Vector3::new(self.x0, self.k - 0.0001, self.y0);
+                let maximum = Vector3::new(self.x1, self.k + 0.0001, self.y1);
+                Some(AABB::new(minimum, maximum))
+            }
+
+        }
     }
 
     fn box_clone(&self) -> Box<dyn Hitable> {
