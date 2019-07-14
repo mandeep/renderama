@@ -95,6 +95,6 @@ impl Hitable for Rectangle {
     }
 
     fn box_clone(&self) -> Box<dyn Hitable> {
-        Box::new(*self).clone()
+        Box::new(self.clone())
     }
 }
