@@ -15,29 +15,29 @@ pub enum Plane {
 #[derive(Clone)]
 pub struct Rectangle {
     plane: Plane,
-    x0: f32,
-    x1: f32,
-    y0: f32,
-    y1: f32,
+    r0: f32,
+    r1: f32,
+    s0: f32,
+    s1: f32,
     k: f32,
     material: Box<dyn Material>,
 }
 
 impl Rectangle {
     pub fn new<M: Material + 'static>(plane: Plane,
-                                      x0: f32,
-                                      x1: f32,
-                                      y0: f32,
-                                      y1: f32,
+                                      r0: f32,
+                                      r1: f32,
+                                      s0: f32,
+                                      s1: f32,
                                       k: f32,
                                       material: M)
                                       -> Rectangle {
         let material = Box::new(material);
         Rectangle { plane,
-                    x0,
-                    x1,
-                    y0,
-                    y1,
+                    r0,
+                    r1,
+                    s0,
+                    s1,
                     k,
                     material }
     }
@@ -45,67 +45,105 @@ impl Rectangle {
 
 impl Hitable for Rectangle {
     fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitRecord> {
-        let mut t = 0.0;
-        let mut x = 0.0;
-        let mut y = 0.0;
-        let mut normal: Vector3<f32> = Vector3::zeros();
         match self.plane {
             Plane::XY => {
-                t = (self.k - ray.origin.z) / ray.direction.z;
-                x = ray.origin.x + t * ray.direction.x;
-                y = ray.origin.y + t * ray.direction.y;
-                normal = Vector3::new(0.0, 0.0, 1.0);
+                let t = (self.k - ray.origin.z) / ray.direction.z;
+
+                if t < position_min || t > position_max {
+                    return None;
+                }
+
+                let x = ray.origin.x + t * ray.direction.x;
+                let y = ray.origin.y + t * ray.direction.y;
+
+                if x < self.r0 || x > self.r1 || y < self.s0 || y > self.s1 {
+                    return None;
+                }
+
+                let normal = Vector3::new(0.0, 0.0, 1.0);
+
+                let record = HitRecord::new(t,
+                                            (x - self.r0) / (self.r1 - self.r0),
+                                            (y - self.s0) / (self.s1 - self.s0),
+                                            ray.point_at_parameter(t),
+                                            normal,
+                                            self.material.box_clone());
+
+
+                Some(record)
             }
             Plane::YZ => {
-                t = (self.k - ray.origin.x) / ray.direction.x;
-                x = ray.origin.y + t * ray.direction.y;
-                y = ray.origin.z + t * ray.direction.z;
-                normal = Vector3::new(1.0, 0.0, 0.0);
+                let t = (self.k - ray.origin.x) / ray.direction.x;
+
+                if t < position_min || t > position_max {
+                    return None;
+                }
+
+                let y = ray.origin.y + t * ray.direction.y;
+                let z = ray.origin.z + t * ray.direction.z;
+
+                if y < self.r0 || y > self.r1 || z < self.s0 || z > self.s1 {
+                    return None;
+                }
+
+                let normal = Vector3::new(1.0, 0.0, 0.0);
+
+                let record = HitRecord::new(t,
+                                            (y - self.r0) / (self.r1 - self.r0),
+                                            (z - self.s0) / (self.s1 - self.s0),
+                                            ray.point_at_parameter(t),
+                                            normal,
+                                            self.material.box_clone());
+
+
+                Some(record)
             }
             Plane::XZ => {
-                t = (self.k - ray.origin.y) / ray.direction.y;
-                x = ray.origin.x + t * ray.direction.x;
-                y = ray.origin.z + t * ray.direction.z;
-                normal = Vector3::new(0.0, 1.0, 0.0);
+                let t = (self.k - ray.origin.y) / ray.direction.y;
+
+                if t < position_min || t > position_max {
+                    return None;
+                }
+
+                let x = ray.origin.x + t * ray.direction.x;
+                let z = ray.origin.z + t * ray.direction.z;
+
+                if x < self.r0 || x > self.r1 || z < self.s0 || z > self.s1 {
+                    return None;
+                }
+
+                let normal = Vector3::new(0.0, 1.0, 0.0);
+
+                let record = HitRecord::new(t,
+                                            (x - self.r0) / (self.r1 - self.r0),
+                                            (z - self.s0) / (self.s1 - self.s0),
+                                            ray.point_at_parameter(t),
+                                            normal,
+                                            self.material.box_clone());
+
+
+                Some(record)
             }
         }
-
-        if t < position_min || t > position_max {
-            return None;
-        }
-
-        if x < self.x0 || x > self.x1 || y < self.y0 || y > self.y1 {
-            return None;
-        }
-
-        let record = HitRecord::new(t,
-                                    (x - self.x0) / (self.x1 - self.x0),
-                                    (y - self.y0) / (self.y1 - self.y0),
-                                    ray.point_at_parameter(t),
-                                    normal,
-                                    self.material.box_clone());
-
-        Some(record)
     }
 
-    fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB> {
+    fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
         match self.plane {
             Plane::XY => {
-                let minimum = Vector3::new(self.x0, self.y0, self.k - 0.0001);
-                let maximum = Vector3::new(self.x1, self.y1, self.k + 0.0001);
+                let minimum = Vector3::new(self.r0, self.s0, self.k - 0.0001);
+                let maximum = Vector3::new(self.r1, self.s1, self.k + 0.0001);
                 Some(AABB::new(minimum, maximum))
             }
             Plane::YZ => {
-                let minimum = Vector3::new(self.k - 0.0001, self.x0, self.y0);
-                let maximum = Vector3::new(self.k + 0.0001, self.x1, self.y1);
+                let minimum = Vector3::new(self.k - 0.0001, self.r0, self.s0);
+                let maximum = Vector3::new(self.k + 0.0001, self.r1, self.s1);
                 Some(AABB::new(minimum, maximum))
             }
             Plane::XZ => {
-                let minimum = Vector3::new(self.x0, self.k - 0.0001, self.y0);
-                let maximum = Vector3::new(self.x1, self.k + 0.0001, self.y1);
+                let minimum = Vector3::new(self.r0, self.k - 0.0001, self.s0);
+                let maximum = Vector3::new(self.r1, self.k + 0.0001, self.s1);
                 Some(AABB::new(minimum, maximum))
             }
-
         }
     }
 
