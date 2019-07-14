@@ -355,16 +355,18 @@ fn main() {
         *pixel = image::Rgb([coordinate.x as u8, coordinate.y as u8, coordinate.z as u8]);
     });
 
+    let mut buffer = image::ImageBuffer::new(width, height);
+    buffer.enumerate_pixels_mut().for_each(|(x, y, pixel)| {
+        let index = (y * width + x) as usize;
+        *pixel = pixels[index];
+    });
+
+    image::ImageRgb8(buffer).flipv().save("render.png").unwrap();
+
+
     if args.len() > 2 && args[2] == "--denoise" {
         let output_image = denoise(&pixels, width as usize, height as usize);
-        image::save_buffer("denoised_output.png", &output_image[..], width as u32, height as u32, image::RGB(8))
+        image::save_buffer("denoised_render.png", &output_image[..], width as u32, height as u32, image::RGB(8))
         .expect("Failed to save output image");
-    } else {
-        let mut buffer = image::ImageBuffer::new(width, height);
-        buffer.enumerate_pixels_mut().for_each(|(x, y, pixel)| {
-            let index = (y * width + x) as usize;
-            *pixel = pixels[index];
-        });
-        image::ImageRgb8(buffer).flipv().save("render.png").unwrap();
     }
 }
