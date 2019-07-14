@@ -1,4 +1,5 @@
 use rand::Rng;
+use std::cmp::Ordering;
 
 use aabb::{surrounding_box, AABB};
 use hitable::{HitRecord, Hitable};
@@ -17,34 +18,7 @@ impl BVH {
         let mut rng = rand::thread_rng();
         let axis: usize = rng.gen_range(0, 3);
 
-        if axis == 0 {
-            objects.sort_by(|a, b| {
-                             a.bounding_box(start_time, end_time)
-                              .unwrap()
-                              .minimum
-                              .x
-                              .partial_cmp(&b.bounding_box(start_time, end_time).unwrap().minimum.x)
-                              .unwrap()
-                         });
-        } else if axis == 1 {
-            objects.sort_by(|a, b| {
-                             a.bounding_box(start_time, end_time)
-                              .unwrap()
-                              .minimum
-                              .y
-                              .partial_cmp(&b.bounding_box(start_time, end_time).unwrap().minimum.y)
-                              .unwrap()
-                         });
-        } else {
-            objects.sort_by(|a, b| {
-                             a.bounding_box(start_time, end_time)
-                              .unwrap()
-                              .minimum
-                              .z
-                              .partial_cmp(&b.bounding_box(start_time, end_time).unwrap().minimum.z)
-                              .unwrap()
-                         });
-        }
+        objects.sort_by(|a, b| box_compare(a, b, axis, start_time, end_time));
 
         let left: Box<dyn Hitable>;
         let right: Box<dyn Hitable>;
@@ -96,4 +70,13 @@ impl Hitable for BVH {
     fn box_clone(&self) -> Box<dyn Hitable> {
         Box::new(self.clone())
     }
+}
+
+
+fn box_compare(a: &Box<dyn Hitable>, b: &Box<dyn Hitable>, axis: usize, start_time: f32, end_time:f32) -> Ordering {
+     a.bounding_box(start_time, end_time)
+      .unwrap()
+      .minimum[axis]
+      .partial_cmp(&b.bounding_box(start_time, end_time).unwrap().minimum[axis])
+      .unwrap()
 }
