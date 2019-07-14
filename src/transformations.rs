@@ -1,3 +1,5 @@
+use std::f32;
+
 use aabb::AABB;
 use hitable::{HitRecord, Hitable};
 use nalgebra::Vector3;
@@ -31,21 +33,23 @@ impl Hitable for Translate {
         if let Some(mut bbox) = self.hitable.bounding_box(t0, t1) {
             bbox.minimum += self.offset;
             bbox.maximum += self.offset;
-            return Some(bbox);
+            Some(bbox)
+        } else {
+            None
         }
-
-        None
     }
 
     fn box_clone(&self) -> Box<dyn Hitable> {
-        Box::new(*self).clone()
+        Box::new(self.clone())
     }
 }
 
+#[derive(Clone)]
 pub struct Rotate {
     sin_theta: f32,
     cos_theta: f32,
     hitable: Box<dyn Hitable>,
+    bbox: AABB,
 }
 
 impl Rotate {
@@ -56,9 +60,39 @@ impl Rotate {
         let sin_theta = radians.sin();
         let cos_theta = radians.cos();
 
-        Rotate { sin_theta,
-                 cos_theta,
-                 hitable }
+        if let Some(bbox) = hitable.bounding_box(0.0, 1.0) {
+            let mut minimum = Vector3::new(f32::MAX, f32::MAX, f32::MAX);
+            let mut maximum = Vector3::new(-f32::MAX, -f32::MAX, -f32::MAX);
+
+            for i in 0..2 {
+                for j in 0..2 {
+                    for k in 0..2 {
+                        let x = i as f32 * bbox.maximum.x + (1.0 - i as f32) * bbox.minimum.x;
+                        let y = j as f32 * bbox.maximum.y + (1.0 - j as f32) * bbox.minimum.y;
+                        let z = k as f32 * bbox.maximum.z + (1.0 - k as f32) * bbox.minimum.z;
+                        let newx = cos_theta * x + sin_theta * z;
+                        let newz = -sin_theta * x + cos_theta * z;
+
+                        let tester = Vector3::new(newx, y, newz);
+
+                        for c in 0..3 {
+                            if tester[c] > maximum[c] {
+                                maximum[c] = tester[c];
+                            }
+                            if tester[c] < minimum[c] {
+                                minimum[c] = tester[c];
+                            }
+                        }
+                    }
+                }
+            }
+            Rotate { sin_theta, cos_theta, hitable, bbox }
+        } else {
+            let minimum = Vector3::new(f32::MAX, f32::MAX, f32::MAX);
+            let maximum = Vector3::new(-f32::MAX, -f32::MAX, -f32::MAX);
+            let bbox = AABB::new(minimum, maximum);
+            Rotate { sin_theta, cos_theta, hitable, bbox }
+        }
     }
 }
 
@@ -84,5 +118,13 @@ impl Hitable for Rotate {
         } else {
             None
         }
+    }
+
+    fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB> {
+        Some(self.bbox.clone())
+    }
+
+    fn box_clone(&self) -> Box<dyn Hitable> {
+        Box::new(self.clone())
     }
 }
