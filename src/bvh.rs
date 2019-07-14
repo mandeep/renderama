@@ -48,15 +48,16 @@ impl Hitable for BVH {
             let left = self.left.hit(&ray, t_min, t_max);
             let right = self.right.hit(&ray, t_min, t_max);
             match (left, right) {
-                (Some(left), Some(right)) =>
+                (Some(left), Some(right)) => {
                     if left.parameter < right.parameter {
                         Some(left)
                     } else {
                         Some(right)
-                    },
+                    }
+                }
                 (Some(left), None) => Some(left),
                 (None, Some(right)) => Some(right),
-                _ => None
+                _ => None,
             }
         } else {
             None
@@ -72,9 +73,13 @@ impl Hitable for BVH {
     }
 }
 
-
-fn box_compare(a: &Box<dyn Hitable>, b: &Box<dyn Hitable>, axis: usize, start_time: f32, end_time:f32) -> Ordering {
-     a.bounding_box(start_time, end_time)
+fn box_compare(a: &Box<dyn Hitable>,
+               b: &Box<dyn Hitable>,
+               axis: usize,
+               start_time: f32,
+               end_time: f32)
+               -> Ordering {
+    a.bounding_box(start_time, end_time)
       .unwrap()
       .minimum[axis]
       .partial_cmp(&b.bounding_box(start_time, end_time).unwrap().minimum[axis])
