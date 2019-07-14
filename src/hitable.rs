@@ -67,12 +67,13 @@ impl FlipNormals {
 
 impl Hitable for FlipNormals {
     fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitRecord> {
-        self.hitable
-            .hit(&ray, position_min, position_max)
-            .map(|mut hit| {
-                hit.normal = -hit.normal;
-                hit
-            })
+        if let Some(mut hit) = self.hitable.hit(&ray, position_min, position_max) {
+            hit.normal = -hit.normal;
+            Some(hit)
+        } else {
+            None
+        }
+
     }
 
     fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB> {
