@@ -69,7 +69,6 @@ impl Hitable for Rectangle {
                                             normal,
                                             self.material.box_clone());
 
-
                 Some(record)
             }
             Plane::YZ => {
@@ -95,7 +94,6 @@ impl Hitable for Rectangle {
                                             normal,
                                             self.material.box_clone());
 
-
                 Some(record)
             }
             Plane::XZ => {
@@ -120,7 +118,6 @@ impl Hitable for Rectangle {
                                             ray.point_at_parameter(t),
                                             normal,
                                             self.material.box_clone());
-
 
                 Some(record)
             }

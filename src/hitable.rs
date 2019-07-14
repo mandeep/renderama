@@ -73,7 +73,6 @@ impl Hitable for FlipNormals {
         } else {
             None
         }
-
     }
 
     fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB> {

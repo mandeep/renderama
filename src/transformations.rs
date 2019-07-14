@@ -29,7 +29,7 @@ impl Hitable for Translate {
         }
     }
 
-    fn bounding_box(&self, t0: f32, t1:f32) -> Option<AABB> {
+    fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB> {
         if let Some(mut bbox) = self.hitable.bounding_box(t0, t1) {
             bbox.minimum += self.offset;
             bbox.maximum += self.offset;
@@ -86,12 +86,18 @@ impl Rotate {
                     }
                 }
             }
-            Rotate { sin_theta, cos_theta, hitable, bbox }
+            Rotate { sin_theta,
+                     cos_theta,
+                     hitable,
+                     bbox }
         } else {
             let minimum = Vector3::new(f32::MAX, f32::MAX, f32::MAX);
             let maximum = Vector3::new(-f32::MAX, -f32::MAX, -f32::MAX);
             let bbox = AABB::new(minimum, maximum);
-            Rotate { sin_theta, cos_theta, hitable, bbox }
+            Rotate { sin_theta,
+                     cos_theta,
+                     hitable,
+                     bbox }
         }
     }
 }
