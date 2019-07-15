@@ -226,8 +226,8 @@ fn cornell_box_scene() -> BVH {
                                              0.0,
                                              555.0,
                                              555.0,
-                                             Diffuse::new(ConstantTexture::new(0.12, 0.45,
-                                                                               0.15)))));
+                                             Diffuse::new(ConstantTexture::new(0.65, 0.05,
+                                                                               0.05)))));
 
     world.add(Rectangle::new(rectangle::Plane::YZ,
                              0.0,
@@ -235,7 +235,7 @@ fn cornell_box_scene() -> BVH {
                              0.0,
                              555.0,
                              0.0,
-                             Diffuse::new(ConstantTexture::new(0.65, 0.05, 0.05))));
+                             Diffuse::new(ConstantTexture::new(0.12, 0.45, 0.15))));
 
     world.add(Rectangle::new(rectangle::Plane::XZ,
                              213.0,
