@@ -14,7 +14,7 @@ pub trait Material: Send + Sync {
                rng: &mut rand::rngs::ThreadRng)
                -> Option<(Vector3<f32>, Ray)>;
 
-    fn emitted(&self, u: f32, v: f32, p: &Vector3<f32>) -> Vector3<f32> {
+    fn emitted(&self, _u: f32, _v: f32, _p: &Vector3<f32>) -> Vector3<f32> {
         Vector3::zeros()
     }
 }
@@ -250,14 +250,14 @@ impl Light {
 }
 
 impl Material for Light {
-    fn box_clone(&self) -> Box<Material> {
+    fn box_clone(&self) -> Box<dyn Material> {
         Box::new((*self).clone())
     }
 
     fn scatter(&self,
-               ray: &Ray,
-               record: &HitRecord,
-               rng: &mut rand::rngs::ThreadRng)
+               _ray: &Ray,
+               _record: &HitRecord,
+               _rng: &mut rand::rngs::ThreadRng)
                -> Option<(Vector3<f32>, Ray)> {
         None
     }

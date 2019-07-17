@@ -17,7 +17,7 @@ impl Ray {
     pub fn new(a: Vector3<f32>, b: Vector3<f32>, time: f32) -> Ray {
         Ray { origin: a,
               direction: b,
-              time: 0.0 }
+              time: time }
     }
 
     /// Find the point on the ray given the parameter of the direction vector
