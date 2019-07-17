@@ -339,7 +339,8 @@ fn main() {
 
     let world = cornell_box_scene();
 
-    println!("Rendering scene with {} samples at {} x {} dimensions...", samples, width, height);
+    println!("Rendering scene with {} samples at {} x {} dimensions...",
+             samples, width, height);
 
     let mut pixels = vec![image::Rgb([0, 0, 0]); (width * height) as usize];
     pixels.par_iter_mut().enumerate().for_each(|(i, pixel)| {
@@ -369,7 +370,8 @@ fn main() {
                                                               coordinate.z as u8]);
                                      });
 
-    println!("Finished rendering in {}. Render saved to render.png.", utils::format_time(instant.elapsed()));
+    println!("Finished rendering in {}. Render saved to render.png.",
+             utils::format_time(instant.elapsed()));
 
     let mut buffer = image::ImageBuffer::new(width, height);
     buffer.enumerate_pixels_mut().for_each(|(x, y, pixel)| {
@@ -390,6 +392,7 @@ fn main() {
                            height as u32,
                            image::RGB(8)).expect("Failed to save output image");
 
-    println!("Finished denoising in {}. Render saved to denoised_render.png.", utils::format_time(instant.elapsed()));
+        println!("Finished denoising in {}. Render saved to denoised_render.png.",
+                 utils::format_time(instant.elapsed()));
     }
 }
