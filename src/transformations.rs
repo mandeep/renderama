@@ -44,7 +44,6 @@ impl Hitable for Translate {
     }
 }
 
-
 #[derive(Clone)]
 pub struct Rotate {
     sin_theta: f32,
@@ -58,25 +57,21 @@ impl Rotate {
         let radians = (f32::consts::PI / 180.0) * angle;
         let sin_theta = radians.sin();
         let cos_theta = radians.cos();
-        Rotate {
-            sin_theta,
-            cos_theta,
-            hitable
-        }
+        Rotate { sin_theta,
+                 cos_theta,
+                 hitable }
     }
 
     pub fn rotate(&self, vector: &Vector3<f32>) -> Vector3<f32> {
-        Vector3::new(
-            self.cos_theta * vector.x - self.sin_theta * vector.z,
-            vector.y,
-            self.sin_theta * vector.x + self.cos_theta * vector.z)
+        Vector3::new(self.cos_theta * vector.x - self.sin_theta * vector.z,
+                     vector.y,
+                     self.sin_theta * vector.x + self.cos_theta * vector.z)
     }
 
     pub fn rotate_inv(&self, vector: &Vector3<f32>) -> Vector3<f32> {
-        Vector3::new(
-            self.cos_theta * vector.x + self.sin_theta * vector.z,
-            vector.y,
-            -self.sin_theta * vector.x + self.cos_theta * vector.z)
+        Vector3::new(self.cos_theta * vector.x + self.sin_theta * vector.z,
+                     vector.y,
+                     -self.sin_theta * vector.x + self.cos_theta * vector.z)
     }
 }
 
@@ -110,8 +105,12 @@ impl Hitable for Rotate {
                         let newz = -self.sin_theta * x + self.cos_theta * z;
                         let tester = Vector3::new(newx, y, newz);
                         for c in 0..3 {
-                            if tester[c] > max[c] { max[c] = tester[c] };
-                            if tester[c] < min[c] { min[c] = tester[c] };
+                            if tester[c] > max[c] {
+                                max[c] = tester[c]
+                            };
+                            if tester[c] < min[c] {
+                                min[c] = tester[c]
+                            };
                         }
                     }
                 }
