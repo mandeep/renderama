@@ -6,4 +6,4 @@ Ray Tracing Minibook series and Matt Pharr, Wenzel Jakob,
 and Greg Humphreys' Physically Based Rendering.
 
 ![Spheres](random_spheres.png)
-![CornellBox](cornell_box.png)
+![CornellBox](cornell_box_denoised.png)
