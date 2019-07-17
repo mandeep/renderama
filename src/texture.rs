@@ -31,7 +31,7 @@ impl ConstantTexture {
 /// This allows the ConstantTexture's color to be retrieved
 /// as well as the ConstantTexture to be cloned.
 impl Texture for ConstantTexture {
-    fn value(&self, u: f32, v: f32, p: &Vector3<f32>) -> Vector3<f32> {
+    fn value(&self, _u: f32, _v: f32, _p: &Vector3<f32>) -> Vector3<f32> {
         self.color
     }
 
@@ -56,7 +56,7 @@ impl ImageTexture {
 /// Determine which pixel to retrieve from the image by
 /// converting pixel coordinates to UV coordinates
 impl Texture for ImageTexture {
-    fn value(&self, u: f32, v: f32, p: &Vector3<f32>) -> Vector3<f32> {
+    fn value(&self, u: f32, v: f32, _p: &Vector3<f32>) -> Vector3<f32> {
         let i = 0.0f32.max((u * self.im.width() as f32).min(self.im.width() as f32 - 1.0));
         let j = 0.0f32.max((v * self.im.height() as f32).min(self.im.height() as f32 - 1.0));
 
