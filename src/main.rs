@@ -16,10 +16,12 @@ mod rectangle;
 mod sphere;
 mod texture;
 mod transformations;
+mod utils;
 mod world;
 
 use std::env;
 use std::f32;
+use std::time::Instant;
 
 use nalgebra::core::Vector3;
 use rand::thread_rng;
@@ -317,6 +319,8 @@ fn cornell_box_scene() -> BVH {
 }
 
 fn main() {
+    let mut instant = Instant::now();
+
     let (width, height): (u32, u32) = (1000, 1000);
     let args: Vec<String> = env::args().collect();
     let samples: u32 = args[1].parse().unwrap();
@@ -334,6 +338,8 @@ fn main() {
                              1.0);
 
     let world = cornell_box_scene();
+
+    println!("Rendering scene with {} samples at {} x {} dimensions...", samples, width, height);
 
     let mut pixels = vec![image::Rgb([0, 0, 0]); (width * height) as usize];
     pixels.par_iter_mut().enumerate().for_each(|(i, pixel)| {
@@ -363,6 +369,8 @@ fn main() {
                                                               coordinate.z as u8]);
                                      });
 
+    println!("Finished rendering in {}. Render saved to render.png.", utils::format_time(instant.elapsed()));
+
     let mut buffer = image::ImageBuffer::new(width, height);
     buffer.enumerate_pixels_mut().for_each(|(x, y, pixel)| {
                                      let index = (y * width + x) as usize;
@@ -372,11 +380,16 @@ fn main() {
     image::ImageRgb8(buffer).flipv().save("render.png").unwrap();
 
     if args.len() > 2 && args[2] == "--denoise" {
+        instant = Instant::now();
+        println!("Denoising image...");
+
         let output_image = denoise(&pixels, width as usize, height as usize);
         image::save_buffer("denoised_render.png",
                            &output_image[..],
                            width as u32,
                            height as u32,
                            image::RGB(8)).expect("Failed to save output image");
+
+    println!("Finished denoising in {}. Render saved to denoised_render.png.", utils::format_time(instant.elapsed()));
     }
 }
