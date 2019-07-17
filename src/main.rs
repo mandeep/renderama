@@ -31,7 +31,6 @@ use rayon::prelude::*;
 use camera::Camera;
 use denoise::denoise;
 
-
 fn main() {
     let mut instant = Instant::now();
 
