@@ -15,41 +15,33 @@ use world::World;
 pub fn three_spheres_scene() -> BVH {
     let mut world = World::new();
 
-    world.add(Sphere::new(
-        Vector3::new(0.6, 0.0, -1.0),
-        Vector3::new(0.6, 0.0, -1.0),
-        0.5,
-        Diffuse::new(ConstantTexture::new(0.75, 0.25, 0.25)),
-        0.0,
-        1.0,
-    ));
+    world.add(Sphere::new(Vector3::new(0.6, 0.0, -1.0),
+                          Vector3::new(0.6, 0.0, -1.0),
+                          0.5,
+                          Diffuse::new(ConstantTexture::new(0.75, 0.25, 0.25)),
+                          0.0,
+                          1.0));
 
-    world.add(Sphere::new(
-        Vector3::new(-0.6, 0.0, -1.0),
-        Vector3::new(-0.6, 0.0, -1.0),
-        0.5,
-        Reflective::new(Vector3::new(0.5, 0.5, 0.5), 0.1),
-        0.0,
-        1.0,
-    ));
+    world.add(Sphere::new(Vector3::new(-0.6, 0.0, -1.0),
+                          Vector3::new(-0.6, 0.0, -1.0),
+                          0.5,
+                          Reflective::new(Vector3::new(0.5, 0.5, 0.5), 0.1),
+                          0.0,
+                          1.0));
 
-    world.add(Sphere::new(
-        Vector3::new(0.0, 0.1, -2.0),
-        Vector3::new(0.0, 0.1, -2.0),
-        0.5,
-        Refractive::new(Vector3::new(0.9, 0.9, 0.9), 1.5, 0.0),
-        0.0,
-        1.0,
-    ));
+    world.add(Sphere::new(Vector3::new(0.0, 0.1, -2.0),
+                          Vector3::new(0.0, 0.1, -2.0),
+                          0.5,
+                          Refractive::new(Vector3::new(0.9, 0.9, 0.9), 1.5, 0.0),
+                          0.0,
+                          1.0));
 
-    world.add(Sphere::new(
-        Vector3::new(0.0, -100.5, -1.0),
-        Vector3::new(0.0, -100.5, -1.0),
-        100.0,
-        Diffuse::new(ConstantTexture::new(0.5, 0.5, 0.5)),
-        0.0,
-        1.0,
-    ));
+    world.add(Sphere::new(Vector3::new(0.0, -100.5, -1.0),
+                          Vector3::new(0.0, -100.5, -1.0),
+                          100.0,
+                          Diffuse::new(ConstantTexture::new(0.5, 0.5, 0.5)),
+                          0.0,
+                          1.0));
 
     BVH::new(&world.objects, 0.0, 1.0)
 }
