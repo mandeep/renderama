@@ -1,6 +1,7 @@
 use nalgebra::Vector3;
 
 use ray::Ray;
+use utils;
 
 #[derive(Clone)]
 pub struct AABB {
@@ -13,23 +14,17 @@ impl AABB {
         AABB { minimum, maximum }
     }
 
-    pub fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> bool {
-        for i in 0..3 {
-            let mut t0 = (self.minimum[i] - ray.origin[i]) * ray.inverse_direction[i];
-            let mut t1 = (self.maximum[i] - ray.origin[i]) * ray.inverse_direction[i];
+    /// Perform an intersection test with an AABB
+    /// Reference: https://medium.com/@bromanz/another-view-on-the-classic-ray
+    /// -aabb-intersection-algorithm-for-bvh-traversal-41125138b525
+    pub fn hit(&self, ray: &Ray, _position_min: f32, _position_max: f32) -> bool {
+        let t0 = (self.minimum - ray.origin).component_mul(&ray.inverse_direction);
+        let t1 = (self.maximum - ray.origin).component_mul(&ray.inverse_direction);
 
-            if ray.inverse_direction[i] < 0.0 {
-                std::mem::swap(&mut t0, &mut t1);
-            }
+        let tmin = utils::component_min(&t0, &t1);
+        let tmax = utils::component_max(&t0, &t1);
 
-            let tmin = t0.max(position_min);
-            let tmax = t1.min(position_max);
-
-            if tmax <= tmin {
-                return false;
-            }
-        }
-        return true;
+        tmin.max() <= tmax.min()
     }
 }
 
