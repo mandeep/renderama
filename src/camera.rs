@@ -73,10 +73,10 @@ impl Camera {
         let radius: Vector3<f32> = self.lens_radius * pick_sphere_point(&mut rng);
         let offset: Vector3<f32> = self.u * radius.x + self.v * radius.y;
         let time = self.start_time + rng.gen::<f32>() * (self.end_time - self.start_time);
-        Ray { origin: self.origin + offset,
-              direction: self.lower_left_corner + s * self.horizontal + t * self.vertical
-                         - self.origin
-                         - offset,
-              time: time }
+        Ray::new(self.origin + offset,
+                 self.lower_left_corner + s * self.horizontal + t * self.vertical
+                            - self.origin
+                            - offset,
+                 time)
     }
 }
