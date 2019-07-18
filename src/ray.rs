@@ -10,14 +10,17 @@ pub struct Ray {
     pub origin: Vector3<f32>,
     pub direction: Vector3<f32>,
     pub time: f32,
+    pub inverse_direction: Vector3<f32>,
 }
 
 impl Ray {
     /// Create a new Ray with origin at `a` and direction towards `b`
     pub fn new(a: Vector3<f32>, b: Vector3<f32>, time: f32) -> Ray {
+        let inverse_direction = b.map(|component| 1.0 / component);
         Ray { origin: a,
               direction: b,
-              time: time }
+              time: time,
+              inverse_direction: inverse_direction }
     }
 
     /// Find the point on the ray given the parameter of the direction vector

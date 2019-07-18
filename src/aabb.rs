@@ -15,11 +15,10 @@ impl AABB {
 
     pub fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> bool {
         for i in 0..3 {
-            let inverse_direction = 1.0 / ray.direction[i];
-            let mut t0 = (self.minimum[i] - ray.origin[i]) * inverse_direction;
-            let mut t1 = (self.maximum[i] - ray.origin[i]) * inverse_direction;
+            let mut t0 = (self.minimum[i] - ray.origin[i]) * ray.inverse_direction[i];
+            let mut t1 = (self.maximum[i] - ray.origin[i]) * ray.inverse_direction[i];
 
-            if inverse_direction < 0.0 {
+            if ray.inverse_direction[i] < 0.0 {
                 std::mem::swap(&mut t0, &mut t1);
             }
 
