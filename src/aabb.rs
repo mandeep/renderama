@@ -1,7 +1,6 @@
 use nalgebra::Vector3;
 
 use ray::Ray;
-use utils;
 
 #[derive(Clone)]
 pub struct AABB {
@@ -21,8 +20,8 @@ impl AABB {
         let t0 = (self.minimum - ray.origin).component_mul(&ray.inverse_direction);
         let t1 = (self.maximum - ray.origin).component_mul(&ray.inverse_direction);
 
-        let tmin = utils::component_min(&t0, &t1);
-        let tmax = utils::component_max(&t0, &t1);
+        let tmin = t0.zip_map(&t1, |a, b| a.min(b));
+        let tmax = t0.zip_map(&t1, |a, b| a.max(b));
 
         tmin.max() <= tmax.min()
     }
