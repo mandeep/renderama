@@ -25,11 +25,11 @@ impl AABB {
 
         tmin.max() <= tmax.min()
     }
-}
 
-pub fn surrounding_box(box0: &AABB, box1: &AABB) -> AABB {
-    let small = box0.minimum.zip_map(&box1.minimum, |a, b| a.min(b));
-    let big = box0.maximum.zip_map(&box1.maximum, |a, b| a.max(b));
+    pub fn surrounding_box(&self, other: &AABB) -> AABB {
+        let small = self.minimum.zip_map(&other.minimum, |a, b| a.min(b));
+        let big = self.maximum.zip_map(&other.maximum, |a, b| a.max(b));
 
-    AABB::new(small, big)
+        AABB::new(small, big)
+    }
 }

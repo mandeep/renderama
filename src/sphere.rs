@@ -109,7 +109,7 @@ impl Hitable for Sphere {
         let small = aabb::AABB::new(min0, max0);
         let big = aabb::AABB::new(min1, max1);
 
-        Some(aabb::surrounding_box(&small, &big))
+        Some(small.surrounding_box(&big))
     }
 
     fn box_clone(&self) -> Box<dyn Hitable> {

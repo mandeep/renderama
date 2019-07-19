@@ -1,7 +1,7 @@
 use rand::Rng;
 use std::cmp::Ordering;
 
-use aabb::{surrounding_box, AABB};
+use aabb::AABB;
 use hitable::{HitRecord, Hitable};
 use ray::Ray;
 
@@ -35,8 +35,9 @@ impl BVH {
             right = Box::new(BVH::new(&mut right_objects, start_time, end_time));
         }
 
-        let bbox = surrounding_box(&left.bounding_box(start_time, end_time).unwrap(),
-                                   &right.bounding_box(start_time, end_time).unwrap());
+        let bbox = left.bounding_box(start_time, end_time)
+            .unwrap().
+            surrounding_box(&right.bounding_box(start_time, end_time).unwrap());
 
         BVH { left, right, bbox }
     }

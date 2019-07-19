@@ -1,6 +1,6 @@
 use nalgebra::core::Vector3;
 
-use aabb::{surrounding_box, AABB};
+use aabb::AABB;
 use hitable::{HitRecord, Hitable};
 use materials::Diffuse;
 use ray::Ray;
@@ -63,7 +63,7 @@ impl Hitable for World {
                 let mut accumulated_box = AABB::new(Vector3::zeros(), Vector3::zeros());
                 for _ in 0..self.objects.len() {
                     if let Some(_) = self.objects.first().unwrap().bounding_box(t0, t1) {
-                        accumulated_box = surrounding_box(&accumulated_box, &temporary_box);
+                        accumulated_box = accumulated_box.surrounding_box(&temporary_box);
                     } else {
                         return None;
                     }
