@@ -36,8 +36,8 @@ impl BVH {
         }
 
         let bbox = left.bounding_box(start_time, end_time)
-            .unwrap().
-            surrounding_box(&right.bounding_box(start_time, end_time).unwrap());
+                       .unwrap()
+                       .surrounding_box(&right.bounding_box(start_time, end_time).unwrap());
 
         BVH { left, right, bbox }
     }

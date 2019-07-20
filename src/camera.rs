@@ -75,8 +75,8 @@ impl Camera {
         let time = self.start_time + rng.gen::<f32>() * (self.end_time - self.start_time);
         Ray::new(self.origin + offset,
                  self.lower_left_corner + s * self.horizontal + t * self.vertical
-                            - self.origin
-                            - offset,
+                 - self.origin
+                 - offset,
                  time)
     }
 }
