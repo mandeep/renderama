@@ -29,6 +29,8 @@ use rand::thread_rng;
 use rayon::prelude::*;
 
 use camera::Camera;
+
+#[cfg(feature = "denoise")]
 use denoise::denoise;
 
 fn main() {
@@ -106,7 +108,10 @@ fn main() {
         instant = Instant::now();
         println!("Denoising image...");
 
+        #[cfg(feature = "denoise")]
         let output_image = denoise(&pixels, width as usize, height as usize);
+
+        #[cfg(feature = "denoise")]
         image::save_buffer("denoised_render.png",
                            &output_image[..],
                            width as u32,
