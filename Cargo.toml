@@ -3,12 +3,15 @@ name = "renderama"
 version = "0.15.0"
 authors = ["mandeep <mandeep@users.noreply.github.com>"]
 
+[features]
+denoise = ["oidn"]
+
 [dependencies]
 image = { git = "https://github.com/image-rs/image" }
 nalgebra = "0.17.3"
 rand = "0.7.0"
 rayon = "1.0.3"
-oidn = "0.2.0"
+oidn = { version = "0.2.0", optional = true }
 
 [profile.dev]
 opt-level = 3

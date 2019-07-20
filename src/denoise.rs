@@ -1,3 +1,4 @@
+#[cfg(feature = "denoise")]
 /// Denoise the input buffer and return a denoised buffer
 /// Reference: https://github.com/Twinklebear/oidn-rs/blob/master/examples/simple/src/main.rs
 pub fn denoise(input: &Vec<image::Rgb<u8>>, width: usize, height: usize) -> Vec<u8> {
