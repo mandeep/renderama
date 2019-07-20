@@ -29,8 +29,8 @@ impl Camera {
     /// aperture controls how big the lens of the camera is and focus distance
     /// controls the shortest distance that the camera can focus.
     pub fn new(origin: Vector3<f32>,
-               lookat: Vector3<f32>,
-               view: Vector3<f32>,
+               lookat: &Vector3<f32>,
+               view: &Vector3<f32>,
                fov: f32,
                aspect: f32,
                aperture: f32,
