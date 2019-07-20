@@ -40,15 +40,16 @@ fn main() {
 
     let origin = Vector3::new(278.0, 278.0, -800.0);
     let lookat = Vector3::new(278.0, 278.0, 0.0);
-    let camera = Camera::new(origin,
-                             lookat,
-                             Vector3::new(0.0, 1.0, 0.0),
-                             40.0,
-                             (width / height) as f32,
-                             0.0,
-                             10.0,
-                             0.0,
-                             1.0);
+    let view = Vector3::new(0.0, 1.0, 0.0);
+    let fov = 40.0;
+    let aspect_ratio = (width / height) as f32;
+    let aperture = 0.0;
+    let focus_distance = 10.0;
+    let time0 = 0.0;
+    let time1 = 1.0;
+
+    let camera = Camera::new(origin, &lookat, &view, fov, aspect_ratio, aperture, focus_distance,
+                             time0, time1);
 
     let world = scene::cornell_box_scene();
 
