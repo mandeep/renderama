@@ -229,31 +229,17 @@ pub fn simple_light_scene() -> BVH {
 pub fn cornell_box_scene() -> BVH {
     let mut world = World::new();
 
+    let red = Diffuse::new(ConstantTexture::new(0.65, 0.05, 0.05));
+    let green = Diffuse::new(ConstantTexture::new(0.12, 0.45, 0.15));
+    let white = Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73));
+    let light = Light::new(ConstantTexture::new(15.0, 15.0, 15.0));
+
     // add the walls of the cornell box to the world
-    world.add(FlipNormals::of(Rectangle::new(Plane::YZ,
-                                             0.0,
-                                             555.0,
-                                             0.0,
-                                             555.0,
-                                             555.0,
-                                             Diffuse::new(ConstantTexture::new(0.65, 0.05,
-                                                                               0.05)))));
+    world.add(FlipNormals::of(Rectangle::new(Plane::YZ, 0.0, 555.0, 0.0, 555.0, 555.0, red)));
 
-    world.add(Rectangle::new(Plane::YZ,
-                             0.0,
-                             555.0,
-                             0.0,
-                             555.0,
-                             0.0,
-                             Diffuse::new(ConstantTexture::new(0.12, 0.45, 0.15))));
+    world.add(Rectangle::new(Plane::YZ, 0.0, 555.0, 0.0, 555.0, 0.0, green));
 
-    world.add(Rectangle::new(Plane::XZ,
-                             213.0,
-                             343.0,
-                             227.0,
-                             332.0,
-                             554.0,
-                             Light::new(ConstantTexture::new(15.0, 15.0, 15.0))));
+    world.add(Rectangle::new(Plane::XZ, 213.0, 343.0, 227.0, 332.0, 554.0, light));
 
     world.add(FlipNormals::of(Rectangle::new(Plane::XZ,
                                              0.0,
@@ -261,16 +247,9 @@ pub fn cornell_box_scene() -> BVH {
                                              0.0,
                                              555.0,
                                              555.0,
-                                             Diffuse::new(ConstantTexture::new(0.73, 0.73,
-                                                                               0.73)))));
+                                             white.clone())));
 
-    world.add(Rectangle::new(Plane::XZ,
-                             0.0,
-                             555.0,
-                             0.0,
-                             555.0,
-                             0.0,
-                             Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73))));
+    world.add(Rectangle::new(Plane::XZ, 0.0, 555.0, 0.0, 555.0, 0.0, white.clone()));
 
     world.add(FlipNormals::of(Rectangle::new(Plane::XY,
                                              0.0,
@@ -278,50 +257,133 @@ pub fn cornell_box_scene() -> BVH {
                                              0.0,
                                              555.0,
                                              555.0,
-                                             Diffuse::new(ConstantTexture::new(0.73, 0.73,
-                                                                               0.73)))));
+                                             white.clone())));
 
     // add the boxes of the cornell box to the world
     let p0 = Vector3::new(0.0, 0.0, 0.0);
     let mut p1 = Vector3::new(165.0, 165.0, 165.0);
 
-    world.add(Translate::new(Vector3::new(130.0, 0.0, 65.0), Rotate::new(-18.0, Rectangle::new(Plane::XY, p0.x, p1.x, p0.y, p1.y, p1.z,
-                             Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73))))));
+    world.add(Translate::new(Vector3::new(130.0, 0.0, 65.0),
+                             Rotate::new(-18.0,
+                                         Rectangle::new(Plane::XY,
+                                                        p0.x,
+                                                        p1.x,
+                                                        p0.y,
+                                                        p1.y,
+                                                        p1.z,
+                                                        white.clone()))));
 
-    world.add(Translate::new(Vector3::new(130.0, 0.0, 65.0), Rotate::new(-18.0, FlipNormals::of(Rectangle::new(Plane::XY, p0.x, p1.x, p0.y, p1.y, p0.z,
-                                              Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73)))))));
+    world.add(Translate::new(Vector3::new(130.0, 0.0, 65.0),
+                             Rotate::new(-18.0,
+                                         FlipNormals::of(Rectangle::new(Plane::XY,
+                                                                        p0.x,
+                                                                        p1.x,
+                                                                        p0.y,
+                                                                        p1.y,
+                                                                        p0.z,
+                                                                        white.clone())))));
 
-    world.add(Translate::new(Vector3::new(130.0, 0.0, 65.0), Rotate::new(-18.0, Rectangle::new(Plane::XZ, p0.x, p1.x, p0.z, p1.z, p1.y,
-                             Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73))))));
+    world.add(Translate::new(Vector3::new(130.0, 0.0, 65.0),
+                             Rotate::new(-18.0,
+                                         Rectangle::new(Plane::XZ,
+                                                        p0.x,
+                                                        p1.x,
+                                                        p0.z,
+                                                        p1.z,
+                                                        p1.y,
+                                                        white.clone()))));
 
-    world.add(Translate::new(Vector3::new(130.0, 0.0, 65.0), Rotate::new(-18.0, FlipNormals::of(Rectangle::new(Plane::XZ, p0.x, p1.x, p0.z, p1.z, p0.y,
-                             Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73)))))));
+    world.add(Translate::new(Vector3::new(130.0, 0.0, 65.0),
+                             Rotate::new(-18.0,
+                                         FlipNormals::of(Rectangle::new(Plane::XZ,
+                                                                        p0.x,
+                                                                        p1.x,
+                                                                        p0.z,
+                                                                        p1.z,
+                                                                        p0.y,
+                                                                        white.clone())))));
 
-    world.add(Translate::new(Vector3::new(130.0, 0.0, 65.0), Rotate::new(-18.0, Rectangle::new(Plane::YZ, p0.y, p1.y, p0.z, p1.z, p1.x,
-                             Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73))))));
+    world.add(Translate::new(Vector3::new(130.0, 0.0, 65.0),
+                             Rotate::new(-18.0,
+                                         Rectangle::new(Plane::YZ,
+                                                        p0.y,
+                                                        p1.y,
+                                                        p0.z,
+                                                        p1.z,
+                                                        p1.x,
+                                                        white.clone()))));
 
-    world.add(Translate::new(Vector3::new(130.0, 0.0, 65.0), Rotate::new(-18.0, FlipNormals::of(Rectangle::new(Plane::YZ, p0.y, p1.y, p0.z, p1.z, p0.x,
-                             Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73)))))));
+    world.add(Translate::new(Vector3::new(130.0, 0.0, 65.0),
+                             Rotate::new(-18.0,
+                                         FlipNormals::of(Rectangle::new(Plane::YZ,
+                                                                        p0.y,
+                                                                        p1.y,
+                                                                        p0.z,
+                                                                        p1.z,
+                                                                        p0.x,
+                                                                        white.clone())))));
 
     p1 = Vector3::new(165.0, 330.0, 165.0);
 
-    world.add(Translate::new(Vector3::new(265.0, 0.0, 295.0), Rotate::new(15.0, Rectangle::new(Plane::XY, p0.x, p1.x, p0.y, p1.y, p1.z,
-                             Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73))))));
+    world.add(Translate::new(Vector3::new(265.0, 0.0, 295.0),
+                             Rotate::new(15.0,
+                                         Rectangle::new(Plane::XY,
+                                                        p0.x,
+                                                        p1.x,
+                                                        p0.y,
+                                                        p1.y,
+                                                        p1.z,
+                                                        white.clone()))));
 
-    world.add(Translate::new(Vector3::new(265.0, 0.0, 295.0), Rotate::new(15.0, FlipNormals::of(Rectangle::new(Plane::XY, p0.x, p1.x, p0.y, p1.y, p0.z,
-                                              Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73)))))));
+    world.add(Translate::new(Vector3::new(265.0, 0.0, 295.0),
+                             Rotate::new(15.0,
+                                         FlipNormals::of(Rectangle::new(Plane::XY,
+                                                                        p0.x,
+                                                                        p1.x,
+                                                                        p0.y,
+                                                                        p1.y,
+                                                                        p0.z,
+                                                                        white.clone())))));
 
-    world.add(Translate::new(Vector3::new(265.0, 0.0, 295.0), Rotate::new(15.0, Rectangle::new(Plane::XZ, p0.x, p1.x, p0.z, p1.z, p1.y,
-                             Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73))))));
+    world.add(Translate::new(Vector3::new(265.0, 0.0, 295.0),
+                             Rotate::new(15.0,
+                                         Rectangle::new(Plane::XZ,
+                                                        p0.x,
+                                                        p1.x,
+                                                        p0.z,
+                                                        p1.z,
+                                                        p1.y,
+                                                        white.clone()))));
 
-    world.add(Translate::new(Vector3::new(265.0, 0.0, 295.0), Rotate::new(15.0, FlipNormals::of(Rectangle::new(Plane::XZ, p0.x, p1.x, p0.z, p1.z, p0.y,
-                             Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73)))))));
+    world.add(Translate::new(Vector3::new(265.0, 0.0, 295.0),
+                             Rotate::new(15.0,
+                                         FlipNormals::of(Rectangle::new(Plane::XZ,
+                                                                        p0.x,
+                                                                        p1.x,
+                                                                        p0.z,
+                                                                        p1.z,
+                                                                        p0.y,
+                                                                        white.clone())))));
 
-    world.add(Translate::new(Vector3::new(265.0, 0.0, 295.0), Rotate::new(15.0, Rectangle::new(Plane::YZ, p0.y, p1.y, p0.z, p1.z, p1.x,
-                             Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73))))));
+    world.add(Translate::new(Vector3::new(265.0, 0.0, 295.0),
+                             Rotate::new(15.0,
+                                         Rectangle::new(Plane::YZ,
+                                                        p0.y,
+                                                        p1.y,
+                                                        p0.z,
+                                                        p1.z,
+                                                        p1.x,
+                                                        white.clone()))));
 
-    world.add(Translate::new(Vector3::new(265.0, 0.0, 295.0), Rotate::new(15.0, FlipNormals::of(Rectangle::new(Plane::YZ, p0.y, p1.y, p0.z, p1.z, p0.x,
-                             Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73)))))));
+    world.add(Translate::new(Vector3::new(265.0, 0.0, 295.0),
+                             Rotate::new(15.0,
+                                         FlipNormals::of(Rectangle::new(Plane::YZ,
+                                                                        p0.y,
+                                                                        p1.y,
+                                                                        p0.z,
+                                                                        p1.z,
+                                                                        p0.x,
+                                                                        white.clone())))));
 
     BVH::new(&world.objects, 0.0, 1.0)
 }
