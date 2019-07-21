@@ -104,14 +104,13 @@ fn main() {
 
     image::ImageRgb8(buffer).flipv().save("render.png").unwrap();
 
-    if args.len() > 2 && args[2] == "--denoise" {
+    #[cfg(feature = "denoise")]
+    {
         instant = Instant::now();
         println!("Denoising image...");
 
-        #[cfg(feature = "denoise")]
         let output_image = denoise(&pixels, width as usize, height as usize);
 
-        #[cfg(feature = "denoise")]
         image::save_buffer("denoised_render.png",
                            &output_image[..],
                            width as u32,
