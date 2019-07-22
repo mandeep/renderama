@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use nalgebra::core::Vector3;
 
 use hitable::HitRecord;
@@ -6,8 +8,6 @@ use texture::Texture;
 
 /// The Material trait is responsible for giving a color to the object implementing the trait
 pub trait Material: Send + Sync {
-    fn box_clone(&self) -> Box<dyn Material>;
-
     fn scatter(&self,
                ray: &Ray,
                record: &HitRecord,
@@ -19,15 +19,9 @@ pub trait Material: Send + Sync {
     }
 }
 
-impl Clone for Box<dyn Material> {
-    fn clone(&self) -> Box<dyn Material> {
-        self.box_clone()
-    }
-}
-
 #[derive(Clone)]
 pub struct Diffuse {
-    pub albedo: Box<dyn Texture>,
+    pub albedo: Arc<dyn Texture>,
 }
 
 impl Diffuse {
@@ -36,17 +30,12 @@ impl Diffuse {
     /// albedo is a Vector3 of the RGB values assigned to the material
     /// where each value is a float between 0.0 and 1.0.
     pub fn new<T: Texture + 'static>(albedo: T) -> Diffuse {
-        let albedo = Box::new(albedo);
+        let albedo = Arc::new(albedo);
         Diffuse { albedo: albedo }
     }
 }
 
 impl Material for Diffuse {
-    /// Create a new Diffuse Material on the heap
-    fn box_clone(&self) -> Box<dyn Material> {
-        Box::new((*self).clone())
-    }
-
     /// Retrieve the color of the given material
     ///
     /// For spheres, the center of the sphere is given by the record.point
@@ -130,11 +119,6 @@ impl Reflective {
 }
 
 impl Material for Reflective {
-    /// Create a new Reflective material on the heap
-    fn box_clone(&self) -> Box<dyn Material> {
-        Box::new((*self).clone())
-    }
-
     /// Retrieve the color of the given material
     ///
     /// For spheres, the center of the sphere is given by the record.point
@@ -182,11 +166,6 @@ impl Refractive {
 }
 
 impl Material for Refractive {
-    /// Create a new Refractive Material on the heap
-    fn box_clone(&self) -> Box<dyn Material> {
-        Box::new((*self).clone())
-    }
-
     /// Retrieve the color of the given material
     ///
     /// For spheres, the center of the sphere is given by the record.point
@@ -239,21 +218,17 @@ impl Material for Refractive {
 
 #[derive(Clone)]
 pub struct Light {
-    pub emit: Box<dyn Texture>,
+    pub emit: Arc<dyn Texture>,
 }
 
 impl Light {
     pub fn new<T: Texture + 'static>(emit: T) -> Light {
-        let emit = Box::new(emit);
+        let emit = Arc::new(emit);
         Light { emit: emit }
     }
 }
 
 impl Material for Light {
-    fn box_clone(&self) -> Box<dyn Material> {
-        Box::new((*self).clone())
-    }
-
     fn scatter(&self,
                _ray: &Ray,
                _record: &HitRecord,

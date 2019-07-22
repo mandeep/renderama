@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use nalgebra::core::Vector3;
 
 use aabb;
@@ -7,12 +9,11 @@ use ray::Ray;
 
 use std::f32;
 
-#[derive(Clone)]
 pub struct Sphere {
     pub start_center: Vector3<f32>,
     pub end_center: Vector3<f32>,
     pub radius: f32,
-    pub material: Box<dyn Material>,
+    pub material: Arc<dyn Material>,
     pub start_time: f32,
     pub end_time: f32,
 }
@@ -20,8 +21,8 @@ pub struct Sphere {
 impl Sphere {
     /// Create a new sphere to place into the world
     ///
-    /// We use the 'static lifetime so that we can create a Box material
-    /// within the function rather than having to pass a Box material
+    /// We use the 'static lifetime so that we can create a Arc material
+    /// within the function rather than having to pass a Arc material
     /// as an input parameter.
     pub fn new<M: Material + 'static>(start_center: Vector3<f32>,
                                       end_center: Vector3<f32>,
@@ -30,7 +31,7 @@ impl Sphere {
                                       start_time: f32,
                                       end_time: f32)
                                       -> Sphere {
-        let material = Box::new(material);
+        let material = Arc::new(material);
         Sphere { start_center,
                  end_center,
                  radius,
@@ -92,7 +93,7 @@ impl Hitable for Sphere {
                                                v,
                                                point,
                                                normal,
-                                               self.material.box_clone()));
+                                               self.material.clone()));
                 }
             }
         }
@@ -110,9 +111,5 @@ impl Hitable for Sphere {
         let big = aabb::AABB::new(min1, max1);
 
         Some(small.surrounding_box(&big))
-    }
-
-    fn box_clone(&self) -> Box<dyn Hitable> {
-        Box::new(self.clone())
     }
 }
