@@ -1,19 +1,19 @@
 use std::f32;
+use std::sync::Arc;
 
 use aabb::AABB;
 use hitable::{HitRecord, Hitable};
 use nalgebra::Vector3;
 use ray::Ray;
 
-#[derive(Clone)]
 pub struct Translate {
     offset: Vector3<f32>,
-    hitable: Box<dyn Hitable>,
+    hitable: Arc<dyn Hitable>,
 }
 
 impl Translate {
     pub fn new<H: Hitable + 'static>(offset: Vector3<f32>, hitable: H) -> Translate {
-        let hitable = Box::new(hitable);
+        let hitable = Arc::new(hitable);
         Translate { offset, hitable }
     }
 }
@@ -38,22 +38,18 @@ impl Hitable for Translate {
             None
         }
     }
-
-    fn box_clone(&self) -> Box<dyn Hitable> {
-        Box::new(self.clone())
-    }
 }
 
 #[derive(Clone)]
 pub struct Rotate {
     sin_theta: f32,
     cos_theta: f32,
-    hitable: Box<dyn Hitable>,
+    hitable: Arc<dyn Hitable>,
 }
 
 impl Rotate {
     pub fn new<H: Hitable + 'static>(angle: f32, hitable: H) -> Rotate {
-        let hitable = Box::new(hitable);
+        let hitable = Arc::new(hitable);
         let radians = (f32::consts::PI / 180.0) * angle;
         let sin_theta = radians.sin();
         let cos_theta = radians.cos();
@@ -121,9 +117,5 @@ impl Hitable for Rotate {
         } else {
             None
         }
-    }
-
-    fn box_clone(&self) -> Box<dyn Hitable> {
-        Box::new(self.clone())
     }
 }

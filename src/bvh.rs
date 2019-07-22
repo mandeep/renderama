@@ -1,5 +1,6 @@
 use rand::Rng;
 use std::cmp::Ordering;
+use std::sync::Arc;
 
 use aabb::AABB;
 use hitable::{HitRecord, Hitable};
@@ -7,20 +8,20 @@ use ray::Ray;
 
 #[derive(Clone)]
 pub struct BVH {
-    left: Box<dyn Hitable>,
-    right: Box<dyn Hitable>,
+    left: Arc<dyn Hitable>,
+    right: Arc<dyn Hitable>,
     bbox: AABB,
 }
 
 impl BVH {
-    pub fn new(mut world: &mut Vec<Box<dyn Hitable>>, start_time: f32, end_time: f32) -> BVH {
+    pub fn new(mut world: &mut Vec<Arc<dyn Hitable>>, start_time: f32, end_time: f32) -> BVH {
         let mut rng = rand::thread_rng();
         let axis: usize = rng.gen_range(0, 3);
 
         world.sort_by(|a, b| box_compare(a, b, axis, start_time, end_time));
 
-        let left: Box<dyn Hitable>;
-        let right: Box<dyn Hitable>;
+        let left: Arc<dyn Hitable>;
+        let right: Arc<dyn Hitable>;
 
         if world.len() == 1 {
             left = world[0].clone();
@@ -30,8 +31,8 @@ impl BVH {
             right = world[1].clone();
         } else {
             let mut right_objects = world.split_off(world.len() / 2);
-            left = Box::new(BVH::new(&mut world, start_time, end_time));
-            right = Box::new(BVH::new(&mut right_objects, start_time, end_time));
+            left = Arc::new(BVH::new(&mut world, start_time, end_time));
+            right = Arc::new(BVH::new(&mut right_objects, start_time, end_time));
         }
 
         let bbox = left.bounding_box(start_time, end_time)
@@ -67,14 +68,10 @@ impl Hitable for BVH {
     fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
         Some(self.bbox.clone())
     }
-
-    fn box_clone(&self) -> Box<dyn Hitable> {
-        Box::new(self.clone())
-    }
 }
 
-fn box_compare(a: &Box<dyn Hitable>,
-               b: &Box<dyn Hitable>,
+fn box_compare(a: &Arc<dyn Hitable>,
+               b: &Arc<dyn Hitable>,
                axis: usize,
                start_time: f32,
                end_time: f32)

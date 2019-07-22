@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use nalgebra::core::Vector3;
 
 use aabb::AABB;
@@ -9,7 +11,7 @@ use texture::ConstantTexture;
 #[derive(Clone)]
 /// The World struct holds all of the objects in the scene
 pub struct World {
-    pub objects: Vec<Box<dyn Hitable>>,
+    pub objects: Vec<Arc<dyn Hitable>>,
 }
 
 impl World {
@@ -20,11 +22,11 @@ impl World {
 
     /// Add objects to the instantiated world
     ///
-    /// We use a 'static lifetime so that we can Box
+    /// We use a 'static lifetime so that we can Arc
     /// object inside the function rather than having to
-    /// pass object as a Boxed object as an input parameter.
+    /// pass object as an Arced object as an input parameter.
     pub fn add<H: Hitable + 'static>(&mut self, object: H) {
-        let object = Box::new(object);
+        let object = Arc::new(object);
         self.objects.push(object);
     }
 }
@@ -37,7 +39,7 @@ impl Hitable for World {
                                         0.0,
                                         Vector3::zeros(),
                                         Vector3::zeros(),
-                                        Box::new(Diffuse::new(ConstantTexture::new(0.0, 0.0,
+                                        Arc::new(Diffuse::new(ConstantTexture::new(0.0, 0.0,
                                                                                    0.0))));
         let mut hit_anything: bool = false;
         let mut closed_so_far: f32 = position_max;
@@ -74,9 +76,5 @@ impl Hitable for World {
             }
         }
         None
-    }
-
-    fn box_clone(&self) -> Box<dyn Hitable> {
-        Box::new(self.clone())
     }
 }

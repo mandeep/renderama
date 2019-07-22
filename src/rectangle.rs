@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use nalgebra::core::Vector3;
 
 use aabb::AABB;
@@ -20,7 +22,7 @@ pub struct Rectangle {
     s0: f32,
     s1: f32,
     k: f32,
-    material: Box<dyn Material>,
+    material: Arc<dyn Material>,
 }
 
 impl Rectangle {
@@ -32,7 +34,7 @@ impl Rectangle {
                                       k: f32,
                                       material: M)
                                       -> Rectangle {
-        let material = Box::new(material);
+        let material = Arc::new(material);
         Rectangle { plane,
                     r0,
                     r1,
@@ -67,7 +69,7 @@ impl Hitable for Rectangle {
                                             (y - self.s0) / (self.s1 - self.s0),
                                             ray.point_at_parameter(t),
                                             normal,
-                                            self.material.box_clone());
+                                            self.material.clone());
 
                 Some(record)
             }
@@ -92,7 +94,7 @@ impl Hitable for Rectangle {
                                             (z - self.s0) / (self.s1 - self.s0),
                                             ray.point_at_parameter(t),
                                             normal,
-                                            self.material.box_clone());
+                                            self.material.clone());
 
                 Some(record)
             }
@@ -117,7 +119,7 @@ impl Hitable for Rectangle {
                                             (z - self.s0) / (self.s1 - self.s0),
                                             ray.point_at_parameter(t),
                                             normal,
-                                            self.material.box_clone());
+                                            self.material.clone());
 
                 Some(record)
             }
@@ -142,9 +144,5 @@ impl Hitable for Rectangle {
                 Some(AABB::new(minimum, maximum))
             }
         }
-    }
-
-    fn box_clone(&self) -> Box<dyn Hitable> {
-        Box::new(self.clone())
     }
 }

@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use nalgebra::core::Vector3;
 
 use aabb::AABB;
@@ -12,7 +14,7 @@ pub struct HitRecord {
     pub v: f32,
     pub point: Vector3<f32>,
     pub normal: Vector3<f32>,
-    pub material: Box<dyn Material>,
+    pub material: Arc<dyn Material>,
 }
 
 impl HitRecord {
@@ -22,7 +24,7 @@ impl HitRecord {
                v: f32,
                point: Vector3<f32>,
                normal: Vector3<f32>,
-               material: Box<dyn Material>)
+               material: Arc<dyn Material>)
                -> HitRecord {
         HitRecord { parameter: parameter,
                     u: u,
@@ -43,24 +45,15 @@ pub trait Hitable: Send + Sync {
     fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitRecord>;
 
     fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB>;
-
-    fn box_clone(&self) -> Box<dyn Hitable>;
 }
 
-impl Clone for Box<dyn Hitable> {
-    fn clone(&self) -> Box<dyn Hitable> {
-        self.box_clone()
-    }
-}
-
-#[derive(Clone)]
 pub struct FlipNormals {
-    hitable: Box<dyn Hitable>,
+    hitable: Arc<dyn Hitable>,
 }
 
 impl FlipNormals {
     pub fn of<H: Hitable + 'static>(hitable: H) -> FlipNormals {
-        let hitable = Box::new(hitable);
+        let hitable = Arc::new(hitable);
         FlipNormals { hitable }
     }
 }
@@ -77,9 +70,5 @@ impl Hitable for FlipNormals {
 
     fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB> {
         self.hitable.bounding_box(t0, t1)
-    }
-
-    fn box_clone(&self) -> Box<dyn Hitable> {
-        Box::new((*self).clone())
     }
 }
