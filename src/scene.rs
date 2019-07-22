@@ -43,7 +43,7 @@ pub fn three_spheres_scene() -> BVH {
                           0.0,
                           1.0));
 
-    BVH::new(&world.objects, 0.0, 1.0)
+    BVH::new(&mut world.objects, 0.0, 1.0)
 }
 
 pub fn random_spheres_scene() -> BVH {
@@ -139,7 +139,7 @@ pub fn random_spheres_scene() -> BVH {
                           0.0,
                           1.0));
 
-    BVH::new(&world.objects, 0.0, 1.0)
+    BVH::new(&mut world.objects, 0.0, 1.0)
 }
 
 pub fn earth_scene() -> World {
@@ -188,7 +188,7 @@ pub fn motion_scene() -> BVH {
                           0.0,
                           1.0));
 
-    BVH::new(&world.objects, 0.0, 1.0)
+    BVH::new(&mut world.objects, 0.0, 1.0)
 }
 
 pub fn simple_light_scene() -> BVH {
@@ -223,7 +223,7 @@ pub fn simple_light_scene() -> BVH {
                              -2.0,
                              Light::new(ConstantTexture::new(4.0, 4.0, 4.0))));
 
-    BVH::new(&world.objects, 0.0, 1.0)
+    BVH::new(&mut world.objects, 0.0, 1.0)
 }
 
 pub fn cornell_box_scene() -> BVH {
@@ -385,5 +385,5 @@ pub fn cornell_box_scene() -> BVH {
                                                                         p0.x,
                                                                         white.clone())))));
 
-    BVH::new(&world.objects, 0.0, 1.0)
+    BVH::new(&mut world.objects, 0.0, 1.0)
 }

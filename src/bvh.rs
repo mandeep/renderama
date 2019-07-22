@@ -13,25 +13,24 @@ pub struct BVH {
 }
 
 impl BVH {
-    pub fn new(world: &Vec<Box<dyn Hitable>>, start_time: f32, end_time: f32) -> BVH {
-        let mut objects = world.clone();
+    pub fn new(mut world: &mut Vec<Box<dyn Hitable>>, start_time: f32, end_time: f32) -> BVH {
         let mut rng = rand::thread_rng();
         let axis: usize = rng.gen_range(0, 3);
 
-        objects.sort_by(|a, b| box_compare(a, b, axis, start_time, end_time));
+        world.sort_by(|a, b| box_compare(a, b, axis, start_time, end_time));
 
         let left: Box<dyn Hitable>;
         let right: Box<dyn Hitable>;
 
-        if objects.len() == 1 {
-            left = objects[0].clone();
-            right = objects[0].clone();
-        } else if objects.len() == 2 {
-            left = objects[0].clone();
-            right = objects[1].clone();
+        if world.len() == 1 {
+            left = world[0].clone();
+            right = world[0].clone();
+        } else if world.len() == 2 {
+            left = world[0].clone();
+            right = world[1].clone();
         } else {
-            let mut right_objects = objects.split_off(world.len() / 2);
-            left = Box::new(BVH::new(&mut objects, start_time, end_time));
+            let mut right_objects = world.split_off(world.len() / 2);
+            left = Box::new(BVH::new(&mut world, start_time, end_time));
             right = Box::new(BVH::new(&mut right_objects, start_time, end_time));
         }
 
