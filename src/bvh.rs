@@ -20,16 +20,13 @@ impl BVH {
 
         world.sort_by(|a, b| box_compare(a, b, axis, start_time, end_time));
 
-        let left: Arc<dyn Hitable>;
-        let right: Arc<dyn Hitable>;
+        let mut left = world[0].clone();
+        let mut right = world[0].clone();
 
-        if world.len() == 1 {
-            left = world[0].clone();
-            right = world[0].clone();
-        } else if world.len() == 2 {
+        if world.len() == 2 {
             left = world[0].clone();
             right = world[1].clone();
-        } else {
+        } else if world.len() > 2 {
             let mut right_objects = world.split_off(world.len() / 2);
             left = Arc::new(BVH::new(&mut world, start_time, end_time));
             right = Arc::new(BVH::new(&mut right_objects, start_time, end_time));
