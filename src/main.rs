@@ -86,6 +86,8 @@ fn main() {
 
                                          coordinate /= samples as f32;
                                          (0..3).for_each(|i| {
+                                                   // take the sqrt as we are gamma correcting
+                                                   // with a gamma of 2 (1 / gamma)
                                                    coordinate[i] = 255.0 * coordinate[i].sqrt()
                                                });
                                          *pixel = image::Rgb([coordinate.x as u8,
