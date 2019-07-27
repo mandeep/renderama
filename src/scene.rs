@@ -1,12 +1,13 @@
 use std::f32;
+use std::sync::Arc;
 
 use nalgebra::core::Vector3;
 
 use bvh::BVH;
 use hitable::FlipNormals;
 use materials::{Diffuse, Light, Reflective, Refractive};
+use prism::Prism;
 use rectangle::{Plane, Rectangle};
-
 use sphere::Sphere;
 use texture::{ConstantTexture, ImageTexture};
 use transformations::{Rotate, Translate};
@@ -261,129 +262,15 @@ pub fn cornell_box_scene() -> BVH {
 
     // add the boxes of the cornell box to the world
     let p0 = Vector3::new(0.0, 0.0, 0.0);
-    let mut p1 = Vector3::new(165.0, 165.0, 165.0);
+    let p1 = Vector3::new(165.0, 165.0, 165.0);
 
     world.add(Translate::new(Vector3::new(130.0, 0.0, 65.0),
-                             Rotate::new(-18.0,
-                                         Rectangle::new(Plane::XY,
-                                                        p0.x,
-                                                        p1.x,
-                                                        p0.y,
-                                                        p1.y,
-                                                        p1.z,
-                                                        white.clone()))));
+                             Rotate::new(-18.0, Prism::new(p0, p1, Arc::new(white.clone())))));
 
-    world.add(Translate::new(Vector3::new(130.0, 0.0, 65.0),
-                             Rotate::new(-18.0,
-                                         FlipNormals::of(Rectangle::new(Plane::XY,
-                                                                        p0.x,
-                                                                        p1.x,
-                                                                        p0.y,
-                                                                        p1.y,
-                                                                        p0.z,
-                                                                        white.clone())))));
-
-    world.add(Translate::new(Vector3::new(130.0, 0.0, 65.0),
-                             Rotate::new(-18.0,
-                                         Rectangle::new(Plane::XZ,
-                                                        p0.x,
-                                                        p1.x,
-                                                        p0.z,
-                                                        p1.z,
-                                                        p1.y,
-                                                        white.clone()))));
-
-    world.add(Translate::new(Vector3::new(130.0, 0.0, 65.0),
-                             Rotate::new(-18.0,
-                                         FlipNormals::of(Rectangle::new(Plane::XZ,
-                                                                        p0.x,
-                                                                        p1.x,
-                                                                        p0.z,
-                                                                        p1.z,
-                                                                        p0.y,
-                                                                        white.clone())))));
-
-    world.add(Translate::new(Vector3::new(130.0, 0.0, 65.0),
-                             Rotate::new(-18.0,
-                                         Rectangle::new(Plane::YZ,
-                                                        p0.y,
-                                                        p1.y,
-                                                        p0.z,
-                                                        p1.z,
-                                                        p1.x,
-                                                        white.clone()))));
-
-    world.add(Translate::new(Vector3::new(130.0, 0.0, 65.0),
-                             Rotate::new(-18.0,
-                                         FlipNormals::of(Rectangle::new(Plane::YZ,
-                                                                        p0.y,
-                                                                        p1.y,
-                                                                        p0.z,
-                                                                        p1.z,
-                                                                        p0.x,
-                                                                        white.clone())))));
-
-    p1 = Vector3::new(165.0, 330.0, 165.0);
+    let p2 = Vector3::new(165.0, 330.0, 165.0);
 
     world.add(Translate::new(Vector3::new(265.0, 0.0, 295.0),
-                             Rotate::new(15.0,
-                                         Rectangle::new(Plane::XY,
-                                                        p0.x,
-                                                        p1.x,
-                                                        p0.y,
-                                                        p1.y,
-                                                        p1.z,
-                                                        white.clone()))));
-
-    world.add(Translate::new(Vector3::new(265.0, 0.0, 295.0),
-                             Rotate::new(15.0,
-                                         FlipNormals::of(Rectangle::new(Plane::XY,
-                                                                        p0.x,
-                                                                        p1.x,
-                                                                        p0.y,
-                                                                        p1.y,
-                                                                        p0.z,
-                                                                        white.clone())))));
-
-    world.add(Translate::new(Vector3::new(265.0, 0.0, 295.0),
-                             Rotate::new(15.0,
-                                         Rectangle::new(Plane::XZ,
-                                                        p0.x,
-                                                        p1.x,
-                                                        p0.z,
-                                                        p1.z,
-                                                        p1.y,
-                                                        white.clone()))));
-
-    world.add(Translate::new(Vector3::new(265.0, 0.0, 295.0),
-                             Rotate::new(15.0,
-                                         FlipNormals::of(Rectangle::new(Plane::XZ,
-                                                                        p0.x,
-                                                                        p1.x,
-                                                                        p0.z,
-                                                                        p1.z,
-                                                                        p0.y,
-                                                                        white.clone())))));
-
-    world.add(Translate::new(Vector3::new(265.0, 0.0, 295.0),
-                             Rotate::new(15.0,
-                                         Rectangle::new(Plane::YZ,
-                                                        p0.y,
-                                                        p1.y,
-                                                        p0.z,
-                                                        p1.z,
-                                                        p1.x,
-                                                        white.clone()))));
-
-    world.add(Translate::new(Vector3::new(265.0, 0.0, 295.0),
-                             Rotate::new(15.0,
-                                         FlipNormals::of(Rectangle::new(Plane::YZ,
-                                                                        p0.y,
-                                                                        p1.y,
-                                                                        p0.z,
-                                                                        p1.z,
-                                                                        p0.x,
-                                                                        white.clone())))));
+                             Rotate::new(15.0, Prism::new(p0, p2, Arc::new(white.clone())))));
 
     BVH::new(&mut world.objects, 0.0, 1.0)
 }

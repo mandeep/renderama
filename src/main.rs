@@ -11,6 +11,7 @@ mod camera;
 mod denoise;
 mod hitable;
 mod materials;
+mod prism;
 mod ray;
 mod rectangle;
 mod scene;
