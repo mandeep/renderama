@@ -43,6 +43,23 @@ impl Rectangle {
                     k,
                     material }
     }
+
+    pub fn from_box(plane: Plane,
+                    r0: f32,
+                    r1: f32,
+                    s0: f32,
+                    s1: f32,
+                    k: f32,
+                    material: Arc<dyn Material>)
+                    -> Rectangle {
+        Rectangle { plane,
+                    r0,
+                    r1,
+                    s0,
+                    s1,
+                    k,
+                    material }
+    }
 }
 
 impl Hitable for Rectangle {
