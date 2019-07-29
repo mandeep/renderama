@@ -4,6 +4,7 @@ use std::sync::Arc;
 use nalgebra::core::Vector3;
 
 use bvh::BVH;
+use camera::Camera;
 use hitable::FlipNormals;
 use materials::{Diffuse, Light, Reflective, Refractive};
 use plane::{Axis, Plane};
@@ -13,7 +14,27 @@ use texture::{ConstantTexture, ImageTexture};
 use transformations::{Rotate, Translate};
 use world::World;
 
-pub fn three_spheres_scene() -> BVH {
+pub fn three_spheres_scene(width: u32, height: u32) -> (Camera, BVH) {
+    let origin = Vector3::new(13.0, 2.0, 3.0);
+    let lookat = Vector3::new(0.0, 0.0, 0.0);
+    let view = Vector3::new(0.0, 1.0, 0.0);
+    let fov = 20.0;
+    let aspect_ratio = (width / height) as f32;
+    let aperture = 0.1;
+    let focus_distance = 10.0;
+    let time0 = 0.0;
+    let time1 = 1.0;
+
+    let camera = Camera::new(origin,
+                             &lookat,
+                             &view,
+                             fov,
+                             aspect_ratio,
+                             aperture,
+                             focus_distance,
+                             time0,
+                             time1);
+
     let mut world = World::new();
 
     world.add(Sphere::new(Vector3::new(0.6, 0.0, -1.0),
@@ -44,10 +65,32 @@ pub fn three_spheres_scene() -> BVH {
                           0.0,
                           1.0));
 
-    BVH::new(&mut world.objects, 0.0, 1.0)
+    let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
+
+    (camera, bvh)
 }
 
-pub fn random_spheres_scene() -> BVH {
+pub fn random_spheres_scene(width: u32, height: u32) -> (Camera, BVH) {
+    let origin = Vector3::new(13.0, 2.0, 3.0);
+    let lookat = Vector3::new(0.0, 0.0, 0.0);
+    let view = Vector3::new(0.0, 1.0, 0.0);
+    let fov = 20.0;
+    let aspect_ratio = (width / height) as f32;
+    let aperture = 0.1;
+    let focus_distance = 10.0;
+    let time0 = 0.0;
+    let time1 = 1.0;
+
+    let camera = Camera::new(origin,
+                             &lookat,
+                             &view,
+                             fov,
+                             aspect_ratio,
+                             aperture,
+                             focus_distance,
+                             time0,
+                             time1);
+
     let mut world = World::new();
 
     world.add(Sphere::new(Vector3::new(0.0, -1000.0, 0.0),
@@ -140,10 +183,32 @@ pub fn random_spheres_scene() -> BVH {
                           0.0,
                           1.0));
 
-    BVH::new(&mut world.objects, 0.0, 1.0)
+    let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
+
+    (camera, bvh)
 }
 
-pub fn earth_scene() -> World {
+pub fn earth_scene(width: u32, height: u32) -> (Camera, World) {
+    let origin = Vector3::new(13.0, 2.0, 3.0);
+    let lookat = Vector3::new(0.0, 0.0, 0.0);
+    let view = Vector3::new(0.0, 1.0, 0.0);
+    let fov = 20.0;
+    let aspect_ratio = (width / height) as f32;
+    let aperture = 0.1;
+    let focus_distance = 10.0;
+    let time0 = 0.0;
+    let time1 = 1.0;
+
+    let camera = Camera::new(origin,
+                             &lookat,
+                             &view,
+                             fov,
+                             aspect_ratio,
+                             aperture,
+                             focus_distance,
+                             time0,
+                             time1);
+
     let mut world = World::new();
 
     world.add(Sphere::new(Vector3::new(0.0, 0.0, 0.0),
@@ -153,10 +218,30 @@ pub fn earth_scene() -> World {
                           0.0,
                           1.0));
 
-    world
+    (camera, world)
 }
 
-pub fn motion_scene() -> BVH {
+pub fn motion_scene(width: u32, height: u32) -> (Camera, BVH) {
+    let origin = Vector3::new(13.0, 2.0, 3.0);
+    let lookat = Vector3::new(0.0, 0.0, 0.0);
+    let view = Vector3::new(0.0, 1.0, 0.0);
+    let fov = 20.0;
+    let aspect_ratio = (width / height) as f32;
+    let aperture = 0.1;
+    let focus_distance = 10.0;
+    let time0 = 0.0;
+    let time1 = 1.0;
+
+    let camera = Camera::new(origin,
+                             &lookat,
+                             &view,
+                             fov,
+                             aspect_ratio,
+                             aperture,
+                             focus_distance,
+                             time0,
+                             time1);
+
     let mut world = World::new();
 
     world.add(Sphere::new(Vector3::new(0.0, -1000.0, 0.0),
@@ -189,10 +274,32 @@ pub fn motion_scene() -> BVH {
                           0.0,
                           1.0));
 
-    BVH::new(&mut world.objects, 0.0, 1.0)
+    let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
+
+    (camera, bvh)
 }
 
-pub fn simple_light_scene() -> BVH {
+pub fn simple_light_scene(width: u32, height: u32) -> (Camera, BVH) {
+    let origin = Vector3::new(13.0, 2.0, 3.0);
+    let lookat = Vector3::new(0.0, 0.0, 0.0);
+    let view = Vector3::new(0.0, 1.0, 0.0);
+    let fov = 20.0;
+    let aspect_ratio = (width / height) as f32;
+    let aperture = 0.1;
+    let focus_distance = 10.0;
+    let time0 = 0.0;
+    let time1 = 1.0;
+
+    let camera = Camera::new(origin,
+                             &lookat,
+                             &view,
+                             fov,
+                             aspect_ratio,
+                             aperture,
+                             focus_distance,
+                             time0,
+                             time1);
+
     let mut world = World::new();
 
     world.add(Sphere::new(Vector3::new(0.0, -1000.0, 0.0),
@@ -224,10 +331,32 @@ pub fn simple_light_scene() -> BVH {
                          -2.0,
                          Light::new(ConstantTexture::new(4.0, 4.0, 4.0))));
 
-    BVH::new(&mut world.objects, 0.0, 1.0)
+    let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
+
+    (camera, bvh)
 }
 
-pub fn cornell_box_scene() -> BVH {
+pub fn cornell_box_scene(width: u32, height: u32) -> (Camera, BVH) {
+    let origin = Vector3::new(278.0, 278.0, -800.0);
+    let lookat = Vector3::new(278.0, 278.0, 0.0);
+    let view = Vector3::new(0.0, 1.0, 0.0);
+    let fov = 40.0;
+    let aspect_ratio = (width / height) as f32;
+    let aperture = 0.0;
+    let focus_distance = 10.0;
+    let time0 = 0.0;
+    let time1 = 1.0;
+
+    let camera = Camera::new(origin,
+                             &lookat,
+                             &view,
+                             fov,
+                             aspect_ratio,
+                             aperture,
+                             focus_distance,
+                             time0,
+                             time1);
+
     let mut world = World::new();
 
     let red = Diffuse::new(ConstantTexture::new(0.65, 0.05, 0.05));
@@ -260,5 +389,7 @@ pub fn cornell_box_scene() -> BVH {
     world.add(Translate::new(Vector3::new(265.0, 0.0, 295.0),
                              Rotate::new(15.0, Rectangle::new(p0, p2, Arc::new(white.clone())))));
 
-    BVH::new(&mut world.objects, 0.0, 1.0)
+    let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
+
+    (camera, bvh)
 }

@@ -5,11 +5,11 @@ use rand::{thread_rng, Rng};
 
 use ray::{pick_sphere_point, Ray};
 
-pub struct Camera<'a> {
+pub struct Camera {
     pub lower_left_corner: Vector3<f32>,
     pub horizontal: Vector3<f32>,
     pub vertical: Vector3<f32>,
-    pub origin: &'a Vector3<f32>,
+    pub origin: Vector3<f32>,
     u: Vector3<f32>,
     v: Vector3<f32>,
     w: Vector3<f32>,
@@ -18,7 +18,7 @@ pub struct Camera<'a> {
     end_time: f32,
 }
 
-impl<'a> Camera<'a> {
+impl Camera {
     /// Create a new camera with which to see the world!
     ///
     /// The origin determines where the eye is placed on the camera.
@@ -28,7 +28,7 @@ impl<'a> Camera<'a> {
     /// The aspect ratio is the proportial difference between the width and height.
     /// aperture controls how big the lens of the camera is and focus distance
     /// controls the shortest distance that the camera can focus.
-    pub fn new(origin: &'a Vector3<f32>,
+    pub fn new(origin: Vector3<f32>,
                lookat: &Vector3<f32>,
                view: &Vector3<f32>,
                fov: f32,
@@ -37,7 +37,7 @@ impl<'a> Camera<'a> {
                focus_distance: f32,
                start_time: f32,
                end_time: f32)
-               -> Camera<'a> {
+               -> Camera {
         let lens_radius: f32 = aperture / 2.0;
         let theta: f32 = fov * f32::consts::PI / 180.0;
         let half_height: f32 = (theta / 2.0).tan();
