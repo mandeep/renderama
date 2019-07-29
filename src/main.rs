@@ -29,8 +29,6 @@ use nalgebra::core::Vector3;
 use rand::thread_rng;
 use rayon::prelude::*;
 
-use camera::Camera;
-
 #[cfg(feature = "denoise")]
 use denoise::denoise;
 
@@ -41,27 +39,8 @@ fn main() {
     let args: Vec<String> = env::args().collect();
     let samples: u32 = args[1].parse().unwrap();
 
-    let origin = Vector3::new(278.0, 278.0, -800.0);
-    let lookat = Vector3::new(278.0, 278.0, 0.0);
-    let view = Vector3::new(0.0, 1.0, 0.0);
-    let fov = 40.0;
-    let aspect_ratio = (width / height) as f32;
-    let aperture = 0.0;
-    let focus_distance = 10.0;
-    let time0 = 0.0;
-    let time1 = 1.0;
 
-    let camera = Camera::new(&origin,
-                             &lookat,
-                             &view,
-                             fov,
-                             aspect_ratio,
-                             aperture,
-                             focus_distance,
-                             time0,
-                             time1);
-
-    let world = scene::cornell_box_scene();
+    let (camera, world) = scene::cornell_box_scene(width, height);
 
     println!("Rendering scene with {} samples at {} x {} dimensions...",
              samples, width, height);
