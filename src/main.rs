@@ -11,7 +11,7 @@ mod camera;
 mod denoise;
 mod hitable;
 mod materials;
-mod prism;
+mod plane;
 mod ray;
 mod rectangle;
 mod scene;
@@ -35,7 +35,7 @@ use camera::Camera;
 use denoise::denoise;
 
 fn main() {
-    let mut instant = Instant::now();
+    let rendering_time = Instant::now();
 
     let (width, height): (u32, u32) = (1000, 1000);
     let args: Vec<String> = env::args().collect();
@@ -97,7 +97,7 @@ fn main() {
                                      });
 
     println!("Finished rendering in {}. Render saved to render.png.",
-             utils::format_time(instant.elapsed()));
+             utils::format_time(rendering_time.elapsed()));
 
     let mut buffer = image::ImageBuffer::new(width, height);
     buffer.enumerate_pixels_mut().for_each(|(x, y, pixel)| {
@@ -109,7 +109,7 @@ fn main() {
 
     #[cfg(feature = "denoise")]
     {
-        instant = Instant::now();
+        let denoising_time = Instant::now();
         println!("Denoising image...");
 
         let output_image = denoise(&pixels, width as usize, height as usize);
@@ -121,6 +121,6 @@ fn main() {
                            image::RGB(8)).expect("Failed to save output image");
 
         println!("Finished denoising in {}. Render saved to denoised_render.png.",
-                 utils::format_time(instant.elapsed()));
+                 utils::format_time(denoising_time.elapsed()));
     }
 }

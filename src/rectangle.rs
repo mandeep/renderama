@@ -3,163 +3,65 @@ use std::sync::Arc;
 use nalgebra::core::Vector3;
 
 use aabb::AABB;
-use hitable::{HitRecord, Hitable};
+use hitable::{FlipNormals, HitRecord, Hitable};
 use materials::Material;
+use plane::{Axis, Plane};
 use ray::Ray;
+use world::World;
 
-#[derive(Clone)]
-pub enum Plane {
-    XY,
-    YZ,
-    XZ,
-}
-
-#[derive(Clone)]
 pub struct Rectangle {
-    plane: Plane,
-    r0: f32,
-    r1: f32,
-    s0: f32,
-    s1: f32,
-    k: f32,
+    p0: Vector3<f32>,
+    p1: Vector3<f32>,
     material: Arc<dyn Material>,
+    hitables: World,
 }
 
 impl Rectangle {
-    pub fn new<M: Material + 'static>(plane: Plane,
-                                      r0: f32,
-                                      r1: f32,
-                                      s0: f32,
-                                      s1: f32,
-                                      k: f32,
-                                      material: M)
-                                      -> Rectangle {
-        let material = Arc::new(material);
-        Rectangle { plane,
-                    r0,
-                    r1,
-                    s0,
-                    s1,
-                    k,
-                    material }
-    }
+    pub fn new(p0: Vector3<f32>, p1: Vector3<f32>, material: Arc<dyn Material>) -> Rectangle {
+        let mut hitables = World::new();
 
-    pub fn from_box(plane: Plane,
-                    r0: f32,
-                    r1: f32,
-                    s0: f32,
-                    s1: f32,
-                    k: f32,
-                    material: Arc<dyn Material>)
-                    -> Rectangle {
-        Rectangle { plane,
-                    r0,
-                    r1,
-                    s0,
-                    s1,
-                    k,
-                    material }
+        hitables.add(Plane::from_box(Axis::XY, p0.x, p1.x, p0.y, p1.y, p1.z, material.clone()));
+
+        hitables.add(FlipNormals::of(Plane::from_box(Axis::XY,
+                                                     p0.x,
+                                                     p1.x,
+                                                     p0.y,
+                                                     p1.y,
+                                                     p0.z,
+                                                     material.clone())));
+
+        hitables.add(Plane::from_box(Axis::XZ, p0.x, p1.x, p0.z, p1.z, p1.y, material.clone()));
+
+        hitables.add(FlipNormals::of(Plane::from_box(Axis::XZ,
+                                                     p0.x,
+                                                     p1.x,
+                                                     p0.z,
+                                                     p1.z,
+                                                     p0.y,
+                                                     material.clone())));
+
+        hitables.add(Plane::from_box(Axis::YZ, p0.y, p1.y, p0.z, p1.z, p1.x, material.clone()));
+
+        hitables.add(FlipNormals::of(Plane::from_box(Axis::YZ,
+                                                     p0.y,
+                                                     p1.y,
+                                                     p0.z,
+                                                     p1.z,
+                                                     p0.x,
+                                                     material.clone())));
+        Rectangle { p0,
+                    p1,
+                    material,
+                    hitables }
     }
 }
 
 impl Hitable for Rectangle {
     fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitRecord> {
-        match self.plane {
-            Plane::XY => {
-                let t = (self.k - ray.origin.z) / ray.direction.z;
-
-                if t < position_min || t > position_max {
-                    return None;
-                }
-
-                let x = ray.origin.x + t * ray.direction.x;
-                let y = ray.origin.y + t * ray.direction.y;
-
-                if x < self.r0 || x > self.r1 || y < self.s0 || y > self.s1 {
-                    return None;
-                }
-
-                let normal = Vector3::new(0.0, 0.0, 1.0);
-
-                let record = HitRecord::new(t,
-                                            (x - self.r0) / (self.r1 - self.r0),
-                                            (y - self.s0) / (self.s1 - self.s0),
-                                            ray.point_at_parameter(t),
-                                            normal,
-                                            self.material.clone());
-
-                Some(record)
-            }
-            Plane::YZ => {
-                let t = (self.k - ray.origin.x) / ray.direction.x;
-
-                if t < position_min || t > position_max {
-                    return None;
-                }
-
-                let y = ray.origin.y + t * ray.direction.y;
-                let z = ray.origin.z + t * ray.direction.z;
-
-                if y < self.r0 || y > self.r1 || z < self.s0 || z > self.s1 {
-                    return None;
-                }
-
-                let normal = Vector3::new(1.0, 0.0, 0.0);
-
-                let record = HitRecord::new(t,
-                                            (y - self.r0) / (self.r1 - self.r0),
-                                            (z - self.s0) / (self.s1 - self.s0),
-                                            ray.point_at_parameter(t),
-                                            normal,
-                                            self.material.clone());
-
-                Some(record)
-            }
-            Plane::XZ => {
-                let t = (self.k - ray.origin.y) / ray.direction.y;
-
-                if t < position_min || t > position_max {
-                    return None;
-                }
-
-                let x = ray.origin.x + t * ray.direction.x;
-                let z = ray.origin.z + t * ray.direction.z;
-
-                if x < self.r0 || x > self.r1 || z < self.s0 || z > self.s1 {
-                    return None;
-                }
-
-                let normal = Vector3::new(0.0, 1.0, 0.0);
-
-                let record = HitRecord::new(t,
-                                            (x - self.r0) / (self.r1 - self.r0),
-                                            (z - self.s0) / (self.s1 - self.s0),
-                                            ray.point_at_parameter(t),
-                                            normal,
-                                            self.material.clone());
-
-                Some(record)
-            }
-        }
+        self.hitables.hit(&ray, position_min, position_max)
     }
 
     fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
-        match self.plane {
-            Plane::XY => {
-                let minimum = Vector3::new(self.r0, self.s0, self.k - 0.0001);
-                let maximum = Vector3::new(self.r1, self.s1, self.k + 0.0001);
-                Some(AABB::new(minimum, maximum))
-            }
-            Plane::YZ => {
-                let minimum = Vector3::new(self.k - 0.0001, self.r0, self.s0);
-                let maximum = Vector3::new(self.k + 0.0001, self.r1, self.s1);
-                Some(AABB::new(minimum, maximum))
-            }
-            Plane::XZ => {
-                let minimum = Vector3::new(self.r0, self.k - 0.0001, self.s0);
-                let maximum = Vector3::new(self.r1, self.k + 0.0001, self.s1);
-                Some(AABB::new(minimum, maximum))
-            }
-        }
+        Some(AABB::new(self.p0, self.p1))
     }
 }
