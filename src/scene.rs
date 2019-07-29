@@ -6,8 +6,8 @@ use nalgebra::core::Vector3;
 use bvh::BVH;
 use hitable::FlipNormals;
 use materials::{Diffuse, Light, Reflective, Refractive};
-use prism::Prism;
-use rectangle::{Plane, Rectangle};
+use plane::{Axis, Plane};
+use rectangle::Rectangle;
 use sphere::Sphere;
 use texture::{ConstantTexture, ImageTexture};
 use transformations::{Rotate, Translate};
@@ -216,13 +216,13 @@ pub fn simple_light_scene() -> BVH {
                           0.0,
                           1.0));
 
-    world.add(Rectangle::new(Plane::XY,
-                             3.0,
-                             5.0,
-                             1.0,
-                             3.0,
-                             -2.0,
-                             Light::new(ConstantTexture::new(4.0, 4.0, 4.0))));
+    world.add(Plane::new(Axis::XY,
+                         3.0,
+                         5.0,
+                         1.0,
+                         3.0,
+                         -2.0,
+                         Light::new(ConstantTexture::new(4.0, 4.0, 4.0))));
 
     BVH::new(&mut world.objects, 0.0, 1.0)
 }
@@ -236,41 +236,29 @@ pub fn cornell_box_scene() -> BVH {
     let light = Light::new(ConstantTexture::new(15.0, 15.0, 15.0));
 
     // add the walls of the cornell box to the world
-    world.add(FlipNormals::of(Rectangle::new(Plane::YZ, 0.0, 555.0, 0.0, 555.0, 555.0, red)));
+    world.add(FlipNormals::of(Plane::new(Axis::YZ, 0.0, 555.0, 0.0, 555.0, 555.0, red)));
 
-    world.add(Rectangle::new(Plane::YZ, 0.0, 555.0, 0.0, 555.0, 0.0, green));
+    world.add(Plane::new(Axis::YZ, 0.0, 555.0, 0.0, 555.0, 0.0, green));
 
-    world.add(Rectangle::new(Plane::XZ, 213.0, 343.0, 227.0, 332.0, 554.0, light));
+    world.add(Plane::new(Axis::XZ, 213.0, 343.0, 227.0, 332.0, 554.0, light));
 
-    world.add(FlipNormals::of(Rectangle::new(Plane::XZ,
-                                             0.0,
-                                             555.0,
-                                             0.0,
-                                             555.0,
-                                             555.0,
-                                             white.clone())));
+    world.add(FlipNormals::of(Plane::new(Axis::XZ, 0.0, 555.0, 0.0, 555.0, 555.0, white.clone())));
 
-    world.add(Rectangle::new(Plane::XZ, 0.0, 555.0, 0.0, 555.0, 0.0, white.clone()));
+    world.add(Plane::new(Axis::XZ, 0.0, 555.0, 0.0, 555.0, 0.0, white.clone()));
 
-    world.add(FlipNormals::of(Rectangle::new(Plane::XY,
-                                             0.0,
-                                             555.0,
-                                             0.0,
-                                             555.0,
-                                             555.0,
-                                             white.clone())));
+    world.add(FlipNormals::of(Plane::new(Axis::XY, 0.0, 555.0, 0.0, 555.0, 555.0, white.clone())));
 
     // add the boxes of the cornell box to the world
     let p0 = Vector3::new(0.0, 0.0, 0.0);
     let p1 = Vector3::new(165.0, 165.0, 165.0);
 
     world.add(Translate::new(Vector3::new(130.0, 0.0, 65.0),
-                             Rotate::new(-18.0, Prism::new(p0, p1, Arc::new(white.clone())))));
+                             Rotate::new(-18.0, Rectangle::new(p0, p1, Arc::new(white.clone())))));
 
     let p2 = Vector3::new(165.0, 330.0, 165.0);
 
     world.add(Translate::new(Vector3::new(265.0, 0.0, 295.0),
-                             Rotate::new(15.0, Prism::new(p0, p2, Arc::new(white.clone())))));
+                             Rotate::new(15.0, Rectangle::new(p0, p2, Arc::new(white.clone())))));
 
     BVH::new(&mut world.objects, 0.0, 1.0)
 }
