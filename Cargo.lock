@@ -504,7 +504,7 @@ dependencies = [
 
 [[package]]
 name = "renderama"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "image 0.21.0 (git+https://github.com/image-rs/image)",
  "nalgebra 0.17.3 (registry+https://github.com/rust-lang/crates.io-index)",
