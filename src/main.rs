@@ -61,6 +61,7 @@ fn main() {
                                                          let ray = camera.get_ray(u, v);
                                                          coordinate +=
                                                              ray::compute_color(&ray, &world, 0,
+                                                                                camera.atmosphere,
                                                                                 &mut rng);
                                                      });
 

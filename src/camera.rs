@@ -13,9 +13,10 @@ pub struct Camera {
     u: Vector3<f32>,
     v: Vector3<f32>,
     w: Vector3<f32>,
-    lens_radius: f32,
-    start_time: f32,
-    end_time: f32,
+    pub lens_radius: f32,
+    pub start_time: f32,
+    pub end_time: f32,
+    pub atmosphere: bool,
 }
 
 impl Camera {
@@ -36,7 +37,8 @@ impl Camera {
                aperture: f32,
                focus_distance: f32,
                start_time: f32,
-               end_time: f32)
+               end_time: f32,
+               atmosphere: bool)
                -> Camera {
         let lens_radius: f32 = aperture / 2.0;
         let theta: f32 = fov * f32::consts::PI / 180.0;
@@ -64,7 +66,8 @@ impl Camera {
                  w,
                  lens_radius,
                  start_time,
-                 end_time }
+                 end_time,
+                 atmosphere }
     }
 
     /// Get the ray that is coming from the camera into the world
