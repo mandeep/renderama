@@ -24,6 +24,7 @@ pub fn three_spheres_scene(width: u32, height: u32) -> (Camera, BVH) {
     let focus_distance = 10.0;
     let time0 = 0.0;
     let time1 = 1.0;
+    let atmosphere = true;
 
     let camera = Camera::new(origin,
                              &lookat,
@@ -33,7 +34,8 @@ pub fn three_spheres_scene(width: u32, height: u32) -> (Camera, BVH) {
                              aperture,
                              focus_distance,
                              time0,
-                             time1);
+                             time1,
+                             atmosphere);
 
     let mut world = World::new();
 
@@ -80,6 +82,7 @@ pub fn random_spheres_scene(width: u32, height: u32) -> (Camera, BVH) {
     let focus_distance = 10.0;
     let time0 = 0.0;
     let time1 = 1.0;
+    let atmosphere = true;
 
     let camera = Camera::new(origin,
                              &lookat,
@@ -89,7 +92,8 @@ pub fn random_spheres_scene(width: u32, height: u32) -> (Camera, BVH) {
                              aperture,
                              focus_distance,
                              time0,
-                             time1);
+                             time1,
+                             atmosphere);
 
     let mut world = World::new();
 
@@ -198,6 +202,7 @@ pub fn earth_scene(width: u32, height: u32) -> (Camera, World) {
     let focus_distance = 10.0;
     let time0 = 0.0;
     let time1 = 1.0;
+    let atmosphere = false;
 
     let camera = Camera::new(origin,
                              &lookat,
@@ -207,7 +212,8 @@ pub fn earth_scene(width: u32, height: u32) -> (Camera, World) {
                              aperture,
                              focus_distance,
                              time0,
-                             time1);
+                             time1,
+                             atmosphere);
 
     let mut world = World::new();
 
@@ -231,6 +237,7 @@ pub fn motion_scene(width: u32, height: u32) -> (Camera, BVH) {
     let focus_distance = 10.0;
     let time0 = 0.0;
     let time1 = 1.0;
+    let atmosphere = true;
 
     let camera = Camera::new(origin,
                              &lookat,
@@ -240,7 +247,8 @@ pub fn motion_scene(width: u32, height: u32) -> (Camera, BVH) {
                              aperture,
                              focus_distance,
                              time0,
-                             time1);
+                             time1,
+                             atmosphere);
 
     let mut world = World::new();
 
@@ -289,6 +297,7 @@ pub fn simple_light_scene(width: u32, height: u32) -> (Camera, BVH) {
     let focus_distance = 10.0;
     let time0 = 0.0;
     let time1 = 1.0;
+    let atmosphere = false;
 
     let camera = Camera::new(origin,
                              &lookat,
@@ -298,7 +307,8 @@ pub fn simple_light_scene(width: u32, height: u32) -> (Camera, BVH) {
                              aperture,
                              focus_distance,
                              time0,
-                             time1);
+                             time1,
+                             atmosphere);
 
     let mut world = World::new();
 
@@ -346,6 +356,7 @@ pub fn cornell_box_scene(width: u32, height: u32) -> (Camera, BVH) {
     let focus_distance = 10.0;
     let time0 = 0.0;
     let time1 = 1.0;
+    let atmosphere = false;
 
     let camera = Camera::new(origin,
                              &lookat,
@@ -355,7 +366,8 @@ pub fn cornell_box_scene(width: u32, height: u32) -> (Camera, BVH) {
                              aperture,
                              focus_distance,
                              time0,
-                             time1);
+                             time1,
+                             atmosphere);
 
     let mut world = World::new();
 
