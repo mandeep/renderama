@@ -3,6 +3,7 @@
 extern crate image;
 extern crate nalgebra;
 extern crate rand;
+extern crate rand_distr;
 extern crate rayon;
 
 mod aabb;

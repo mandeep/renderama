@@ -1,7 +1,7 @@
 use std::f32;
 
 use nalgebra::core::Vector3;
-use rand::distributions::{Distribution, Normal};
+use rand_distr::{Distribution, Normal};
 
 use bvh::BVH;
 use hitable::Hitable;
@@ -40,7 +40,7 @@ impl Ray {
 /// Reference: http://mathworld.wolfram.com/SpherePointPicking.html
 ///
 pub fn pick_sphere_point(rng: &mut rand::rngs::ThreadRng) -> Vector3<f32> {
-    let normal_distribution = Normal::new(0.0, 1.0);
+    let normal_distribution = Normal::new(0.0, 1.0).unwrap();
     let x = normal_distribution.sample(rng) as f32;
     let y = normal_distribution.sample(rng) as f32;
     let z = normal_distribution.sample(rng) as f32;
