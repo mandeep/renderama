@@ -220,7 +220,7 @@ pub fn earth_scene(width: u32, height: u32) -> (Camera, World) {
     world.add(Sphere::new(Vector3::new(0.0, 0.0, 0.0),
                           Vector3::new(0.0, 0.0, 0.0),
                           2.0,
-                          Diffuse::new(ImageTexture::new("earthmap.png")),
+                          Diffuse::new(ImageTexture::new("world_topo_nasa.jpg")),
                           0.0,
                           1.0));
 
