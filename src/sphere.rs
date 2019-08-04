@@ -9,6 +9,7 @@ use ray::Ray;
 
 use std::f32;
 
+#[derive(Clone)]
 pub struct Sphere {
     pub start_center: Vector3<f32>,
     pub end_center: Vector3<f32>,
