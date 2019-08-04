@@ -56,7 +56,7 @@ pub fn three_spheres_scene(width: u32, height: u32) -> (Camera, BVH) {
     world.add(Sphere::new(Vector3::new(0.0, 0.1, -2.0),
                           Vector3::new(0.0, 0.1, -2.0),
                           0.5,
-                          Refractive::new(Vector3::new(0.9, 0.9, 0.9), 1.5, 0.0),
+                          Refractive::new(1.5),
                           0.0,
                           1.0));
 
@@ -144,14 +144,14 @@ pub fn random_spheres_scene(width: u32, height: u32) -> (Camera, BVH) {
                     world.add(Sphere::new(center,
                                           center,
                                           0.2,
-                                          Refractive::new(Vector3::new(0.9, 0.9, 0.9), 1.5, 0.0),
+                                          Refractive::new(1.5),
                                           0.0,
                                           1.0));
 
                     world.add(Sphere::new(center,
                                           center,
                                           -0.19,
-                                          Refractive::new(Vector3::new(0.9, 0.9, 0.9), 1.5, 0.0),
+                                          Refractive::new(1.5),
                                           0.0,
                                           1.0));
                 }
@@ -169,14 +169,14 @@ pub fn random_spheres_scene(width: u32, height: u32) -> (Camera, BVH) {
     world.add(Sphere::new(Vector3::new(0.0, 1.0, 0.0),
                           Vector3::new(0.0, 1.0, 0.0),
                           1.0,
-                          Refractive::new(Vector3::new(1.0, 1.0, 1.0), 1.5, 0.0),
+                          Refractive::new(1.5),
                           0.0,
                           1.0));
 
     world.add(Sphere::new(Vector3::new(0.0, 1.0, 0.0),
                           Vector3::new(0.0, 1.0, 0.0),
                           -0.99,
-                          Refractive::new(Vector3::new(1.0, 1.0, 1.0), 1.5, 0.0),
+                          Refractive::new(1.5),
                           0.0,
                           1.0));
 
