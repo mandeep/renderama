@@ -142,19 +142,9 @@ pub fn random_spheres_scene(width: u32, height: u32) -> (Camera, BVH) {
                                           0.0,
                                           1.0));
                 } else {
-                    world.add(Sphere::new(center,
-                                          center,
-                                          0.2,
-                                          Refractive::new(1.5),
-                                          0.0,
-                                          1.0));
+                    world.add(Sphere::new(center, center, 0.2, Refractive::new(1.5), 0.0, 1.0));
 
-                    world.add(Sphere::new(center,
-                                          center,
-                                          -0.19,
-                                          Refractive::new(1.5),
-                                          0.0,
-                                          1.0));
+                    world.add(Sphere::new(center, center, -0.19, Refractive::new(1.5), 0.0, 1.0));
                 }
             }
         }
@@ -407,7 +397,6 @@ pub fn cornell_box_scene(width: u32, height: u32) -> (Camera, BVH) {
     (camera, bvh)
 }
 
-
 pub fn spheres_in_box_scene(width: u32, height: u32) -> (Camera, BVH) {
     let origin = Vector3::new(478.0, 278.0, -600.0);
     let lookat = Vector3::new(278.0, 278.0, 0.0);
@@ -451,9 +440,19 @@ pub fn spheres_in_box_scene(width: u32, height: u32) -> (Camera, BVH) {
 
     world.add(Plane::new(Axis::XZ, 123.0, 423.0, 147.0, 412.0, 554.0, light));
 
-    world.add(Sphere::new(Vector3::new(400.0, 400.0, 200.0), Vector3::new(430.0, 400.0, 200.0), 50.0, red, 0.0, 1.0));
+    world.add(Sphere::new(Vector3::new(400.0, 400.0, 200.0),
+                          Vector3::new(430.0, 400.0, 200.0),
+                          50.0,
+                          red,
+                          0.0,
+                          1.0));
 
-    world.add(Sphere::new(Vector3::new(260.0, 150.0, 45.0), Vector3::new(260.0, 150.0, 45.0), 50.0, Refractive::new(1.5), 0.0, 1.0));
+    world.add(Sphere::new(Vector3::new(260.0, 150.0, 45.0),
+                          Vector3::new(260.0, 150.0, 45.0),
+                          50.0,
+                          Refractive::new(1.5),
+                          0.0,
+                          1.0));
 
     world.add(Sphere::new(Vector3::new(0.0, 150.0, 145.0),
                           Vector3::new(0.0, 150.0, 145.0),
@@ -462,25 +461,23 @@ pub fn spheres_in_box_scene(width: u32, height: u32) -> (Camera, BVH) {
                           0.0,
                           1.0));
 
-    let boundary = Sphere::new(
-        Vector3::new(360.0, 150.0, 145.0),
-        Vector3::new(360.0, 150.0, 145.0),
-        70.0,
-        Refractive::new(1.5),
-        0.0,
-        1.0);
+    let boundary = Sphere::new(Vector3::new(360.0, 150.0, 145.0),
+                               Vector3::new(360.0, 150.0, 145.0),
+                               70.0,
+                               Refractive::new(1.5),
+                               0.0,
+                               1.0);
 
     world.add(boundary.clone());
 
     world.add(Volume::new(0.2, boundary.clone(), ConstantTexture::new(0.2, 0.4, 0.9)));
 
-    let fog = Sphere::new(
-        Vector3::new(0.0, 0.0, 0.0),
-        Vector3::new(0.0, 0.0, 0.0),
-        5000.0,
-        Refractive::new(1.5),
-        0.0,
-        1.0);
+    let fog = Sphere::new(Vector3::new(0.0, 0.0, 0.0),
+                          Vector3::new(0.0, 0.0, 0.0),
+                          5000.0,
+                          Refractive::new(1.5),
+                          0.0,
+                          1.0);
 
     world.add(Volume::new(0.0001, fog, ConstantTexture::new(1.0, 1.0, 1.0)));
 
@@ -500,25 +497,22 @@ pub fn spheres_in_box_scene(width: u32, height: u32) -> (Camera, BVH) {
 
     let number_of_spheres = 1000;
     for _ in 0..number_of_spheres {
-        let sphere = Sphere::new(
-                Vector3::new(165.0 * rand::random::<f32>(),
-                             165.0 * rand::random::<f32>(),
-                             165.0 * rand::random::<f32>()),
+        let sphere = Sphere::new(Vector3::new(165.0 * rand::random::<f32>(),
+                                              165.0 * rand::random::<f32>(),
+                                              165.0 * rand::random::<f32>()),
+                                 Vector3::new(165.0 * rand::random::<f32>(),
+                                              165.0 * rand::random::<f32>(),
+                                              165.0 * rand::random::<f32>()),
+                                 10.0,
+                                 white.clone(),
+                                 0.0,
+                                 1.0);
 
-                Vector3::new(165.0 * rand::random::<f32>(),
-                             165.0 * rand::random::<f32>(),
-                             165.0 * rand::random::<f32>()),
-                10.0,
-                white.clone(),
-                0.0,
-                1.0);
-
-        world.add(Translate::new(Vector3::new(-100.0, 270.0, 395.0), Rotate::new(15.0, sphere)));
+        world.add(Translate::new(Vector3::new(-100.0, 270.0, 395.0),
+                                 Rotate::new(15.0, sphere)));
     }
-
 
     let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
 
     (camera, bvh)
-
 }

@@ -201,15 +201,9 @@ impl Material for Refractive {
         let attenuation = Vector3::new(1.0, 1.0, 1.0);
 
         if rand::random::<f32>() < reflect_probability {
-            return Some((attenuation,
-                         Ray::new(record.point,
-                                  reflected,
-                                  ray.time)));
+            return Some((attenuation, Ray::new(record.point, reflected, ray.time)));
         } else {
-            return Some((attenuation,
-                         Ray::new(record.point,
-                                  refracted.unwrap(),
-                                  ray.time)));
+            return Some((attenuation, Ray::new(record.point, refracted.unwrap(), ray.time)));
         }
     }
 }
@@ -242,7 +236,7 @@ impl Material for Light {
 
 #[derive(Clone)]
 pub struct Isotropic {
-    pub albedo: Arc<dyn Texture>
+    pub albedo: Arc<dyn Texture>,
 }
 
 impl Isotropic {
