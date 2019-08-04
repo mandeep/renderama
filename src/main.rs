@@ -42,7 +42,7 @@ fn main() {
     let samples: u32 = args[1].parse().unwrap();
 
 
-    let (camera, world) = scene::cornell_box_scene(width, height);
+    let (camera, world) = scene::spheres_in_box_scene(width, height);
 
     println!("Rendering scene with {} samples at {} x {} dimensions...",
              samples, width, height);
