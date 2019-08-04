@@ -20,6 +20,7 @@ mod sphere;
 mod texture;
 mod transformations;
 mod utils;
+mod volume;
 mod world;
 
 use std::env;

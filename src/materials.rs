@@ -241,3 +241,31 @@ impl Material for Light {
         self.emit.value(u, v, &p)
     }
 }
+
+#[derive(Clone)]
+pub struct Isotropic {
+    pub albedo: Arc<dyn Texture>
+}
+
+impl Isotropic {
+    pub fn new<T: Texture + 'static>(albedo: T) -> Isotropic {
+        let albedo = Arc::new(albedo);
+        Isotropic { albedo }
+    }
+}
+
+impl Material for Isotropic {
+    fn scatter(&self,
+               _ray: &Ray,
+               record: &HitRecord,
+               rng: &mut rand::rngs::ThreadRng)
+               -> Option<(Vector3<f32>, Ray)> {
+        let scattered = Ray::new(record.point, pick_sphere_point(rng), 0.0);
+        let attenuation = self.albedo.value(record.u, record.v, &record.point);
+        Some((attenuation, scattered))
+    }
+
+    fn emitted(&self, _u: f32, _v: f32, _p: &Vector3<f32>) -> Vector3<f32> {
+        Vector3::zeros()
+    }
+}
