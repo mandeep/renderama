@@ -41,7 +41,6 @@ fn main() {
     let args: Vec<String> = env::args().collect();
     let samples: u32 = args[1].parse().unwrap();
 
-
     let (camera, world) = scene::spheres_in_box_scene(width, height);
 
     println!("Rendering scene with {} samples at {} x {} dimensions...",
@@ -62,7 +61,9 @@ fn main() {
                                                                  / height as f32;
                                                          let ray = camera.get_ray(u, v);
                                                          coordinate +=
-                                                             ray::compute_color(&ray, &world, 0,
+                                                             ray::compute_color(&ray,
+                                                                                &world,
+                                                                                0,
                                                                                 camera.atmosphere,
                                                                                 &mut rng);
                                                      });
