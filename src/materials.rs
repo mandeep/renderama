@@ -254,16 +254,12 @@ impl Isotropic {
 
 impl Material for Isotropic {
     fn scatter(&self,
-               _ray: &Ray,
+               ray: &Ray,
                record: &HitRecord,
                rng: &mut rand::rngs::ThreadRng)
                -> Option<(Vector3<f32>, Ray)> {
-        let scattered = Ray::new(record.point, pick_sphere_point(rng), 0.0);
+        let scattered = Ray::new(record.point, pick_sphere_point(rng), ray.time);
         let attenuation = self.albedo.value(record.u, record.v, &record.point);
         Some((attenuation, scattered))
-    }
-
-    fn emitted(&self, _u: f32, _v: f32, _p: &Vector3<f32>) -> Vector3<f32> {
-        Vector3::zeros()
     }
 }
