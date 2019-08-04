@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+extern crate chrono;
 extern crate image;
 extern crate nalgebra;
 extern crate rand;
@@ -27,6 +28,7 @@ use std::env;
 use std::f32;
 use std::time::Instant;
 
+use chrono::{DateTime, Local};
 use nalgebra::core::Vector3;
 use rand::thread_rng;
 use rayon::prelude::*;
@@ -43,8 +45,9 @@ fn main() {
 
     let (camera, world) = scene::spheres_in_box_scene(width, height);
 
-    println!("Rendering scene with {} samples at {} x {} dimensions...",
-             samples, width, height);
+    let render_start_time: DateTime<Local> = Local::now();
+    println!("[{}] Rendering scene with {} samples at {} x {} dimensions...",
+             render_start_time.format("%H:%M:%S"), samples, width, height);
 
     let mut pixels = vec![image::Rgb([0, 0, 0]); (width * height) as usize];
     pixels.par_iter_mut().enumerate().for_each(|(i, pixel)| {
@@ -79,7 +82,9 @@ fn main() {
                                                               coordinate.z as u8]);
                                      });
 
-    println!("Finished rendering in {}. Render saved to render.png.",
+    let render_end_time: DateTime<Local> = Local::now();
+    println!("[{}] Finished rendering in {}. Render saved to render.png.",
+             render_end_time.format("%H:%M:%S"),
              utils::format_time(rendering_time.elapsed()));
 
     let mut buffer = image::ImageBuffer::new(width, height);
@@ -93,7 +98,8 @@ fn main() {
     #[cfg(feature = "denoise")]
     {
         let denoising_time = Instant::now();
-        println!("Denoising image...");
+        let denoise_start_time: DateTime<Local> = Local::now();
+        println!("[{}] Denoising image...", denoise_start_time.format("%H:%M:%S"));
 
         let output_image = denoise(&pixels, width as usize, height as usize);
 
@@ -103,7 +109,9 @@ fn main() {
                            height as u32,
                            image::RGB(8)).expect("Failed to save output image");
 
-        println!("Finished denoising in {}. Render saved to denoised_render.png.",
+        let denoise_end_time: DateTime<Local> = Local::now();
+        println!("[{}] Finished denoising in {}. Render saved to denoised_render.png.",
+                 denoise_end_time.format("%H:%M:%S"),
                  utils::format_time(denoising_time.elapsed()));
     }
 }
