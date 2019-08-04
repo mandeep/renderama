@@ -145,9 +145,7 @@ impl Material for Reflective {
 
 #[derive(Clone)]
 pub struct Refractive {
-    pub albedo: Vector3<f32>,
     pub refractive_index: f32,
-    pub fuzz: f32,
 }
 
 impl Refractive {
@@ -158,10 +156,8 @@ impl Refractive {
     /// how much of the light is refracted when entering the material.
     /// fuzz accounts for the fuzziness of the reflections due to the size of the sphere.
     /// Generally, the larger the sphere, the fuzzier the reflections will be.
-    pub fn new(albedo: Vector3<f32>, index: f32, fuzz: f32) -> Refractive {
-        Refractive { albedo: albedo,
-                     refractive_index: index,
-                     fuzz: fuzz }
+    pub fn new(index: f32) -> Refractive {
+        Refractive { refractive_index: index }
     }
 }
 
@@ -181,7 +177,7 @@ impl Material for Refractive {
     fn scatter(&self,
                ray: &Ray,
                record: &HitRecord,
-               rng: &mut rand::rngs::ThreadRng)
+               _rng: &mut rand::rngs::ThreadRng)
                -> Option<(Vector3<f32>, Ray)> {
         let reflected: Vector3<f32> = reflect(&ray.direction.normalize(), &record.normal);
         let incident: f32 = ray.direction.dot(&record.normal);
@@ -202,15 +198,17 @@ impl Material for Refractive {
             None => 1.0,
         };
 
+        let attenuation = Vector3::new(1.0, 1.0, 1.0);
+
         if rand::random::<f32>() < reflect_probability {
-            return Some((self.albedo,
+            return Some((attenuation,
                          Ray::new(record.point,
-                                  reflected + self.fuzz * pick_sphere_point(rng),
+                                  reflected,
                                   ray.time)));
         } else {
-            return Some((self.albedo,
+            return Some((attenuation,
                          Ray::new(record.point,
-                                  refracted.unwrap() + self.fuzz * pick_sphere_point(rng),
+                                  refracted.unwrap(),
                                   ray.time)));
         }
     }
