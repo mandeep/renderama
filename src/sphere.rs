@@ -72,17 +72,13 @@ impl Hitable for Sphere {
 
         // checking the discriminant is a fast way to determine if the root is real
         if discriminant >= 0.0 {
-            let first_root: f32 = (-b - (b * b - a * c).sqrt()) / a;
-            let second_root: f32 = (-b + (b * b - a * c).sqrt()) / a;
+            let first_root: f32 = (-b - discriminant.sqrt()) / a;
+            let second_root: f32 = (-b + discriminant.sqrt()) / a;
             let mut roots = vec![first_root, second_root];
 
             // if we have two positive roots, we want the smaller one as
             // it is the first hit point of the sphere
             roots.sort_by(|a, b| a.partial_cmp(b).unwrap());
-
-            // negative roots mean the intersection point is not in our view
-            // so we can safely disregard these hits
-            roots.retain(|&root| root > 0.0);
 
             for root in roots {
                 if root > position_min && root < position_max {
