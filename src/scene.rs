@@ -423,7 +423,7 @@ pub fn spheres_in_box_scene(width: u32, height: u32) -> (Camera, BVH) {
     let mut world = World::new();
 
     let white = Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73));
-    let orange = Diffuse::new(ConstantTexture::new(0.9, 0.30, 0.0));
+    let orange = Diffuse::new(ConstantTexture::new(1.0, 0.10, 0.0));
     let light = Light::new(ConstantTexture::new(7.0, 7.0, 7.0));
     let ground = Diffuse::new(ConstantTexture::new(0.48, 0.83, 0.53));
 
