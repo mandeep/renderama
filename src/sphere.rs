@@ -71,7 +71,7 @@ impl Hitable for Sphere {
         let discriminant: f32 = b * b - a * c;
 
         // checking the discriminant is a fast way to determine if the root is real
-        if discriminant >= 0.0 {
+        if discriminant > 0.0 {
             let first_root: f32 = (-b - discriminant.sqrt()) / a;
             let second_root: f32 = (-b + discriminant.sqrt()) / a;
             let mut roots = vec![first_root, second_root];
