@@ -491,18 +491,18 @@ pub fn spheres_in_box_scene(width: u32, height: u32) -> (Camera, BVH) {
     world.add(Sphere::new(Vector3::new(220.0, 280.0, 300.0),
                           Vector3::new(220.0, 280.0, 300.0),
                           80.0,
-                          Diffuse::new(ConstantTexture::new(0.8, 0.8, 0.8)),
+                          Diffuse::new(ConstantTexture::new(0.6, 0.6, 0.6)),
                           0.0,
                           1.0));
 
     let number_of_spheres = 1000;
     for _ in 0..number_of_spheres {
-        let sphere = Sphere::new(Vector3::new(165.0 * rand::random::<f32>(),
-                                              165.0 * rand::random::<f32>(),
-                                              165.0 * rand::random::<f32>()),
-                                 Vector3::new(165.0 * rand::random::<f32>(),
-                                              165.0 * rand::random::<f32>(),
-                                              165.0 * rand::random::<f32>()),
+        let center = Vector3::new(165.0 * rand::random::<f32>(),
+                                  165.0 * rand::random::<f32>(),
+                                  165.0 * rand::random::<f32>());
+
+        let sphere = Sphere::new(center,
+                                 center,
                                  10.0,
                                  white.clone(),
                                  0.0,
