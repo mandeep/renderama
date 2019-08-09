@@ -48,7 +48,7 @@ impl Material for Diffuse {
                record: &HitRecord,
                rng: &mut rand::rngs::ThreadRng)
                -> Option<(Vector3<f32>, Ray)> {
-        let target: Vector3<f32> = record.point + record.normal + pick_sphere_point(rng);
+        let target: Vector3<f32> = record.point + record.normal * 1e-4 + pick_sphere_point(rng);
         Some((self.albedo.value(record.u, record.v, &record.point),
               Ray::new(record.point, target - record.point, ray.time)))
     }
