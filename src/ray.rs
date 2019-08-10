@@ -70,7 +70,7 @@ pub fn compute_color(ray: &Ray,
                      atmosphere: bool,
                      rng: &mut rand::rngs::ThreadRng)
                      -> Vector3<f32> {
-    if let Some(hit_record) = world.hit(ray, 0.001, f32::MAX) {
+    if let Some(hit_record) = world.hit(ray, 1e-16, f32::MAX) {
         let emitted = hit_record.material
                                 .emitted(hit_record.u, hit_record.v, &hit_record.point);
         if depth < 50 {
