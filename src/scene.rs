@@ -365,7 +365,7 @@ pub fn cornell_box_scene(width: u32, height: u32) -> (Camera, BVH) {
     let red = Diffuse::new(ConstantTexture::new(0.65, 0.05, 0.05));
     let green = Diffuse::new(ConstantTexture::new(0.12, 0.45, 0.15));
     let white = Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73));
-    let light = Light::new(ConstantTexture::new(15.0, 15.0, 15.0));
+    let light = Light::new(ConstantTexture::new(35.0, 20.2, 5.6));
 
     // add the walls of the cornell box to the world
     world.add(FlipNormals::of(Plane::new(Axis::YZ, 0.0, 555.0, 0.0, 555.0, 555.0, red)));
