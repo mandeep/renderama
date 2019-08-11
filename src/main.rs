@@ -75,7 +75,7 @@ fn main() {
                                          // take the sqrt as we are gamma correcting
                                          // with a gamma of 2 (1 / gamma)
                                          (0..3).for_each(|j| {
-                                                   coordinate[j] = 255.0 * coordinate[j].sqrt()
+                                                   coordinate[j] = (255.0 * coordinate[j].sqrt()).min(255.0).max(0.0);
                                                });
                                          *pixel = image::Rgb([coordinate.x as u8,
                                                               coordinate.y as u8,
