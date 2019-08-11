@@ -47,7 +47,10 @@ fn main() {
 
     let render_start_time: DateTime<Local> = Local::now();
     println!("[{}] Rendering scene with {} samples at {} x {} dimensions...",
-             render_start_time.format("%H:%M:%S"), samples, width, height);
+             render_start_time.format("%H:%M:%S"),
+             samples,
+             width,
+             height);
 
     let mut pixels = vec![image::Rgb([0, 0, 0]); (width * height) as usize];
     pixels.par_iter_mut().enumerate().for_each(|(i, pixel)| {
@@ -75,7 +78,9 @@ fn main() {
                                          // take the sqrt as we are gamma correcting
                                          // with a gamma of 2 (1 / gamma)
                                          (0..3).for_each(|j| {
-                                                   coordinate[j] = (255.0 * coordinate[j].sqrt()).min(255.0).max(0.0);
+                                                   coordinate[j] =
+                                                       (255.0 * coordinate[j].sqrt()).min(255.0)
+                                                                                     .max(0.0);
                                                });
                                          *pixel = image::Rgb([coordinate.x as u8,
                                                               coordinate.y as u8,
@@ -99,7 +104,8 @@ fn main() {
     {
         let denoising_time = Instant::now();
         let denoise_start_time: DateTime<Local> = Local::now();
-        println!("[{}] Denoising image...", denoise_start_time.format("%H:%M:%S"));
+        println!("[{}] Denoising image...",
+                 denoise_start_time.format("%H:%M:%S"));
 
         let output_image = denoise(&pixels, width as usize, height as usize);
 
