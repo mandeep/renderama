@@ -528,7 +528,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "renderama"
-version = "0.18.0"
+version = "0.18.1"
 dependencies = [
  "chrono 0.4.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "image 0.21.0 (git+https://github.com/image-rs/image)",
