@@ -501,12 +501,7 @@ pub fn spheres_in_box_scene(width: u32, height: u32) -> (Camera, BVH) {
                                   165.0 * rand::random::<f32>(),
                                   165.0 * rand::random::<f32>());
 
-        let sphere = Sphere::new(center,
-                                 center,
-                                 10.0,
-                                 white.clone(),
-                                 0.0,
-                                 1.0);
+        let sphere = Sphere::new(center, center, 10.0, white.clone(), 0.0, 1.0);
 
         world.add(Translate::new(Vector3::new(-100.0, 270.0, 395.0),
                                  Rotate::new(15.0, sphere)));
