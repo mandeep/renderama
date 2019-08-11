@@ -9,3 +9,13 @@ pub fn format_time(instant: Duration) -> String {
 
     format!("{:02}:{:02}:{:02}", hours, minutes, seconds)
 }
+
+/// Clamp a float between 0.0 and 255.0
+///
+/// This function is used due to an LLVM bug
+/// where casting a float to u8 can lead to
+/// undefined behavior:
+/// https://github.com/rust-lang/rust/issues/10184
+pub fn clamp(n: f32) -> f32 {
+    n.min(255.0).max(0.0)
+}
