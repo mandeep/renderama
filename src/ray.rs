@@ -74,15 +74,19 @@ pub fn compute_color(ray: &Ray,
         let emitted = hit_record.material
                                 .emitted(hit_record.u, hit_record.v, &hit_record.point);
         if depth < 50 {
-            if let Some((attenuation, scattered)) =
+            if let Some((attenuation, scattered, pdf)) =
                 hit_record.material.scatter(ray, &hit_record, rng)
             {
+                let scattering_pdf = hit_record.material
+                                               .scattering_pdf(&ray, &hit_record, &scattered);
                 return emitted
-                       + attenuation.component_mul(&compute_color(&scattered,
-                                                                  world,
-                                                                  depth + 1,
-                                                                  atmosphere,
-                                                                  rng));
+                       + attenuation.component_mul(&(scattering_pdf
+                                                     * compute_color(&scattered,
+                                                                     world,
+                                                                     depth + 1,
+                                                                     atmosphere,
+                                                                     rng)))
+                         / pdf;
             }
         }
         emitted
