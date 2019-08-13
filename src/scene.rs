@@ -372,7 +372,7 @@ pub fn cornell_box_scene(width: u32, height: u32) -> (Camera, BVH) {
 
     world.add(Plane::new(Axis::YZ, 0.0, 555.0, 0.0, 555.0, 0.0, green));
 
-    world.add(Plane::new(Axis::XZ, 213.0, 343.0, 227.0, 332.0, 554.0, light));
+    world.add(FlipNormals::of(Plane::new(Axis::XZ, 213.0, 343.0, 227.0, 332.0, 554.0, light)));
 
     world.add(FlipNormals::of(Plane::new(Axis::XZ, 0.0, 555.0, 0.0, 555.0, 555.0, white.clone())));
 
