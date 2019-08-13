@@ -8,11 +8,13 @@ extern crate rand_distr;
 extern crate rayon;
 
 mod aabb;
+mod basis;
 mod bvh;
 mod camera;
 mod denoise;
 mod hitable;
 mod materials;
+mod pdf;
 mod plane;
 mod ray;
 mod rectangle;
