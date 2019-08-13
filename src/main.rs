@@ -69,11 +69,11 @@ fn main() {
                                                                  / height as f32;
                                                          let ray = camera.get_ray(u, v);
                                                          coordinate +=
-                                                             ray::compute_color(&ray,
+                                                             utils::de_nan(&ray::compute_color(&ray,
                                                                                 &world,
                                                                                 0,
                                                                                 camera.atmosphere,
-                                                                                &mut rng);
+                                                                                &mut rng));
                                                      });
 
                                          coordinate /= samples as f32;
