@@ -1,6 +1,8 @@
 use std::sync::Arc;
+use std::f32;
 
 use nalgebra::core::Vector3;
+use rand::Rng;
 
 use aabb::AABB;
 use hitable::{HitRecord, Hitable};
@@ -161,5 +163,23 @@ impl Hitable for Plane {
                 Some(AABB::new(minimum, maximum))
             }
         }
+    }
+
+    fn pdf_value(&self, origin: &Vector3<f32>, direction: &Vector3<f32>) -> f32 {
+        if let Some(hit) = self.hit(&Ray::new(*origin, *direction, 0.0), 0.001, f32::MAX) {
+            let area = (self.r1 - self.r0) * (self.s1 - self.s0);
+            let distance_squared = hit.parameter * hit.parameter * direction.norm_squared();
+            let cosine = direction.dot(&hit.normal).abs() / direction.norm();
+            distance_squared / (cosine * area)
+        } else {
+            0.0
+        }
+    }
+
+    fn pdf_random(&self, origin: &Vector3<f32>, rng: &mut rand::rngs::ThreadRng) -> Vector3<f32> {
+        let random_point = Vector3::new(self.r0 + rng.gen::<f32>() * (self.r1 - self.r0),
+                                        self.k,
+                                        self.s0 + rng.gen::<f32>() * (self.s1 - self.s0));
+        random_point - origin
     }
 }
