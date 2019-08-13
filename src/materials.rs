@@ -17,7 +17,7 @@ pub trait Material: Send + Sync {
                rng: &mut rand::rngs::ThreadRng)
                -> Option<(Vector3<f32>, Ray, f32)>;
 
-    fn emitted(&self, _u: f32, _v: f32, _p: &Vector3<f32>) -> Vector3<f32> {
+    fn emitted(&self, _ray: &Ray, _hit: &HitRecord) -> Vector3<f32> {
         Vector3::zeros()
     }
 
@@ -55,8 +55,8 @@ impl Material for Diffuse {
                record: &HitRecord,
                rng: &mut rand::rngs::ThreadRng)
                -> Option<(Vector3<f32>, Ray, f32)> {
-        let uvw = OrthonormalBase::new(record.normal);
-        let direction = uvw.local(random_cosine_direction(rng));
+        let uvw = OrthonormalBase::new(&record.normal);
+        let direction = uvw.local(&random_cosine_direction(rng));
         let scattered = Ray::new(record.point, direction.normalize(), ray.time);
         let attenuation = self.albedo.value(record.u, record.v, &record.point);
         let pdf = uvw.w().dot(&scattered.direction) / PI;
@@ -244,8 +244,12 @@ impl Material for Light {
         None
     }
 
-    fn emitted(&self, u: f32, v: f32, p: &Vector3<f32>) -> Vector3<f32> {
-        self.emit.value(u, v, &p)
+    fn emitted(&self, ray: &Ray, hit: &HitRecord) -> Vector3<f32> {
+        if hit.normal.dot(&ray.direction) < 0.0 {
+            self.emit.value(hit.u, hit.v, &hit.point)
+        } else {
+            Vector3::zeros()
+        }
     }
 }
 
