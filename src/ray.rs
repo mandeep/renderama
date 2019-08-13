@@ -5,6 +5,10 @@ use rand_distr::{Distribution, Normal};
 
 use bvh::BVH;
 use hitable::Hitable;
+use materials::Light;
+use pdf::{CosinePDF, HitablePDF, MixturePDF};
+use plane::{Axis, Plane};
+use texture::ConstantTexture;
 
 pub struct Ray {
     pub origin: Vector3<f32>,
@@ -72,11 +76,18 @@ pub fn compute_color(ray: &Ray,
                      -> Vector3<f32> {
     if let Some(hit_record) = world.hit(ray, 1e-2, f32::MAX) {
         let emitted = hit_record.material
-                                .emitted(hit_record.u, hit_record.v, &hit_record.point);
+                                .emitted(ray, &hit_record);
         if depth < 50 {
-            if let Some((attenuation, scattered, pdf)) =
+            if let Some((attenuation, _, _)) =
                 hit_record.material.scatter(ray, &hit_record, rng)
             {
+                let light = Light::new(ConstantTexture::new(0.0, 0.0, 0.0));
+                let light_shape = Plane::new(Axis::XZ, 213.0, 343.0, 227.0, 332.0, 554.0, light);
+                let cosine_pdf = CosinePDF::new(&hit_record.normal);
+                let hitable_pdf = HitablePDF::new(hit_record.point, light_shape);
+                let mixture_pdf = MixturePDF::new(cosine_pdf, hitable_pdf);
+                let scattered = Ray::new(hit_record.point, mixture_pdf.generate(rng), ray.time);
+                let pdf = mixture_pdf.value(&scattered.direction);
                 let scattering_pdf = hit_record.material
                                                .scattering_pdf(&ray, &hit_record, &scattered);
                 return emitted
