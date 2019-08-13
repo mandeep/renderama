@@ -43,7 +43,7 @@ fn main() {
     let args: Vec<String> = env::args().collect();
     let samples: u32 = args[1].parse().unwrap();
 
-    let (camera, world) = scene::spheres_in_box_scene(width, height);
+    let (camera, world) = scene::cornell_box_scene(width, height);
 
     let render_start_time: DateTime<Local> = Local::now();
     println!("[{}] Rendering scene with {} samples at {} x {} dimensions...",
