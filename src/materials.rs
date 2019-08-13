@@ -1,8 +1,11 @@
+use std::f32::consts::PI;
 use std::sync::Arc;
 
 use nalgebra::core::Vector3;
 
+use basis::OrthonormalBase;
 use hitable::HitRecord;
+use pdf::random_cosine_direction;
 use ray::{pick_sphere_point, Ray};
 use texture::Texture;
 
@@ -12,10 +15,14 @@ pub trait Material: Send + Sync {
                ray: &Ray,
                record: &HitRecord,
                rng: &mut rand::rngs::ThreadRng)
-               -> Option<(Vector3<f32>, Ray)>;
+               -> Option<(Vector3<f32>, Ray, f32)>;
 
     fn emitted(&self, _u: f32, _v: f32, _p: &Vector3<f32>) -> Vector3<f32> {
         Vector3::zeros()
+    }
+
+    fn scattering_pdf(&self, _ray: &Ray, _record: &HitRecord, _scattered: &Ray) -> f32 {
+        1.0
     }
 }
 
@@ -47,10 +54,18 @@ impl Material for Diffuse {
                ray: &Ray,
                record: &HitRecord,
                rng: &mut rand::rngs::ThreadRng)
-               -> Option<(Vector3<f32>, Ray)> {
-        let target: Vector3<f32> = record.point + record.normal + pick_sphere_point(rng);
-        Some((self.albedo.value(record.u, record.v, &record.point),
-              Ray::new(record.point, target - record.point, ray.time)))
+               -> Option<(Vector3<f32>, Ray, f32)> {
+        let uvw = OrthonormalBase::new(record.normal);
+        let direction = uvw.local(random_cosine_direction(rng));
+        let scattered = Ray::new(record.point, direction.normalize(), ray.time);
+        let attenuation = self.albedo.value(record.u, record.v, &record.point);
+        let pdf = uvw.w().dot(&scattered.direction) / PI;
+        Some((attenuation, scattered, pdf))
+    }
+
+    fn scattering_pdf(&self, _ray: &Ray, record: &HitRecord, scattered: &Ray) -> f32 {
+        let cosine = (record.normal.dot(&scattered.direction.normalize())).max(0.0);
+        cosine / PI
     }
 }
 
@@ -131,13 +146,13 @@ impl Material for Reflective {
                ray: &Ray,
                record: &HitRecord,
                rng: &mut rand::rngs::ThreadRng)
-               -> Option<(Vector3<f32>, Ray)> {
+               -> Option<(Vector3<f32>, Ray, f32)> {
         let reflected: Vector3<f32> = reflect(&ray.direction.normalize(), &record.normal);
         let scattered = Ray::new(record.point,
                                  reflected + self.fuzz * pick_sphere_point(rng),
                                  ray.time);
         if scattered.direction.dot(&record.normal) > 0.0 {
-            return Some((self.albedo, scattered));
+            return Some((self.albedo, scattered, 1.0));
         }
         None
     }
@@ -178,7 +193,7 @@ impl Material for Refractive {
                ray: &Ray,
                record: &HitRecord,
                _rng: &mut rand::rngs::ThreadRng)
-               -> Option<(Vector3<f32>, Ray)> {
+               -> Option<(Vector3<f32>, Ray, f32)> {
         let reflected: Vector3<f32> = reflect(&ray.direction.normalize(), &record.normal);
         let incident: f32 = ray.direction.dot(&record.normal);
 
@@ -201,9 +216,9 @@ impl Material for Refractive {
         let attenuation = Vector3::new(1.0, 1.0, 1.0);
 
         if rand::random::<f32>() < reflect_probability {
-            return Some((attenuation, Ray::new(record.point, reflected, ray.time)));
+            return Some((attenuation, Ray::new(record.point, reflected, ray.time), 1.0));
         } else {
-            return Some((attenuation, Ray::new(record.point, refracted.unwrap(), ray.time)));
+            return Some((attenuation, Ray::new(record.point, refracted.unwrap(), ray.time), 1.0));
         }
     }
 }
@@ -225,7 +240,7 @@ impl Material for Light {
                _ray: &Ray,
                _record: &HitRecord,
                _rng: &mut rand::rngs::ThreadRng)
-               -> Option<(Vector3<f32>, Ray)> {
+               -> Option<(Vector3<f32>, Ray, f32)> {
         None
     }
 
@@ -251,9 +266,9 @@ impl Material for Isotropic {
                ray: &Ray,
                record: &HitRecord,
                rng: &mut rand::rngs::ThreadRng)
-               -> Option<(Vector3<f32>, Ray)> {
+               -> Option<(Vector3<f32>, Ray, f32)> {
         let scattered = Ray::new(record.point, pick_sphere_point(rng), ray.time);
         let attenuation = self.albedo.value(record.u, record.v, &record.point);
-        Some((attenuation, scattered))
+        Some((attenuation, scattered, 1.0))
     }
 }
