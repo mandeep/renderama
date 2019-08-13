@@ -5,7 +5,7 @@ pub struct OrthonormalBase {
 }
 
 impl OrthonormalBase {
-    pub fn new(normal: Vector3<f32>) -> OrthonormalBase {
+    pub fn new(normal: &Vector3<f32>) -> OrthonormalBase {
         let w = normal.normalize();
 
         let t = if w.x.abs() > 0.9 {
@@ -32,7 +32,7 @@ impl OrthonormalBase {
         self.axis[2]
     }
 
-    pub fn local(&self, v: Vector3<f32>) -> Vector3<f32> {
+    pub fn local(&self, v: &Vector3<f32>) -> Vector3<f32> {
         v.x * self.u() + v.y * self.v() + v.z * self.w()
     }
 }
