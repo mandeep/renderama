@@ -45,6 +45,14 @@ pub trait Hitable: Send + Sync {
     fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitRecord>;
 
     fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB>;
+
+    fn pdf_value(&self, origin: &Vector3<f32>, v: &Vector3<f32>) -> f32 {
+        0.0
+    }
+
+    fn pdf_random(&self, origin: &Vector3<f32>, rng: &mut rand::rngs::ThreadRng) -> Vector3<f32> {
+        Vector3::new(1.0, 0.0, 0.0)
+    }
 }
 
 pub struct FlipNormals {
