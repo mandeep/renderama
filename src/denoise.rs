@@ -4,12 +4,12 @@
 pub fn denoise(input: &Vec<image::Rgb<u8>>, width: usize, height: usize) -> Vec<u8> {
     // OIDN works on float images only, so convert this to a floating point image
     let mut coerced_input = vec![0.0f32; 3 * input.len()];
-    for (i, pixel) in input.iter().enumerate() {
+    input.iter().enumerate().for_each(|(i, pixel)| {
         let (x, y) = (i % width, height - 1 - (i / width));
-        for rgb_index in 0..3 {
+        (0..3).for_each(|rgb_index| {
             coerced_input[3 * (y * width + x) + rgb_index] = pixel[rgb_index] as f32 / 255.0;
-        }
-    }
+        });
+    });
 
     let mut filter_output = vec![0.0f32; coerced_input.len()];
 
