@@ -76,10 +76,6 @@ impl Hitable for Sphere {
             let second_root: f32 = (-b + discriminant.sqrt()) / a;
             let mut roots = vec![first_root, second_root];
 
-            // if we have two positive roots, we want the smaller one as
-            // it is the first hit point of the sphere
-            roots.sort_by(|a, b| a.partial_cmp(b).unwrap());
-
             for root in roots {
                 if root > position_min && root < position_max {
                     let point = ray.point_at_parameter(root);
