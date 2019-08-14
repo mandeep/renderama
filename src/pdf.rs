@@ -68,7 +68,8 @@ pub struct MixturePDF {
 
 impl MixturePDF {
     pub fn new(cosine_pdf: CosinePDF, hitable_pdf: HitablePDF) -> MixturePDF {
-        MixturePDF { cosine_pdf, hitable_pdf }
+        MixturePDF { cosine_pdf,
+                     hitable_pdf }
     }
 
     pub fn value(&self, direction: &Vector3<f32>) -> f32 {
