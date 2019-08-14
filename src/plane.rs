@@ -1,5 +1,5 @@
-use std::sync::Arc;
 use std::f32;
+use std::sync::Arc;
 
 use nalgebra::core::Vector3;
 use rand::Rng;
