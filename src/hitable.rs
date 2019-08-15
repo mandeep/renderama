@@ -46,11 +46,11 @@ pub trait Hitable: Send + Sync {
 
     fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB>;
 
-    fn pdf_value(&self, origin: &Vector3<f32>, v: &Vector3<f32>) -> f32 {
+    fn pdf_value(&self, _origin: &Vector3<f32>, _v: &Vector3<f32>) -> f32 {
         0.0
     }
 
-    fn pdf_random(&self, origin: &Vector3<f32>, rng: &mut rand::rngs::ThreadRng) -> Vector3<f32> {
+    fn pdf_random(&self, _origin: &Vector3<f32>, _rng: &mut rand::rngs::ThreadRng) -> Vector3<f32> {
         Vector3::new(1.0, 0.0, 0.0)
     }
 }
