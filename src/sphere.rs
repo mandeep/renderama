@@ -74,7 +74,7 @@ impl Hitable for Sphere {
         if discriminant > 0.0 {
             let first_root: f32 = (-b - discriminant.sqrt()) / a;
             let second_root: f32 = (-b + discriminant.sqrt()) / a;
-            let mut roots = vec![first_root, second_root];
+            let roots = vec![first_root, second_root];
 
             for root in roots {
                 if root > position_min && root < position_max {
