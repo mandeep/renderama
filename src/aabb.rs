@@ -21,7 +21,7 @@ impl AABB {
         let t1 = (self.maximum - ray.origin).component_mul(&ray.inverse_direction);
 
         let tmin = t0.zip_map(&t1, |a, b| a.min(b));
-        let tmax = t0.zip_map(&t1, |a, b| a.max(b));
+        let tmax = t1.zip_map(&t0, |a, b| a.max(b));
 
         tmin.max() <= tmax.min()
     }
