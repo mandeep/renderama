@@ -92,21 +92,24 @@ impl Hitable for Rotate {
             let mut min = Vector3::new(f32::MAX, f32::MAX, f32::MAX);
             let mut max = Vector3::new(f32::MIN, f32::MIN, f32::MIN);
             (0..2).for_each(|i| {
-                (0..2).for_each(|j| {
-                    (0..2).for_each(|k| {
-                        let x = i as f32 * bbox.maximum.x + (1 - i) as f32 * bbox.minimum.x;
-                        let y = j as f32 * bbox.maximum.y + (1 - j) as f32 * bbox.minimum.y;
-                        let z = k as f32 * bbox.maximum.z + (1 - k) as f32 * bbox.minimum.z;
-                        let newx = self.cos_theta * x + self.sin_theta * z;
-                        let newz = -self.sin_theta * x + self.cos_theta * z;
-                        let rotation = Vector3::new(newx, y, newz);
-                        (0..3).for_each(|c| {
-                            max[c] = max[c].max(rotation[c]);
-                            min[c] = min[c].min(rotation[c]);
-                        });
-                    });
-                });
-            });
+                      (0..2).for_each(|j| {
+                                (0..2).for_each(|k| {
+                                          let x = i as f32 * bbox.maximum.x
+                                                  + (1 - i) as f32 * bbox.minimum.x;
+                                          let y = j as f32 * bbox.maximum.y
+                                                  + (1 - j) as f32 * bbox.minimum.y;
+                                          let z = k as f32 * bbox.maximum.z
+                                                  + (1 - k) as f32 * bbox.minimum.z;
+                                          let newx = self.cos_theta * x + self.sin_theta * z;
+                                          let newz = -self.sin_theta * x + self.cos_theta * z;
+                                          let rotation = Vector3::new(newx, y, newz);
+                                          (0..3).for_each(|c| {
+                                                    max[c] = max[c].max(rotation[c]);
+                                                    min[c] = min[c].min(rotation[c]);
+                                                });
+                                      });
+                            });
+                  });
 
             bbox.minimum = min;
             bbox.maximum = max;
