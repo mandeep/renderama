@@ -80,11 +80,11 @@ pub fn compute_color(ray: &Ray,
             if let Some((attenuation, _, _)) = hit_record.material.scatter(ray, &hit_record, rng) {
                 let light = Light::new(ConstantTexture::new(0.0, 0.0, 0.0));
                 let light_shape = Plane::new(Axis::XZ, 213.0, 343.0, 227.0, 332.0, 554.0, light);
-                let cosine_pdf = CosinePDF::new(&hit_record.normal);
+                let cosine_pdf = CosinePDF::new(&hit_record.normal.normalize());
                 let hitable_pdf = HitablePDF::new(hit_record.point, light_shape);
                 let mixture_pdf = MixturePDF::new(cosine_pdf, hitable_pdf);
                 let scattered = Ray::new(hit_record.point, mixture_pdf.generate(rng), ray.time);
-                let pdf = mixture_pdf.value(&scattered.direction);
+                let pdf = mixture_pdf.value(&scattered.direction.normalize());
                 let scattering_pdf = hit_record.material
                                                .scattering_pdf(&ray, &hit_record, &scattered);
                 return emitted
