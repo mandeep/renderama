@@ -22,6 +22,11 @@ pub fn clamp(n: f32) -> f32 {
     n.min(255.0).max(0.0)
 }
 
+/// Tone map the given luminance globally
+pub fn tone_map(luminance: f32) -> f32 {
+    luminance / (luminance + 1.0)
+}
+
 /// Check if a computed color contains any NaNs
 pub fn de_nan(color: &Vector3<f32>) -> Vector3<f32> {
     let mut correction = Vector3::new(color.x, color.y, color.z);
