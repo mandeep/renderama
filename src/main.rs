@@ -41,7 +41,7 @@ use denoise::denoise;
 fn main() {
     let rendering_time = Instant::now();
 
-    let (width, height): (u32, u32) = (1000, 1000);
+    let (width, height): (u32, u32) = (2048, 2048);
     let args: Vec<String> = env::args().collect();
     let samples: u32 = args[1].parse().unwrap();
 
