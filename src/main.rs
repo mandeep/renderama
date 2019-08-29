@@ -45,7 +45,7 @@ fn main() {
     let args: Vec<String> = env::args().collect();
     let samples: u32 = args[1].parse().unwrap();
 
-    let (camera, world) = scene::cornell_box_scene(width, height);
+    let (camera, world, light_source) = scene::cornell_box_scene(width, height);
 
     let render_start_time: DateTime<Local> = Local::now();
     println!("[{}] Rendering scene with {} samples at {} x {} dimensions...",
@@ -72,6 +72,7 @@ fn main() {
                                                              utils::de_nan(&ray::compute_color(&ray,
                                                                                 &world,
                                                                                 0,
+                                                                                &light_source,
                                                                                 camera.atmosphere,
                                                                                 &mut rng));
                                                      });

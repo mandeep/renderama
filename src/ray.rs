@@ -5,10 +5,8 @@ use rand_distr::{Distribution, Normal};
 
 use bvh::BVH;
 use hitable::Hitable;
-use materials::Light;
 use pdf::{CosinePDF, HitablePDF, MixturePDF};
-use plane::{Axis, Plane};
-use texture::ConstantTexture;
+use plane::Plane;
 
 pub struct Ray {
     pub origin: Vector3<f32>,
@@ -71,6 +69,7 @@ pub fn pick_sphere_point(rng: &mut rand::rngs::ThreadRng) -> Vector3<f32> {
 pub fn compute_color(ray: &Ray,
                      world: &BVH,
                      depth: i32,
+                     light_source: &Option<Plane>,
                      atmosphere: bool,
                      rng: &mut rand::rngs::ThreadRng)
                      -> Vector3<f32> {
@@ -78,10 +77,8 @@ pub fn compute_color(ray: &Ray,
         let emitted = hit_record.material.emitted(ray, &hit_record);
         if depth < 50 {
             if let Some((attenuation, _, _)) = hit_record.material.scatter(ray, &hit_record, rng) {
-                let light = Light::new(ConstantTexture::new(0.0, 0.0, 0.0));
-                let light_shape = Plane::new(Axis::XZ, 213.0, 343.0, 227.0, 332.0, 554.0, light);
                 let cosine_pdf = CosinePDF::new(&hit_record.normal.normalize());
-                let hitable_pdf = HitablePDF::new(hit_record.point, light_shape);
+                let hitable_pdf = HitablePDF::new(hit_record.point, light_source.clone().unwrap());
                 let mixture_pdf = MixturePDF::new(cosine_pdf, hitable_pdf);
                 let scattered = Ray::new(hit_record.point, mixture_pdf.generate(rng), ray.time);
                 let pdf = mixture_pdf.value(&scattered.direction.normalize());
@@ -92,6 +89,7 @@ pub fn compute_color(ray: &Ray,
                                                      * compute_color(&scattered,
                                                                      world,
                                                                      depth + 1,
+                                                                     light_source,
                                                                      atmosphere,
                                                                      rng)))
                          / pdf;
