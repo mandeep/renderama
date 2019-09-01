@@ -17,70 +17,52 @@ pub fn random_cosine_direction(rng: &mut rand::rngs::ThreadRng) -> Vector3<f32> 
     Vector3::new(x, y, z)
 }
 
-pub struct CosinePDF {
-    uvw: OrthonormalBase,
+pub enum PDF<'a> {
+    CosinePDF {
+        uvw: OrthonormalBase,
+    },
+    HitablePDF {
+        origin: Vector3<f32>,
+        hitable: Arc<dyn Hitable>,
+    },
+    MixturePDF {
+        cosine_pdf: &'a PDF<'a>,
+        hitable_pdf: &'a PDF<'a>,
+    },
 }
 
-impl CosinePDF {
-    pub fn new(normal: &Vector3<f32>) -> CosinePDF {
-        CosinePDF { uvw: OrthonormalBase::new(&normal) }
-    }
-
+impl<'a> PDF<'a> {
     pub fn value(&self, direction: &Vector3<f32>) -> f32 {
-        let cosine = direction.normalize().dot(&self.uvw.w());
+        match self {
+            PDF::CosinePDF { uvw } => {
+                let cosine = direction.normalize().dot(&uvw.w());
 
-        if cosine > 0.0 {
-            cosine / PI
-        } else {
-            0.0
+                if cosine > 0.0 {
+                    cosine / PI
+                } else {
+                    0.0
+                }
+            }
+            PDF::HitablePDF { origin, hitable } => hitable.pdf_value(origin, direction),
+            PDF::MixturePDF { cosine_pdf,
+                              hitable_pdf, } => {
+                0.5 * cosine_pdf.value(&direction) + 0.5 * hitable_pdf.value(direction)
+            }
         }
     }
 
     pub fn generate(&self, rng: &mut rand::rngs::ThreadRng) -> Vector3<f32> {
-        self.uvw.local(&random_cosine_direction(rng))
-    }
-}
-
-pub struct HitablePDF {
-    origin: Vector3<f32>,
-    hitable: Arc<dyn Hitable>,
-}
-
-impl HitablePDF {
-    pub fn new<H: Hitable + 'static>(origin: Vector3<f32>, hitable: H) -> HitablePDF {
-        let hitable = Arc::new(hitable);
-        HitablePDF { origin, hitable }
-    }
-
-    pub fn value(&self, direction: &Vector3<f32>) -> f32 {
-        self.hitable.pdf_value(&self.origin, direction)
-    }
-
-    pub fn generate(&self, rng: &mut rand::rngs::ThreadRng) -> Vector3<f32> {
-        self.hitable.pdf_random(&self.origin, rng)
-    }
-}
-
-pub struct MixturePDF {
-    cosine_pdf: CosinePDF,
-    hitable_pdf: HitablePDF,
-}
-
-impl MixturePDF {
-    pub fn new(cosine_pdf: CosinePDF, hitable_pdf: HitablePDF) -> MixturePDF {
-        MixturePDF { cosine_pdf,
-                     hitable_pdf }
-    }
-
-    pub fn value(&self, direction: &Vector3<f32>) -> f32 {
-        0.5 * self.cosine_pdf.value(&direction) + 0.5 * self.hitable_pdf.value(direction)
-    }
-
-    pub fn generate(&self, rng: &mut rand::rngs::ThreadRng) -> Vector3<f32> {
-        if rng.gen::<f32>() < 0.5 {
-            self.cosine_pdf.generate(rng)
-        } else {
-            self.hitable_pdf.generate(rng)
+        match self {
+            PDF::CosinePDF { uvw } => uvw.local(&random_cosine_direction(rng)),
+            PDF::HitablePDF { origin, hitable } => hitable.pdf_random(&origin, rng),
+            PDF::MixturePDF { cosine_pdf,
+                              hitable_pdf, } => {
+                if rng.gen::<f32>() < 0.5 {
+                    cosine_pdf.generate(rng)
+                } else {
+                    hitable_pdf.generate(rng)
+                }
+            }
         }
     }
 }
