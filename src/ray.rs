@@ -1,11 +1,13 @@
 use std::f32;
+use std::sync::Arc;
 
 use nalgebra::core::Vector3;
 use rand_distr::{Distribution, Normal};
 
+use basis::OrthonormalBase;
 use bvh::BVH;
 use hitable::Hitable;
-use pdf::{CosinePDF, HitablePDF, MixturePDF};
+use pdf::PDF;
 use plane::Plane;
 
 pub struct Ray {
@@ -77,9 +79,13 @@ pub fn compute_color(ray: &Ray,
         let emitted = hit_record.material.emitted(ray, &hit_record);
         if depth < 50 {
             if let Some((attenuation, _, _)) = hit_record.material.scatter(ray, &hit_record, rng) {
-                let cosine_pdf = CosinePDF::new(&hit_record.normal.normalize());
-                let hitable_pdf = HitablePDF::new(hit_record.point, light_source.clone().unwrap());
-                let mixture_pdf = MixturePDF::new(cosine_pdf, hitable_pdf);
+                let cosine_pdf =
+                    PDF::CosinePDF { uvw: OrthonormalBase::new(&hit_record.normal.normalize()) };
+                let hitable_pdf = PDF::HitablePDF { origin: hit_record.point,
+                                                    hitable: Arc::new(light_source.clone()
+                                                                                  .unwrap()) };
+                let mixture_pdf = PDF::MixturePDF { cosine_pdf: &cosine_pdf,
+                                                    hitable_pdf: &hitable_pdf };
                 let scattered = Ray::new(hit_record.point, mixture_pdf.generate(rng), ray.time);
                 let pdf = mixture_pdf.value(&scattered.direction.normalize());
                 let scattering_pdf = hit_record.material
