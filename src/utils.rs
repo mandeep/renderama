@@ -30,6 +30,10 @@ pub fn tone_map(luminance: f32) -> f32 {
 /// Check if a computed color contains any NaNs
 pub fn de_nan(color: &Vector3<f32>) -> Vector3<f32> {
     let mut correction = Vector3::new(color.x, color.y, color.z);
-    (0..3).for_each(|i| if correction[i].is_nan() { correction[i] = 0.0 });
+    (0..3).for_each(|i| {
+              if correction[i].is_nan() {
+                  correction[i] = 0.0
+              }
+          });
     correction
 }
