@@ -78,11 +78,11 @@ fn main() {
                                                      });
 
                                          coordinate /= samples as f32;
-                                         // take the sqrt as we are gamma correcting
-                                         // with a gamma of 2 (1 / gamma)
                                          (0..3).for_each(|j| {
                                                    coordinate[j] =
-                                                       utils::clamp(255.0 * coordinate[j].sqrt())
+                                                 utils::clamp(255.0
+                                                              * utils::gamma_correct(coordinate[j],
+                                                                                     0.5));
                                                });
                                          *pixel = image::Rgb([coordinate.x as u8,
                                                               coordinate.y as u8,

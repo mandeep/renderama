@@ -27,6 +27,11 @@ pub fn tone_map(luminance: f32) -> f32 {
     luminance / (luminance + 1.0)
 }
 
+/// Gamma correct the given luminance
+pub fn gamma_correct(luminance: f32, alpha: f32) -> f32 {
+    luminance.powf(alpha)
+}
+
 /// Check if a computed color contains any NaNs
 pub fn de_nan(color: &Vector3<f32>) -> Vector3<f32> {
     let mut correction = Vector3::new(color.x, color.y, color.z);
