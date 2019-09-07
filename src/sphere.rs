@@ -1,3 +1,4 @@
+use std::f32::consts::PI;
 use std::sync::Arc;
 
 use nalgebra::core::Vector3;
@@ -6,8 +7,6 @@ use aabb;
 use hitable::{HitRecord, Hitable};
 use materials::Material;
 use ray::Ray;
-
-use std::f32;
 
 #[derive(Clone)]
 pub struct Sphere {
@@ -51,8 +50,8 @@ impl Sphere {
 fn get_sphere_uv(p: &Vector3<f32>) -> (f32, f32) {
     let phi = p.z.atan2(p.x);
     let theta = p.y.asin();
-    let u = 1.0 - (phi + std::f32::consts::PI) / (2.0 * std::f32::consts::PI);
-    let v = (theta + std::f32::consts::PI / 2.0) / std::f32::consts::PI;
+    let u = 1.0 - (phi + PI) / (2.0 * PI);
+    let v = (theta + PI / 2.0) / PI;
     (u, v)
 }
 

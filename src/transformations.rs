@@ -1,4 +1,5 @@
 use std::f32;
+use std::f32::consts::PI;
 use std::sync::Arc;
 
 use aabb::AABB;
@@ -50,7 +51,7 @@ pub struct Rotate {
 impl Rotate {
     pub fn new<H: Hitable + 'static>(angle: f32, hitable: H) -> Rotate {
         let hitable = Arc::new(hitable);
-        let radians = (f32::consts::PI / 180.0) * angle;
+        let radians = (PI / 180.0) * angle;
         let sin_theta = radians.sin();
         let cos_theta = radians.cos();
         Rotate { sin_theta,

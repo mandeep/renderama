@@ -1,4 +1,4 @@
-use std::f32;
+use std::f32::consts::PI;
 
 use nalgebra::core::Vector3;
 use rand::{thread_rng, Rng};
@@ -41,7 +41,7 @@ impl Camera {
                atmosphere: bool)
                -> Camera {
         let lens_radius: f32 = aperture / 2.0;
-        let theta: f32 = fov * f32::consts::PI / 180.0;
+        let theta: f32 = fov * PI / 180.0;
         let half_height: f32 = (theta / 2.0).tan();
         let half_width: f32 = aspect * half_height;
 
