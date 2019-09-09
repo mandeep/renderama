@@ -2,6 +2,7 @@ use std::f32;
 use std::sync::Arc;
 
 use nalgebra::core::Vector3;
+use rand::rngs::ThreadRng;
 use rand_distr::{Distribution, Normal};
 
 use basis::OrthonormalBase;
@@ -43,7 +44,7 @@ impl Ray {
 ///
 /// Reference: http://mathworld.wolfram.com/SpherePointPicking.html
 ///
-pub fn pick_sphere_point(rng: &mut rand::rngs::ThreadRng) -> Vector3<f32> {
+pub fn pick_sphere_point(rng: &mut ThreadRng) -> Vector3<f32> {
     let normal_distribution = Normal::new(0.0, 1.0).unwrap();
     let x = normal_distribution.sample(rng) as f32;
     let y = normal_distribution.sample(rng) as f32;
@@ -73,7 +74,7 @@ pub fn compute_color(ray: &Ray,
                      depth: i32,
                      light_source: &Option<Plane>,
                      atmosphere: bool,
-                     rng: &mut rand::rngs::ThreadRng)
+                     rng: &mut ThreadRng)
                      -> Vector3<f32> {
     if let Some(hit_record) = world.hit(ray, 1e-2, f32::MAX) {
         let emitted = hit_record.material.emitted(ray, &hit_record);

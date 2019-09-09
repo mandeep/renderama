@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use nalgebra::core::Vector3;
+use rand::rngs::ThreadRng;
 
 use aabb::AABB;
 use materials::Material;
@@ -50,7 +51,7 @@ pub trait Hitable: Send + Sync {
         0.0
     }
 
-    fn pdf_random(&self, _origin: &Vector3<f32>, _rng: &mut rand::rngs::ThreadRng) -> Vector3<f32> {
+    fn pdf_random(&self, _origin: &Vector3<f32>, _rng: &mut ThreadRng) -> Vector3<f32> {
         Vector3::new(1.0, 0.0, 0.0)
     }
 }

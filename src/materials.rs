@@ -2,6 +2,7 @@ use std::f32::consts::PI;
 use std::sync::Arc;
 
 use nalgebra::core::Vector3;
+use rand::rngs::ThreadRng;
 
 use basis::OrthonormalBase;
 use hitable::HitRecord;
@@ -14,7 +15,7 @@ pub trait Material: Send + Sync {
     fn scatter(&self,
                ray: &Ray,
                record: &HitRecord,
-               rng: &mut rand::rngs::ThreadRng)
+               rng: &mut ThreadRng)
                -> Option<(Vector3<f32>, Ray, f32)>;
 
     fn emitted(&self, _ray: &Ray, _hit: &HitRecord) -> Vector3<f32> {
@@ -53,7 +54,7 @@ impl Material for Diffuse {
     fn scatter(&self,
                ray: &Ray,
                record: &HitRecord,
-               rng: &mut rand::rngs::ThreadRng)
+               rng: &mut ThreadRng)
                -> Option<(Vector3<f32>, Ray, f32)> {
         let uvw = OrthonormalBase::new(&record.normal);
         let direction = uvw.local(&random_cosine_direction(rng));
@@ -145,7 +146,7 @@ impl Material for Reflective {
     fn scatter(&self,
                ray: &Ray,
                record: &HitRecord,
-               rng: &mut rand::rngs::ThreadRng)
+               rng: &mut ThreadRng)
                -> Option<(Vector3<f32>, Ray, f32)> {
         let reflected: Vector3<f32> = reflect(&ray.direction.normalize(), &record.normal);
         let scattered = Ray::new(record.point,
@@ -192,7 +193,7 @@ impl Material for Refractive {
     fn scatter(&self,
                ray: &Ray,
                record: &HitRecord,
-               _rng: &mut rand::rngs::ThreadRng)
+               _rng: &mut ThreadRng)
                -> Option<(Vector3<f32>, Ray, f32)> {
         let reflected: Vector3<f32> = reflect(&ray.direction.normalize(), &record.normal);
         let incident: f32 = ray.direction.dot(&record.normal);
@@ -239,7 +240,7 @@ impl Material for Light {
     fn scatter(&self,
                _ray: &Ray,
                _record: &HitRecord,
-               _rng: &mut rand::rngs::ThreadRng)
+               _rng: &mut ThreadRng)
                -> Option<(Vector3<f32>, Ray, f32)> {
         None
     }
@@ -269,7 +270,7 @@ impl Material for Isotropic {
     fn scatter(&self,
                ray: &Ray,
                record: &HitRecord,
-               rng: &mut rand::rngs::ThreadRng)
+               rng: &mut ThreadRng)
                -> Option<(Vector3<f32>, Ray, f32)> {
         let scattered = Ray::new(record.point, pick_sphere_point(rng), ray.time);
         let attenuation = self.albedo.value(record.u, record.v, &record.point);

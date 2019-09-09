@@ -3,6 +3,7 @@ use std::sync::Arc;
 
 use nalgebra::core::Vector3;
 use rand::Rng;
+use rand::rngs::ThreadRng;
 
 use aabb::AABB;
 use hitable::{HitRecord, Hitable};
@@ -176,7 +177,7 @@ impl Hitable for Plane {
         }
     }
 
-    fn pdf_random(&self, origin: &Vector3<f32>, rng: &mut rand::rngs::ThreadRng) -> Vector3<f32> {
+    fn pdf_random(&self, origin: &Vector3<f32>, rng: &mut ThreadRng) -> Vector3<f32> {
         let random_point = Vector3::new(self.r0 + rng.gen::<f32>() * (self.r1 - self.r0),
                                         self.k,
                                         self.s0 + rng.gen::<f32>() * (self.s1 - self.s0));
