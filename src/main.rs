@@ -67,7 +67,7 @@ fn main() {
                                                                  / width as f32;
                                                          let v = (y as f32 + rand::random::<f32>())
                                                                  / height as f32;
-                                                         let ray = camera.get_ray(u, v);
+                                                         let ray = camera.get_ray(u, v, &mut rng);
                                                          coordinate +=
                                                              utils::de_nan(&ray::compute_color(&ray,
                                                                                 &world,

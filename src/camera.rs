@@ -1,7 +1,8 @@
 use std::f32::consts::PI;
 
 use nalgebra::core::Vector3;
-use rand::{thread_rng, Rng};
+use rand::Rng;
+use rand::rngs::ThreadRng;
 
 use ray::{pick_sphere_point, Ray};
 
@@ -71,8 +72,7 @@ impl Camera {
     }
 
     /// Get the ray that is coming from the camera into the world
-    pub fn get_ray(&self, s: f32, t: f32) -> Ray {
-        let mut rng = thread_rng();
+    pub fn get_ray(&self, s: f32, t: f32, mut rng: &mut ThreadRng) -> Ray {
         let radius: Vector3<f32> = self.lens_radius * pick_sphere_point(&mut rng);
         let offset: Vector3<f32> = self.u * radius.x + self.v * radius.y;
         let time = self.start_time + rng.gen::<f32>() * (self.end_time - self.start_time);
