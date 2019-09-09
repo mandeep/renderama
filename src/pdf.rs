@@ -3,11 +3,12 @@ use std::sync::Arc;
 
 use nalgebra::Vector3;
 use rand::Rng;
+use rand::rngs::ThreadRng;
 
 use basis::OrthonormalBase;
 use hitable::Hitable;
 
-pub fn random_cosine_direction(rng: &mut rand::rngs::ThreadRng) -> Vector3<f32> {
+pub fn random_cosine_direction(rng: &mut ThreadRng) -> Vector3<f32> {
     let r1 = rng.gen::<f32>();
     let r2 = rng.gen::<f32>();
     let z = (1.0 - r2).sqrt();
@@ -51,7 +52,7 @@ impl<'a> PDF<'a> {
         }
     }
 
-    pub fn generate(&self, rng: &mut rand::rngs::ThreadRng) -> Vector3<f32> {
+    pub fn generate(&self, rng: &mut ThreadRng) -> Vector3<f32> {
         match self {
             PDF::CosinePDF { uvw } => uvw.local(&random_cosine_direction(rng)),
             PDF::HitablePDF { origin, hitable } => hitable.pdf_random(&origin, rng),
