@@ -3,6 +3,7 @@ use std::sync::Arc;
 
 use nalgebra::core::Vector3;
 use rand::rngs::ThreadRng;
+use rand::Rng;
 use rand_distr::{Distribution, Normal};
 
 use basis::OrthonormalBase;
@@ -71,14 +72,15 @@ pub fn pick_sphere_point(rng: &mut ThreadRng) -> Vector3<f32> {
 ///
 pub fn compute_color(ray: &Ray,
                      world: &BVH,
-                     depth: i32,
+                     mut throughput: Vector3<f32>,
                      light_source: &Option<Plane>,
                      atmosphere: bool,
                      rng: &mut ThreadRng)
                      -> Vector3<f32> {
     if let Some(hit_record) = world.hit(ray, 1e-2, f32::MAX) {
+        let termination = throughput.x.max(throughput.y.max(throughput.z));
         let emitted = hit_record.material.emitted(ray, &hit_record);
-        if depth < 50 {
+        if rng.gen::<f32>() < termination {
             if let Some((attenuation, _, _)) = hit_record.material.scatter(ray, &hit_record, rng) {
                 let cosine_pdf =
                     PDF::CosinePDF { uvw: OrthonormalBase::new(&hit_record.normal.normalize()) };
@@ -91,15 +93,19 @@ pub fn compute_color(ray: &Ray,
                 let pdf = mixture_pdf.value(&scattered.direction.normalize());
                 let scattering_pdf = hit_record.material
                                                .scattering_pdf(&ray, &hit_record, &scattered);
-                return emitted
-                       + attenuation.component_mul(&(scattering_pdf
-                                                     * compute_color(&scattered,
-                                                                     world,
-                                                                     depth + 1,
-                                                                     light_source,
-                                                                     atmosphere,
-                                                                     rng)))
-                         / pdf;
+
+                throughput = attenuation.component_mul(&(scattering_pdf
+                                                         * compute_color(&scattered,
+                                                                         world,
+                                                                         throughput,
+                                                                         light_source,
+                                                                         atmosphere,
+                                                                         rng)))
+                             / pdf;
+
+                throughput *= 1.0 / termination;
+
+                return emitted + throughput;
             }
         }
         emitted
