@@ -1,8 +1,8 @@
 use std::f32::consts::PI;
 
 use nalgebra::core::Vector3;
-use rand::Rng;
 use rand::rngs::ThreadRng;
+use rand::Rng;
 
 use ray::{pick_sphere_point, Ray};
 
