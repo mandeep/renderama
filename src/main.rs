@@ -61,6 +61,7 @@ fn main() {
                                          let y = i / width as usize;
 
                                          let mut rng = thread_rng();
+                                         let throughput = Vector3::new(1.0f32, 1.0f32, 1.0f32);
 
                                          (0..samples).for_each(|_| {
                                                          let u = (x as f32 + rand::random::<f32>())
@@ -71,7 +72,7 @@ fn main() {
                                                          coordinate +=
                                                              utils::de_nan(&ray::compute_color(&ray,
                                                                                 &world,
-                                                                                0,
+                                                                                throughput,
                                                                                 &light_source,
                                                                                 camera.atmosphere,
                                                                                 &mut rng));
