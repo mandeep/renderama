@@ -2,8 +2,8 @@ use std::f32::consts::PI;
 use std::sync::Arc;
 
 use nalgebra::Vector3;
-use rand::Rng;
 use rand::rngs::ThreadRng;
+use rand::Rng;
 
 use basis::OrthonormalBase;
 use hitable::Hitable;
