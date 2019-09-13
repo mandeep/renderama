@@ -56,7 +56,7 @@ fn main() {
 
     let mut pixels = vec![image::Rgb([0, 0, 0]); (width * height) as usize];
     pixels.par_iter_mut().enumerate().for_each(|(i, pixel)| {
-                                         let mut coordinate: Vector3<f32> = Vector3::zeros();
+                                         let mut color: Vector3<f32> = Vector3::zeros();
                                          let x = i % width as usize;
                                          let y = i / width as usize;
 
@@ -69,7 +69,7 @@ fn main() {
                                                          let v = (y as f32 + rand::random::<f32>())
                                                                  / height as f32;
                                                          let ray = camera.get_ray(u, v, &mut rng);
-                                                         coordinate +=
+                                                         color +=
                                                              utils::de_nan(&ray::compute_color(&ray,
                                                                                 &world,
                                                                                 throughput,
@@ -78,16 +78,16 @@ fn main() {
                                                                                 &mut rng));
                                                      });
 
-                                         coordinate /= samples as f32;
+                                         color /= samples as f32;
                                          (0..3).for_each(|j| {
-                                                   coordinate[j] =
+                                                   color[j] =
                                                  utils::clamp(255.0
-                                                              * utils::gamma_correct(coordinate[j],
+                                                              * utils::gamma_correct(color[j],
                                                                                      0.5));
                                                });
-                                         *pixel = image::Rgb([coordinate.x as u8,
-                                                              coordinate.y as u8,
-                                                              coordinate.z as u8]);
+                                         *pixel = image::Rgb([color.x as u8,
+                                                              color.y as u8,
+                                                              color.z as u8]);
                                      });
 
     let render_end_time: DateTime<Local> = Local::now();
