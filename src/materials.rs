@@ -96,9 +96,10 @@ fn refract(v: &Vector3<f32>, n: &Vector3<f32>, refractive_index: f32) -> Option<
         1.0 - refractive_index * refractive_index * (1.0 - direction * direction);
 
     if discriminant > 0.0 {
-        return Some(refractive_index * (uv - n * direction) - n * discriminant.sqrt());
+        Some(refractive_index * (uv - n * direction) - n * discriminant.sqrt())
+    } else {
+        None
     }
-    None
 }
 
 /// Determine the reflectivity amount based on the angle
@@ -153,9 +154,10 @@ impl Material for Reflective {
                                  reflected + self.fuzz * pick_sphere_point(rng),
                                  ray.time);
         if scattered.direction.dot(&record.normal) > 0.0 {
-            return Some((self.albedo, scattered, 1.0));
+            Some((self.albedo, scattered, 1.0))
+        } else {
+            None
         }
-        None
     }
 }
 
@@ -217,9 +219,9 @@ impl Material for Refractive {
         let attenuation = Vector3::new(1.0, 1.0, 1.0);
 
         if rand::random::<f32>() < reflect_probability {
-            return Some((attenuation, Ray::new(record.point, reflected, ray.time), 1.0));
+            Some((attenuation, Ray::new(record.point, reflected, ray.time), 1.0))
         } else {
-            return Some((attenuation, Ray::new(record.point, refracted.unwrap(), ray.time), 1.0));
+            Some((attenuation, Ray::new(record.point, refracted.unwrap(), ray.time), 1.0))
         }
     }
 }
