@@ -9,6 +9,7 @@ pub struct AABB {
 }
 
 impl AABB {
+    /// Create a new AABB from the minimum and maximum slab vectors
     pub fn new(minimum: Vector3<f32>, maximum: Vector3<f32>) -> AABB {
         AABB { minimum, maximum }
     }
@@ -26,6 +27,7 @@ impl AABB {
         tmin.max() <= tmax.min()
     }
 
+    /// Find the surrounding box between two AABBs
     pub fn surrounding_box(&self, other: &AABB) -> AABB {
         let small = self.minimum.zip_map(&other.minimum, |a, b| a.min(b));
         let big = self.maximum.zip_map(&other.maximum, |a, b| a.max(b));
