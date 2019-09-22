@@ -83,6 +83,7 @@ pub fn compute_color(ray: &Ray,
         if rng.gen::<f32>() < termination {
             if let Some((attenuation, _, _)) = hit_record.material.scatter(ray, &hit_record, rng) {
                 throughput = attenuation.clone();
+                throughput *= 1.0 / termination;
 
                 let cosine_pdf =
                     PDF::CosinePDF { uvw: OrthonormalBase::new(&hit_record.normal.normalize()) };
@@ -104,8 +105,6 @@ pub fn compute_color(ray: &Ray,
                                                                          atmosphere,
                                                                          rng)))
                              / pdf;
-
-                throughput *= 1.0 / termination;
 
                 return emitted + throughput;
             }
