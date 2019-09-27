@@ -60,17 +60,15 @@ impl Hitable for World {
 
     fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB> {
         if self.objects.len() > 0 {
-            let temporary_box = AABB::new(Vector3::zeros(), Vector3::zeros());
-            if let Some(_) = self.objects.first().unwrap().bounding_box(t0, t1) {
-                let mut accumulated_box = AABB::new(Vector3::zeros(), Vector3::zeros());
-                for _ in 0..self.objects.len() {
-                    if let Some(_) = self.objects.first().unwrap().bounding_box(t0, t1) {
-                        accumulated_box = accumulated_box.surrounding_box(&temporary_box);
+            if let Some(accumulated_box) = self.objects.first().unwrap().bounding_box(t0, t1) {
+                for i in 1..self.objects.len() {
+                    if let Some(new_box) = self.objects[i].bounding_box(t0, t1) {
+                        return Some(accumulated_box.surrounding_box(&new_box))
                     } else {
-                        return None;
+                        return None
                     }
                 }
-                return Some(accumulated_box);
+                return None;
             } else {
                 return None;
             }
