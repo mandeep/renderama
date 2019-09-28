@@ -64,8 +64,6 @@ impl Hitable for World {
                 for i in 1..self.objects.len() {
                     if let Some(new_box) = self.objects[i].bounding_box(t0, t1) {
                         return Some(accumulated_box.surrounding_box(&new_box))
-                    } else {
-                        return None
                     }
                 }
                 return None;
