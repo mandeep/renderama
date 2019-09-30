@@ -35,7 +35,11 @@ pub fn clamp(n: f32) -> f32 {
 ///
 /// The tone mapping derivation can be found in Drago et al.
 /// Adaptive Logarithmic Mapping for Displaying High Constrast Scenes.
-pub fn adaptive_log_map(luminance: f32, max_luminance: f32, display_luminance: f32, bias: f32) -> f32 {
+pub fn adaptive_log_map(luminance: f32,
+                        max_luminance: f32,
+                        display_luminance: f32,
+                        bias: f32)
+                        -> f32 {
     let bias_term = bias.ln() / 0.5f32.ln();
 
     let first_term_numerator = display_luminance * 0.01;
@@ -76,7 +80,7 @@ pub fn reinhard_tone_map(luminance: f32, max_luminance: f32) -> f32 {
     if max_luminance > 1e20 {
         luminance / (1.0 + luminance)
     } else {
-        (luminance * (1.0 + (luminance / max_luminance.powf(2.0))))  / (1.0 + luminance)
+        (luminance * (1.0 + (luminance / max_luminance.powf(2.0)))) / (1.0 + luminance)
     }
 }
 
