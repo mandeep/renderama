@@ -1,4 +1,4 @@
-![Renderama](header.png)
+![Illumine](header.png)
 =============================
 
 Renderama is a path tracer in progress based off of Peter Shirley's
