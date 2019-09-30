@@ -83,7 +83,7 @@ fn main() {
                                                    color[j] =
                                                  utils::clamp(255.0
                                                               * utils::gamma_correct(color[j],
-                                                                                     0.5));
+                                                                                     2.2));
                                                });
                                          *pixel = image::Rgb([color.x as u8,
                                                               color.y as u8,
