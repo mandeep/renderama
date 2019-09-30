@@ -22,7 +22,7 @@ pub fn clamp(n: f32) -> f32 {
     n.min(255.0).max(0.0)
 }
 
-/// Tone map the given luminance globally
+/// Tone map the given luminance globally with the Reinhard equation
 ///
 /// luminance is the pixel to map and max_luminance
 /// is the smallest luminance that will be mapped to pure
@@ -32,7 +32,7 @@ pub fn clamp(n: f32) -> f32 {
 /// The tone mapping derivation can be found in the paper:
 /// Photographic Tone Reproduction for Digital Images by
 /// Reinhard et al.
-pub fn tone_map(luminance: f32, max_luminance: f32) -> f32 {
+pub fn reinhard_tone_map(luminance: f32, max_luminance: f32) -> f32 {
     (luminance * (1.0 + (luminance / max_luminance.powf(2.0))))  / (1.0 + luminance)
 }
 
