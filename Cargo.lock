@@ -162,6 +162,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "illumine"
+version = "0.19.0"
+dependencies = [
+ "chrono 0.4.7 (registry+https://github.com/rust-lang/crates.io-index)",
+ "image 0.21.0 (git+https://github.com/image-rs/image)",
+ "nalgebra 0.17.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "oidn 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rand 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rand_distr 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rayon 1.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "image"
 version = "0.21.0"
 source = "git+https://github.com/image-rs/image#36d2741eb3826d72e66d5a42c87818bdeb454b4c"
@@ -525,19 +538,6 @@ dependencies = [
 name = "redox_syscall"
 version = "0.1.56"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-
-[[package]]
-name = "renderama"
-version = "0.18.1"
-dependencies = [
- "chrono 0.4.7 (registry+https://github.com/rust-lang/crates.io-index)",
- "image 0.21.0 (git+https://github.com/image-rs/image)",
- "nalgebra 0.17.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "oidn 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "rand 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "rand_distr 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "rayon 1.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
-]
 
 [[package]]
 name = "scoped_threadpool"

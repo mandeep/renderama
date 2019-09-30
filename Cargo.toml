@@ -1,6 +1,6 @@
 [package]
-name = "renderama"
-version = "0.18.1"
+name = "illumine"
+version = "0.19.0"
 authors = ["mandeep <mandeep@users.noreply.github.com>"]
 
 [features]
