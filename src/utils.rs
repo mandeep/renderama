@@ -22,7 +22,6 @@ pub fn clamp(n: f32) -> f32 {
     n.min(255.0).max(0.0)
 }
 
-
 /// Tone map the given luminance globally with the Stockham equation
 ///
 /// luminance is the pixel to map and max_luminance
@@ -47,7 +46,11 @@ pub fn stockham_tone_map(luminance: f32, max_luminance: f32) -> f32 {
 /// Photographic Tone Reproduction for Digital Images by
 /// Reinhard et al.
 pub fn reinhard_tone_map(luminance: f32, max_luminance: f32) -> f32 {
-    (luminance * (1.0 + (luminance / max_luminance.powf(2.0))))  / (1.0 + luminance)
+    if max_luminance > 1e20 {
+        luminance / (1.0 + luminance)
+    } else {
+        (luminance * (1.0 + (luminance / max_luminance.powf(2.0))))  / (1.0 + luminance)
+    }
 }
 
 /// Gamma correct the given luminance
