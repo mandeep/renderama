@@ -24,7 +24,7 @@ pub fn clamp(n: f32) -> f32 {
 
 /// Tone map the given luminance globally
 ///
-/// luminance is the pixel to map and white_luminance
+/// luminance is the pixel to map and max_luminance
 /// is the smallest luminance that will be mapped to pure
 /// white. Generally, this luminance is set to the
 /// maximum luminance in the scene.
@@ -32,8 +32,8 @@ pub fn clamp(n: f32) -> f32 {
 /// The tone mapping derivation can be found in the paper:
 /// Photographic Tone Reproduction for Digital Images by
 /// Reinhard et al.
-pub fn tone_map(luminance: f32, white_luminance: f32) -> f32 {
-    (luminance * (1.0 + (luminance / white_luminance.powf(2.0))))  / (1.0 + luminance)
+pub fn tone_map(luminance: f32, max_luminance: f32) -> f32 {
+    (luminance * (1.0 + (luminance / max_luminance.powf(2.0))))  / (1.0 + luminance)
 }
 
 /// Gamma correct the given luminance
