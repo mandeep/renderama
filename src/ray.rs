@@ -78,9 +78,9 @@ pub fn compute_color(ray: &Ray,
                      rng: &mut ThreadRng)
                      -> Vector3<f32> {
     if let Some(hit_record) = world.hit(ray, 1e-2, f32::MAX) {
-        let termination = throughput.x.max(throughput.y.max(throughput.z));
+        let roulette_factor = 1.0 - throughput.max();
         let emitted = hit_record.material.emitted(ray, &hit_record);
-        if rng.gen::<f32>() < termination {
+        if rng.gen::<f32>() > roulette_factor {
             if let Some((attenuation, _, _)) = hit_record.material.scatter(ray, &hit_record, rng) {
                 throughput = throughput.component_mul(&attenuation);
 
@@ -105,7 +105,7 @@ pub fn compute_color(ray: &Ray,
                                                                          rng)))
                              / pdf;
 
-                throughput /= termination;
+                throughput /= 1.0 - roulette_factor;
 
                 return emitted + throughput;
             }
