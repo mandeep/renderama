@@ -37,8 +37,8 @@ pub fn tone_map(luminance: f32, white_luminance: f32) -> f32 {
 }
 
 /// Gamma correct the given luminance
-pub fn gamma_correct(luminance: f32, alpha: f32) -> f32 {
-    luminance.powf(alpha)
+pub fn gamma_correct(luminance: f32, gamma: f32) -> f32 {
+    luminance.powf(gamma)
 }
 
 /// Check if a computed color contains any NaNs
