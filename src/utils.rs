@@ -38,7 +38,7 @@ pub fn reinhard_tone_map(luminance: f32, max_luminance: f32) -> f32 {
 
 /// Gamma correct the given luminance
 pub fn gamma_correct(luminance: f32, gamma: f32) -> f32 {
-    luminance.powf(gamma)
+    luminance.powf(1.0 / gamma)
 }
 
 /// Check if a computed color contains any NaNs
