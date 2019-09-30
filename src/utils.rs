@@ -22,6 +22,20 @@ pub fn clamp(n: f32) -> f32 {
     n.min(255.0).max(0.0)
 }
 
+
+/// Tone map the given luminance globally with the Stockham equation
+///
+/// luminance is the pixel to map and max_luminance
+/// is the smallest luminance that will be mapped to pure
+/// white. Generally, this luminance is set to the
+/// maximum luminance in the scene.
+///
+/// The tone mapping derivation can be found in Stockham's paper
+/// Image Processing in the Context of a Visual Model.
+pub fn stockham_tone_map(luminance: f32, max_luminance: f32) -> f32 {
+    (luminance + 1.0).ln() / (max_luminance + 1.0).ln()
+}
+
 /// Tone map the given luminance globally with the Reinhard equation
 ///
 /// luminance is the pixel to map and max_luminance
