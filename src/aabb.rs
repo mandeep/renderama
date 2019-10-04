@@ -27,7 +27,7 @@ impl AABB {
         tmin.max() <= tmax.min()
     }
 
-    /// Find the surrounding box between two AABBs
+    /// Create an AABB that encapsulates two volumes
     pub fn surrounding_box(&self, other: &AABB) -> AABB {
         let small = self.minimum.zip_map(&other.minimum, |a, b| a.min(b));
         let big = self.maximum.zip_map(&other.maximum, |a, b| a.max(b));
