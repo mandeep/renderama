@@ -14,6 +14,11 @@ pub struct BVH {
 }
 
 impl BVH {
+    /// Construct a new BVH from the objects in the scene.
+    ///
+    /// An axis is chosen by random and the objects in the scene
+    /// are sorted upon that axis. Then, child objects are created
+    /// until only leaf nodes exist.
     pub fn new(mut world: &mut Vec<Arc<dyn Hitable>>, start_time: f32, end_time: f32) -> BVH {
         let mut rng = rand::thread_rng();
         let axis: usize = rng.gen_range(0, 3);
@@ -41,6 +46,11 @@ impl BVH {
 }
 
 impl Hitable for BVH {
+    /// Test whether the ray intersects the bounding volume.
+    ///
+    /// We check for an intersection with a node in the BVH and
+    /// return the node that is hit. If both the left and right
+    /// child are hit, then we return the node closest to the ray.
     fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
         if self.bbox.hit(&ray, t_min, t_max) {
             let left = self.left.hit(&ray, t_min, t_max);
@@ -67,6 +77,11 @@ impl Hitable for BVH {
     }
 }
 
+/// Compare the coordinates of two bounding volumes.
+///
+/// We compare two bounding volumes based on their minimum
+/// slab and return the order with the volume with the
+/// least minimum first.
 fn box_compare(a: &Arc<dyn Hitable>,
                b: &Arc<dyn Hitable>,
                axis: usize,
