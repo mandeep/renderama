@@ -62,14 +62,6 @@ pub fn pick_sphere_point(rng: &mut ThreadRng) -> Vector3<f32> {
 /// the color at the ray's hit point. The depth has been set to an arbitrary
 /// limit of 50 which can lead to bias rendering.
 ///
-/// Instead of returning a Vector3 of zeros, the following code can be used
-/// to simulate an atmosphere:
-/// ```
-///     let unit_direction: Vector3<f32> = ray.direction.normalize();
-///     let point: f32 = 0.5 * (unit_direction.y + 1.0);
-///     return (1.0 - point) * Vector3::new(1.0, 1.0, 1.0) + point * Vector3::new(0.5, 0.7, 1.0);
-/// ```
-///
 pub fn compute_color(ray: &Ray,
                      world: &BVH,
                      mut throughput: Vector3<f32>,
