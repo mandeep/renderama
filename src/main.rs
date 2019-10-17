@@ -44,6 +44,7 @@ fn main() {
     let (width, height): (u32, u32) = (2048, 2048);
     let args: Vec<String> = env::args().collect();
     let samples: u32 = args[1].parse().unwrap();
+    let bounces: u32 = 10;
 
     let (camera, world, light_source) = scene::cornell_box_scene(width, height);
     let scene_name = "Cornell Box";
@@ -59,11 +60,11 @@ fn main() {
     let mut pixels = vec![image::Rgb([0, 0, 0]); (width * height) as usize];
     pixels.par_iter_mut().enumerate().for_each(|(i, pixel)| {
                                          let mut color: Vector3<f32> = Vector3::zeros();
+
                                          let x = i % width as usize;
                                          let y = i / width as usize;
 
                                          let mut rng = thread_rng();
-                                         let throughput = Vector3::new(1.0f32, 1.0f32, 1.0f32);
 
                                          (0..samples).for_each(|_| {
                                                          let u = (x as f32 + rand::random::<f32>())
@@ -72,12 +73,12 @@ fn main() {
                                                                  / height as f32;
                                                          let ray = camera.get_ray(u, v, &mut rng);
                                                          color +=
-                                                             utils::de_nan(&ray::compute_color(&ray,
+                                                             ray::compute_color(ray,
                                                                                 &world,
-                                                                                throughput,
+                                                                                bounces,
                                                                                 &light_source,
                                                                                 camera.atmosphere,
-                                                                                &mut rng));
+                                                                                &mut rng);
                                                      });
 
                                          color /= samples as f32;

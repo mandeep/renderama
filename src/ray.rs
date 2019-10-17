@@ -62,20 +62,22 @@ pub fn pick_sphere_point(rng: &mut ThreadRng) -> Vector3<f32> {
 /// the color at the ray's hit point. The depth has been set to an arbitrary
 /// limit of 50 which can lead to bias rendering.
 ///
-pub fn compute_color(ray: &Ray,
+pub fn compute_color(mut ray: Ray,
                      world: &BVH,
-                     mut throughput: Vector3<f32>,
+                     bounces: u32,
                      light_source: &Option<Plane>,
                      atmosphere: bool,
                      rng: &mut ThreadRng)
                      -> Vector3<f32> {
-    if let Some(hit_record) = world.hit(ray, 1e-2, f32::MAX) {
-        let roulette_factor = 1.0 - throughput.max();
-        let emitted = hit_record.material.emitted(ray, &hit_record);
-        if rng.gen::<f32>() > roulette_factor {
-            if let Some((attenuation, _, _)) = hit_record.material.scatter(ray, &hit_record, rng) {
-                throughput = throughput.component_mul(&attenuation);
+    let mut color = Vector3::zeros();
+    let mut throughput = Vector3::new(1.0, 1.0, 1.0);
 
+    for bounce in 0..=bounces {
+        if let Some(hit_record) = world.hit(&ray, 1e-2, f32::MAX) {
+            let emitted = hit_record.material.emitted(&ray, &hit_record);
+            color += throughput.component_mul(&emitted);
+
+            if let Some((attenuation, _, _)) = hit_record.material.scatter(&ray, &hit_record, rng) {
                 let cosine_pdf =
                     PDF::CosinePDF { uvw: OrthonormalBase::new(&hit_record.normal.normalize()) };
                 let hitable_pdf = PDF::HitablePDF { origin: hit_record.point,
@@ -88,28 +90,30 @@ pub fn compute_color(ray: &Ray,
                 let scattering_pdf = hit_record.material
                                                .scattering_pdf(&ray, &hit_record, &scattered);
 
-                throughput = attenuation.component_mul(&(scattering_pdf
-                                                         * compute_color(&scattered,
-                                                                         world,
-                                                                         throughput,
-                                                                         light_source,
-                                                                         atmosphere,
-                                                                         rng)))
-                             / pdf;
+                throughput = throughput.component_mul(&(scattering_pdf * attenuation)) / pdf;
 
-                throughput /= 1.0 - roulette_factor;
-
-                return emitted + throughput;
+                ray = scattered;
+            } else {
+                break;
+            }
+        } else {
+            if atmosphere {
+                let unit_direction: Vector3<f32> = ray.direction.normalize();
+                let point: f32 = 0.5 * (unit_direction.y + 1.0);
+                return (1.0 - point) * Vector3::new(1.0, 1.0, 1.0)
+                       + point * Vector3::new(0.5, 0.7, 1.0);
+            } else {
+                return Vector3::zeros();
             }
         }
-        emitted
-    } else {
-        if atmosphere {
-            let unit_direction: Vector3<f32> = ray.direction.normalize();
-            let point: f32 = 0.5 * (unit_direction.y + 1.0);
-            (1.0 - point) * Vector3::new(1.0, 1.0, 1.0) + point * Vector3::new(0.5, 0.7, 1.0)
-        } else {
-            Vector3::zeros()
+
+        if bounce > 3 {
+            let roulette_factor = (1.0 - throughput.max()).max(0.05);
+            if rng.gen::<f32>() < roulette_factor {
+                break;
+            }
+            throughput /= 1.0 - roulette_factor;
         }
     }
+    return color;
 }
