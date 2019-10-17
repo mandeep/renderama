@@ -73,12 +73,12 @@ fn main() {
                                                                  / height as f32;
                                                          let ray = camera.get_ray(u, v, &mut rng);
                                                          color +=
-                                                             ray::compute_color(ray,
+                                                             utils::de_nan(&ray::compute_color(ray,
                                                                                 &world,
                                                                                 bounces,
                                                                                 &light_source,
                                                                                 camera.atmosphere,
-                                                                                &mut rng);
+                                                                                &mut rng));
                                                      });
 
                                          color /= samples as f32;
