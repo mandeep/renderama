@@ -21,6 +21,7 @@ mod rectangle;
 mod scene;
 mod sphere;
 mod texture;
+mod tone;
 mod transformations;
 mod utils;
 mod volume;
