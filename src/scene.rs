@@ -15,7 +15,7 @@ use transformations::{Rotate, Translate};
 use volume::Volume;
 use world::World;
 
-pub fn three_spheres_scene(width: u32, height: u32) -> (Camera, BVH, Option<Plane>) {
+pub fn three_spheres_scene(width: u32, height: u32) -> (String, Camera, BVH, Option<Plane>) {
     let origin = Vector3::new(0.0, 3.0, 6.0);
     let lookat = Vector3::new(0.0, 0.0, -1.5);
     let view = Vector3::new(0.0, 1.0, 0.0);
@@ -70,10 +70,10 @@ pub fn three_spheres_scene(width: u32, height: u32) -> (Camera, BVH, Option<Plan
 
     let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
 
-    (camera, bvh, None)
+    (String::from("Three Spheres"), camera, bvh, None)
 }
 
-pub fn random_spheres_scene(width: u32, height: u32) -> (Camera, BVH, Option<Plane>) {
+pub fn random_spheres_scene(width: u32, height: u32) -> (String, Camera, BVH, Option<Plane>) {
     let origin = Vector3::new(13.0, 2.0, 3.0);
     let lookat = Vector3::new(0.0, 0.0, 0.0);
     let view = Vector3::new(0.0, 1.0, 0.0);
@@ -180,10 +180,10 @@ pub fn random_spheres_scene(width: u32, height: u32) -> (Camera, BVH, Option<Pla
 
     let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
 
-    (camera, bvh, None)
+    (String::from("Random Spheres"), camera, bvh, None)
 }
 
-pub fn earth_scene(width: u32, height: u32) -> (Camera, World, Option<Plane>) {
+pub fn earth_scene(width: u32, height: u32) -> (String, Camera, World, Option<Plane>) {
     let origin = Vector3::new(13.0, 2.0, 3.0);
     let lookat = Vector3::new(0.0, 0.0, 0.0);
     let view = Vector3::new(0.0, 1.0, 0.0);
@@ -215,10 +215,10 @@ pub fn earth_scene(width: u32, height: u32) -> (Camera, World, Option<Plane>) {
                           0.0,
                           1.0));
 
-    (camera, world, None)
+    (String::from("Earth"), camera, world, None)
 }
 
-pub fn motion_scene(width: u32, height: u32) -> (Camera, BVH, Option<Plane>) {
+pub fn motion_scene(width: u32, height: u32) -> (String, Camera, BVH, Option<Plane>) {
     let origin = Vector3::new(13.0, 2.0, 3.0);
     let lookat = Vector3::new(0.0, 0.0, 0.0);
     let view = Vector3::new(0.0, 1.0, 0.0);
@@ -275,10 +275,10 @@ pub fn motion_scene(width: u32, height: u32) -> (Camera, BVH, Option<Plane>) {
 
     let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
 
-    (camera, bvh, None)
+    (String::from("Motion Blur"), camera, bvh, None)
 }
 
-pub fn simple_light_scene(width: u32, height: u32) -> (Camera, BVH, Option<Plane>) {
+pub fn simple_light_scene(width: u32, height: u32) -> (String, Camera, BVH, Option<Plane>) {
     let origin = Vector3::new(13.0, 2.0, 3.0);
     let lookat = Vector3::new(0.0, 0.0, 0.0);
     let view = Vector3::new(0.0, 1.0, 0.0);
@@ -337,10 +337,10 @@ pub fn simple_light_scene(width: u32, height: u32) -> (Camera, BVH, Option<Plane
     let light = Light::new(ConstantTexture::new(0.0, 0.0, 0.0));
     let light_shape = Plane::new(Axis::XZ, 3.0, 5.0, 1.0, 3.0, -2.0, light);
 
-    (camera, bvh, Some(light_shape))
+    (String::from("Simple Light"), camera, bvh, Some(light_shape))
 }
 
-pub fn cornell_box_scene(width: u32, height: u32) -> (Camera, BVH, Option<Plane>) {
+pub fn cornell_box_scene(width: u32, height: u32) -> (String, Camera, BVH, Option<Plane>) {
     let origin = Vector3::new(278.0, 278.0, -800.0);
     let lookat = Vector3::new(278.0, 278.0, 0.0);
     let view = Vector3::new(0.0, 1.0, 0.0);
@@ -400,10 +400,10 @@ pub fn cornell_box_scene(width: u32, height: u32) -> (Camera, BVH, Option<Plane>
     let light = Light::new(ConstantTexture::new(0.0, 0.0, 0.0));
     let light_shape = Plane::new(Axis::XZ, 213.0, 343.0, 227.0, 332.0, 554.0, light);
 
-    (camera, bvh, Some(light_shape))
+    (String::from("Cornell Box"), camera, bvh, Some(light_shape))
 }
 
-pub fn spheres_in_box_scene(width: u32, height: u32) -> (Camera, BVH, Option<Plane>) {
+pub fn spheres_in_box_scene(width: u32, height: u32) -> (String, Camera, BVH, Option<Plane>) {
     let origin = Vector3::new(478.0, 278.0, -600.0);
     let lookat = Vector3::new(278.0, 278.0, 0.0);
     let view = Vector3::new(0.0, 1.0, 0.0);
@@ -518,5 +518,5 @@ pub fn spheres_in_box_scene(width: u32, height: u32) -> (Camera, BVH, Option<Pla
     let light = Light::new(ConstantTexture::new(0.0, 0.0, 0.0));
     let light_shape = Plane::new(Axis::XZ, 123.0, 423.0, 147.0, 412.0, 554.0, light);
 
-    (camera, bvh, Some(light_shape))
+    (String::from("Spheres in Box"), camera, bvh, Some(light_shape))
 }

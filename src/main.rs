@@ -46,13 +46,12 @@ fn main() {
     let samples: u32 = args[1].parse().unwrap();
     let bounces: u32 = 10;
 
-    let (camera, world, light_source) = scene::cornell_box_scene(width, height);
-    let scene_name = "Cornell Box";
+    let (name, camera, world, light_source) = scene::cornell_box_scene(width, height);
 
     let render_start_time: DateTime<Local> = Local::now();
     println!("[{}] Rendering '{}' scene with {} samples at {} x {} dimensions...",
              render_start_time.format("%H:%M:%S"),
-             scene_name,
+             name,
              samples,
              width,
              height);
