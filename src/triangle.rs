@@ -1,3 +1,4 @@
+use std::f32;
 use std::sync::Arc;
 
 use nalgebra::Vector3;
@@ -6,12 +7,19 @@ use aabb::AABB;
 use hitable::{HitRecord, Hitable};
 use materials::Material;
 use ray::Ray;
+use world::World;
 
 pub struct Triangle {
     v0: Vector3<f32>,
     v1: Vector3<f32>,
     v2: Vector3<f32>,
     material: Arc<dyn Material>,
+}
+
+pub struct TriangleMesh {
+    triangles: Vec<Triangle>,
+    hitables: World,
+    material: Arc<dyn Material>
 }
 
 impl Triangle {
@@ -26,6 +34,18 @@ impl Triangle {
                    v1: v1,
                    v2: v2,
                    material: material }
+    }
+
+    pub fn minimum(&self) -> Vector3<f32> {
+        self.v0
+            .zip_map(&self.v1, |a, b| a.min(b))
+            .zip_map(&self.v2, |c, d| c.min(d))
+    }
+
+    pub fn maximum(&self) -> Vector3<f32> {
+        self.v0
+            .zip_map(&self.v1, |a, b| a.max(b))
+            .zip_map(&self.v2, |c, d| c.max(d))
     }
 }
 
@@ -81,12 +101,23 @@ impl Hitable for Triangle {
     /// The bounding box is created using the minimum
     /// and maximum points of all of the vertices
     fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
-        let minimum = self.v0
-                          .zip_map(&self.v1, |a, b| a.min(b))
-                          .zip_map(&self.v2, |c, d| c.min(d));
-        let maximum = self.v0
-                          .zip_map(&self.v1, |a, b| a.max(b))
-                          .zip_map(&self.v2, |c, d| c.max(d));
+        Some(AABB::new(self.minimum(), self.maximum()))
+    }
+}
+
+impl Hitable for TriangleMesh {
+    fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitRecord> {
+        self.hitables.hit(&ray, position_min, position_max)
+    }
+
+    fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
+        let mut minimum = Vector3::new(f32::MAX, f32::MAX, f32::MAX);
+        let mut maximum = Vector3::new(f32::MIN, f32::MIN, f32::MIN);
+
+        for triangle in &self.triangles {
+            minimum = minimum.zip_map(&triangle.minimum(), |a, b| a.min(b));
+            maximum = maximum.zip_map(&triangle.maximum(), |a, b| a.max(b));
+        }
 
         Some(AABB::new(minimum, maximum))
     }
