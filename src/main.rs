@@ -23,6 +23,7 @@ mod sphere;
 mod texture;
 mod tone;
 mod transformations;
+mod triangle;
 mod utils;
 mod volume;
 mod world;
