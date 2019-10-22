@@ -279,10 +279,10 @@ pub fn motion_scene(width: u32, height: u32) -> (String, Camera, BVH, Option<Pla
 }
 
 pub fn simple_light_scene(width: u32, height: u32) -> (String, Camera, BVH, Option<Plane>) {
-    let origin = Vector3::new(13.0, 2.0, 3.0);
+    let origin = Vector3::new(13.0, 3.0, 3.0);
     let lookat = Vector3::new(0.0, 0.0, 0.0);
     let view = Vector3::new(0.0, 1.0, 0.0);
-    let fov = 20.0;
+    let fov = 50.0;
     let aspect_ratio = (width / height) as f32;
     let aperture = 0.1;
     let focus_distance = 10.0;
