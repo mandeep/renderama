@@ -1,3 +1,93 @@
-pub struct Triangle {}
+use std::sync::Arc;
 
-pub struct TriangleMesh {}
+use nalgebra::Vector3;
+
+use aabb::AABB;
+use hitable::{HitRecord, Hitable};
+use materials::Material;
+use ray::Ray;
+
+pub struct Triangle {
+    v0: Vector3<f32>,
+    v1: Vector3<f32>,
+    v2: Vector3<f32>,
+    material: Arc<dyn Material>,
+}
+
+impl Triangle {
+    /// Create a new triangle with vertices v0, v1, and v2
+    pub fn new<M: Material + 'static>(v0: Vector3<f32>,
+                                      v1: Vector3<f32>,
+                                      v2: Vector3<f32>,
+                                      material: M)
+                                      -> Triangle {
+        let material = Arc::new(material);
+        Triangle { v0: v0,
+                   v1: v1,
+                   v2: v2,
+                   material: material }
+    }
+}
+
+impl Hitable for Triangle {
+    /// Determine whether or not a ray hits the triangle
+    ///
+    /// Reference:
+    /// Tomas Moller, Ben Trumbore
+    /// Fast, Minimum Storage Ray/Triangle Intersection
+    /// Journal of Graphics Tools Vol. 2 Issue 1, 1997
+    /// http://www.acm.org/jgt/papers/MollerTrumbore97/
+    ///
+    fn hit(&self, ray: &Ray, position_min: f32, _position_max: f32) -> Option<HitRecord> {
+        let edge1 = self.v1 - self.v0;
+        let edge2 = self.v2 - self.v0;
+
+        let pvec = ray.direction.cross(&edge2);
+        let determinant = edge1.dot(&pvec);
+
+        if determinant < position_min {
+            return None;
+        }
+
+        let tvec = ray.origin - self.v0;
+        let mut u = tvec.dot(&pvec);
+
+        if u < 0.0 || u > determinant {
+            return None;
+        }
+
+        let qvec = tvec.cross(&edge1);
+        let mut v = ray.direction.dot(&qvec);
+
+        if v < 0.0 || u + v > determinant {
+            return None;
+        }
+
+        let mut t = edge2.dot(&qvec);
+
+        let inverse_determinant = 1.0 / determinant;
+        t *= inverse_determinant;
+        u *= inverse_determinant;
+        v *= inverse_determinant;
+
+        let point = ray.point_at_parameter(t);
+        let normal = edge1.cross(&edge2);
+
+        Some(HitRecord::new(t, u, v, point, normal, self.material.clone()))
+    }
+
+    /// Create a bounding box around the triangle
+    ///
+    /// The bounding box is created using the minimum
+    /// and maximum points of all of the vertices
+    fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
+        let minimum = self.v0
+                          .zip_map(&self.v1, |a, b| a.min(b))
+                          .zip_map(&self.v2, |c, d| c.min(d));
+        let maximum = self.v0
+                          .zip_map(&self.v1, |a, b| a.max(b))
+                          .zip_map(&self.v2, |c, d| c.max(d));
+
+        Some(AABB::new(minimum, maximum))
+    }
+}
