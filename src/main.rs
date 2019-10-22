@@ -6,6 +6,7 @@ extern crate nalgebra;
 extern crate rand;
 extern crate rand_distr;
 extern crate rayon;
+extern crate tobj;
 
 mod aabb;
 mod basis;
