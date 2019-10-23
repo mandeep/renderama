@@ -9,6 +9,7 @@ use materials::Material;
 use ray::Ray;
 use world::World;
 
+#[derive(Clone)]
 pub struct Triangle {
     v0: Vector3<f32>,
     v1: Vector3<f32>,
