@@ -1,7 +1,9 @@
 use std::f32;
+use std::path::Path;
 use std::sync::Arc;
 
 use nalgebra::Vector3;
+use tobj;
 
 use aabb::AABB;
 use hitable::{HitRecord, Hitable};
@@ -114,6 +116,39 @@ impl Hitable for Triangle {
     /// and maximum points of all of the vertices
     fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
         Some(AABB::new(self.minimum(), self.maximum()))
+    }
+}
+
+impl TriangleMesh {
+    pub fn new(triangles: Vec<Triangle>, material: Arc<dyn Material>) -> TriangleMesh {
+    let mut world = World::new();
+
+    for triangle in &triangles {
+        world.add(triangle.clone());
+    }
+
+    TriangleMesh { triangles: triangles, hitables: world, material: material }
+    }
+
+    pub fn from(filepath: &str, material: Arc<dyn Material>) -> TriangleMesh {
+        let obj = tobj::load_obj(&Path::new(&filepath));
+        let (models, _) = obj.unwrap();
+        let mesh = &models[0].mesh;
+
+        let mut triangles: Vec<Triangle> = Vec::new();
+
+        let positions: Vec<Vector3<f32>> = mesh.positions
+            .chunks(3)
+            .map(|i| Vector3::new(i[0], i[1], i[2]))
+            .collect();
+
+        for i in 0..positions.len() / 3 {
+            let (v0, v1, v2) = (positions[3*i], positions[3*i+1], positions[3*i+2]);
+            let triangle = Triangle::from_box(v0, v1, v2, material.clone());
+            triangles.push(triangle);
+        }
+
+        TriangleMesh::new(triangles, material)
     }
 }
 
