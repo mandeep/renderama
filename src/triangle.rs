@@ -37,6 +37,17 @@ impl Triangle {
                    material: material }
     }
 
+    pub fn from_box(v0: Vector3<f32>,
+                                      v1: Vector3<f32>,
+                                      v2: Vector3<f32>,
+                                      material: Arc<dyn Material>)
+                                      -> Triangle {
+        Triangle { v0: v0,
+                   v1: v1,
+                   v2: v2,
+                   material: material }
+    }
+
     pub fn minimum(&self) -> Vector3<f32> {
         self.v0
             .zip_map(&self.v1, |a, b| a.min(b))
