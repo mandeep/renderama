@@ -138,15 +138,18 @@ impl TriangleMesh {
         for model in models {
             let mesh = &model.mesh;
 
-        let positions: Vec<Vector3<f32>> = mesh.positions
-            .chunks(3)
-            .map(|i| Vector3::new(i[0], i[1], i[2]))
-            .collect();
 
-        for i in 0..positions.len() / 3 {
-            let (v0, v1, v2) = (positions[3*i], positions[3*i+1], positions[3*i+2]);
-            let triangle = Triangle::from_box(v0, v1, v2, material.clone());
-            triangles.push(triangle);
+            let positions: Vec<Vector3<f32>> = mesh.positions
+                .chunks(3)
+                .map(|i| Vector3::new(i[0], i[1], i[2]))
+                .collect();
+
+            for i in 0..mesh.indices.len() / 3 {
+                let (i, j, k) = (mesh.indices[3*i], mesh.indices[3*i+1], mesh.indices[3*i+2]);
+                let (v0, v1, v2) = (positions[i as usize], positions[j as usize], positions[k as usize]);
+                let triangle = Triangle::from_box(v0, v1, v2, material.clone());
+                triangles.push(triangle);
+            }
         }
 
         TriangleMesh::new(triangles, material)
