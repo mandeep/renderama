@@ -133,9 +133,10 @@ impl TriangleMesh {
     pub fn from(filepath: &str, material: Arc<dyn Material>) -> TriangleMesh {
         let obj = tobj::load_obj(&Path::new(&filepath));
         let (models, _) = obj.unwrap();
-        let mesh = &models[0].mesh;
 
         let mut triangles: Vec<Triangle> = Vec::new();
+        for model in models {
+            let mesh = &model.mesh;
 
         let positions: Vec<Vector3<f32>> = mesh.positions
             .chunks(3)
