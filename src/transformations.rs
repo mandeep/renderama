@@ -126,16 +126,19 @@ pub struct Scale {
     hitable: Arc<dyn Hitable>
 }
 
+impl Scale {
+    pub fn new<H: Hitable + 'static>(scalar: f32, hitable: H) -> Scale {
+        let hitable = Arc::new(hitable);
+        Scale { scalar, hitable }
+    }
+}
+
 impl Hitable for Scale {
     fn hit(&self, ray: &Ray, t0: f32, t1: f32) -> Option<HitRecord> {
-        let origin = &ray.origin / self.scalar;
-        let direction = &ray.direction / self.scalar;
-
-        let scaled_ray = Ray::new(origin, direction, ray.time);
+        let scaled_ray = Ray::new(ray.origin / self.scalar, ray.direction, ray.time);
 
         if let Some(mut hit) = self.hitable.hit(&scaled_ray, t0, t1) {
             hit.point = &hit.point * self.scalar;
-            hit.normal = &hit.normal / self.scalar;
             Some(hit)
         } else {
             None
