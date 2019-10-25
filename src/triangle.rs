@@ -72,14 +72,14 @@ impl Hitable for Triangle {
     /// Journal of Graphics Tools Vol. 2 Issue 1, 1997
     /// http://www.acm.org/jgt/papers/MollerTrumbore97/
     ///
-    fn hit(&self, ray: &Ray, position_min: f32, _position_max: f32) -> Option<HitRecord> {
+    fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitRecord> {
         let edge1 = self.v1 - self.v0;
         let edge2 = self.v2 - self.v0;
 
         let pvec = ray.direction.cross(&edge2);
         let determinant = edge1.dot(&pvec);
 
-        if determinant < position_min {
+        if determinant < position_min && determinant > position_max {
             return None;
         }
 
