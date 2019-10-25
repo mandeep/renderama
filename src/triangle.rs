@@ -107,7 +107,7 @@ impl Hitable for Triangle {
         let point = ray.point_at_parameter(t);
         let normal = edge1.cross(&edge2);
 
-        Some(HitRecord::new(t, u, v, point, normal, self.material.clone()))
+        Some(HitRecord::new(t, u, v, point, normal.normalize(), self.material.clone()))
     }
 
     /// Create a bounding box around the triangle
