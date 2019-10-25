@@ -120,3 +120,35 @@ impl Hitable for Rotate {
         }
     }
 }
+
+pub struct Scale {
+    scalar: f32,
+    hitable: Arc<dyn Hitable>
+}
+
+impl Hitable for Scale {
+    fn hit(&self, ray: &Ray, t0: f32, t1: f32) -> Option<HitRecord> {
+        let origin = &ray.origin / self.scalar;
+        let direction = &ray.direction / self.scalar;
+
+        let scaled_ray = Ray::new(origin, direction, ray.time);
+
+        if let Some(mut hit) = self.hitable.hit(&scaled_ray, t0, t1) {
+            hit.point = &hit.point * self.scalar;
+            hit.normal = &hit.normal / self.scalar;
+            Some(hit)
+        } else {
+            None
+        }
+    }
+
+    fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB> {
+        if let Some(mut bbox) = self.hitable.bounding_box(t0, t1) {
+            bbox.minimum *= self.scalar;
+            bbox.maximum *= self.scalar;
+            Some(bbox)
+        } else {
+            None
+        }
+    }
+}
