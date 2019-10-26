@@ -16,6 +16,9 @@ pub struct Triangle {
     v0: Vector3<f32>,
     v1: Vector3<f32>,
     v2: Vector3<f32>,
+    n0: Vector3<f32>,
+    n1: Vector3<f32>,
+    n2: Vector3<f32>,
     material: Arc<dyn Material>,
 }
 
@@ -30,23 +33,36 @@ impl Triangle {
     pub fn new<M: Material + 'static>(v0: Vector3<f32>,
                                       v1: Vector3<f32>,
                                       v2: Vector3<f32>,
+                                      n0: Vector3<f32>,
+                                      n1: Vector3<f32>,
+                                      n2: Vector3<f32>,
                                       material: M)
                                       -> Triangle {
         let material = Arc::new(material);
         Triangle { v0: v0,
                    v1: v1,
                    v2: v2,
-                   material: material }
+                   n0: n0,
+                   n1: n1,
+                   n2: n2,
+                   material: material
+        }
     }
 
     pub fn from_box(v0: Vector3<f32>,
                                       v1: Vector3<f32>,
                                       v2: Vector3<f32>,
+                                      n0: Vector3<f32>,
+                                      n1: Vector3<f32>,
+                                      n2: Vector3<f32>,
                                       material: Arc<dyn Material>)
                                       -> Triangle {
         Triangle { v0: v0,
                    v1: v1,
                    v2: v2,
+                   n0: n0,
+                   n1: n1,
+                   n2: n2,
                    material: material }
     }
 
@@ -105,7 +121,7 @@ impl Hitable for Triangle {
         v *= inverse_determinant;
 
         let point = ray.point_at_parameter(t);
-        let normal = edge1.cross(&edge2);
+        let normal = (1.0 - u - v) * self.n0 + u * self.n1 + v * self.n2;
 
         Some(HitRecord::new(t, u, v, point, normal.normalize(), self.material.clone()))
     }
@@ -144,10 +160,17 @@ impl TriangleMesh {
                 .map(|i| Vector3::new(i[0], i[1], i[2]))
                 .collect();
 
+            let normals: Vec<Vector3<f32>> = mesh.normals
+                .chunks(3)
+                .map(|i| Vector3::new(i[0], i[1], i[2]))
+                .collect();
+
             for i in 0..mesh.indices.len() / 3 {
                 let (i, j, k) = (mesh.indices[3*i], mesh.indices[3*i+1], mesh.indices[3*i+2]);
                 let (v0, v1, v2) = (positions[i as usize], positions[j as usize], positions[k as usize]);
-                let triangle = Triangle::from_box(v0, v1, v2, material.clone());
+                let (n0, n1, n2) = (normals[i as usize], normals[j as usize], normals[k as usize]);
+
+                let triangle = Triangle::from_box(v0, v1, v2, n0, n1, n2, material.clone());
                 triangles.push(triangle);
             }
         }
