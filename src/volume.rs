@@ -52,6 +52,7 @@ impl Hitable for Volume {
                                                    0.0,
                                                    point,
                                                    normal,
+                                                   normal,
                                                    self.material.clone()));
                     }
                 }

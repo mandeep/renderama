@@ -89,6 +89,7 @@ impl Hitable for Plane {
                                             (y - self.s0) / (self.s1 - self.s0),
                                             ray.point_at_parameter(t),
                                             normal,
+                                            normal,
                                             self.material.clone());
 
                 Some(record)
@@ -114,6 +115,7 @@ impl Hitable for Plane {
                                             (z - self.s0) / (self.s1 - self.s0),
                                             ray.point_at_parameter(t),
                                             normal,
+                                            normal,
                                             self.material.clone());
 
                 Some(record)
@@ -138,6 +140,7 @@ impl Hitable for Plane {
                                             (x - self.r0) / (self.r1 - self.r0),
                                             (z - self.s0) / (self.s1 - self.s0),
                                             ray.point_at_parameter(t),
+                                            normal,
                                             normal,
                                             self.material.clone());
 
@@ -170,7 +173,7 @@ impl Hitable for Plane {
         if let Some(hit) = self.hit(&Ray::new(*origin, *direction, 0.0), 0.001, f32::MAX) {
             let area = (self.r1 - self.r0) * (self.s1 - self.s0);
             let distance_squared = hit.parameter * hit.parameter * direction.norm_squared();
-            let cosine = direction.dot(&hit.normal).abs() / direction.norm();
+            let cosine = direction.dot(&hit.shading_normal).abs() / direction.norm();
             distance_squared / (cosine * area)
         } else {
             0.0

@@ -88,14 +88,14 @@ impl Hitable for Triangle {
     /// Journal of Graphics Tools Vol. 2 Issue 1, 1997
     /// http://www.acm.org/jgt/papers/MollerTrumbore97/
     ///
-    fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitRecord> {
+    fn hit(&self, ray: &Ray, position_min: f32, _position_max: f32) -> Option<HitRecord> {
         let edge1 = self.v1 - self.v0;
         let edge2 = self.v2 - self.v0;
 
         let pvec = ray.direction.cross(&edge2);
         let determinant = edge1.dot(&pvec);
 
-        if determinant < position_min && determinant > position_max {
+        if determinant < position_min {
             return None;
         }
 
@@ -121,9 +121,10 @@ impl Hitable for Triangle {
         v *= inverse_determinant;
 
         let point = ray.point_at_parameter(t);
-        let normal = (1.0 - u - v) * self.n0 + u * self.n1 + v * self.n2;
+        let geometric_normal = edge1.cross(&edge2).normalize();
+        let shading_normal = ((1.0 - u - v) * self.n0 + u * self.n1 + v * self.n2).normalize();
 
-        Some(HitRecord::new(t, u, v, point, normal.normalize(), self.material.clone()))
+        Some(HitRecord::new(t, u, v, point, geometric_normal, shading_normal, self.material.clone()))
     }
 
     /// Create a bounding box around the triangle

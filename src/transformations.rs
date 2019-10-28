@@ -81,7 +81,7 @@ impl Hitable for Rotate {
 
         if let Some(mut hit) = self.hitable.hit(&rotated_ray, t0, t1) {
             hit.point = self.rotate_inv(&hit.point);
-            hit.normal = self.rotate_inv(&hit.normal);
+            hit.shading_normal = self.rotate_inv(&hit.shading_normal);
             Some(hit)
         } else {
             None
@@ -143,7 +143,7 @@ impl Hitable for Scale {
 
         if let Some(mut hit) = self.hitable.hit(&scaled_ray, t0, t1) {
             hit.point = &hit.point * self.scalar;
-            hit.normal = &hit.normal / self.scalar;
+            // hit.normal = &hit.normal / self.scalar;
             Some(hit)
         } else {
             None

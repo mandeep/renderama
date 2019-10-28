@@ -39,6 +39,7 @@ impl Hitable for World {
                                         0.0,
                                         Vector3::zeros(),
                                         Vector3::zeros(),
+                                        Vector3::zeros(),
                                         Arc::new(Diffuse::new(ConstantTexture::new(0.0, 0.0,
                                                                                    0.0))));
         let mut hit_anything: bool = false;
