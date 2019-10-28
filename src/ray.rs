@@ -54,6 +54,47 @@ pub fn pick_sphere_point(rng: &mut ThreadRng) -> Vector3<f32> {
     Vector3::new(x, y, z).normalize()
 }
 
+/// Find the offset ray given the ray origin and geometric normal of the shape
+pub fn find_offset_point(point: Vector3<f32>, geometric_normal: Vector3<f32>) -> Vector3<f32> {
+    let origin: f32 = 1.0 / 32.0;
+    let float_scale: f32 = 1.0 / 65536.0;
+    let int_scale: f32 = 256.0;
+
+    let mut offset_int: Vector3<u32> = Vector3::zeros();
+
+    for i in 0..3 {
+        offset_int[i] = f32::to_bits(int_scale * geometric_normal[i]);
+    }
+
+    let mut point_int: Vector3<f32> = Vector3::zeros();
+
+    let mut temp_point_int: Vector3<u32> = Vector3::zeros();
+
+    for i in 0..3 {
+        temp_point_int[i] = f32::to_bits(point[i]);
+    }
+
+    for j in 0..3 {
+        if point[j] < 0.0 {
+            point_int[j] = f32::from_bits(temp_point_int[j].overflowing_sub(offset_int[j]).0);
+        } else {
+            point_int[j] = f32::from_bits(temp_point_int[j].overflowing_add(offset_int[j]).0);
+        }
+    }
+
+    let mut new_offset: Vector3<f32> = Vector3::zeros();
+
+    for i in 0..3 {
+        if point[i].abs() < origin {
+            new_offset[i] = point_int[i] + float_scale * geometric_normal[i];
+        } else {
+            new_offset[i] = point_int[i];
+        }
+    }
+
+    new_offset
+}
+
 /// Compute the color of the surface that the ray has collided with
 ///
 /// If the ray hits an object in the world, the object is colored in relation
@@ -79,13 +120,18 @@ pub fn compute_color(mut ray: Ray,
 
             if let Some((attenuation, _, _)) = hit_record.material.scatter(&ray, &hit_record, rng) {
                 let cosine_pdf =
-                    PDF::CosinePDF { uvw: OrthonormalBase::new(&hit_record.normal.normalize()) };
+                    PDF::CosinePDF { uvw: OrthonormalBase::new(&hit_record.shading_normal.normalize()) };
                 let hitable_pdf = PDF::HitablePDF { origin: hit_record.point,
                                                     hitable: Arc::new(light_source.clone()
                                                                                   .unwrap()) };
                 let mixture_pdf = PDF::MixturePDF { cosine_pdf: &cosine_pdf,
                                                     hitable_pdf: &hitable_pdf };
-                let scattered = Ray::new(hit_record.point, mixture_pdf.generate(rng), ray.time);
+
+                let mut offset_point = hit_record.point;
+                if hit_record.geometric_normal != hit_record.shading_normal {
+                    offset_point = find_offset_point(hit_record.point, hit_record.geometric_normal);
+                }
+                let scattered = Ray::new(offset_point, mixture_pdf.generate(rng), ray.time);
                 let pdf = mixture_pdf.value(&scattered.direction.normalize());
                 let scattering_pdf = hit_record.material
                                                .scattering_pdf(&ray, &hit_record, &scattered);
