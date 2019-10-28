@@ -14,7 +14,8 @@ pub struct HitRecord {
     pub u: f32,
     pub v: f32,
     pub point: Vector3<f32>,
-    pub normal: Vector3<f32>,
+    pub geometric_normal: Vector3<f32>,
+    pub shading_normal: Vector3<f32>,
     pub material: Arc<dyn Material>,
 }
 
@@ -24,14 +25,16 @@ impl HitRecord {
                u: f32,
                v: f32,
                point: Vector3<f32>,
-               normal: Vector3<f32>,
+               geometric_normal: Vector3<f32>,
+               shading_normal: Vector3<f32>,
                material: Arc<dyn Material>)
                -> HitRecord {
         HitRecord { parameter: parameter,
                     u: u,
                     v: v,
                     point: point,
-                    normal: normal,
+                    geometric_normal: geometric_normal,
+                    shading_normal: shading_normal,
                     material: material }
     }
 }
@@ -70,7 +73,8 @@ impl FlipNormals {
 impl Hitable for FlipNormals {
     fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitRecord> {
         if let Some(mut hit) = self.hitable.hit(&ray, position_min, position_max) {
-            hit.normal = -hit.normal;
+            hit.geometric_normal = -hit.geometric_normal;
+            hit.shading_normal = -hit.shading_normal;
             Some(hit)
         } else {
             None

@@ -56,7 +56,7 @@ impl Material for Diffuse {
                record: &HitRecord,
                rng: &mut ThreadRng)
                -> Option<(Vector3<f32>, Ray, f32)> {
-        let uvw = OrthonormalBase::new(&record.normal);
+        let uvw = OrthonormalBase::new(&record.shading_normal);
         let direction = uvw.local(&random_cosine_direction(rng));
         let scattered = Ray::new(record.point, direction.normalize(), ray.time);
         let attenuation = self.albedo.value(record.u, record.v, &record.point);
@@ -65,7 +65,7 @@ impl Material for Diffuse {
     }
 
     fn scattering_pdf(&self, _ray: &Ray, record: &HitRecord, scattered: &Ray) -> f32 {
-        let cosine = (record.normal.dot(&scattered.direction.normalize())).max(0.0);
+        let cosine = (record.shading_normal.dot(&scattered.direction.normalize())).max(0.0);
         cosine / PI
     }
 }
@@ -149,11 +149,11 @@ impl Material for Reflective {
                record: &HitRecord,
                rng: &mut ThreadRng)
                -> Option<(Vector3<f32>, Ray, f32)> {
-        let reflected: Vector3<f32> = reflect(&ray.direction.normalize(), &record.normal);
+        let reflected: Vector3<f32> = reflect(&ray.direction.normalize(), &record.shading_normal);
         let scattered = Ray::new(record.point,
                                  reflected + self.fuzz * pick_sphere_point(rng),
                                  ray.time);
-        if scattered.direction.dot(&record.normal) > 0.0 {
+        if scattered.direction.dot(&record.shading_normal) > 0.0 {
             Some((self.albedo, scattered, 1.0))
         } else {
             None
@@ -197,17 +197,17 @@ impl Material for Refractive {
                record: &HitRecord,
                _rng: &mut ThreadRng)
                -> Option<(Vector3<f32>, Ray, f32)> {
-        let reflected: Vector3<f32> = reflect(&ray.direction.normalize(), &record.normal);
-        let incident: f32 = ray.direction.dot(&record.normal);
+        let reflected: Vector3<f32> = reflect(&ray.direction.normalize(), &record.shading_normal);
+        let incident: f32 = ray.direction.dot(&record.shading_normal);
 
         let (outward_normal, refractive_index, cosine) = if incident > 0.0 {
-            (-record.normal,
+            (-record.shading_normal,
              self.refractive_index,
-             self.refractive_index * ray.direction.dot(&record.normal) / ray.direction.norm())
+             self.refractive_index * ray.direction.dot(&record.shading_normal) / ray.direction.norm())
         } else {
-            (record.normal,
+            (record.shading_normal,
              1.0 / self.refractive_index,
-             -ray.direction.dot(&record.normal) / ray.direction.norm())
+             -ray.direction.dot(&record.shading_normal) / ray.direction.norm())
         };
 
         let refracted = refract(&ray.direction, &outward_normal, refractive_index);
@@ -248,7 +248,7 @@ impl Material for Light {
     }
 
     fn emitted(&self, ray: &Ray, hit: &HitRecord) -> Vector3<f32> {
-        if hit.normal.dot(&ray.direction) < 0.0 {
+        if hit.shading_normal.dot(&ray.direction) < 0.0 {
             self.emit.value(hit.u, hit.v, &hit.point)
         } else {
             Vector3::zeros()

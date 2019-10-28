@@ -80,7 +80,7 @@ impl Hitable for Sphere {
                     let point = ray.point_at_parameter(root);
                     let normal = (point - self.center(ray.time)) / self.radius;
                     let (u, v) = get_sphere_uv(&normal);
-                    return Some(HitRecord::new(root, u, v, point, normal, self.material.clone()));
+                    return Some(HitRecord::new(root, u, v, point, normal, normal, self.material.clone()));
                 }
             }
         }
