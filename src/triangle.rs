@@ -25,7 +25,7 @@ pub struct Triangle {
 pub struct TriangleMesh {
     triangles: Vec<Triangle>,
     hitables: World,
-    material: Arc<dyn Material>
+    material: Arc<dyn Material>,
 }
 
 impl Triangle {
@@ -45,18 +45,17 @@ impl Triangle {
                    n0: n0,
                    n1: n1,
                    n2: n2,
-                   material: material
-        }
+                   material: material }
     }
 
     pub fn from_box(v0: Vector3<f32>,
-                                      v1: Vector3<f32>,
-                                      v2: Vector3<f32>,
-                                      n0: Vector3<f32>,
-                                      n1: Vector3<f32>,
-                                      n2: Vector3<f32>,
-                                      material: Arc<dyn Material>)
-                                      -> Triangle {
+                    v1: Vector3<f32>,
+                    v2: Vector3<f32>,
+                    n0: Vector3<f32>,
+                    n1: Vector3<f32>,
+                    n2: Vector3<f32>,
+                    material: Arc<dyn Material>)
+                    -> Triangle {
         Triangle { v0: v0,
                    v1: v1,
                    v2: v2,
@@ -124,7 +123,13 @@ impl Hitable for Triangle {
         let geometric_normal = edge1.cross(&edge2).normalize();
         let shading_normal = ((1.0 - u - v) * self.n0 + u * self.n1 + v * self.n2).normalize();
 
-        Some(HitRecord::new(t, u, v, point, geometric_normal, shading_normal, self.material.clone()))
+        Some(HitRecord::new(t,
+                            u,
+                            v,
+                            point,
+                            geometric_normal,
+                            shading_normal,
+                            self.material.clone()))
     }
 
     /// Create a bounding box around the triangle
@@ -138,13 +143,15 @@ impl Hitable for Triangle {
 
 impl TriangleMesh {
     pub fn new(triangles: Vec<Triangle>, material: Arc<dyn Material>) -> TriangleMesh {
-    let mut world = World::new();
+        let mut world = World::new();
 
-    for triangle in &triangles {
-        world.add(triangle.clone());
-    }
+        for triangle in &triangles {
+            world.add(triangle.clone());
+        }
 
-    TriangleMesh { triangles: triangles, hitables: world, material: material }
+        TriangleMesh { triangles: triangles,
+                       hitables: world,
+                       material: material }
     }
 
     pub fn from(filepath: &str, material: Arc<dyn Material>) -> TriangleMesh {
@@ -155,20 +162,21 @@ impl TriangleMesh {
         for model in models {
             let mesh = &model.mesh;
 
-
             let positions: Vec<Vector3<f32>> = mesh.positions
-                .chunks(3)
-                .map(|i| Vector3::new(i[0], i[1], i[2]))
-                .collect();
+                                                   .chunks(3)
+                                                   .map(|i| Vector3::new(i[0], i[1], i[2]))
+                                                   .collect();
 
             let normals: Vec<Vector3<f32>> = mesh.normals
-                .chunks(3)
-                .map(|i| Vector3::new(i[0], i[1], i[2]))
-                .collect();
+                                                 .chunks(3)
+                                                 .map(|i| Vector3::new(i[0], i[1], i[2]))
+                                                 .collect();
 
             for i in 0..mesh.indices.len() / 3 {
-                let (i, j, k) = (mesh.indices[3*i], mesh.indices[3*i+1], mesh.indices[3*i+2]);
-                let (v0, v1, v2) = (positions[i as usize], positions[j as usize], positions[k as usize]);
+                let (i, j, k) =
+                    (mesh.indices[3 * i], mesh.indices[3 * i + 1], mesh.indices[3 * i + 2]);
+                let (v0, v1, v2) =
+                    (positions[i as usize], positions[j as usize], positions[k as usize]);
                 let (n0, n1, n2) = (normals[i as usize], normals[j as usize], normals[k as usize]);
 
                 let triangle = Triangle::from_box(v0, v1, v2, n0, n1, n2, material.clone());

@@ -120,7 +120,8 @@ pub fn compute_color(mut ray: Ray,
 
             if let Some((attenuation, _, _)) = hit_record.material.scatter(&ray, &hit_record, rng) {
                 let cosine_pdf =
-                    PDF::CosinePDF { uvw: OrthonormalBase::new(&hit_record.shading_normal.normalize()) };
+                    PDF::CosinePDF { uvw: OrthonormalBase::new(&hit_record.shading_normal
+                                                                          .normalize()) };
                 let hitable_pdf = PDF::HitablePDF { origin: hit_record.point,
                                                     hitable: Arc::new(light_source.clone()
                                                                                   .unwrap()) };

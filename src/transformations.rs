@@ -123,7 +123,7 @@ impl Hitable for Rotate {
 
 pub struct Scale {
     scalar: f32,
-    hitable: Arc<dyn Hitable>
+    hitable: Arc<dyn Hitable>,
 }
 
 impl Scale {
