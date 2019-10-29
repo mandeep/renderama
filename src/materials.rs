@@ -203,7 +203,8 @@ impl Material for Refractive {
         let (outward_normal, refractive_index, cosine) = if incident > 0.0 {
             (-record.shading_normal,
              self.refractive_index,
-             self.refractive_index * ray.direction.dot(&record.shading_normal) / ray.direction.norm())
+             self.refractive_index * ray.direction.dot(&record.shading_normal)
+             / ray.direction.norm())
         } else {
             (record.shading_normal,
              1.0 / self.refractive_index,
