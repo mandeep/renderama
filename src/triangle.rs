@@ -119,7 +119,7 @@ impl Hitable for Triangle {
         u *= inverse_determinant;
         v *= inverse_determinant;
 
-        let point = ray.point_at_parameter(t);
+        let point = u * self.v0 + v * self.v1 + (1.0 - u - v) * self.v2;
         let geometric_normal = edge1.cross(&edge2).normalize();
         let shading_normal = ((1.0 - u - v) * self.n0 + u * self.n1 + v * self.n2).normalize();
 
