@@ -12,6 +12,7 @@ use rectangle::Rectangle;
 use sphere::Sphere;
 use texture::{ConstantTexture, ImageTexture};
 use transformations::{Rotate, Translate};
+use triangle::TriangleMesh;
 use volume::Volume;
 use world::World;
 
@@ -310,12 +311,8 @@ pub fn simple_light_scene(width: u32, height: u32) -> (String, Camera, BVH, Opti
                           0.0,
                           1.0));
 
-    world.add(Sphere::new(Vector3::new(0.0, 2.0, 0.0),
-                          Vector3::new(0.0, 2.0, 0.0),
-                          2.0,
-                          Diffuse::new(ConstantTexture::new(1.0, 0.0, 0.0)),
-                          0.0,
-                          1.0));
+    world.add(Translate::new(Vector3::new(0.0, 2.0, 0.0), Rotate::new(90.0, TriangleMesh::from("suzanne.obj",
+                          Arc::new(Diffuse::new(ConstantTexture::new(1.0, 0.0, 0.0)))))));
 
     world.add(Sphere::new(Vector3::new(0.0, 7.0, 0.0),
                           Vector3::new(0.0, 7.0, 0.0),
