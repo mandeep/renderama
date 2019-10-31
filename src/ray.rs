@@ -140,10 +140,11 @@ pub fn compute_color(mut ray: Ray,
             if atmosphere {
                 let unit_direction: Vector3<f32> = ray.direction.normalize();
                 let point: f32 = 0.5 * (unit_direction.y + 1.0);
-                return (1.0 - point) * Vector3::new(1.0, 1.0, 1.0)
-                       + point * Vector3::new(0.5, 0.7, 1.0);
+                let lerp =
+                    (1.0 - point) * Vector3::repeat(1.0) + point * Vector3::new(0.5, 0.7, 1.0);
+                color = throughput.component_mul(&lerp);
             } else {
-                return Vector3::zeros();
+                color = Vector3::zeros();
             }
         }
 
