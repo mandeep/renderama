@@ -99,7 +99,7 @@ pub fn find_offset_point(point: Vector3<f32>, geometric_normal: Vector3<f32>) ->
 pub fn compute_color(mut ray: Ray,
                      world: &BVH,
                      bounces: u32,
-                     light_source: &Option<Plane>,
+                     light_source: &Plane,
                      atmosphere: bool,
                      rng: &mut ThreadRng)
                      -> Vector3<f32> {
@@ -116,8 +116,7 @@ pub fn compute_color(mut ray: Ray,
                     PDF::CosinePDF { uvw: OrthonormalBase::new(&hit_record.shading_normal
                                                                           .normalize()) };
                 let hitable_pdf = PDF::HitablePDF { origin: hit_record.point,
-                                                    hitable: Arc::new(light_source.clone()
-                                                                                  .unwrap()) };
+                                                    hitable: Arc::new(light_source.clone()) };
                 let mixture_pdf = PDF::MixturePDF { cosine_pdf: &cosine_pdf,
                                                     hitable_pdf: &hitable_pdf };
 
