@@ -71,9 +71,9 @@ pub fn find_offset_point(point: Vector3<f32>, geometric_normal: Vector3<f32>) ->
 
     for j in 0..3 {
         if point[j] < 0.0 {
-            point_int[j] = f32::from_bits(f32::to_bits(point[j]).overflowing_sub(offset_int[j]).0);
+            point_int[j] = f32::from_bits(f32::to_bits(point[j]).wrapping_sub(offset_int[j]));
         } else {
-            point_int[j] = f32::from_bits(f32::to_bits(point[j]).overflowing_add(offset_int[j]).0);
+            point_int[j] = f32::from_bits(f32::to_bits(point[j]).wrapping_add(offset_int[j]));
         }
     }
 
