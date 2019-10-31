@@ -21,10 +21,10 @@ pub struct Ray {
 
 impl Ray {
     /// Create a new Ray with origin at `a` and direction towards `b`
-    pub fn new(a: Vector3<f32>, b: Vector3<f32>, time: f32) -> Ray {
-        let inverse_direction = b.map(|component| 1.0 / component);
-        Ray { origin: a,
-              direction: b,
+    pub fn new(origin: Vector3<f32>, direction: Vector3<f32>, time: f32) -> Ray {
+        let inverse_direction = direction.map(|component| 1.0 / component);
+        Ray { origin: origin,
+              direction: direction,
               time: time,
               inverse_direction: inverse_direction }
     }
