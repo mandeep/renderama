@@ -28,6 +28,18 @@ pub trait Material: Send + Sync {
 }
 
 #[derive(Clone)]
+pub struct Empty { }
+
+impl Empty {
+    pub fn new() -> Empty {
+        Empty { }
+    }
+}
+impl Material for Empty {
+    fn scatter(&self, _ray: &Ray, _hit: &HitRecord, _rng: &mut ThreadRng) -> Option<(Vector3<f32>, Ray, f32)> { None }
+}
+
+#[derive(Clone)]
 pub struct Diffuse {
     pub albedo: Arc<dyn Texture>,
 }
