@@ -55,40 +55,33 @@ pub fn pick_sphere_point(rng: &mut ThreadRng) -> Vector3<f32> {
 }
 
 /// Find the offset ray given the ray origin and geometric normal of the shape
+///
+/// Reference:
+/// Carsten Wächter, Nikolaus Binder
+/// A Fast and Robust Method for Avoiding Self-Intersection
+/// Ray Tracing Gems, Chapter 6
 pub fn find_offset_point(point: Vector3<f32>, geometric_normal: Vector3<f32>) -> Vector3<f32> {
     let origin: f32 = 1.0 / 32.0;
     let float_scale: f32 = 1.0 / 65536.0;
     let int_scale: f32 = 256.0;
 
-    let mut offset_int: Vector3<u32> = Vector3::zeros();
-
-    for i in 0..3 {
-        offset_int[i] = (int_scale * geometric_normal[i]) as u32;
-    }
+    let offset_int: Vector3<u32> = (int_scale * geometric_normal).map(|i| i as u32);
 
     let mut point_int: Vector3<f32> = Vector3::zeros();
 
-    let mut temp_point_int: Vector3<u32> = Vector3::zeros();
-
-    for i in 0..3 {
-        temp_point_int[i] = f32::to_bits(point[i]);
-    }
-
     for j in 0..3 {
         if point[j] < 0.0 {
-            point_int[j] = f32::from_bits(temp_point_int[j].overflowing_sub(offset_int[j]).0);
+            point_int[j] = f32::from_bits(f32::to_bits(point[j]).overflowing_sub(offset_int[j]).0);
         } else {
-            point_int[j] = f32::from_bits(temp_point_int[j].overflowing_add(offset_int[j]).0);
+            point_int[j] = f32::from_bits(f32::to_bits(point[j]).overflowing_add(offset_int[j]).0);
         }
     }
 
-    let mut new_offset: Vector3<f32> = Vector3::zeros();
+    let mut new_offset: Vector3<f32> = point_int.clone();
 
     for i in 0..3 {
         if point[i].abs() < origin {
             new_offset[i] = point_int[i] + float_scale * geometric_normal[i];
-        } else {
-            new_offset[i] = point_int[i];
         }
     }
 
