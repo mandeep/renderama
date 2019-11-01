@@ -6,17 +6,32 @@ use rand::rngs::ThreadRng;
 
 use basis::OrthonormalBase;
 use hitable::HitRecord;
-use pdf::random_cosine_direction;
+use pdf::PDF;
 use ray::{pick_sphere_point, Ray};
 use texture::Texture;
+
+pub struct ScatterRecord<'a> {
+    pub specular_ray: Ray,
+    pub attenuation: Vector3<f32>,
+    pub pdf: PDF<'a>,
+    pub specular: bool,
+}
+
+impl<'a> ScatterRecord<'a> {
+    pub fn new(specular_ray: Ray, attenuation: Vector3<f32>, pdf: PDF<'a>, specular: bool) -> ScatterRecord<'a> {
+        ScatterRecord { specular_ray, attenuation, pdf, specular }
+    }
+}
 
 /// The Material trait is responsible for giving a color to the object implementing the trait
 pub trait Material: Send + Sync {
     fn scatter(&self,
-               ray: &Ray,
-               record: &HitRecord,
-               rng: &mut ThreadRng)
-               -> Option<(Vector3<f32>, Ray, f32)>;
+               _ray: &Ray,
+               _record: &HitRecord,
+               _rng: &mut ThreadRng)
+               -> Option<ScatterRecord> {
+        None
+    }
 
     fn emitted(&self, _ray: &Ray, _hit: &HitRecord) -> Vector3<f32> {
         Vector3::zeros()
@@ -28,15 +43,21 @@ pub trait Material: Send + Sync {
 }
 
 #[derive(Clone)]
-pub struct Empty { }
+pub struct Empty {}
 
 impl Empty {
     pub fn new() -> Empty {
-        Empty { }
+        Empty {}
     }
 }
 impl Material for Empty {
-    fn scatter(&self, _ray: &Ray, _hit: &HitRecord, _rng: &mut ThreadRng) -> Option<(Vector3<f32>, Ray, f32)> { None }
+    fn scatter(&self,
+               _ray: &Ray,
+               _hit: &HitRecord,
+               _rng: &mut ThreadRng)
+               -> Option<ScatterRecord> {
+        None
+    }
 }
 
 #[derive(Clone)]
@@ -66,14 +87,13 @@ impl Material for Diffuse {
     fn scatter(&self,
                ray: &Ray,
                record: &HitRecord,
-               rng: &mut ThreadRng)
-               -> Option<(Vector3<f32>, Ray, f32)> {
-        let uvw = OrthonormalBase::new(&record.shading_normal);
-        let direction = uvw.local(&random_cosine_direction(rng));
-        let scattered = Ray::new(record.point, direction.normalize(), ray.time);
+               _rng: &mut ThreadRng)
+               -> Option<ScatterRecord> {
+
+        let scattered = Ray::new(record.point, ray.direction.normalize(), ray.time);
         let attenuation = self.albedo.value(record.u, record.v, &record.point);
-        let pdf = uvw.w().dot(&scattered.direction) / PI;
-        Some((attenuation, scattered, pdf))
+        let pdf = PDF::CosinePDF { uvw: OrthonormalBase::new(&record.shading_normal) };
+        Some(ScatterRecord::new(scattered, attenuation, pdf, false))
     }
 
     fn scattering_pdf(&self, _ray: &Ray, record: &HitRecord, scattered: &Ray) -> f32 {
@@ -160,16 +180,13 @@ impl Material for Reflective {
                ray: &Ray,
                record: &HitRecord,
                rng: &mut ThreadRng)
-               -> Option<(Vector3<f32>, Ray, f32)> {
+               -> Option<ScatterRecord> {
         let reflected: Vector3<f32> = reflect(&ray.direction.normalize(), &record.shading_normal);
-        let scattered = Ray::new(record.point,
+        let specular_ray = Ray::new(record.point,
                                  reflected + self.fuzz * pick_sphere_point(rng),
                                  ray.time);
-        if scattered.direction.dot(&record.shading_normal) > 0.0 {
-            Some((self.albedo, scattered, 1.0))
-        } else {
-            None
-        }
+        let pdf = PDF::CosinePDF { uvw: OrthonormalBase::new(&record.shading_normal) };
+        Some(ScatterRecord::new(specular_ray, self.albedo, pdf, true))
     }
 }
 
@@ -208,7 +225,7 @@ impl Material for Refractive {
                ray: &Ray,
                record: &HitRecord,
                _rng: &mut ThreadRng)
-               -> Option<(Vector3<f32>, Ray, f32)> {
+               -> Option<ScatterRecord> {
         let reflected: Vector3<f32> = reflect(&ray.direction.normalize(), &record.shading_normal);
         let incident: f32 = ray.direction.dot(&record.shading_normal);
 
@@ -230,11 +247,14 @@ impl Material for Refractive {
         };
 
         let attenuation = Vector3::new(1.0, 1.0, 1.0);
+        let pdf = PDF::CosinePDF { uvw: OrthonormalBase::new(&record.shading_normal) };
 
         if rand::random::<f32>() < reflect_probability {
-            Some((attenuation, Ray::new(record.point, reflected, ray.time), 1.0))
+            let specular_ray = Ray::new(record.point, reflected, ray.time);
+            Some(ScatterRecord::new(specular_ray, attenuation, pdf, true))
         } else {
-            Some((attenuation, Ray::new(record.point, refracted.unwrap(), ray.time), 1.0))
+            let specular_ray = Ray::new(record.point, refracted.unwrap(), ray.time);
+            Some(ScatterRecord::new(specular_ray, attenuation, pdf, true))
         }
     }
 }
@@ -256,7 +276,7 @@ impl Material for Light {
                _ray: &Ray,
                _record: &HitRecord,
                _rng: &mut ThreadRng)
-               -> Option<(Vector3<f32>, Ray, f32)> {
+               -> Option<ScatterRecord> {
         None
     }
 
@@ -286,9 +306,10 @@ impl Material for Isotropic {
                ray: &Ray,
                record: &HitRecord,
                rng: &mut ThreadRng)
-               -> Option<(Vector3<f32>, Ray, f32)> {
+               -> Option<ScatterRecord> {
         let scattered = Ray::new(record.point, pick_sphere_point(rng), ray.time);
         let attenuation = self.albedo.value(record.u, record.v, &record.point);
-        Some((attenuation, scattered, 1.0))
+        let pdf = PDF::CosinePDF { uvw: OrthonormalBase::new(&record.shading_normal) };
+        Some(ScatterRecord::new(scattered, attenuation, pdf, true))
     }
 }
