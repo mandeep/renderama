@@ -14,6 +14,16 @@ impl AABB {
         AABB { minimum, maximum }
     }
 
+    pub fn area(&self) -> f32 {
+        let diff = self.maximum - self.minimum;
+        2.0 * (diff.x * diff.y + diff.y * diff.z + diff.z * diff.x)
+
+    }
+
+    pub fn longest_axis(&self) -> usize {
+        (self.maximum - self.minimum).argmax().0
+    }
+
     /// Perform an intersection test with an AABB
     /// Reference: https://medium.com/@bromanz/another-view-on-the-classic-ray
     /// -aabb-intersection-algorithm-for-bvh-traversal-41125138b525
