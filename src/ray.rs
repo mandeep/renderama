@@ -65,7 +65,11 @@ pub fn find_offset_point(point: Vector3<f32>, geometric_normal: Vector3<f32>) ->
     let float_scale: f32 = 1.0 / 65536.0;
     let int_scale: f32 = 256.0;
 
-    let offset_int: Vector3<u32> = (int_scale * geometric_normal).map(|i| i as u32);
+    let mut offset_int: Vector3<u32> = Vector3::zeros();
+
+    for k in 0..3 {
+        offset_int[k] = (int_scale * geometric_normal[k]) as u32;
+    }
 
     let mut point_int: Vector3<f32> = Vector3::zeros();
 
