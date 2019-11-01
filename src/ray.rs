@@ -123,6 +123,7 @@ pub fn compute_color(mut ray: Ray,
                 let mut offset_point = hit_record.point;
                 if hit_record.geometric_normal != hit_record.shading_normal {
                     offset_point = find_offset_point(hit_record.point, hit_record.geometric_normal);
+                    offset_point += pick_sphere_point(rng);
                 }
                 let scattered = Ray::new(offset_point, mixture_pdf.generate(rng), ray.time);
                 let pdf = mixture_pdf.value(&scattered.direction.normalize());
