@@ -6,7 +6,6 @@ use rand::rngs::ThreadRng;
 use rand::Rng;
 use rand_distr::{Distribution, Normal};
 
-use basis::OrthonormalBase;
 use bvh::BVH;
 use hitable::Hitable;
 use pdf::PDF;
@@ -115,28 +114,30 @@ pub fn compute_color(mut ray: Ray,
             let emitted = hit_record.material.emitted(&ray, &hit_record);
             color += throughput.component_mul(&emitted);
 
-            if let Some((attenuation, _, _)) = hit_record.material.scatter(&ray, &hit_record, rng) {
-                let cosine_pdf =
-                    PDF::CosinePDF { uvw: OrthonormalBase::new(&hit_record.shading_normal
-                                                                          .normalize()) };
-                let hitable_pdf = PDF::HitablePDF { origin: hit_record.point,
-                                                    hitable: Arc::new(light_source.clone()) };
-                let mixture_pdf = PDF::MixturePDF { cosine_pdf: &cosine_pdf,
-                                                    hitable_pdf: &hitable_pdf };
+            if let Some(scatter_record) = hit_record.material.scatter(&ray, &hit_record, rng) {
+                if scatter_record.specular {
+                    throughput = throughput.component_mul(&scatter_record.attenuation);
+                    ray = scatter_record.specular_ray;
+                } else {
+                    let hitable_pdf = PDF::HitablePDF { origin: hit_record.point,
+                                                        hitable: Arc::new(light_source.clone()) };
+                    let mixture_pdf = PDF::MixturePDF { cosine_pdf: &scatter_record.pdf,
+                                                        hitable_pdf: &hitable_pdf };
 
-                let mut offset_point = hit_record.point;
-                if hit_record.geometric_normal != hit_record.shading_normal {
-                    offset_point = find_offset_point(hit_record.point, hit_record.geometric_normal);
-                    offset_point += pick_sphere_point(rng);
+                    let mut offset_point = hit_record.point;
+                    if hit_record.geometric_normal != hit_record.shading_normal {
+                        offset_point = find_offset_point(hit_record.point, hit_record.geometric_normal);
+                        offset_point += pick_sphere_point(rng);
+                    }
+                    let scattered = Ray::new(offset_point, mixture_pdf.generate(rng), ray.time);
+                    let pdf = mixture_pdf.value(&scattered.direction.normalize());
+                    let scattering_pdf = hit_record.material
+                                                   .scattering_pdf(&ray, &hit_record, &scattered);
+
+                    throughput = throughput.component_mul(&(scattering_pdf * scatter_record.attenuation)) / pdf;
+
+                    ray = scattered;
                 }
-                let scattered = Ray::new(offset_point, mixture_pdf.generate(rng), ray.time);
-                let pdf = mixture_pdf.value(&scattered.direction.normalize());
-                let scattering_pdf = hit_record.material
-                                               .scattering_pdf(&ray, &hit_record, &scattered);
-
-                throughput = throughput.component_mul(&(scattering_pdf * attenuation)) / pdf;
-
-                ray = scattered;
             } else {
                 break;
             }
