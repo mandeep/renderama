@@ -1,4 +1,3 @@
-use rand::Rng;
 use std::cmp::Ordering;
 use std::sync::Arc;
 
@@ -20,8 +19,14 @@ impl BVH {
     /// are sorted upon that axis. Then, child objects are created
     /// until only leaf nodes exist.
     pub fn new(mut world: &mut Vec<Arc<dyn Hitable>>, start_time: f32, end_time: f32) -> BVH {
-        let mut rng = rand::thread_rng();
-        let axis: usize = rng.gen_range(0, 3);
+        let mut main_box = world[0].bounding_box(start_time, end_time).unwrap();
+
+        for i in 1..world.len() {
+            let new_box = world[i].bounding_box(start_time, end_time).unwrap();
+            main_box = main_box.surrounding_box(&new_box);
+        }
+
+        let axis = main_box.longest_axis();
 
         world.sort_by(|a, b| box_compare(a, b, axis, start_time, end_time));
 
