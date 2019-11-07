@@ -9,8 +9,13 @@ pub struct AABB {
 }
 
 impl AABB {
+    /// Create an empty AABB from a zero vector and one vector
+    pub fn new() -> AABB {
+        AABB { minimum: Vector3::zeros(), maximum: Vector3::repeat(1.0) }
+    }
+
     /// Create a new AABB from the minimum and maximum slab vectors
-    pub fn new(minimum: Vector3<f32>, maximum: Vector3<f32>) -> AABB {
+    pub fn from(minimum: Vector3<f32>, maximum: Vector3<f32>) -> AABB {
         AABB { minimum, maximum }
     }
 
@@ -42,6 +47,6 @@ impl AABB {
         let small = self.minimum.zip_map(&other.minimum, |a, b| a.min(b));
         let big = self.maximum.zip_map(&other.maximum, |a, b| a.max(b));
 
-        AABB::new(small, big)
+        AABB::from(small, big)
     }
 }

@@ -154,17 +154,17 @@ impl Hitable for Plane {
             Axis::XY => {
                 let minimum = Vector3::new(self.r0, self.s0, self.k - 0.0001);
                 let maximum = Vector3::new(self.r1, self.s1, self.k + 0.0001);
-                Some(AABB::new(minimum, maximum))
+                Some(AABB::from(minimum, maximum))
             }
             Axis::YZ => {
                 let minimum = Vector3::new(self.k - 0.0001, self.r0, self.s0);
                 let maximum = Vector3::new(self.k + 0.0001, self.r1, self.s1);
-                Some(AABB::new(minimum, maximum))
+                Some(AABB::from(minimum, maximum))
             }
             Axis::XZ => {
                 let minimum = Vector3::new(self.r0, self.k - 0.0001, self.s0);
                 let maximum = Vector3::new(self.r1, self.k + 0.0001, self.s1);
-                Some(AABB::new(minimum, maximum))
+                Some(AABB::from(minimum, maximum))
             }
         }
     }

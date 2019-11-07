@@ -137,7 +137,7 @@ impl Hitable for Triangle {
     /// The bounding box is created using the minimum
     /// and maximum points of all of the vertices
     fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
-        Some(AABB::new(self.minimum(), self.maximum()))
+        Some(AABB::from(self.minimum(), self.maximum()))
     }
 }
 
@@ -202,6 +202,6 @@ impl Hitable for TriangleMesh {
             maximum = maximum.zip_map(&triangle.maximum(), |a, b| a.max(b));
         }
 
-        Some(AABB::new(minimum, maximum))
+        Some(AABB::from(minimum, maximum))
     }
 }
