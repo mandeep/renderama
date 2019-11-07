@@ -1,3 +1,5 @@
+use std::f32;
+
 use nalgebra::Vector3;
 
 use ray::Ray;
@@ -11,7 +13,7 @@ pub struct AABB {
 impl AABB {
     /// Create an empty AABB from a zero vector and one vector
     pub fn new() -> AABB {
-        AABB { minimum: Vector3::zeros(), maximum: Vector3::repeat(1.0) }
+        AABB { minimum: Vector3::repeat(f32::MAX), maximum: Vector3::repeat(f32::MIN) }
     }
 
     /// Create a new AABB from the minimum and maximum slab vectors
