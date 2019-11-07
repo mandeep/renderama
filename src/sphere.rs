@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use nalgebra::core::Vector3;
 
-use aabb;
+use aabb::AABB;
 use hitable::{HitRecord, Hitable};
 use materials::Material;
 use ray::Ray;
@@ -93,15 +93,15 @@ impl Hitable for Sphere {
         None
     }
 
-    fn bounding_box(&self, t0: f32, t1: f32) -> Option<aabb::AABB> {
+    fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB> {
         let radius = Vector3::new(self.radius, self.radius, self.radius);
         let min0 = self.center(t0) - radius;
         let max0 = self.center(t0) + radius;
         let min1 = self.center(t1) - radius;
         let max1 = self.center(t1) + radius;
 
-        let small = aabb::AABB::new(min0, max0);
-        let big = aabb::AABB::new(min1, max1);
+        let small = AABB::from(min0, max0);
+        let big = AABB::from(min1, max1);
 
         Some(small.surrounding_box(&big))
     }

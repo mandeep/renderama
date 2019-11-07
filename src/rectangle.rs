@@ -62,6 +62,6 @@ impl Hitable for Rectangle {
     }
 
     fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
-        Some(AABB::new(self.p0, self.p1))
+        Some(AABB::from(self.p0, self.p1))
     }
 }
