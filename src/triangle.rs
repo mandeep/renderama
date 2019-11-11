@@ -159,14 +159,14 @@ impl TriangleMesh {
             let mesh = &model.mesh;
 
             let positions: Vec<Vec3> = mesh.positions
-                                                   .chunks(3)
-                                                   .map(|i| Vec3::new(i[0], i[1], i[2]))
-                                                   .collect();
+                                           .chunks(3)
+                                           .map(|i| Vec3::new(i[0], i[1], i[2]))
+                                           .collect();
 
             let normals: Vec<Vec3> = mesh.normals
-                                                 .chunks(3)
-                                                 .map(|i| Vec3::new(i[0], i[1], i[2]))
-                                                 .collect();
+                                         .chunks(3)
+                                         .map(|i| Vec3::new(i[0], i[1], i[2]))
+                                         .collect();
 
             for i in 0..mesh.indices.len() / 3 {
                 let (i, j, k) =

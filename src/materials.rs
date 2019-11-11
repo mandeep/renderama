@@ -18,8 +18,15 @@ pub struct ScatterRecord<'a> {
 }
 
 impl<'a> ScatterRecord<'a> {
-    pub fn new(specular_ray: Ray, attenuation: Vec3, pdf: PDF<'a>, specular: bool) -> ScatterRecord<'a> {
-        ScatterRecord { specular_ray, attenuation, pdf, specular }
+    pub fn new(specular_ray: Ray,
+               attenuation: Vec3,
+               pdf: PDF<'a>,
+               specular: bool)
+               -> ScatterRecord<'a> {
+        ScatterRecord { specular_ray,
+                        attenuation,
+                        pdf,
+                        specular }
     }
 }
 
@@ -51,11 +58,7 @@ impl Empty {
     }
 }
 impl Material for Empty {
-    fn scatter(&self,
-               _ray: &Ray,
-               _hit: &HitRecord,
-               _rng: &mut ThreadRng)
-               -> Option<ScatterRecord> {
+    fn scatter(&self, _ray: &Ray, _hit: &HitRecord, _rng: &mut ThreadRng) -> Option<ScatterRecord> {
         None
     }
 }
@@ -89,7 +92,6 @@ impl Material for Diffuse {
                record: &HitRecord,
                _rng: &mut ThreadRng)
                -> Option<ScatterRecord> {
-
         let scattered = Ray::new(record.point, ray.direction.normalize(), ray.time);
         let attenuation = self.albedo.value(record.u, record.v, &record.point);
         let pdf = PDF::CosinePDF { uvw: OrthonormalBasis::new(&record.shading_normal) };
@@ -176,15 +178,11 @@ impl Material for Reflective {
     /// factor is also added in to account for the reflection fuzz due to
     /// the size of the sphere. The target minus the record.point is used
     /// to determine the ray that is being reflected from the surface of the material.
-    fn scatter(&self,
-               ray: &Ray,
-               record: &HitRecord,
-               rng: &mut ThreadRng)
-               -> Option<ScatterRecord> {
+    fn scatter(&self, ray: &Ray, record: &HitRecord, rng: &mut ThreadRng) -> Option<ScatterRecord> {
         let reflected: Vec3 = reflect(ray.direction.normalize(), record.shading_normal);
         let specular_ray = Ray::new(record.point,
-                                 reflected + self.fuzz * pick_sphere_point(rng),
-                                 ray.time);
+                                    reflected + self.fuzz * pick_sphere_point(rng),
+                                    ray.time);
         let pdf = PDF::CosinePDF { uvw: OrthonormalBasis::new(&record.shading_normal) };
         Some(ScatterRecord::new(specular_ray, self.albedo, pdf, true))
     }
@@ -302,11 +300,7 @@ impl Isotropic {
 }
 
 impl Material for Isotropic {
-    fn scatter(&self,
-               ray: &Ray,
-               record: &HitRecord,
-               rng: &mut ThreadRng)
-               -> Option<ScatterRecord> {
+    fn scatter(&self, ray: &Ray, record: &HitRecord, rng: &mut ThreadRng) -> Option<ScatterRecord> {
         let scattered = Ray::new(record.point, pick_sphere_point(rng), ray.time);
         let attenuation = self.albedo.value(record.u, record.v, &record.point);
         let pdf = PDF::CosinePDF { uvw: OrthonormalBasis::new(&record.shading_normal) };

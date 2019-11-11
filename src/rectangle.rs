@@ -20,7 +20,13 @@ impl Rectangle {
     pub fn new(p0: Vec3, p1: Vec3, material: Arc<dyn Material>) -> Rectangle {
         let mut hitables = World::new();
 
-        hitables.add(Plane::from_box(Axis::XY, p0.x(), p1.x(), p0.y(), p1.y(), p1.z(), material.clone()));
+        hitables.add(Plane::from_box(Axis::XY,
+                                     p0.x(),
+                                     p1.x(),
+                                     p0.y(),
+                                     p1.y(),
+                                     p1.z(),
+                                     material.clone()));
 
         hitables.add(FlipNormals::of(Plane::from_box(Axis::XY,
                                                      p0.x(),
@@ -30,7 +36,13 @@ impl Rectangle {
                                                      p0.z(),
                                                      material.clone())));
 
-        hitables.add(Plane::from_box(Axis::XZ, p0.x(), p1.x(), p0.z(), p1.z(), p1.y(), material.clone()));
+        hitables.add(Plane::from_box(Axis::XZ,
+                                     p0.x(),
+                                     p1.x(),
+                                     p0.z(),
+                                     p1.z(),
+                                     p1.y(),
+                                     material.clone()));
 
         hitables.add(FlipNormals::of(Plane::from_box(Axis::XZ,
                                                      p0.x(),
@@ -40,7 +52,13 @@ impl Rectangle {
                                                      p0.y(),
                                                      material.clone())));
 
-        hitables.add(Plane::from_box(Axis::YZ, p0.y(), p1.y(), p0.z(), p1.z(), p1.x(), material.clone()));
+        hitables.add(Plane::from_box(Axis::YZ,
+                                     p0.y(),
+                                     p1.y(),
+                                     p0.z(),
+                                     p1.z(),
+                                     p1.x(),
+                                     material.clone()));
 
         hitables.add(FlipNormals::of(Plane::from_box(Axis::YZ,
                                                      p0.y(),

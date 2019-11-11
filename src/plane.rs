@@ -182,8 +182,8 @@ impl Hitable for Plane {
 
     fn pdf_random(&self, origin: Vec3, rng: &mut ThreadRng) -> Vec3 {
         let random_point = Vec3::new(self.r0 + rng.gen::<f32>() * (self.r1 - self.r0),
-                                        self.k,
-                                        self.s0 + rng.gen::<f32>() * (self.s1 - self.s0));
+                                     self.k,
+                                     self.s0 + rng.gen::<f32>() * (self.s1 - self.s0));
         random_point - origin
     }
 }

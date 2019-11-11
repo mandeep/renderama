@@ -1,5 +1,5 @@
-use image;
 use glam::Vec3;
+use image;
 
 /// Texture trait can be implemented so that textures can be applied to materials
 pub trait Texture: Send + Sync {
