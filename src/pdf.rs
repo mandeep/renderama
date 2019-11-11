@@ -5,7 +5,7 @@ use nalgebra::Vector3;
 use rand::rngs::ThreadRng;
 use rand::Rng;
 
-use basis::OrthonormalBase;
+use basis::OrthonormalBasis;
 use hitable::Hitable;
 
 pub fn random_cosine_direction(rng: &mut ThreadRng) -> Vector3<f32> {
@@ -20,7 +20,7 @@ pub fn random_cosine_direction(rng: &mut ThreadRng) -> Vector3<f32> {
 
 pub enum PDF<'a> {
     CosinePDF {
-        uvw: OrthonormalBase,
+        uvw: OrthonormalBasis,
     },
     HitablePDF {
         origin: Vector3<f32>,
