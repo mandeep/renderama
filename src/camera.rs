@@ -1,19 +1,19 @@
 use std::f32::consts::PI;
 
-use nalgebra::core::Vector3;
+use glam::Vec3;
 use rand::rngs::ThreadRng;
 use rand::Rng;
 
 use ray::{pick_sphere_point, Ray};
 
 pub struct Camera {
-    pub lower_left_corner: Vector3<f32>,
-    pub horizontal: Vector3<f32>,
-    pub vertical: Vector3<f32>,
-    pub origin: Vector3<f32>,
-    u: Vector3<f32>,
-    v: Vector3<f32>,
-    w: Vector3<f32>,
+    pub lower_left_corner: Vec3,
+    pub horizontal: Vec3,
+    pub vertical: Vec3,
+    pub origin: Vec3,
+    u: Vec3,
+    v: Vec3,
+    w: Vec3,
     pub lens_radius: f32,
     pub start_time: f32,
     pub end_time: f32,
@@ -30,9 +30,9 @@ impl Camera {
     /// The aspect ratio is the proportial difference between the width and height.
     /// aperture controls how big the lens of the camera is and focus distance
     /// controls the shortest distance that the camera can focus.
-    pub fn new(origin: Vector3<f32>,
-               lookat: &Vector3<f32>,
-               view: &Vector3<f32>,
+    pub fn new(origin: Vec3,
+               lookat: Vec3,
+               view: Vec3,
                fov: f32,
                aspect: f32,
                aperture: f32,
@@ -46,17 +46,17 @@ impl Camera {
         let half_height: f32 = (theta / 2.0).tan();
         let half_width: f32 = aspect * half_height;
 
-        let w: Vector3<f32> = (origin - lookat).normalize();
-        let u: Vector3<f32> = view.cross(&w).normalize();
-        let v: Vector3<f32> = w.cross(&u);
+        let w: Vec3 = (origin - lookat).normalize();
+        let u: Vec3 = view.cross(w).normalize();
+        let v: Vec3 = w.cross(u);
 
-        let lower_left_corner: Vector3<f32> = origin
+        let lower_left_corner: Vec3 = origin
                                               - half_width * focus_distance * u
                                               - half_height * focus_distance * v
                                               - focus_distance * w;
 
-        let horizontal: Vector3<f32> = 2.0 * half_width * focus_distance * u;
-        let vertical: Vector3<f32> = 2.0 * half_height * focus_distance * v;
+        let horizontal: Vec3 = 2.0 * half_width * focus_distance * u;
+        let vertical: Vec3 = 2.0 * half_height * focus_distance * v;
 
         Camera { lower_left_corner,
                  horizontal,
@@ -73,8 +73,8 @@ impl Camera {
 
     /// Get the ray that is coming from the camera into the world
     pub fn get_ray(&self, s: f32, t: f32, mut rng: &mut ThreadRng) -> Ray {
-        let radius: Vector3<f32> = self.lens_radius * pick_sphere_point(&mut rng);
-        let offset: Vector3<f32> = self.u * radius.x + self.v * radius.y;
+        let radius: Vec3 = self.lens_radius * pick_sphere_point(&mut rng);
+        let offset: Vec3 = self.u * radius.x() + self.v * radius.y();
         let time = self.start_time + rng.gen::<f32>() * (self.end_time - self.start_time);
         Ray::new(self.origin + offset,
                  self.lower_left_corner + s * self.horizontal + t * self.vertical

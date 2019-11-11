@@ -1,7 +1,7 @@
 use std::f32;
 use std::sync::Arc;
 
-use nalgebra::core::Vector3;
+use glam::Vec3;
 
 use aabb::AABB;
 use hitable::{HitRecord, Hitable};
@@ -40,13 +40,13 @@ impl Hitable for Volume {
                 };
                 if hit1.parameter < hit2.parameter {
                     let distance_inside_boundary =
-                        (hit2.parameter - hit1.parameter) * ray.direction.norm();
+                        (hit2.parameter - hit1.parameter) * ray.direction.length();
                     let hit_distance = -(1.0 / self.density) * rand::random::<f32>().ln();
 
                     if hit_distance < distance_inside_boundary {
-                        let t = hit1.parameter + hit_distance / ray.direction.norm();
+                        let t = hit1.parameter + hit_distance / ray.direction.length();
                         let point = ray.point_at_parameter(t);
-                        let normal = Vector3::new(1.0, 0.0, 0.0);
+                        let normal = Vec3::new(1.0, 0.0, 0.0);
                         return Some(HitRecord::new(t,
                                                    0.0,
                                                    0.0,

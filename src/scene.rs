@@ -1,7 +1,7 @@
 use std::f32;
 use std::sync::Arc;
 
-use nalgebra::core::Vector3;
+use glam::Vec3;
 
 use bvh::BVH;
 use camera::Camera;
@@ -17,9 +17,9 @@ use volume::Volume;
 use world::World;
 
 pub fn three_spheres_scene(width: u32, height: u32) -> (String, Camera, BVH, Plane) {
-    let origin = Vector3::new(0.0, 3.0, 6.0);
-    let lookat = Vector3::new(0.0, 0.0, -1.5);
-    let view = Vector3::new(0.0, 1.0, 0.0);
+    let origin = Vec3::new(0.0, 3.0, 6.0);
+    let lookat = Vec3::new(0.0, 0.0, -1.5);
+    let view = Vec3::new(0.0, 1.0, 0.0);
     let fov = 20.0;
     let aspect_ratio = (width / height) as f32;
     let aperture = 0.1;
@@ -29,8 +29,8 @@ pub fn three_spheres_scene(width: u32, height: u32) -> (String, Camera, BVH, Pla
     let atmosphere = true;
 
     let camera = Camera::new(origin,
-                             &lookat,
-                             &view,
+                             lookat,
+                             view,
                              fov,
                              aspect_ratio,
                              aperture,
@@ -41,29 +41,29 @@ pub fn three_spheres_scene(width: u32, height: u32) -> (String, Camera, BVH, Pla
 
     let mut world = World::new();
 
-    world.add(Sphere::new(Vector3::new(0.6, 0.0, -1.0),
-                          Vector3::new(0.6, 0.0, -1.0),
+    world.add(Sphere::new(Vec3::new(0.6, 0.0, -1.0),
+                          Vec3::new(0.6, 0.0, -1.0),
                           0.5,
                           Diffuse::new(ConstantTexture::new(0.75, 0.25, 0.25)),
                           0.0,
                           1.0));
 
-    world.add(Sphere::new(Vector3::new(-0.6, 0.0, -1.0),
-                          Vector3::new(-0.6, 0.0, -1.0),
+    world.add(Sphere::new(Vec3::new(-0.6, 0.0, -1.0),
+                          Vec3::new(-0.6, 0.0, -1.0),
                           0.5,
-                          Reflective::new(Vector3::new(0.5, 0.5, 0.5), 0.1),
+                          Reflective::new(Vec3::new(0.5, 0.5, 0.5), 0.1),
                           0.0,
                           1.0));
 
-    world.add(Sphere::new(Vector3::new(0.0, 0.1, -2.0),
-                          Vector3::new(0.0, 0.1, -2.0),
+    world.add(Sphere::new(Vec3::new(0.0, 0.1, -2.0),
+                          Vec3::new(0.0, 0.1, -2.0),
                           0.5,
                           Refractive::new(1.5),
                           0.0,
                           1.0));
 
-    world.add(Sphere::new(Vector3::new(0.0, -100.5, -1.0),
-                          Vector3::new(0.0, -100.5, -1.0),
+    world.add(Sphere::new(Vec3::new(0.0, -100.5, -1.0),
+                          Vec3::new(0.0, -100.5, -1.0),
                           100.0,
                           Diffuse::new(ConstantTexture::new(0.5, 0.5, 0.5)),
                           0.0,
@@ -77,9 +77,9 @@ pub fn three_spheres_scene(width: u32, height: u32) -> (String, Camera, BVH, Pla
 }
 
 pub fn random_spheres_scene(width: u32, height: u32) -> (String, Camera, BVH, Plane) {
-    let origin = Vector3::new(13.0, 2.0, 3.0);
-    let lookat = Vector3::new(0.0, 0.0, 0.0);
-    let view = Vector3::new(0.0, 1.0, 0.0);
+    let origin = Vec3::new(13.0, 2.0, 3.0);
+    let lookat = Vec3::new(0.0, 0.0, 0.0);
+    let view = Vec3::new(0.0, 1.0, 0.0);
     let fov = 20.0;
     let aspect_ratio = (width / height) as f32;
     let aperture = 0.1;
@@ -89,8 +89,8 @@ pub fn random_spheres_scene(width: u32, height: u32) -> (String, Camera, BVH, Pl
     let atmosphere = true;
 
     let camera = Camera::new(origin,
-                             &lookat,
-                             &view,
+                             lookat,
+                             view,
                              fov,
                              aspect_ratio,
                              aperture,
@@ -101,8 +101,8 @@ pub fn random_spheres_scene(width: u32, height: u32) -> (String, Camera, BVH, Pl
 
     let mut world = World::new();
 
-    world.add(Sphere::new(Vector3::new(0.0, -1000.0, 0.0),
-                          Vector3::new(0.0, -1000.0, 0.0),
+    world.add(Sphere::new(Vec3::new(0.0, -1000.0, 0.0),
+                          Vec3::new(0.0, -1000.0, 0.0),
                           1000.0,
                           Diffuse::new(ConstantTexture::new(0.5, 0.5, 0.5)),
                           0.0,
@@ -111,11 +111,11 @@ pub fn random_spheres_scene(width: u32, height: u32) -> (String, Camera, BVH, Pl
     for a in -11..11 {
         for b in -11..11 {
             let material = rand::random::<f32>();
-            let center: Vector3<f32> = Vector3::new(a as f32 + 0.9 * rand::random::<f32>(),
+            let center: Vec3 = Vec3::new(a as f32 + 0.9 * rand::random::<f32>(),
                                                     0.2,
                                                     b as f32 + 0.9 * rand::random::<f32>());
 
-            if (center - Vector3::new(4.0, 0.2, 0.0)).norm() > 0.9 {
+            if (center - Vec3::new(4.0, 0.2, 0.0)).length() > 0.9 {
                 if material < 0.75 {
                     world.add(Sphere::new(center,
                                      center,
@@ -132,7 +132,7 @@ pub fn random_spheres_scene(width: u32, height: u32) -> (String, Camera, BVH, Pl
                     world.add(Sphere::new(center,
                                           center,
                                           0.2,
-                                          Reflective::new(Vector3::new(0.5
+                                          Reflective::new(Vec3::new(0.5
                                                                        * (1.0
                                                                           * rand::random::<f32>()),
                                                                        0.5
@@ -153,31 +153,31 @@ pub fn random_spheres_scene(width: u32, height: u32) -> (String, Camera, BVH, Pl
         }
     }
 
-    world.add(Sphere::new(Vector3::new(-2.0, 1.0, 0.0),
-                          Vector3::new(-2.0, 1.0, 0.0),
+    world.add(Sphere::new(Vec3::new(-2.0, 1.0, 0.0),
+                          Vec3::new(-2.0, 1.0, 0.0),
                           1.0,
                           Diffuse::new(ConstantTexture::new(0.75, 0.25, 0.25)),
                           0.0,
                           1.0));
 
-    world.add(Sphere::new(Vector3::new(0.0, 1.0, 0.0),
-                          Vector3::new(0.0, 1.0, 0.0),
+    world.add(Sphere::new(Vec3::new(0.0, 1.0, 0.0),
+                          Vec3::new(0.0, 1.0, 0.0),
                           1.0,
                           Refractive::new(1.5),
                           0.0,
                           1.0));
 
-    world.add(Sphere::new(Vector3::new(0.0, 1.0, 0.0),
-                          Vector3::new(0.0, 1.0, 0.0),
+    world.add(Sphere::new(Vec3::new(0.0, 1.0, 0.0),
+                          Vec3::new(0.0, 1.0, 0.0),
                           -0.99,
                           Refractive::new(1.5),
                           0.0,
                           1.0));
 
-    world.add(Sphere::new(Vector3::new(2.0, 1.0, 0.0),
-                          Vector3::new(2.0, 1.0, 0.0),
+    world.add(Sphere::new(Vec3::new(2.0, 1.0, 0.0),
+                          Vec3::new(2.0, 1.0, 0.0),
                           1.0,
-                          Reflective::new(Vector3::new(0.5, 0.5, 0.5), 0.05),
+                          Reflective::new(Vec3::new(0.5, 0.5, 0.5), 0.05),
                           0.0,
                           1.0));
 
@@ -189,9 +189,9 @@ pub fn random_spheres_scene(width: u32, height: u32) -> (String, Camera, BVH, Pl
 }
 
 pub fn earth_scene(width: u32, height: u32) -> (String, Camera, World, Plane) {
-    let origin = Vector3::new(13.0, 2.0, 3.0);
-    let lookat = Vector3::new(0.0, 0.0, 0.0);
-    let view = Vector3::new(0.0, 1.0, 0.0);
+    let origin = Vec3::new(13.0, 2.0, 3.0);
+    let lookat = Vec3::new(0.0, 0.0, 0.0);
+    let view = Vec3::new(0.0, 1.0, 0.0);
     let fov = 20.0;
     let aspect_ratio = (width / height) as f32;
     let aperture = 0.1;
@@ -201,8 +201,8 @@ pub fn earth_scene(width: u32, height: u32) -> (String, Camera, World, Plane) {
     let atmosphere = false;
 
     let camera = Camera::new(origin,
-                             &lookat,
-                             &view,
+                             lookat,
+                             view,
                              fov,
                              aspect_ratio,
                              aperture,
@@ -213,8 +213,8 @@ pub fn earth_scene(width: u32, height: u32) -> (String, Camera, World, Plane) {
 
     let mut world = World::new();
 
-    world.add(Sphere::new(Vector3::new(0.0, 0.0, 0.0),
-                          Vector3::new(0.0, 0.0, 0.0),
+    world.add(Sphere::new(Vec3::new(0.0, 0.0, 0.0),
+                          Vec3::new(0.0, 0.0, 0.0),
                           2.0,
                           Diffuse::new(ImageTexture::new("world_topo_nasa.jpg")),
                           0.0,
@@ -226,9 +226,9 @@ pub fn earth_scene(width: u32, height: u32) -> (String, Camera, World, Plane) {
 }
 
 pub fn motion_scene(width: u32, height: u32) -> (String, Camera, BVH, Plane) {
-    let origin = Vector3::new(13.0, 2.0, 3.0);
-    let lookat = Vector3::new(0.0, 0.0, 0.0);
-    let view = Vector3::new(0.0, 1.0, 0.0);
+    let origin = Vec3::new(13.0, 2.0, 3.0);
+    let lookat = Vec3::new(0.0, 0.0, 0.0);
+    let view = Vec3::new(0.0, 1.0, 0.0);
     let fov = 20.0;
     let aspect_ratio = (width / height) as f32;
     let aperture = 0.1;
@@ -238,8 +238,8 @@ pub fn motion_scene(width: u32, height: u32) -> (String, Camera, BVH, Plane) {
     let atmosphere = true;
 
     let camera = Camera::new(origin,
-                             &lookat,
-                             &view,
+                             lookat,
+                             view,
                              fov,
                              aspect_ratio,
                              aperture,
@@ -250,19 +250,19 @@ pub fn motion_scene(width: u32, height: u32) -> (String, Camera, BVH, Plane) {
 
     let mut world = World::new();
 
-    world.add(Sphere::new(Vector3::new(0.0, -1000.0, 0.0),
-                          Vector3::new(0.0, -1000.0, 0.0),
+    world.add(Sphere::new(Vec3::new(0.0, -1000.0, 0.0),
+                          Vec3::new(0.0, -1000.0, 0.0),
                           1000.0,
                           Diffuse::new(ConstantTexture::new(0.5, 0.5, 0.5)),
                           0.0,
                           1.0));
 
-    let center: Vector3<f32> = Vector3::new(0.9 * rand::random::<f32>(),
+    let center: Vec3 = Vec3::new(0.9 * rand::random::<f32>(),
                                             0.2,
                                             0.9 * rand::random::<f32>());
 
     world.add(Sphere::new(center,
-                          center + Vector3::new(0.0, 0.5 * rand::random::<f32>(), 0.0),
+                          center + Vec3::new(0.0, 0.5 * rand::random::<f32>(), 0.0),
                           0.2,
                           Diffuse::new(ConstantTexture::new(rand::random::<f32>()
                                                             * rand::random::<f32>(),
@@ -273,8 +273,8 @@ pub fn motion_scene(width: u32, height: u32) -> (String, Camera, BVH, Plane) {
                           0.0,
                           1.0));
 
-    world.add(Sphere::new(Vector3::new(-2.0, 1.0, 0.0),
-                          Vector3::new(-2.0, 1.0, 0.0),
+    world.add(Sphere::new(Vec3::new(-2.0, 1.0, 0.0),
+                          Vec3::new(-2.0, 1.0, 0.0),
                           1.0,
                           Diffuse::new(ConstantTexture::new(0.75, 0.25, 0.25)),
                           0.0,
@@ -288,9 +288,9 @@ pub fn motion_scene(width: u32, height: u32) -> (String, Camera, BVH, Plane) {
 }
 
 pub fn simple_light_scene(width: u32, height: u32) -> (String, Camera, BVH, Plane) {
-    let origin = Vector3::new(13.0, 3.0, 3.0);
-    let lookat = Vector3::new(0.0, 0.0, 0.0);
-    let view = Vector3::new(0.0, 1.0, 0.0);
+    let origin = Vec3::new(13.0, 3.0, 3.0);
+    let lookat = Vec3::new(0.0, 0.0, 0.0);
+    let view = Vec3::new(0.0, 1.0, 0.0);
     let fov = 50.0;
     let aspect_ratio = (width / height) as f32;
     let aperture = 0.1;
@@ -300,8 +300,8 @@ pub fn simple_light_scene(width: u32, height: u32) -> (String, Camera, BVH, Plan
     let atmosphere = false;
 
     let camera = Camera::new(origin,
-                             &lookat,
-                             &view,
+                             lookat,
+                             view,
                              fov,
                              aspect_ratio,
                              aperture,
@@ -312,18 +312,18 @@ pub fn simple_light_scene(width: u32, height: u32) -> (String, Camera, BVH, Plan
 
     let mut world = World::new();
 
-    world.add(Sphere::new(Vector3::new(0.0, -1000.0, 0.0),
-                          Vector3::new(0.0, -1000.0, 0.0),
+    world.add(Sphere::new(Vec3::new(0.0, -1000.0, 0.0),
+                          Vec3::new(0.0, -1000.0, 0.0),
                           1000.0,
                           Diffuse::new(ConstantTexture::new(0.5, 0.5, 0.5)),
                           0.0,
                           1.0));
 
-    world.add(Translate::new(Vector3::new(0.0, 2.0, 0.0), Rotate::new(90.0, TriangleMesh::from("suzanne.obj",
+    world.add(Translate::new(Vec3::new(0.0, 2.0, 0.0), Rotate::new(90.0, TriangleMesh::from("suzanne.obj",
                           Arc::new(Diffuse::new(ConstantTexture::new(1.0, 0.0, 0.0)))))));
 
-    world.add(Sphere::new(Vector3::new(0.0, 7.0, 0.0),
-                          Vector3::new(0.0, 7.0, 0.0),
+    world.add(Sphere::new(Vec3::new(0.0, 7.0, 0.0),
+                          Vec3::new(0.0, 7.0, 0.0),
                           2.0,
                           Light::new(ConstantTexture::new(4.0, 4.0, 4.0)),
                           0.0,
@@ -346,9 +346,9 @@ pub fn simple_light_scene(width: u32, height: u32) -> (String, Camera, BVH, Plan
 }
 
 pub fn cornell_box_scene(width: u32, height: u32) -> (String, Camera, BVH, Plane) {
-    let origin = Vector3::new(278.0, 278.0, -800.0);
-    let lookat = Vector3::new(278.0, 278.0, 0.0);
-    let view = Vector3::new(0.0, 1.0, 0.0);
+    let origin = Vec3::new(278.0, 278.0, -800.0);
+    let lookat = Vec3::new(278.0, 278.0, 0.0);
+    let view = Vec3::new(0.0, 1.0, 0.0);
     let fov = 40.0;
     let aspect_ratio = (width / height) as f32;
     let aperture = 0.0;
@@ -358,8 +358,8 @@ pub fn cornell_box_scene(width: u32, height: u32) -> (String, Camera, BVH, Plane
     let atmosphere = false;
 
     let camera = Camera::new(origin,
-                             &lookat,
-                             &view,
+                             lookat,
+                             view,
                              fov,
                              aspect_ratio,
                              aperture,
@@ -389,16 +389,16 @@ pub fn cornell_box_scene(width: u32, height: u32) -> (String, Camera, BVH, Plane
     world.add(FlipNormals::of(Plane::new(Axis::XY, 0.0, 555.0, 0.0, 555.0, 555.0, white.clone())));
 
     // add the boxes of the cornell box to the world
-    let p0 = Vector3::new(0.0, 0.0, 0.0);
-    let p1 = Vector3::new(165.0, 165.0, 165.0);
+    let p0 = Vec3::new(0.0, 0.0, 0.0);
+    let p1 = Vec3::new(165.0, 165.0, 165.0);
 
-    world.add(Translate::new(Vector3::new(130.0, 0.0, 65.0),
+    world.add(Translate::new(Vec3::new(130.0, 0.0, 65.0),
                              Rotate::new(-18.0, Rectangle::new(p0, p1, Arc::new(white.clone())))));
 
-    let p2 = Vector3::new(165.0, 330.0, 165.0);
+    let p2 = Vec3::new(165.0, 330.0, 165.0);
 
-    let aluminum = Reflective::new(Vector3::new(0.80, 0.85, 0.88), 0.0);
-    world.add(Translate::new(Vector3::new(265.0, 0.0, 295.0),
+    let aluminum = Reflective::new(Vec3::new(0.80, 0.85, 0.88), 0.0);
+    world.add(Translate::new(Vec3::new(265.0, 0.0, 295.0),
                              Rotate::new(15.0, Rectangle::new(p0, p2, Arc::new(aluminum)))));
 
     let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
@@ -410,9 +410,9 @@ pub fn cornell_box_scene(width: u32, height: u32) -> (String, Camera, BVH, Plane
 }
 
 pub fn spheres_in_box_scene(width: u32, height: u32) -> (String, Camera, BVH, Plane) {
-    let origin = Vector3::new(478.0, 278.0, -600.0);
-    let lookat = Vector3::new(278.0, 278.0, 0.0);
-    let view = Vector3::new(0.0, 1.0, 0.0);
+    let origin = Vec3::new(478.0, 278.0, -600.0);
+    let lookat = Vec3::new(278.0, 278.0, 0.0);
+    let view = Vec3::new(0.0, 1.0, 0.0);
     let fov = 40.0;
     let aspect_ratio = (width / height) as f32;
     let aperture = 0.0;
@@ -422,8 +422,8 @@ pub fn spheres_in_box_scene(width: u32, height: u32) -> (String, Camera, BVH, Pl
     let atmosphere = false;
 
     let camera = Camera::new(origin,
-                             &lookat,
-                             &view,
+                             lookat,
+                             view,
                              fov,
                              aspect_ratio,
                              aperture,
@@ -444,37 +444,37 @@ pub fn spheres_in_box_scene(width: u32, height: u32) -> (String, Camera, BVH, Pl
     for i in 0..number_of_boxes {
         for j in 0..number_of_boxes {
             let w = 100.0;
-            let p0 = Vector3::new(-1000.0 + i as f32 * w, 0.0, -1000.0 + j as f32 * w);
-            let p1 = p0 + Vector3::new(w, 100.0 * (rand::random::<f32>() + 0.01), w);
+            let p0 = Vec3::new(-1000.0 + i as f32 * w, 0.0, -1000.0 + j as f32 * w);
+            let p1 = p0 + Vec3::new(w, 100.0 * (rand::random::<f32>() + 0.01), w);
             world.add(Rectangle::new(p0, p1, Arc::new(ground.clone())));
         }
     }
 
     world.add(Plane::new(Axis::XZ, 123.0, 423.0, 147.0, 412.0, 554.0, light));
 
-    world.add(Sphere::new(Vector3::new(400.0, 400.0, 200.0),
-                          Vector3::new(430.0, 400.0, 200.0),
+    world.add(Sphere::new(Vec3::new(400.0, 400.0, 200.0),
+                          Vec3::new(430.0, 400.0, 200.0),
                           50.0,
                           orange,
                           0.0,
                           1.0));
 
-    world.add(Sphere::new(Vector3::new(260.0, 150.0, 45.0),
-                          Vector3::new(260.0, 150.0, 45.0),
+    world.add(Sphere::new(Vec3::new(260.0, 150.0, 45.0),
+                          Vec3::new(260.0, 150.0, 45.0),
                           50.0,
                           Refractive::new(1.5),
                           0.0,
                           1.0));
 
-    world.add(Sphere::new(Vector3::new(0.0, 150.0, 145.0),
-                          Vector3::new(0.0, 150.0, 145.0),
+    world.add(Sphere::new(Vec3::new(0.0, 150.0, 145.0),
+                          Vec3::new(0.0, 150.0, 145.0),
                           50.0,
-                          Reflective::new(Vector3::new(0.8, 0.8, 0.9), 1.0),
+                          Reflective::new(Vec3::new(0.8, 0.8, 0.9), 1.0),
                           0.0,
                           1.0));
 
-    let boundary = Sphere::new(Vector3::new(360.0, 150.0, 145.0),
-                               Vector3::new(360.0, 150.0, 145.0),
+    let boundary = Sphere::new(Vec3::new(360.0, 150.0, 145.0),
+                               Vec3::new(360.0, 150.0, 145.0),
                                70.0,
                                Refractive::new(1.5),
                                0.0,
@@ -484,8 +484,8 @@ pub fn spheres_in_box_scene(width: u32, height: u32) -> (String, Camera, BVH, Pl
 
     world.add(Volume::new(0.2, boundary.clone(), ConstantTexture::new(0.2, 0.4, 0.9)));
 
-    let fog = Sphere::new(Vector3::new(0.0, 0.0, 0.0),
-                          Vector3::new(0.0, 0.0, 0.0),
+    let fog = Sphere::new(Vec3::new(0.0, 0.0, 0.0),
+                          Vec3::new(0.0, 0.0, 0.0),
                           5000.0,
                           Refractive::new(1.5),
                           0.0,
@@ -493,15 +493,15 @@ pub fn spheres_in_box_scene(width: u32, height: u32) -> (String, Camera, BVH, Pl
 
     world.add(Volume::new(0.0001, fog, ConstantTexture::new(1.0, 1.0, 1.0)));
 
-    world.add(Sphere::new(Vector3::new(400.0, 200.0, 400.0),
-                          Vector3::new(400.0, 200.0, 400.0),
+    world.add(Sphere::new(Vec3::new(400.0, 200.0, 400.0),
+                          Vec3::new(400.0, 200.0, 400.0),
                           100.0,
                           Diffuse::new(ImageTexture::new("world_topo_nasa.jpg")),
                           0.0,
                           1.0));
 
-    world.add(Sphere::new(Vector3::new(220.0, 280.0, 300.0),
-                          Vector3::new(220.0, 280.0, 300.0),
+    world.add(Sphere::new(Vec3::new(220.0, 280.0, 300.0),
+                          Vec3::new(220.0, 280.0, 300.0),
                           80.0,
                           Diffuse::new(ConstantTexture::new(0.6, 0.6, 0.6)),
                           0.0,
@@ -509,13 +509,13 @@ pub fn spheres_in_box_scene(width: u32, height: u32) -> (String, Camera, BVH, Pl
 
     let number_of_spheres = 1000;
     for _ in 0..number_of_spheres {
-        let center = Vector3::new(165.0 * rand::random::<f32>(),
+        let center = Vec3::new(165.0 * rand::random::<f32>(),
                                   165.0 * rand::random::<f32>(),
                                   165.0 * rand::random::<f32>());
 
         let sphere = Sphere::new(center, center, 10.0, white.clone(), 0.0, 1.0);
 
-        world.add(Translate::new(Vector3::new(-100.0, 270.0, 395.0),
+        world.add(Translate::new(Vec3::new(-100.0, 270.0, 395.0),
                                  Rotate::new(15.0, sphere)));
     }
 

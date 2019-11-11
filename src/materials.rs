@@ -1,7 +1,7 @@
 use std::f32::consts::PI;
 use std::sync::Arc;
 
-use nalgebra::core::Vector3;
+use glam::Vec3;
 use rand::rngs::ThreadRng;
 
 use basis::OrthonormalBasis;
@@ -12,13 +12,13 @@ use texture::Texture;
 
 pub struct ScatterRecord<'a> {
     pub specular_ray: Ray,
-    pub attenuation: Vector3<f32>,
+    pub attenuation: Vec3,
     pub pdf: PDF<'a>,
     pub specular: bool,
 }
 
 impl<'a> ScatterRecord<'a> {
-    pub fn new(specular_ray: Ray, attenuation: Vector3<f32>, pdf: PDF<'a>, specular: bool) -> ScatterRecord<'a> {
+    pub fn new(specular_ray: Ray, attenuation: Vec3, pdf: PDF<'a>, specular: bool) -> ScatterRecord<'a> {
         ScatterRecord { specular_ray, attenuation, pdf, specular }
     }
 }
@@ -33,8 +33,8 @@ pub trait Material: Send + Sync {
         None
     }
 
-    fn emitted(&self, _ray: &Ray, _hit: &HitRecord) -> Vector3<f32> {
-        Vector3::zeros()
+    fn emitted(&self, _ray: &Ray, _hit: &HitRecord) -> Vec3 {
+        Vec3::zero()
     }
 
     fn scattering_pdf(&self, _ray: &Ray, _record: &HitRecord, _scattered: &Ray) -> f32 {
@@ -68,7 +68,7 @@ pub struct Diffuse {
 impl Diffuse {
     /// Create a new Diffuse material with the given albedo
     ///
-    /// albedo is a Vector3 of the RGB values assigned to the material
+    /// albedo is a Vec3 of the RGB values assigned to the material
     /// where each value is a float between 0.0 and 1.0.
     pub fn new<T: Texture + 'static>(albedo: T) -> Diffuse {
         let albedo = Arc::new(albedo);
@@ -97,7 +97,7 @@ impl Material for Diffuse {
     }
 
     fn scattering_pdf(&self, _ray: &Ray, record: &HitRecord, scattered: &Ray) -> f32 {
-        let cosine = (record.shading_normal.dot(&scattered.direction.normalize())).max(0.0);
+        let cosine = (record.shading_normal.dot(scattered.direction.normalize())).max(0.0);
         cosine / PI
     }
 }
@@ -110,8 +110,8 @@ impl Material for Diffuse {
 ///
 /// For derivation see Section 10.4.2 in Mathematical and Computer Programming
 /// Techniques for Computer Graphics by Peter Comininos.
-fn reflect(v: &Vector3<f32>, n: &Vector3<f32>) -> Vector3<f32> {
-    v - 2.0 * v.dot(&n) * n
+fn reflect(v: Vec3, n: Vec3) -> Vec3 {
+    v - 2.0 * v.dot(n) * n
 }
 
 /// Compute the refract vector given the light vector, normal vector, and refractive_index
@@ -121,9 +121,9 @@ fn reflect(v: &Vector3<f32>, n: &Vector3<f32>) -> Vector3<f32> {
 ///
 /// For derivation see Section 10.4.3 in Mathematical and Computer Programming
 /// Techniques for Computer Graphics by Peter Comininos.
-fn refract(v: &Vector3<f32>, n: &Vector3<f32>, refractive_index: f32) -> Option<Vector3<f32>> {
-    let uv: Vector3<f32> = v.normalize();
-    let direction: f32 = uv.dot(&n);
+fn refract(v: Vec3, n: Vec3, refractive_index: f32) -> Option<Vec3> {
+    let uv: Vec3 = v.normalize();
+    let direction: f32 = uv.dot(n);
     let discriminant: f32 =
         1.0 - refractive_index * refractive_index * (1.0 - direction * direction);
 
@@ -150,18 +150,18 @@ fn schlick(cosine: f32, reference_index: f32) -> f32 {
 
 #[derive(Clone)]
 pub struct Reflective {
-    pub albedo: Vector3<f32>,
+    pub albedo: Vec3,
     pub fuzz: f32,
 }
 
 impl Reflective {
     /// Create a new Reflective material for objects that reflect light only
     ///
-    /// albedo is a Vector3 of the RGB values assigned to the material
+    /// albedo is a Vec3 of the RGB values assigned to the material
     /// where each value is a float between 0.0 and 1.0. fuzz accounts
     /// for the fuzziness of the reflections due to the size of the sphere.
     /// Generally, the larger the sphere, the fuzzier the reflections will be.
-    pub fn new(albedo: Vector3<f32>, fuzz: f32) -> Reflective {
+    pub fn new(albedo: Vec3, fuzz: f32) -> Reflective {
         Reflective { albedo: albedo,
                      fuzz: fuzz }
     }
@@ -181,7 +181,7 @@ impl Material for Reflective {
                record: &HitRecord,
                rng: &mut ThreadRng)
                -> Option<ScatterRecord> {
-        let reflected: Vector3<f32> = reflect(&ray.direction.normalize(), &record.shading_normal);
+        let reflected: Vec3 = reflect(ray.direction.normalize(), record.shading_normal);
         let specular_ray = Ray::new(record.point,
                                  reflected + self.fuzz * pick_sphere_point(rng),
                                  ray.time);
@@ -198,7 +198,7 @@ pub struct Refractive {
 impl Refractive {
     /// Create a new Refractive material for objects that both reflect and transmit light
     ///
-    /// albedo is a Vector3 of the RGB values assigned to the material
+    /// albedo is a Vec3 of the RGB values assigned to the material
     /// where each value is a float between 0.0 and 1.0. index determines
     /// how much of the light is refracted when entering the material.
     /// fuzz accounts for the fuzziness of the reflections due to the size of the sphere.
@@ -226,27 +226,27 @@ impl Material for Refractive {
                record: &HitRecord,
                _rng: &mut ThreadRng)
                -> Option<ScatterRecord> {
-        let reflected: Vector3<f32> = reflect(&ray.direction.normalize(), &record.shading_normal);
-        let incident: f32 = ray.direction.dot(&record.shading_normal);
+        let reflected: Vec3 = reflect(ray.direction.normalize(), record.shading_normal);
+        let incident: f32 = ray.direction.dot(record.shading_normal);
 
         let (outward_normal, refractive_index, cosine) = if incident > 0.0 {
             (-record.shading_normal,
              self.refractive_index,
-             self.refractive_index * ray.direction.dot(&record.shading_normal)
-             / ray.direction.norm())
+             self.refractive_index * ray.direction.dot(record.shading_normal)
+             / ray.direction.length())
         } else {
             (record.shading_normal,
              1.0 / self.refractive_index,
-             -ray.direction.dot(&record.shading_normal) / ray.direction.norm())
+             -ray.direction.dot(record.shading_normal) / ray.direction.length())
         };
 
-        let refracted = refract(&ray.direction, &outward_normal, refractive_index);
+        let refracted = refract(ray.direction, outward_normal, refractive_index);
         let reflect_probability = match refracted {
             Some(_) => schlick(cosine, self.refractive_index),
             None => 1.0,
         };
 
-        let attenuation = Vector3::new(1.0, 1.0, 1.0);
+        let attenuation = Vec3::new(1.0, 1.0, 1.0);
         let pdf = PDF::CosinePDF { uvw: OrthonormalBasis::new(&record.shading_normal) };
 
         if rand::random::<f32>() < reflect_probability {
@@ -280,11 +280,11 @@ impl Material for Light {
         None
     }
 
-    fn emitted(&self, ray: &Ray, hit: &HitRecord) -> Vector3<f32> {
-        if hit.shading_normal.dot(&ray.direction) < 0.0 {
+    fn emitted(&self, ray: &Ray, hit: &HitRecord) -> Vec3 {
+        if hit.shading_normal.dot(ray.direction) < 0.0 {
             self.emit.value(hit.u, hit.v, &hit.point)
         } else {
-            Vector3::zeros()
+            Vec3::zero()
         }
     }
 }

@@ -2,7 +2,7 @@ use std::f32;
 use std::path::Path;
 use std::sync::Arc;
 
-use nalgebra::Vector3;
+use glam::Vec3;
 use tobj;
 
 use aabb::AABB;
@@ -13,12 +13,12 @@ use world::World;
 
 #[derive(Clone)]
 pub struct Triangle {
-    v0: Vector3<f32>,
-    v1: Vector3<f32>,
-    v2: Vector3<f32>,
-    n0: Vector3<f32>,
-    n1: Vector3<f32>,
-    n2: Vector3<f32>,
+    v0: Vec3,
+    v1: Vec3,
+    v2: Vec3,
+    n0: Vec3,
+    n1: Vec3,
+    n2: Vec3,
     material: Arc<dyn Material>,
 }
 
@@ -30,12 +30,12 @@ pub struct TriangleMesh {
 
 impl Triangle {
     /// Create a new triangle with vertices v0, v1, and v2
-    pub fn new<M: Material + 'static>(v0: Vector3<f32>,
-                                      v1: Vector3<f32>,
-                                      v2: Vector3<f32>,
-                                      n0: Vector3<f32>,
-                                      n1: Vector3<f32>,
-                                      n2: Vector3<f32>,
+    pub fn new<M: Material + 'static>(v0: Vec3,
+                                      v1: Vec3,
+                                      v2: Vec3,
+                                      n0: Vec3,
+                                      n1: Vec3,
+                                      n2: Vec3,
                                       material: M)
                                       -> Triangle {
         let material = Arc::new(material);
@@ -48,12 +48,12 @@ impl Triangle {
                    material: material }
     }
 
-    pub fn from_box(v0: Vector3<f32>,
-                    v1: Vector3<f32>,
-                    v2: Vector3<f32>,
-                    n0: Vector3<f32>,
-                    n1: Vector3<f32>,
-                    n2: Vector3<f32>,
+    pub fn from_box(v0: Vec3,
+                    v1: Vec3,
+                    v2: Vec3,
+                    n0: Vec3,
+                    n1: Vec3,
+                    n2: Vec3,
                     material: Arc<dyn Material>)
                     -> Triangle {
         Triangle { v0: v0,
@@ -65,16 +65,12 @@ impl Triangle {
                    material: material }
     }
 
-    pub fn minimum(&self) -> Vector3<f32> {
-        self.v0
-            .zip_map(&self.v1, |a, b| a.min(b))
-            .zip_map(&self.v2, |c, d| c.min(d))
+    pub fn minimum(&self) -> Vec3 {
+        self.v0.min(self.v1.min(self.v2))
     }
 
-    pub fn maximum(&self) -> Vector3<f32> {
-        self.v0
-            .zip_map(&self.v1, |a, b| a.max(b))
-            .zip_map(&self.v2, |c, d| c.max(d))
+    pub fn maximum(&self) -> Vec3 {
+        self.v0.max(self.v1.max(self.v2))
     }
 }
 
@@ -91,28 +87,28 @@ impl Hitable for Triangle {
         let edge1 = self.v1 - self.v0;
         let edge2 = self.v2 - self.v0;
 
-        let pvec = ray.direction.cross(&edge2);
-        let determinant = edge1.dot(&pvec);
+        let pvec = ray.direction.cross(edge2);
+        let determinant = edge1.dot(pvec);
 
         if determinant < position_min {
             return None;
         }
 
         let tvec = ray.origin - self.v0;
-        let mut u = tvec.dot(&pvec);
+        let mut u = tvec.dot(pvec);
 
         if u < 0.0 || u > determinant {
             return None;
         }
 
-        let qvec = tvec.cross(&edge1);
-        let mut v = ray.direction.dot(&qvec);
+        let qvec = tvec.cross(edge1);
+        let mut v = ray.direction.dot(qvec);
 
         if v < 0.0 || u + v > determinant {
             return None;
         }
 
-        let mut t = edge2.dot(&qvec);
+        let mut t = edge2.dot(qvec);
 
         let inverse_determinant = 1.0 / determinant;
         t *= inverse_determinant;
@@ -120,7 +116,7 @@ impl Hitable for Triangle {
         v *= inverse_determinant;
 
         let point = u * self.v0 + v * self.v1 + (1.0 - u - v) * self.v2;
-        let geometric_normal = edge1.cross(&edge2).normalize();
+        let geometric_normal = edge1.cross(edge2).normalize();
         let shading_normal = ((1.0 - u - v) * self.n0 + u * self.n1 + v * self.n2).normalize();
 
         Some(HitRecord::new(t,
@@ -162,14 +158,14 @@ impl TriangleMesh {
         for model in models {
             let mesh = &model.mesh;
 
-            let positions: Vec<Vector3<f32>> = mesh.positions
+            let positions: Vec<Vec3> = mesh.positions
                                                    .chunks(3)
-                                                   .map(|i| Vector3::new(i[0], i[1], i[2]))
+                                                   .map(|i| Vec3::new(i[0], i[1], i[2]))
                                                    .collect();
 
-            let normals: Vec<Vector3<f32>> = mesh.normals
+            let normals: Vec<Vec3> = mesh.normals
                                                  .chunks(3)
-                                                 .map(|i| Vector3::new(i[0], i[1], i[2]))
+                                                 .map(|i| Vec3::new(i[0], i[1], i[2]))
                                                  .collect();
 
             for i in 0..mesh.indices.len() / 3 {
@@ -194,12 +190,12 @@ impl Hitable for TriangleMesh {
     }
 
     fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
-        let mut minimum = Vector3::new(f32::MAX, f32::MAX, f32::MAX);
-        let mut maximum = Vector3::new(f32::MIN, f32::MIN, f32::MIN);
+        let mut minimum = Vec3::new(f32::MAX, f32::MAX, f32::MAX);
+        let mut maximum = Vec3::new(f32::MIN, f32::MIN, f32::MIN);
 
         for triangle in &self.triangles {
-            minimum = minimum.zip_map(&triangle.minimum(), |a, b| a.min(b));
-            maximum = maximum.zip_map(&triangle.maximum(), |a, b| a.max(b));
+            minimum = minimum.min(triangle.minimum());
+            maximum = maximum.max(triangle.maximum());
         }
 
         Some(AABB::from(minimum, maximum))

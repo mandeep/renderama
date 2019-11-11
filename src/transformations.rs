@@ -2,18 +2,19 @@ use std::f32;
 use std::f32::consts::PI;
 use std::sync::Arc;
 
+use glam::Vec3;
+
 use aabb::AABB;
 use hitable::{HitRecord, Hitable};
-use nalgebra::Vector3;
 use ray::Ray;
 
 pub struct Translate {
-    offset: Vector3<f32>,
+    offset: Vec3,
     hitable: Arc<dyn Hitable>,
 }
 
 impl Translate {
-    pub fn new<H: Hitable + 'static>(offset: Vector3<f32>, hitable: H) -> Translate {
+    pub fn new<H: Hitable + 'static>(offset: Vec3, hitable: H) -> Translate {
         let hitable = Arc::new(hitable);
         Translate { offset, hitable }
     }
@@ -59,16 +60,16 @@ impl Rotate {
                  hitable }
     }
 
-    pub fn rotate(&self, vector: &Vector3<f32>) -> Vector3<f32> {
-        Vector3::new(self.cos_theta * vector.x - self.sin_theta * vector.z,
-                     vector.y,
-                     self.sin_theta * vector.x + self.cos_theta * vector.z)
+    pub fn rotate(&self, vector: &Vec3) -> Vec3 {
+        Vec3::new(self.cos_theta * vector.x() - self.sin_theta * vector.z(),
+                     vector.y(),
+                     self.sin_theta * vector.x() + self.cos_theta * vector.z())
     }
 
-    pub fn rotate_inv(&self, vector: &Vector3<f32>) -> Vector3<f32> {
-        Vector3::new(self.cos_theta * vector.x + self.sin_theta * vector.z,
-                     vector.y,
-                     -self.sin_theta * vector.x + self.cos_theta * vector.z)
+    pub fn rotate_inv(&self, vector: &Vec3) -> Vec3 {
+        Vec3::new(self.cos_theta * vector.x() + self.sin_theta * vector.z(),
+                     vector.y(),
+                     -self.sin_theta * vector.x() + self.cos_theta * vector.z())
     }
 }
 
@@ -90,24 +91,22 @@ impl Hitable for Rotate {
 
     fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB> {
         if let Some(mut bbox) = self.hitable.bounding_box(t0, t1) {
-            let mut min = Vector3::new(f32::MAX, f32::MAX, f32::MAX);
-            let mut max = Vector3::new(f32::MIN, f32::MIN, f32::MIN);
+            let mut min = Vec3::new(f32::MAX, f32::MAX, f32::MAX);
+            let mut max = Vec3::new(f32::MIN, f32::MIN, f32::MIN);
             (0..2).for_each(|i| {
                       (0..2).for_each(|j| {
                                 (0..2).for_each(|k| {
-                                          let x = i as f32 * bbox.maximum.x
-                                                  + (1 - i) as f32 * bbox.minimum.x;
-                                          let y = j as f32 * bbox.maximum.y
-                                                  + (1 - j) as f32 * bbox.minimum.y;
-                                          let z = k as f32 * bbox.maximum.z
-                                                  + (1 - k) as f32 * bbox.minimum.z;
+                                          let x = i as f32 * bbox.maximum.x()
+                                                  + (1 - i) as f32 * bbox.minimum.x();
+                                          let y = j as f32 * bbox.maximum.y()
+                                                  + (1 - j) as f32 * bbox.minimum.y();
+                                          let z = k as f32 * bbox.maximum.z()
+                                                  + (1 - k) as f32 * bbox.minimum.z();
                                           let newx = self.cos_theta * x + self.sin_theta * z;
                                           let newz = -self.sin_theta * x + self.cos_theta * z;
-                                          let rotation = Vector3::new(newx, y, newz);
-                                          (0..3).for_each(|c| {
-                                                    max[c] = max[c].max(rotation[c]);
-                                                    min[c] = min[c].min(rotation[c]);
-                                                });
+                                          let rotation = Vec3::new(newx, y, newz);
+                                          max = max.max(rotation);
+                                          min = min.min(rotation);
                                       });
                             });
                   });
@@ -136,13 +135,13 @@ impl Scale {
 impl Hitable for Scale {
     /// Reference: http://woo4.me/raytracer/translations/
     fn hit(&self, ray: &Ray, t0: f32, t1: f32) -> Option<HitRecord> {
-        let origin = &ray.origin / self.scalar;
-        let direction = &ray.direction / self.scalar;
+        let origin = ray.origin / self.scalar;
+        let direction = ray.direction / self.scalar;
 
         let scaled_ray = Ray::new(origin, direction, ray.time);
 
         if let Some(mut hit) = self.hitable.hit(&scaled_ray, t0, t1) {
-            hit.point = &hit.point * self.scalar;
+            hit.point = hit.point * self.scalar;
             // hit.normal = &hit.normal / self.scalar;
             Some(hit)
         } else {

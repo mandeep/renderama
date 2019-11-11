@@ -162,6 +162,11 @@ dependencies = [
 ]
 
 [[package]]
+name = "glam"
+version = "0.8.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
 name = "image"
 version = "0.21.0"
 source = "git+https://github.com/image-rs/image#36d2741eb3826d72e66d5a42c87818bdeb454b4c"
@@ -531,6 +536,7 @@ name = "renderama"
 version = "0.18.1"
 dependencies = [
  "chrono 0.4.7 (registry+https://github.com/rust-lang/crates.io-index)",
+ "glam 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "image 0.21.0 (git+https://github.com/image-rs/image)",
  "nalgebra 0.17.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "oidn 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -642,6 +648,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum generic-array 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)" = "3c0f28c2f5bfb5960175af447a2da7c18900693738343dc896ffbcabd9839592"
 "checksum getrandom 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)" = "e65cce4e5084b14874c4e7097f38cab54f47ee554f9194673456ea379dcc4c55"
 "checksum gif 0.10.1 (registry+https://github.com/rust-lang/crates.io-index)" = "dd4bca55ac1f213920ce3527ccd62386f1f15fa3f1714aeee1cf93f2c416903f"
+"checksum glam 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)" = "9e984e7412cd7cce57671037f1f55a625cda90b21d2c6ae3511a3ea6741f840f"
 "checksum image 0.21.0 (git+https://github.com/image-rs/image)" = "<none>"
 "checksum inflate 0.4.5 (registry+https://github.com/rust-lang/crates.io-index)" = "1cdb29978cc5797bd8dcc8e5bf7de604891df2a8dc576973d71a281e916db2ff"
 "checksum jpeg-decoder 0.1.15 (registry+https://github.com/rust-lang/crates.io-index)" = "c8b7d43206b34b3f94ea9445174bda196e772049b9bddbc620c9d29b2d20110d"

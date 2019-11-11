@@ -1,7 +1,7 @@
-use nalgebra::Vector3;
+use glam::Vec3;
 
 pub struct OrthonormalBasis {
-    axis: Vec<Vector3<f32>>,
+    axis: Vec<Vec3>,
 }
 
 impl OrthonormalBasis {
@@ -12,33 +12,33 @@ impl OrthonormalBasis {
     /// Tom Duff, James Burgess, Per Christensen, Christophe Hery, Andrew Kensler,
     /// Max Liani, Ryusuke Villemin: Building an Orthonormal Basis, Revisited,
     /// Journal of Computer Graphics Techniques Vol. 6, No. 1, 2017 http://jcgt.org
-    pub fn new(normal: &Vector3<f32>) -> OrthonormalBasis {
+    pub fn new(normal: &Vec3) -> OrthonormalBasis {
         let w = normal.normalize();
 
-        let sign = 1.0f32.copysign(w.z);
-        let a = -1.0 / (sign + w.z);
-        let b = w.x * w.y * a;
+        let sign = 1.0f32.copysign(w.z());
+        let a = -1.0 / (sign + w.z());
+        let b = w.x() * w.y() * a;
 
-        let u = Vector3::new(1.0 + sign * w.x * w.x * a, sign * b, -sign * w.x);
-        let v = Vector3::new(b, sign + w.y * w.y * a, -w.y);
+        let u = Vec3::new(1.0 + sign * w.x() * w.x() * a, sign * b, -sign * w.x());
+        let v = Vec3::new(b, sign + w.y() * w.y() * a, -w.y());
 
         OrthonormalBasis { axis: vec![u, v, w] }
     }
 
-    pub fn u(&self) -> Vector3<f32> {
+    pub fn u(&self) -> Vec3 {
         self.axis[0]
     }
 
-    pub fn v(&self) -> Vector3<f32> {
+    pub fn v(&self) -> Vec3 {
         self.axis[1]
     }
 
-    pub fn w(&self) -> Vector3<f32> {
+    pub fn w(&self) -> Vec3 {
         self.axis[2]
     }
 
-    pub fn local(&self, v: &Vector3<f32>) -> Vector3<f32> {
-        v.x * self.u() + v.y * self.v() + v.z * self.w()
+    pub fn local(&self, v: &Vec3) -> Vec3 {
+        v.x() * self.u() + v.y() * self.v() + v.z() * self.w()
     }
 }
 
@@ -48,12 +48,12 @@ mod tests {
 
     #[test]
     fn test_orthonormal_frame() {
-        use nalgebra::Matrix3;
+        use glam::Mat3;
 
-        let normal = Vector3::new(0.00038527316, 0.00038460016, -0.99999988079);
+        let normal = Vec3::new(0.00038527316, 0.00038460016, -0.99999988079);
         let frame = OrthonormalBasis::new(&normal);
-        let matrix = Matrix3::from_columns(&frame.axis);
+        let matrix = Mat3::from_cols(frame.axis[0], frame.axis[1], frame.axis[2]);
 
-        assert_eq!(matrix * matrix.transpose(), Matrix3::identity());
+        assert_eq!(matrix * matrix.transpose(), Mat3::identity());
     }
 }
