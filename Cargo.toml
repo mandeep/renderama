@@ -15,6 +15,7 @@ rayon = "1.0.3"
 oidn = { version = "0.2.0", optional = true }
 chrono = "0.4"
 tobj = "0.1.11"
+glam = "0.8.2"
 
 [profile.dev]
 opt-level = 3

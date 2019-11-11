@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use nalgebra::core::Vector3;
+use glam::Vec3;
 use rand::rngs::ThreadRng;
 
 use aabb::AABB;
@@ -13,9 +13,9 @@ pub struct HitRecord {
     pub parameter: f32,
     pub u: f32,
     pub v: f32,
-    pub point: Vector3<f32>,
-    pub geometric_normal: Vector3<f32>,
-    pub shading_normal: Vector3<f32>,
+    pub point: Vec3,
+    pub geometric_normal: Vec3,
+    pub shading_normal: Vec3,
     pub material: Arc<dyn Material>,
 }
 
@@ -24,9 +24,9 @@ impl HitRecord {
     pub fn new(parameter: f32,
                u: f32,
                v: f32,
-               point: Vector3<f32>,
-               geometric_normal: Vector3<f32>,
-               shading_normal: Vector3<f32>,
+               point: Vec3,
+               geometric_normal: Vec3,
+               shading_normal: Vec3,
                material: Arc<dyn Material>)
                -> HitRecord {
         HitRecord { parameter: parameter,
@@ -50,12 +50,12 @@ pub trait Hitable: Send + Sync {
 
     fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB>;
 
-    fn pdf_value(&self, _origin: &Vector3<f32>, _v: &Vector3<f32>) -> f32 {
+    fn pdf_value(&self, _origin: Vec3, _v: Vec3) -> f32 {
         0.0
     }
 
-    fn pdf_random(&self, _origin: &Vector3<f32>, _rng: &mut ThreadRng) -> Vector3<f32> {
-        Vector3::new(1.0, 0.0, 0.0)
+    fn pdf_random(&self, _origin: Vec3, _rng: &mut ThreadRng) -> Vec3 {
+        Vec3::new(1.0, 0.0, 0.0)
     }
 }
 

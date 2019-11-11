@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use nalgebra::core::Vector3;
+use glam::Vec3;
 
 use aabb::AABB;
 use hitable::{HitRecord, Hitable};
@@ -37,9 +37,9 @@ impl Hitable for World {
         let mut record = HitRecord::new(0.0,
                                         0.0,
                                         0.0,
-                                        Vector3::zeros(),
-                                        Vector3::zeros(),
-                                        Vector3::zeros(),
+                                        Vec3::zero(),
+                                        Vec3::zero(),
+                                        Vec3::zero(),
                                         Arc::new(Diffuse::new(ConstantTexture::new(0.0, 0.0,
                                                                                    0.0))));
         let mut hit_anything: bool = false;

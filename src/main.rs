@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 
 extern crate chrono;
+extern crate glam;
 extern crate image;
 extern crate nalgebra;
 extern crate rand;
@@ -34,7 +35,7 @@ use std::f32;
 use std::time::Instant;
 
 use chrono::{DateTime, Local};
-use nalgebra::core::Vector3;
+use glam::Vec3;
 use rand::thread_rng;
 use rayon::prelude::*;
 
@@ -61,7 +62,7 @@ fn main() {
 
     let mut pixels = vec![image::Rgb([0, 0, 0]); (width * height) as usize];
     pixels.par_iter_mut().enumerate().for_each(|(i, pixel)| {
-                                         let mut color: Vector3<f32> = Vector3::zeros();
+                                         let mut color = Vec3::zero();
 
                                          let x = i % width as usize;
                                          let y = i / width as usize;
@@ -84,15 +85,14 @@ fn main() {
                                                      });
 
                                          color /= samples as f32;
-                                         (0..3).for_each(|j| {
-                                                   color[j] =
-                                                 utils::clamp(255.0
-                                                              * utils::gamma_correct(color[j],
-                                                                                     2.2));
-                                               });
-                                         *pixel = image::Rgb([color.x as u8,
-                                                              color.y as u8,
-                                                              color.z as u8]);
+
+                                         color.set_x(utils::clamp(255.0 * utils::gamma_correct(color.x(), 2.2)));
+                                         color.set_y(utils::clamp(255.0 * utils::gamma_correct(color.y(), 2.2)));
+                                         color.set_z(utils::clamp(255.0 * utils::gamma_correct(color.z(), 2.2)));
+
+                                         *pixel = image::Rgb([color.x() as u8,
+                                                              color.y() as u8,
+                                                              color.z() as u8]);
                                      });
 
     let render_end_time: DateTime<Local> = Local::now();

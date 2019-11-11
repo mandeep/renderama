@@ -1,7 +1,8 @@
 use std::f32;
 use std::sync::Arc;
 
-use nalgebra::core::Vector3;
+use glam::Vec3;
+use nalgebra::Vector3;
 use rand::rngs::ThreadRng;
 use rand::Rng;
 use rand_distr::{Distribution, Normal};
@@ -12,16 +13,16 @@ use pdf::PDF;
 use plane::Plane;
 
 pub struct Ray {
-    pub origin: Vector3<f32>,
-    pub direction: Vector3<f32>,
+    pub origin: Vec3,
+    pub direction: Vec3,
     pub time: f32,
-    pub inverse_direction: Vector3<f32>,
+    pub inverse_direction: Vec3,
 }
 
 impl Ray {
     /// Create a new Ray with origin at `a` and direction towards `b`
-    pub fn new(origin: Vector3<f32>, direction: Vector3<f32>, time: f32) -> Ray {
-        let inverse_direction = direction.map(|component| 1.0 / component);
+    pub fn new(origin: Vec3, direction: Vec3, time: f32) -> Ray {
+        let inverse_direction = direction.reciprocal();
         Ray { origin: origin,
               direction: direction,
               time: time,
@@ -29,7 +30,7 @@ impl Ray {
     }
 
     /// Find the point on the ray given the parameter of the direction vector
-    pub fn point_at_parameter(&self, parameter: f32) -> Vector3<f32> {
+    pub fn point_at_parameter(&self, parameter: f32) -> Vec3 {
         self.origin + parameter * self.direction
     }
 }
@@ -44,13 +45,13 @@ impl Ray {
 ///
 /// Reference: http://mathworld.wolfram.com/SpherePointPicking.html
 ///
-pub fn pick_sphere_point(rng: &mut ThreadRng) -> Vector3<f32> {
+pub fn pick_sphere_point(rng: &mut ThreadRng) -> Vec3 {
     let normal_distribution = Normal::new(0.0, 1.0).unwrap();
     let x = normal_distribution.sample(rng) as f32;
     let y = normal_distribution.sample(rng) as f32;
     let z = normal_distribution.sample(rng) as f32;
 
-    Vector3::new(x, y, z).normalize()
+    Vec3::new(x, y, z).normalize()
 }
 
 /// Find the offset ray given the ray origin and geometric normal of the shape
@@ -59,33 +60,45 @@ pub fn pick_sphere_point(rng: &mut ThreadRng) -> Vector3<f32> {
 /// Carsten Wächter, Nikolaus Binder
 /// A Fast and Robust Method for Avoiding Self-Intersection
 /// Ray Tracing Gems, Chapter 6
-pub fn find_offset_point(point: Vector3<f32>, geometric_normal: Vector3<f32>) -> Vector3<f32> {
+pub fn find_offset_point(point: Vec3, geometric_normal: Vec3) -> Vec3 {
     let origin: f32 = 1.0 / 32.0;
     let float_scale: f32 = 1.0 / 65536.0;
     let int_scale: f32 = 256.0;
 
-    let mut offset_int: Vector3<u32> = Vector3::zeros();
+    let offset_int: Vector3<u32> = Vector3::new((int_scale * geometric_normal.x()) as u32,
+    (int_scale * geometric_normal.y()) as u32,
+    (int_scale * geometric_normal.z()) as u32);
 
-    for k in 0..3 {
-        offset_int[k] = (int_scale * geometric_normal[k]) as u32;
+
+    let mut point_int = Vec3::zero();
+
+    if point.x() < 0.0 {
+        point_int.set_x(f32::from_bits(f32::to_bits(point.x()).wrapping_sub(offset_int.x)));
+    } else {
+        point_int.set_x(f32::from_bits(f32::to_bits(point.x()).wrapping_add(offset_int.x)));
+    }
+    if point.y() < 0.0 {
+        point_int.set_y(f32::from_bits(f32::to_bits(point.y()).wrapping_sub(offset_int.y)));
+    } else {
+        point_int.set_y(f32::from_bits(f32::to_bits(point.y()).wrapping_add(offset_int.y)));
     }
 
-    let mut point_int: Vector3<f32> = Vector3::zeros();
-
-    for j in 0..3 {
-        if point[j] < 0.0 {
-            point_int[j] = f32::from_bits(f32::to_bits(point[j]).wrapping_sub(offset_int[j]));
-        } else {
-            point_int[j] = f32::from_bits(f32::to_bits(point[j]).wrapping_add(offset_int[j]));
-        }
+    if point.z() < 0.0 {
+        point_int.set_z(f32::from_bits(f32::to_bits(point.z()).wrapping_sub(offset_int.z)));
+    } else {
+        point_int.set_z(f32::from_bits(f32::to_bits(point.z()).wrapping_add(offset_int.z)));
     }
 
-    let mut new_offset: Vector3<f32> = point_int.clone();
+    let mut new_offset: Vec3 = point_int.clone();
 
-    for i in 0..3 {
-        if point[i].abs() < origin {
-            new_offset[i] = point_int[i] + float_scale * geometric_normal[i];
-        }
+    if point.x().abs() < origin {
+        new_offset.set_x(point_int.x() + float_scale * geometric_normal.x());
+    }
+    if point.y().abs() < origin {
+        new_offset.set_y(point_int.y() + float_scale * geometric_normal.y());
+    }
+    if point.z().abs() < origin {
+        new_offset.set_z(point_int.z() + float_scale * geometric_normal.z());
     }
 
     new_offset
@@ -105,18 +118,18 @@ pub fn compute_color(mut ray: Ray,
                      light_source: &Plane,
                      atmosphere: bool,
                      rng: &mut ThreadRng)
-                     -> Vector3<f32> {
-    let mut color = Vector3::zeros();
-    let mut throughput = Vector3::new(1.0, 1.0, 1.0);
+                     -> Vec3 {
+    let mut color = Vec3::zero();
+    let mut throughput = Vec3::one();
 
     for bounce in 0..=bounces {
         if let Some(hit_record) = world.hit(&ray, 1e-2, f32::MAX) {
             let emitted = hit_record.material.emitted(&ray, &hit_record);
-            color += throughput.component_mul(&emitted);
+            color += throughput * emitted;
 
             if let Some(scatter_record) = hit_record.material.scatter(&ray, &hit_record, rng) {
                 if scatter_record.specular {
-                    throughput = throughput.component_mul(&scatter_record.attenuation);
+                    throughput = throughput * scatter_record.attenuation;
                     ray = scatter_record.specular_ray;
                 } else {
                     let hitable_pdf = PDF::HitablePDF { origin: hit_record.point,
@@ -130,11 +143,11 @@ pub fn compute_color(mut ray: Ray,
                         offset_point += pick_sphere_point(rng);
                     }
                     let scattered = Ray::new(offset_point, mixture_pdf.generate(rng), ray.time);
-                    let pdf = mixture_pdf.value(&scattered.direction.normalize());
+                    let pdf = mixture_pdf.value(scattered.direction.normalize());
                     let scattering_pdf = hit_record.material
                                                    .scattering_pdf(&ray, &hit_record, &scattered);
 
-                    throughput = throughput.component_mul(&(scattering_pdf * scatter_record.attenuation)) / pdf;
+                    throughput = throughput * (scattering_pdf * scatter_record.attenuation) / pdf;
 
                     ray = scattered;
                 }
@@ -143,18 +156,18 @@ pub fn compute_color(mut ray: Ray,
             }
         } else {
             if atmosphere {
-                let unit_direction: Vector3<f32> = ray.direction.normalize();
-                let point: f32 = 0.5 * (unit_direction.y + 1.0);
+                let unit_direction: Vec3 = ray.direction.normalize();
+                let point: f32 = 0.5 * (unit_direction.y() + 1.0);
                 let lerp =
-                    (1.0 - point) * Vector3::repeat(1.0) + point * Vector3::new(0.5, 0.7, 1.0);
-                color = throughput.component_mul(&lerp);
+                    (1.0 - point) * Vec3::splat(1.0) + point * Vec3::new(0.5, 0.7, 1.0);
+                color = throughput * lerp;
             } else {
-                color = Vector3::zeros();
+                color = Vec3::zero();
             }
         }
 
         if bounce > 3 {
-            let roulette_factor = (1.0 - throughput.max()).max(0.05);
+            let roulette_factor = (1.0 - throughput.max_element()).max(0.05);
             if rng.gen::<f32>() < roulette_factor {
                 break;
             }
