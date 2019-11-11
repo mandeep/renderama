@@ -66,9 +66,8 @@ pub fn find_offset_point(point: Vec3, geometric_normal: Vec3) -> Vec3 {
     let int_scale: f32 = 256.0;
 
     let offset_int: Vector3<u32> = Vector3::new((int_scale * geometric_normal.x()) as u32,
-    (int_scale * geometric_normal.y()) as u32,
-    (int_scale * geometric_normal.z()) as u32);
-
+                                                (int_scale * geometric_normal.y()) as u32,
+                                                (int_scale * geometric_normal.z()) as u32);
 
     let mut point_int = Vec3::zero();
 
@@ -139,7 +138,8 @@ pub fn compute_color(mut ray: Ray,
 
                     let mut offset_point = hit_record.point;
                     if hit_record.geometric_normal != hit_record.shading_normal {
-                        offset_point = find_offset_point(hit_record.point, hit_record.geometric_normal);
+                        offset_point =
+                            find_offset_point(hit_record.point, hit_record.geometric_normal);
                         offset_point += pick_sphere_point(rng);
                     }
                     let scattered = Ray::new(offset_point, mixture_pdf.generate(rng), ray.time);
@@ -158,8 +158,7 @@ pub fn compute_color(mut ray: Ray,
             if atmosphere {
                 let unit_direction: Vec3 = ray.direction.normalize();
                 let point: f32 = 0.5 * (unit_direction.y() + 1.0);
-                let lerp =
-                    (1.0 - point) * Vec3::splat(1.0) + point * Vec3::new(0.5, 0.7, 1.0);
+                let lerp = (1.0 - point) * Vec3::splat(1.0) + point * Vec3::new(0.5, 0.7, 1.0);
                 color = throughput * lerp;
             } else {
                 color = Vec3::zero();

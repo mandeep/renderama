@@ -13,7 +13,8 @@ pub struct AABB {
 impl AABB {
     /// Create an empty AABB from a zero vector and one vector
     pub fn new() -> AABB {
-        AABB { minimum: Vec3::splat(f32::MAX), maximum: Vec3::splat(f32::MIN) }
+        AABB { minimum: Vec3::splat(f32::MAX),
+               maximum: Vec3::splat(f32::MIN) }
     }
 
     /// Create a new AABB from the minimum and maximum slab vectors
@@ -24,7 +25,6 @@ impl AABB {
     pub fn area(&self) -> f32 {
         let diff = self.maximum - self.minimum;
         2.0 * (diff.x() * diff.y() + diff.y() * diff.z() + diff.z() * diff.x())
-
     }
 
     pub fn longest_axis(&self) -> usize {

@@ -51,9 +51,9 @@ impl Camera {
         let v: Vec3 = w.cross(u);
 
         let lower_left_corner: Vec3 = origin
-                                              - half_width * focus_distance * u
-                                              - half_height * focus_distance * v
-                                              - focus_distance * w;
+                                      - half_width * focus_distance * u
+                                      - half_height * focus_distance * v
+                                      - focus_distance * w;
 
         let horizontal: Vec3 = 2.0 * half_width * focus_distance * u;
         let vertical: Vec3 = 2.0 * half_height * focus_distance * v;

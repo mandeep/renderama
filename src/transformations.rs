@@ -62,14 +62,14 @@ impl Rotate {
 
     pub fn rotate(&self, vector: &Vec3) -> Vec3 {
         Vec3::new(self.cos_theta * vector.x() - self.sin_theta * vector.z(),
-                     vector.y(),
-                     self.sin_theta * vector.x() + self.cos_theta * vector.z())
+                  vector.y(),
+                  self.sin_theta * vector.x() + self.cos_theta * vector.z())
     }
 
     pub fn rotate_inv(&self, vector: &Vec3) -> Vec3 {
         Vec3::new(self.cos_theta * vector.x() + self.sin_theta * vector.z(),
-                     vector.y(),
-                     -self.sin_theta * vector.x() + self.cos_theta * vector.z())
+                  vector.y(),
+                  -self.sin_theta * vector.x() + self.cos_theta * vector.z())
     }
 }
 

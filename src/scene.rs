@@ -112,8 +112,8 @@ pub fn random_spheres_scene(width: u32, height: u32) -> (String, Camera, BVH, Pl
         for b in -11..11 {
             let material = rand::random::<f32>();
             let center: Vec3 = Vec3::new(a as f32 + 0.9 * rand::random::<f32>(),
-                                                    0.2,
-                                                    b as f32 + 0.9 * rand::random::<f32>());
+                                         0.2,
+                                         b as f32 + 0.9 * rand::random::<f32>());
 
             if (center - Vec3::new(4.0, 0.2, 0.0)).length() > 0.9 {
                 if material < 0.75 {
@@ -133,14 +133,14 @@ pub fn random_spheres_scene(width: u32, height: u32) -> (String, Camera, BVH, Pl
                                           center,
                                           0.2,
                                           Reflective::new(Vec3::new(0.5
-                                                                       * (1.0
-                                                                          * rand::random::<f32>()),
-                                                                       0.5
-                                                                       * (1.0
-                                                                          * rand::random::<f32>()),
-                                                                       0.5
-                                                                       * (1.0
-                                                                          * rand::random::<f32>())),
+                                                                    * (1.0
+                                                                       * rand::random::<f32>()),
+                                                                    0.5
+                                                                    * (1.0
+                                                                       * rand::random::<f32>()),
+                                                                    0.5
+                                                                    * (1.0
+                                                                       * rand::random::<f32>())),
                                                           0.5 * rand::random::<f32>()),
                                           0.0,
                                           1.0));
@@ -258,8 +258,8 @@ pub fn motion_scene(width: u32, height: u32) -> (String, Camera, BVH, Plane) {
                           1.0));
 
     let center: Vec3 = Vec3::new(0.9 * rand::random::<f32>(),
-                                            0.2,
-                                            0.9 * rand::random::<f32>());
+                                 0.2,
+                                 0.9 * rand::random::<f32>());
 
     world.add(Sphere::new(center,
                           center + Vec3::new(0.0, 0.5 * rand::random::<f32>(), 0.0),
@@ -510,13 +510,12 @@ pub fn spheres_in_box_scene(width: u32, height: u32) -> (String, Camera, BVH, Pl
     let number_of_spheres = 1000;
     for _ in 0..number_of_spheres {
         let center = Vec3::new(165.0 * rand::random::<f32>(),
-                                  165.0 * rand::random::<f32>(),
-                                  165.0 * rand::random::<f32>());
+                               165.0 * rand::random::<f32>(),
+                               165.0 * rand::random::<f32>());
 
         let sphere = Sphere::new(center, center, 10.0, white.clone(), 0.0, 1.0);
 
-        world.add(Translate::new(Vec3::new(-100.0, 270.0, 395.0),
-                                 Rotate::new(15.0, sphere)));
+        world.add(Translate::new(Vec3::new(-100.0, 270.0, 395.0), Rotate::new(15.0, sphere)));
     }
 
     let bvh = BVH::new(&mut world.objects, 0.0, 1.0);

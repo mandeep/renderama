@@ -95,21 +95,24 @@ fn box_compare(a: &Arc<dyn Hitable>,
                -> Ordering {
     if axis == 0 {
         a.bounding_box(start_time, end_time)
-          .unwrap()
-          .minimum.x()
-          .partial_cmp(&b.bounding_box(start_time, end_time).unwrap().minimum.x())
-          .unwrap()
+         .unwrap()
+         .minimum
+         .x()
+         .partial_cmp(&b.bounding_box(start_time, end_time).unwrap().minimum.x())
+         .unwrap()
     } else if axis == 1 {
         a.bounding_box(start_time, end_time)
-          .unwrap()
-          .minimum.y()
-          .partial_cmp(&b.bounding_box(start_time, end_time).unwrap().minimum.y())
-          .unwrap()
+         .unwrap()
+         .minimum
+         .y()
+         .partial_cmp(&b.bounding_box(start_time, end_time).unwrap().minimum.y())
+         .unwrap()
     } else {
         a.bounding_box(start_time, end_time)
-          .unwrap()
-          .minimum.z()
-          .partial_cmp(&b.bounding_box(start_time, end_time).unwrap().minimum.z())
-          .unwrap()
+         .unwrap()
+         .minimum
+         .z()
+         .partial_cmp(&b.bounding_box(start_time, end_time).unwrap().minimum.z())
+         .unwrap()
     }
 }
