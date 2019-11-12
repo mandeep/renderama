@@ -43,14 +43,14 @@ impl Hitable for World {
                                         Arc::new(Diffuse::new(ConstantTexture::new(0.0, 0.0,
                                                                                    0.0))));
         let mut hit_anything: bool = false;
-        let mut closed_so_far: f32 = position_max;
+        let mut closest_so_far: f32 = position_max;
 
         for object in &self.objects {
-            match object.hit(ray, position_min, closed_so_far) {
+            match object.hit(ray, position_min, closest_so_far) {
                 None => (),
                 Some(hit_record) => {
                     hit_anything = true;
-                    closed_so_far = hit_record.parameter;
+                    closest_so_far = hit_record.parameter;
                     record = hit_record;
                 }
             }
