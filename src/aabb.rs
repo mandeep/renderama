@@ -22,11 +22,13 @@ impl AABB {
         AABB { minimum, maximum }
     }
 
-    pub fn area(&self) -> f32 {
+    /// Calculate the surface area of the bounding box
+    pub fn surface_area(&self) -> f32 {
         let diff = self.maximum - self.minimum;
         2.0 * (diff.x() * diff.y() + diff.y() * diff.z() + diff.z() * diff.x())
     }
 
+    /// Find the longest axis of the bounding box
     pub fn longest_axis(&self) -> usize {
         let diff = self.maximum - self.minimum;
 
