@@ -91,8 +91,8 @@ impl Hitable for Rotate {
 
     fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB> {
         if let Some(mut bbox) = self.hitable.bounding_box(t0, t1) {
-            let mut min = Vec3::new(f32::MAX, f32::MAX, f32::MAX);
-            let mut max = Vec3::new(f32::MIN, f32::MIN, f32::MIN);
+            let mut minimum = Vec3::splat(f32::MAX);
+            let mut maximum = Vec3::splat(f32::MIN);
             (0..2).for_each(|i| {
                       (0..2).for_each(|j| {
                                 (0..2).for_each(|k| {
@@ -105,14 +105,14 @@ impl Hitable for Rotate {
                                           let newx = self.cos_theta * x + self.sin_theta * z;
                                           let newz = -self.sin_theta * x + self.cos_theta * z;
                                           let rotation = Vec3::new(newx, y, newz);
-                                          max = max.max(rotation);
-                                          min = min.min(rotation);
+                                          maximum = maximum.max(rotation);
+                                          minimum = minimum.min(rotation);
                                       });
                             });
                   });
 
-            bbox.minimum = min;
-            bbox.maximum = max;
+            bbox.minimum = minimum;
+            bbox.maximum = maximum;
             Some(bbox)
         } else {
             None
