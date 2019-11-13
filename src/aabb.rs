@@ -32,13 +32,10 @@ impl AABB {
     pub fn longest_axis(&self) -> usize {
         let diff = self.maximum - self.minimum;
 
-        if diff.x() == diff.min_element() {
-            return 0;
-        } else if diff.y() == diff.min_element() {
-            return 1;
-        } else {
-            return 2;
-        }
+        diff.as_ref()
+            .iter()
+            .position(|&e| e == diff.min_element())
+            .unwrap()
     }
 
     /// Perform an intersection test with an AABB
