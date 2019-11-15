@@ -128,7 +128,7 @@ pub fn compute_color(mut ray: Ray,
 
             if let Some(scatter_record) = hit_record.material.scatter(&ray, &hit_record, rng) {
                 if scatter_record.specular {
-                    throughput = throughput * scatter_record.attenuation;
+                    throughput *= scatter_record.attenuation;
                     ray = scatter_record.specular_ray;
                 } else {
                     let hitable_pdf = PDF::HitablePDF { origin: hit_record.point,
@@ -147,7 +147,7 @@ pub fn compute_color(mut ray: Ray,
                     let scattering_pdf = hit_record.material
                                                    .scattering_pdf(&ray, &hit_record, &scattered);
 
-                    throughput = throughput * (scattering_pdf * scatter_record.attenuation) / pdf;
+                    throughput *= (scattering_pdf * scatter_record.attenuation) / pdf;
 
                     ray = scattered;
                 }
