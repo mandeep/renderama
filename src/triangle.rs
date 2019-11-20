@@ -190,8 +190,8 @@ impl Hitable for TriangleMesh {
     }
 
     fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
-        let mut minimum = Vec3::new(f32::MAX, f32::MAX, f32::MAX);
-        let mut maximum = Vec3::new(f32::MIN, f32::MIN, f32::MIN);
+        let mut minimum = Vec3::splat(f32::MAX);
+        let mut maximum = Vec3::splat(f32::MIN);
 
         for triangle in &self.triangles {
             minimum = minimum.min(triangle.minimum());
