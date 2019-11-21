@@ -62,38 +62,33 @@ fn main() {
 
     let mut pixels = vec![image::Rgb([0, 0, 0]); (width * height) as usize];
     pixels.par_iter_mut().enumerate().for_each(|(i, pixel)| {
-                                         let mut color = Vec3::zero();
+        let mut color = Vec3::zero();
 
-                                         let x = i % width as usize;
-                                         let y = i / width as usize;
+        let x = i % width as usize;
+        let y = i / width as usize;
 
-                                         let mut rng = thread_rng();
+        let mut rng = thread_rng();
 
-                                         (0..samples).for_each(|_| {
-                                                         let u = (x as f32 + rand::random::<f32>())
-                                                                 / width as f32;
-                                                         let v = (y as f32 + rand::random::<f32>())
-                                                                 / height as f32;
-                                                         let ray = camera.get_ray(u, v, &mut rng);
-                                                         color +=
-                                                             utils::de_nan(&ray::compute_color(ray,
-                                                                                &world,
-                                                                                bounces,
-                                                                                &light_source,
-                                                                                camera.atmosphere,
-                                                                                &mut rng));
-                                                     });
+        (0..samples).for_each(|_| {
+            let u = (x as f32 + rand::random::<f32>()) / width as f32;
+            let v = (y as f32 + rand::random::<f32>()) / height as f32;
+            let ray = camera.get_ray(u, v, &mut rng);
+            color += utils::de_nan(&ray::compute_color(ray,
+                                                        &world,
+                                                        bounces,
+                                                        &light_source,
+                                                        camera.atmosphere,
+                                                        &mut rng));
+        });
 
-                                         color /= samples as f32;
+        color /= samples as f32;
 
-                                         color.set_x(utils::clamp(255.0 * utils::gamma_correct(color.x(), 2.2)));
-                                         color.set_y(utils::clamp(255.0 * utils::gamma_correct(color.y(), 2.2)));
-                                         color.set_z(utils::clamp(255.0 * utils::gamma_correct(color.z(), 2.2)));
+        color.set_x(utils::clamp(255.0 * utils::gamma_correct(color.x(), 2.2)));
+        color.set_y(utils::clamp(255.0 * utils::gamma_correct(color.y(), 2.2)));
+        color.set_z(utils::clamp(255.0 * utils::gamma_correct(color.z(), 2.2)));
 
-                                         *pixel = image::Rgb([color.x() as u8,
-                                                              color.y() as u8,
-                                                              color.z() as u8]);
-                                     });
+        *pixel = image::Rgb([color.x() as u8, color.y() as u8, color.z() as u8]);
+    });
 
     let render_end_time: DateTime<Local> = Local::now();
     println!("[{}] Finished rendering in {}. Render saved to render.png.",
