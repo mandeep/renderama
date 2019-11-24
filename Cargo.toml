@@ -1,19 +1,19 @@
 [package]
 name = "renderama"
-version = "0.18.1"
+version = "0.18.2"
 authors = ["mandeep <mandeep@users.noreply.github.com>"]
 
 [features]
 denoise = ["oidn"]
 
 [dependencies]
-image = { git = "https://github.com/image-rs/image" }
-nalgebra = "0.17.3"
-rand = "0.7.0"
-rand_distr = "0.2.1"
-rayon = "1.0.3"
+image = "0.22.3"
+nalgebra = "0.19.0"
+rand = "0.7.2"
+rand_distr = "0.2.2"
+rayon = "1.2.1"
 oidn = { version = "0.2.0", optional = true }
-chrono = "0.4"
+chrono = "0.4.10"
 tobj = "0.1.11"
 glam = "0.8.2"
 
