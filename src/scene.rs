@@ -44,7 +44,7 @@ pub fn three_spheres_scene(width: u32, height: u32) -> (String, Camera, BVH, Pla
     world.add(Sphere::new(Vec3::new(0.6, 0.0, -1.0),
                           Vec3::new(0.6, 0.0, -1.0),
                           0.5,
-                          Diffuse::new(ConstantTexture::new(0.75, 0.25, 0.25)),
+                          Diffuse::new(ConstantTexture::new(0.75, 0.25, 0.25), 0.0),
                           0.0,
                           1.0));
 
@@ -65,7 +65,7 @@ pub fn three_spheres_scene(width: u32, height: u32) -> (String, Camera, BVH, Pla
     world.add(Sphere::new(Vec3::new(0.0, -100.5, -1.0),
                           Vec3::new(0.0, -100.5, -1.0),
                           100.0,
-                          Diffuse::new(ConstantTexture::new(0.5, 0.5, 0.5)),
+                          Diffuse::new(ConstantTexture::new(0.5, 0.5, 0.5), 0.0),
                           0.0,
                           1.0));
 
@@ -104,7 +104,7 @@ pub fn random_spheres_scene(width: u32, height: u32) -> (String, Camera, BVH, Pl
     world.add(Sphere::new(Vec3::new(0.0, -1000.0, 0.0),
                           Vec3::new(0.0, -1000.0, 0.0),
                           1000.0,
-                          Diffuse::new(ConstantTexture::new(0.5, 0.5, 0.5)),
+                          Diffuse::new(ConstantTexture::new(0.5, 0.5, 0.5), 0.0),
                           0.0,
                           1.0));
 
@@ -125,7 +125,8 @@ pub fn random_spheres_scene(width: u32, height: u32) -> (String, Camera, BVH, Pl
                                                                        rand::random::<f32>()
                                                                        * rand::random::<f32>(),
                                                                        rand::random::<f32>()
-                                                                       * rand::random::<f32>())),
+                                                                       * rand::random::<f32>()),
+                                                                       0.0),
                                      0.0,
                                      1.0));
                 } else if material < 0.95 {
@@ -156,7 +157,7 @@ pub fn random_spheres_scene(width: u32, height: u32) -> (String, Camera, BVH, Pl
     world.add(Sphere::new(Vec3::new(-2.0, 1.0, 0.0),
                           Vec3::new(-2.0, 1.0, 0.0),
                           1.0,
-                          Diffuse::new(ConstantTexture::new(0.75, 0.25, 0.25)),
+                          Diffuse::new(ConstantTexture::new(0.75, 0.25, 0.25), 0.0),
                           0.0,
                           1.0));
 
@@ -216,7 +217,7 @@ pub fn earth_scene(width: u32, height: u32) -> (String, Camera, World, Plane) {
     world.add(Sphere::new(Vec3::new(0.0, 0.0, 0.0),
                           Vec3::new(0.0, 0.0, 0.0),
                           2.0,
-                          Diffuse::new(ImageTexture::new("world_topo_nasa.jpg")),
+                          Diffuse::new(ImageTexture::new("world_topo_nasa.jpg"), 0.0),
                           0.0,
                           1.0));
 
@@ -253,7 +254,7 @@ pub fn motion_scene(width: u32, height: u32) -> (String, Camera, BVH, Plane) {
     world.add(Sphere::new(Vec3::new(0.0, -1000.0, 0.0),
                           Vec3::new(0.0, -1000.0, 0.0),
                           1000.0,
-                          Diffuse::new(ConstantTexture::new(0.5, 0.5, 0.5)),
+                          Diffuse::new(ConstantTexture::new(0.5, 0.5, 0.5), 0.0),
                           0.0,
                           1.0));
 
@@ -269,14 +270,14 @@ pub fn motion_scene(width: u32, height: u32) -> (String, Camera, BVH, Plane) {
                                                             rand::random::<f32>()
                                                             * rand::random::<f32>(),
                                                             rand::random::<f32>()
-                                                            * rand::random::<f32>())),
+                                                            * rand::random::<f32>()), 0.0),
                           0.0,
                           1.0));
 
     world.add(Sphere::new(Vec3::new(-2.0, 1.0, 0.0),
                           Vec3::new(-2.0, 1.0, 0.0),
                           1.0,
-                          Diffuse::new(ConstantTexture::new(0.75, 0.25, 0.25)),
+                          Diffuse::new(ConstantTexture::new(0.75, 0.25, 0.25), 0.0),
                           0.0,
                           1.0));
 
@@ -315,12 +316,12 @@ pub fn simple_light_scene(width: u32, height: u32) -> (String, Camera, BVH, Plan
     world.add(Sphere::new(Vec3::new(0.0, -1000.0, 0.0),
                           Vec3::new(0.0, -1000.0, 0.0),
                           1000.0,
-                          Diffuse::new(ConstantTexture::new(0.5, 0.5, 0.5)),
+                          Diffuse::new(ConstantTexture::new(0.5, 0.5, 0.5), 0.0),
                           0.0,
                           1.0));
 
     world.add(Translate::new(Vec3::new(0.0, 2.0, 0.0), Rotate::new(90.0, TriangleMesh::from("suzanne.obj",
-                          Arc::new(Diffuse::new(ConstantTexture::new(1.0, 0.0, 0.0)))))));
+                          Arc::new(Diffuse::new(ConstantTexture::new(1.0, 0.0, 0.0), 0.0))))));
 
     world.add(Sphere::new(Vec3::new(0.0, 7.0, 0.0),
                           Vec3::new(0.0, 7.0, 0.0),
@@ -370,9 +371,9 @@ pub fn cornell_box_scene(width: u32, height: u32) -> (String, Camera, BVH, Plane
 
     let mut world = World::new();
 
-    let red = Diffuse::new(ConstantTexture::new(0.65, 0.05, 0.05));
-    let green = Diffuse::new(ConstantTexture::new(0.12, 0.45, 0.15));
-    let white = Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73));
+    let red = Diffuse::new(ConstantTexture::new(0.65, 0.05, 0.05), 20.0);
+    let green = Diffuse::new(ConstantTexture::new(0.12, 0.45, 0.15), 20.0);
+    let white = Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73), 20.0);
     let light = Light::new(ConstantTexture::new(35.0, 20.2, 5.6));
 
     // add the walls of the cornell box to the world
@@ -434,10 +435,10 @@ pub fn spheres_in_box_scene(width: u32, height: u32) -> (String, Camera, BVH, Pl
 
     let mut world = World::new();
 
-    let white = Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73));
-    let orange = Diffuse::new(ConstantTexture::new(1.0, 0.10, 0.0));
+    let white = Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73), 0.0);
+    let orange = Diffuse::new(ConstantTexture::new(1.0, 0.10, 0.0), 0.0);
     let light = Light::new(ConstantTexture::new(7.0, 7.0, 7.0));
-    let ground = Diffuse::new(ConstantTexture::new(0.48, 0.83, 0.53));
+    let ground = Diffuse::new(ConstantTexture::new(0.48, 0.83, 0.53), 0.0);
 
     let number_of_boxes = 20;
 
@@ -496,14 +497,14 @@ pub fn spheres_in_box_scene(width: u32, height: u32) -> (String, Camera, BVH, Pl
     world.add(Sphere::new(Vec3::new(400.0, 200.0, 400.0),
                           Vec3::new(400.0, 200.0, 400.0),
                           100.0,
-                          Diffuse::new(ImageTexture::new("world_topo_nasa.jpg")),
+                          Diffuse::new(ImageTexture::new("world_topo_nasa.jpg"), 0.0),
                           0.0,
                           1.0));
 
     world.add(Sphere::new(Vec3::new(220.0, 280.0, 300.0),
                           Vec3::new(220.0, 280.0, 300.0),
                           80.0,
-                          Diffuse::new(ConstantTexture::new(0.6, 0.6, 0.6)),
+                          Diffuse::new(ConstantTexture::new(0.6, 0.6, 0.6), 0.0),
                           0.0,
                           1.0));
 

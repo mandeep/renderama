@@ -41,7 +41,7 @@ impl Hitable for World {
                                         Vec3::zero(),
                                         Vec3::zero(),
                                         Arc::new(Diffuse::new(ConstantTexture::new(0.0, 0.0,
-                                                                                   0.0))));
+                                                                                   0.0), 0.0)));
         let mut hit_anything: bool = false;
         let mut closest_so_far: f32 = position_max;
 
