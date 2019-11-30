@@ -83,9 +83,9 @@ fn main() {
 
         color /= samples as f32;
 
-        color.set_x(utils::clamp(255.0 * utils::gamma_correct(color.x(), 2.2)));
-        color.set_y(utils::clamp(255.0 * utils::gamma_correct(color.y(), 2.2)));
-        color.set_z(utils::clamp(255.0 * utils::gamma_correct(color.z(), 2.2)));
+        color.set_x(utils::clamp_rgb(255.0 * utils::gamma_correct(color.x(), 2.2)));
+        color.set_y(utils::clamp_rgb(255.0 * utils::gamma_correct(color.y(), 2.2)));
+        color.set_z(utils::clamp_rgb(255.0 * utils::gamma_correct(color.z(), 2.2)));
 
         *pixel = image::Rgb([color.x() as u8, color.y() as u8, color.z() as u8]);
     });
