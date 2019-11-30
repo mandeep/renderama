@@ -18,8 +18,15 @@ pub fn format_time(instant: Duration) -> String {
 /// where casting a float to u8 can lead to
 /// undefined behavior:
 /// https://github.com/rust-lang/rust/issues/10184
-pub fn clamp(n: f32) -> f32 {
+pub fn clamp_rgb(n: f32) -> f32 {
     n.min(255.0).max(0.0)
+}
+
+pub fn clamp(n: f32, lower_bound: f32, upper_bound: f32) -> f32 {
+    let minimum = n.max(lower_bound);
+    let maximum = n.min(upper_bound);
+
+    minimum.min(maximum)
 }
 
 /// Gamma correct the given luminance
