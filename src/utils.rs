@@ -22,6 +22,7 @@ pub fn clamp_rgb(n: f32) -> f32 {
     n.min(255.0).max(0.0)
 }
 
+/// Clamp a value between the lower bound and upper bound
 pub fn clamp(n: f32, lower_bound: f32, upper_bound: f32) -> f32 {
     let minimum = n.max(lower_bound);
     let maximum = n.min(upper_bound);
