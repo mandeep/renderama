@@ -68,6 +68,8 @@ impl Material for Empty {
 pub struct Diffuse {
     pub albedo: Arc<dyn Texture>,
     pub roughness: f32,
+    alpha: f32,
+    beta: f32,
 }
 
 impl Diffuse {
@@ -77,7 +79,14 @@ impl Diffuse {
     /// where each value is a float between 0.0 and 1.0.
     pub fn new<T: Texture + 'static>(albedo: T, roughness: f32) -> Diffuse {
         let albedo = Arc::new(albedo);
-        Diffuse { albedo: albedo, roughness: roughness }
+
+        let sigma = roughness.to_radians();
+        let sigma2 = sigma.powf(2.0);
+
+        let alpha = 1.0 - (sigma2 / (2.0 * (sigma2 + 0.33)));
+        let beta = 0.45 * sigma2 / (sigma2 + 0.09);
+
+        Diffuse { albedo, roughness, alpha, beta }
     }
 }
 
@@ -101,9 +110,6 @@ impl Material for Diffuse {
     }
 
     fn scattering_pdf(&self, wo: &Ray, record: &HitRecord, wi: &Ray) -> f32 {
-        let sigma = self.roughness.to_radians();
-        let sigma2 = sigma.powf(2.0);
-
         let cos_theta_o = wo.direction.z();
         let cos_theta_i = wi.direction.z();
 
@@ -124,39 +130,27 @@ impl Material for Diffuse {
 
         if sin_theta_i != 0.0 {
             cos_phi_i = clamp(wi.direction.x() / sin_theta_i, -1.0, 1.0);
-        }
-
-        if sin_theta_i != 0.0 {
             sin_phi_i = clamp(wi.direction.y() / sin_theta_i, -1.0, 1.0);
         }
 
         if sin_theta_o != 0.0 {
             cos_phi_o = clamp(wo.direction.x() / sin_theta_o, -1.0, 1.0);
-        }
-
-        if sin_theta_o != 0.0 {
             sin_phi_o = clamp(wo.direction.y() / sin_theta_o, -1.0, 1.0);
         }
 
-        let A = 1.0 - (sigma2 / (2.0 * (sigma2 + 0.33)));
-        let B = 0.45 * sigma2 / (sigma2 + 0.09);
-
-        let mut sin_alpha = 0.0;
-        let mut tan_beta = 0.0;
+        let mut sin_alpha = sin_theta_i;
+        let mut tan_beta = sin_theta_o / cos_theta_o.abs();
 
         if cos_theta_i.abs() > cos_theta_o.abs() {
             sin_alpha = sin_theta_o;
             tan_beta = sin_theta_i / cos_theta_i.abs();
-        } else {
-            sin_alpha = sin_theta_i;
-            tan_beta = sin_theta_o / cos_theta_o.abs();
         }
 
         let cos_diff = cos_phi_i * cos_phi_o + sin_phi_i * sin_phi_o;
         let max_cos = cos_diff.max(0.0);
 
         let cosine = (record.shading_normal.dot(wi.direction.normalize())).max(0.0);
-        cosine * (A + B * max_cos * sin_alpha * tan_beta) / PI
+        cosine * (self.alpha + self.beta * max_cos * sin_alpha * tan_beta) / PI
     }
 }
 
