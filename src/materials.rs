@@ -110,8 +110,8 @@ impl Material for Diffuse {
     }
 
     fn scattering_pdf(&self, wo: &Ray, record: &HitRecord, wi: &Ray) -> f32 {
-        let cos_theta_o = wo.direction.z();
-        let cos_theta_i = wi.direction.z();
+        let cos_theta_i = record.shading_normal.normalize().dot(wi.direction.normalize()).max(0.0);
+        let cos_theta_o = record.shading_normal.normalize().dot(wo.direction.normalize()).max(0.0);
 
         let cos2_theta_i = cos_theta_i * cos_theta_i;
         let cos2_theta_o = cos_theta_o * cos_theta_o;
@@ -129,13 +129,13 @@ impl Material for Diffuse {
         let mut sin_phi_o = 0.0;
 
         if sin_theta_i != 0.0 {
-            cos_phi_i = clamp(wi.direction.x() / sin_theta_i, -1.0, 1.0);
-            sin_phi_i = clamp(wi.direction.y() / sin_theta_i, -1.0, 1.0);
+            cos_phi_i = clamp(wi.direction.normalize().x() / sin_theta_i, -1.0, 1.0);
+            sin_phi_i = clamp(wi.direction.normalize().y() / sin_theta_i, -1.0, 1.0);
         }
 
         if sin_theta_o != 0.0 {
-            cos_phi_o = clamp(wo.direction.x() / sin_theta_o, -1.0, 1.0);
-            sin_phi_o = clamp(wo.direction.y() / sin_theta_o, -1.0, 1.0);
+            cos_phi_o = clamp(wo.direction.normalize().x() / sin_theta_o, -1.0, 1.0);
+            sin_phi_o = clamp(wo.direction.normalize().y() / sin_theta_o, -1.0, 1.0);
         }
 
         let mut sin_alpha = sin_theta_i;
@@ -148,9 +148,7 @@ impl Material for Diffuse {
 
         let cos_diff = cos_phi_i * cos_phi_o + sin_phi_i * sin_phi_o;
         let max_cos = cos_diff.max(0.0);
-
-        let cosine = (record.shading_normal.dot(wi.direction.normalize())).max(0.0);
-        cosine * (self.alpha + self.beta * max_cos * sin_alpha * tan_beta) / PI
+        cos_theta_i * (self.alpha + self.beta * max_cos * sin_alpha * tan_beta) / PI
     }
 }
 
