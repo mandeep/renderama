@@ -34,6 +34,7 @@ mod world;
 use std::env;
 use std::f32;
 use std::time::Instant;
+use std::sync::{Arc, Mutex};
 
 use chrono::{DateTime, Local};
 use glam::Vec3;
@@ -64,6 +65,9 @@ fn main() {
 
 
     let mut progress_bar = ProgressBar::new((width * height) as u64);
+    progress_bar.show_speed = false;
+
+    let mutex = Arc::new(Mutex::new(progress_bar));
 
     let mut pixels = vec![image::Rgb([0, 0, 0]); (width * height) as usize];
     pixels.par_iter_mut().enumerate().for_each(|(i, pixel)| {
@@ -94,7 +98,8 @@ fn main() {
 
         *pixel = image::Rgb([color.x() as u8, color.y() as u8, color.z() as u8]);
 
-        progress_bar.inc();
+        let mut progress = mutex.lock().unwrap();
+        progress.inc();
     });
 
     let render_end_time: DateTime<Local> = Local::now();
