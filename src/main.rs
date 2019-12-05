@@ -4,6 +4,7 @@ extern crate chrono;
 extern crate glam;
 extern crate image;
 extern crate nalgebra;
+extern crate pbr;
 extern crate rand;
 extern crate rand_distr;
 extern crate rayon;
@@ -36,6 +37,7 @@ use std::time::Instant;
 
 use chrono::{DateTime, Local};
 use glam::Vec3;
+use pbr::ProgressBar;
 use rand::thread_rng;
 use rayon::prelude::*;
 
@@ -59,6 +61,9 @@ fn main() {
              samples,
              width,
              height);
+
+
+    let mut progress_bar = ProgressBar::new((width * height) as u64);
 
     let mut pixels = vec![image::Rgb([0, 0, 0]); (width * height) as usize];
     pixels.par_iter_mut().enumerate().for_each(|(i, pixel)| {
@@ -88,6 +93,8 @@ fn main() {
         color.set_z(utils::clamp_rgb(255.0 * utils::gamma_correct(color.z(), 2.2)));
 
         *pixel = image::Rgb([color.x() as u8, color.y() as u8, color.z() as u8]);
+
+        progress_bar.inc();
     });
 
     let render_end_time: DateTime<Local> = Local::now();
