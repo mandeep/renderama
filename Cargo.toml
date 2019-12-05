@@ -7,15 +7,15 @@ authors = ["mandeep <mandeep@users.noreply.github.com>"]
 denoise = ["oidn"]
 
 [dependencies]
+chrono = "0.4.10"
+glam = "0.8.2"
 image = "0.22.3"
 nalgebra = "0.19.0"
+oidn = { version = "0.2.0", optional = true }
 rand = "0.7.2"
 rand_distr = "0.2.2"
 rayon = "1.2.1"
-oidn = { version = "0.2.0", optional = true }
-chrono = "0.4.10"
 tobj = "0.1.11"
-glam = "0.8.2"
 
 [profile.dev]
 opt-level = 3
