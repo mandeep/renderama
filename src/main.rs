@@ -33,8 +33,10 @@ mod world;
 
 use std::env;
 use std::f32;
-use std::time::Instant;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::thread;
+use std::time::{Duration, Instant};
 
 use chrono::{DateTime, Local};
 use glam::Vec3;
@@ -67,7 +69,16 @@ fn main() {
     let mut progress_bar = ProgressBar::new((width * height) as u64);
     progress_bar.show_speed = false;
 
-    let mutex = Arc::new(Mutex::new(progress_bar));
+    let atomic_counter = Arc::new(AtomicU64::new(0));
+    let cloned_counter = atomic_counter.clone();
+
+    thread::spawn(move || {
+        while cloned_counter.load(Ordering::SeqCst) < (width * height) as u64 {
+            let count = cloned_counter.load(Ordering::SeqCst);
+            progress_bar.add(count);
+            thread::sleep(Duration::from_secs(3));
+        }
+    });
 
     let mut pixels = vec![image::Rgb([0, 0, 0]); (width * height) as usize];
     pixels.par_iter_mut().enumerate().for_each(|(i, pixel)| {
@@ -98,8 +109,7 @@ fn main() {
 
         *pixel = image::Rgb([color.x() as u8, color.y() as u8, color.z() as u8]);
 
-        let mut progress = mutex.lock().unwrap();
-        progress.inc();
+        atomic_counter.fetch_add(1, Ordering::SeqCst);
     });
 
     let render_end_time: DateTime<Local> = Local::now();
