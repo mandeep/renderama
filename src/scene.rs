@@ -398,9 +398,8 @@ pub fn cornell_box_scene(width: u32, height: u32) -> (String, Camera, BVH, Plane
 
     let p2 = Vec3::new(165.0, 330.0, 165.0);
 
-    let aluminum = Reflective::new(Vec3::new(0.80, 0.85, 0.88), 0.0);
     world.add(Translate::new(Vec3::new(265.0, 0.0, 295.0),
-                             Rotate::new(15.0, Rectangle::new(p0, p2, Arc::new(aluminum)))));
+                             Rotate::new(15.0, Rectangle::new(p0, p2, Arc::new(white.clone())))));
 
     let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
 
