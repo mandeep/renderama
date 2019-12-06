@@ -75,7 +75,7 @@ fn main() {
     thread::spawn(move || {
         while cloned_counter.load(Ordering::SeqCst) < (width * height) as u64 {
             let count = cloned_counter.load(Ordering::SeqCst);
-            progress_bar.add(count);
+            progress_bar.set(count);
             thread::sleep(Duration::from_secs(3));
         }
     });
