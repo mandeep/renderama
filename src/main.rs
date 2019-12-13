@@ -70,12 +70,13 @@ fn main() {
 
     let atomic_counter = Arc::new(AtomicU64::new(0));
     let cloned_counter = atomic_counter.clone();
+    let seconds = (samples as f32).log2();
 
     thread::spawn(move || {
         while cloned_counter.load(Ordering::SeqCst) < (width * height) as u64 {
             let count = cloned_counter.load(Ordering::SeqCst);
             progress_bar.set(count);
-            thread::sleep(Duration::from_secs(3));
+            thread::sleep(Duration::from_secs(seconds as u64));
         }
     });
 
