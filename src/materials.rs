@@ -95,7 +95,7 @@ impl Material for Diffuse {
                record: &HitRecord,
                _rng: &mut ThreadRng)
                -> Option<ScatterRecord> {
-        let scattered = Ray::new(record.point, ray.direction.normalize(), ray.time);
+        let scattered = Ray::new(record.point, ray.direction, ray.time);
         let attenuation = self.albedo.value(record.u, record.v, &record.point);
         let pdf = PDF::CosinePDF { uvw: OrthonormalBasis::new(&record.shading_normal) };
         Some(ScatterRecord::new(scattered, attenuation, pdf, false))
@@ -110,9 +110,9 @@ impl Material for Diffuse {
     ///
     /// https://developer.blender.org/diffusion/C/browse/master/src/kernel/closure/bsdf_oren_nayar.h
     fn scattering_pdf(&self, wo: &Ray, record: &HitRecord, wi: &Ray) -> f32 {
-        let l = wi.direction.normalize();
-        let v = wo.direction.normalize();
-        let n = record.shading_normal.normalize();
+        let l = wi.direction;
+        let v = wo.direction;
+        let n = record.shading_normal;
 
         let nl = n.dot(l).max(0.0);
         let nv = n.dot(v).max(0.0);
@@ -200,7 +200,7 @@ impl Material for Reflective {
     /// the size of the sphere. The target minus the record.point is used
     /// to determine the ray that is being reflected from the surface of the material.
     fn scatter(&self, ray: &Ray, record: &HitRecord, rng: &mut ThreadRng) -> Option<ScatterRecord> {
-        let reflected: Vec3 = reflect(ray.direction.normalize(), record.shading_normal);
+        let reflected: Vec3 = reflect(ray.direction, record.shading_normal);
         let specular_ray = Ray::new(record.point,
                                     reflected + self.fuzz * pick_sphere_point(rng),
                                     ray.time);
@@ -245,7 +245,7 @@ impl Material for Refractive {
                record: &HitRecord,
                _rng: &mut ThreadRng)
                -> Option<ScatterRecord> {
-        let reflected: Vec3 = reflect(ray.direction.normalize(), record.shading_normal);
+        let reflected: Vec3 = reflect(ray.direction, record.shading_normal);
         let incident: f32 = ray.direction.dot(record.shading_normal);
 
         let (outward_normal, refractive_index, cosine) = if incident > 0.0 {
