@@ -22,6 +22,7 @@ pub struct Ray {
 impl Ray {
     /// Create a new Ray with origin at `a` and direction towards `b`
     pub fn new(origin: Vec3, direction: Vec3, time: f32) -> Ray {
+        let direction = direction.normalize();
         let inverse_direction = direction.reciprocal();
         Ray { origin: origin,
               direction: direction,
