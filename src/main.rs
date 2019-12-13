@@ -33,8 +33,8 @@ mod world;
 
 use std::env;
 use std::f32;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -64,7 +64,6 @@ fn main() {
              samples,
              width,
              height);
-
 
     let mut progress_bar = ProgressBar::new((width * height) as u64);
     progress_bar.show_speed = false;
