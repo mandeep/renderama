@@ -1,4 +1,5 @@
 use std::f32;
+use std::f32::consts::PI;
 use std::sync::Arc;
 
 use glam::Vec3;
@@ -126,7 +127,7 @@ pub fn random_spheres_scene(width: u32, height: u32) -> (String, Camera, BVH, Pl
                                                                        * rand::random::<f32>(),
                                                                        rand::random::<f32>()
                                                                        * rand::random::<f32>()),
-                                                                       0.0),
+                                                  0.0),
                                      0.0,
                                      1.0));
                 } else if material < 0.95 {
@@ -270,7 +271,8 @@ pub fn motion_scene(width: u32, height: u32) -> (String, Camera, BVH, Plane) {
                                                             rand::random::<f32>()
                                                             * rand::random::<f32>(),
                                                             rand::random::<f32>()
-                                                            * rand::random::<f32>()), 0.0),
+                                                            * rand::random::<f32>()),
+                                       0.0),
                           0.0,
                           1.0));
 
@@ -371,9 +373,10 @@ pub fn cornell_box_scene(width: u32, height: u32) -> (String, Camera, BVH, Plane
 
     let mut world = World::new();
 
-    let red = Diffuse::new(ConstantTexture::new(0.65, 0.05, 0.05), 20.0);
-    let green = Diffuse::new(ConstantTexture::new(0.12, 0.45, 0.15), 20.0);
-    let white = Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73), 20.0);
+    let roughness = PI / 4.0;
+    let red = Diffuse::new(ConstantTexture::new(0.65, 0.05, 0.05), roughness);
+    let green = Diffuse::new(ConstantTexture::new(0.12, 0.45, 0.15), roughness);
+    let white = Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73), roughness);
     let light = Light::new(ConstantTexture::new(35.0, 20.2, 5.6));
 
     // add the walls of the cornell box to the world

@@ -9,7 +9,6 @@ use hitable::HitRecord;
 use pdf::PDF;
 use ray::{pick_sphere_point, Ray};
 use texture::Texture;
-use utils::clamp;
 
 pub struct ScatterRecord<'a> {
     pub specular_ray: Ray,
@@ -67,7 +66,6 @@ impl Material for Empty {
 #[derive(Clone)]
 pub struct Diffuse {
     pub albedo: Arc<dyn Texture>,
-    pub roughness: f32,
     alpha: f32,
     beta: f32,
 }
@@ -77,27 +75,20 @@ impl Diffuse {
     ///
     /// albedo is a Vec3 of the RGB values assigned to the material
     /// where each value is a float between 0.0 and 1.0.
-    pub fn new<T: Texture + 'static>(albedo: T, roughness: f32) -> Diffuse {
+    pub fn new<T: Texture + 'static>(albedo: T, sigma: f32) -> Diffuse {
         let albedo = Arc::new(albedo);
 
-        let sigma = roughness.to_radians();
-        let sigma2 = sigma.powf(2.0);
+        let alpha = 1.0 / (PI + sigma * (PI / 2.0 - 2.0 / 3.0));
+        let beta = sigma / (PI + sigma * (PI / 2.0 - 2.0 / 3.0));
 
-        let alpha = 1.0 - (sigma2 / (2.0 * (sigma2 + 0.33)));
-        let beta = 0.45 * sigma2 / (sigma2 + 0.09);
-
-        Diffuse { albedo, roughness, alpha, beta }
+        Diffuse { albedo,
+                  alpha,
+                  beta }
     }
 }
 
 impl Material for Diffuse {
-    /// Retrieve the color of the given material
-    ///
-    /// For spheres, the center of the sphere is given by the record.point
-    /// plus the record.normal. We add a random point from the unit sphere
-    /// to uniformly distribute hit points on the sphere. The target minus
-    /// the record.point is used to determine the ray that is being reflected
-    /// from the surface of the material.
+    /// Scatter a new ray from the hit point of the surface
     fn scatter(&self,
                ray: &Ray,
                record: &HitRecord,
@@ -109,46 +100,27 @@ impl Material for Diffuse {
         Some(ScatterRecord::new(scattered, attenuation, pdf, false))
     }
 
+    /// Reflect light according to the Oren-Nayar model
+    ///
+    /// This method uses the improved Oren-Nayar model as implemented in Cycles:
+
+    /// Yasuhiro Fujii
+    /// https://mimosa-pudica.net/improved-oren-nayar.html
+    ///
+    /// https://developer.blender.org/diffusion/C/browse/master/src/kernel/closure/bsdf_oren_nayar.h
     fn scattering_pdf(&self, wo: &Ray, record: &HitRecord, wi: &Ray) -> f32 {
-        let cos_theta_i = record.shading_normal.normalize().dot(wi.direction.normalize()).max(0.0);
-        let cos_theta_o = record.shading_normal.normalize().dot(wo.direction.normalize()).max(0.0);
+        let l = wi.direction.normalize();
+        let v = wo.direction.normalize();
+        let n = record.shading_normal.normalize();
 
-        let cos2_theta_i = cos_theta_i * cos_theta_i;
-        let cos2_theta_o = cos_theta_o * cos_theta_o;
+        let nl = n.dot(l).max(0.0);
+        let nv = n.dot(v).max(0.0);
+        let lv = l.dot(v);
 
-        let sin2_theta_i = (1.0 - cos2_theta_i).max(0.0);
-        let sin2_theta_o = (1.0 - cos2_theta_o).max(0.0);
+        let s = lv - nl * nv;
+        let t = if s <= 0.0 { 1.0 } else { nl.max(nv) };
 
-        let sin_theta_i = sin2_theta_i.sqrt();
-        let sin_theta_o = sin2_theta_o.sqrt();
-
-        let mut cos_phi_i = 1.0;
-        let mut sin_phi_i = 0.0;
-
-        let mut cos_phi_o = 1.0;
-        let mut sin_phi_o = 0.0;
-
-        if sin_theta_i != 0.0 {
-            cos_phi_i = clamp(wi.direction.normalize().x() / sin_theta_i, -1.0, 1.0);
-            sin_phi_i = clamp(wi.direction.normalize().y() / sin_theta_i, -1.0, 1.0);
-        }
-
-        if sin_theta_o != 0.0 {
-            cos_phi_o = clamp(wo.direction.normalize().x() / sin_theta_o, -1.0, 1.0);
-            sin_phi_o = clamp(wo.direction.normalize().y() / sin_theta_o, -1.0, 1.0);
-        }
-
-        let mut sin_alpha = sin_theta_i;
-        let mut tan_beta = sin_theta_o / cos_theta_o.abs();
-
-        if cos_theta_i.abs() > cos_theta_o.abs() {
-            sin_alpha = sin_theta_o;
-            tan_beta = sin_theta_i / cos_theta_i.abs();
-        }
-
-        let cos_diff = cos_phi_i * cos_phi_o + sin_phi_i * sin_phi_o;
-        let max_cos = cos_diff.max(0.0);
-        cos_theta_i * (self.alpha + self.beta * max_cos * sin_alpha * tan_beta) / PI
+        nl * (self.alpha + self.beta * s / t)
     }
 }
 
