@@ -78,8 +78,9 @@ impl Diffuse {
     pub fn new<T: Texture + 'static>(albedo: T, sigma: f32) -> Diffuse {
         let albedo = Arc::new(albedo);
 
-        let alpha = 1.0 / (PI + sigma * (PI / 2.0 - 2.0 / 3.0));
-        let beta = sigma / (PI + sigma * (PI / 2.0 - 2.0 / 3.0));
+        let constant = PI + sigma * (3.0 * PI - 4.0) / 6.0;
+        let alpha = 1.0 / constant;
+        let beta = sigma / constant;
 
         Diffuse { albedo,
                   alpha,
@@ -103,8 +104,8 @@ impl Material for Diffuse {
     /// Reflect light according to the Oren-Nayar model
     ///
     /// This method uses the improved Oren-Nayar model as implemented in Cycles:
-
-    /// Yasuhiro Fujii
+    ///
+    /// Yasuhiro Fujii: A tiny improvement of Oren-Nayar reflectance model
     /// https://mimosa-pudica.net/improved-oren-nayar.html
     ///
     /// https://developer.blender.org/diffusion/C/browse/master/src/kernel/closure/bsdf_oren_nayar.h
@@ -118,7 +119,7 @@ impl Material for Diffuse {
         let lv = l.dot(v);
 
         let s = lv - nl * nv;
-        let t = if s <= 0.0 { 1.0 } else { nl.max(nv) };
+        let t = if s > 0.0 { nl.max(nv) } else { 1.0 };
 
         nl * (self.alpha + self.beta * s / t)
     }
