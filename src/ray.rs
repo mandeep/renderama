@@ -144,7 +144,7 @@ pub fn compute_color(mut ray: Ray,
                         offset_point += pick_sphere_point(rng);
                     }
                     let scattered = Ray::new(offset_point, mixture_pdf.generate(rng), ray.time);
-                    let pdf = mixture_pdf.value(scattered.direction.normalize());
+                    let pdf = mixture_pdf.value(scattered.direction);
                     let scattering_pdf = hit_record.material
                                                    .scattering_pdf(&ray, &hit_record, &scattered);
 
@@ -157,8 +157,7 @@ pub fn compute_color(mut ray: Ray,
             }
         } else {
             if atmosphere {
-                let unit_direction: Vec3 = ray.direction.normalize();
-                let point: f32 = 0.5 * (unit_direction.y() + 1.0);
+                let point: f32 = 0.5 * (ray.direction.y() + 1.0);
                 let lerp = (1.0 - point) * Vec3::splat(1.0) + point * Vec3::new(0.5, 0.7, 1.0);
                 color = throughput * lerp;
             } else {
