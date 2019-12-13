@@ -373,7 +373,7 @@ pub fn cornell_box_scene(width: u32, height: u32) -> (String, Camera, BVH, Plane
 
     let mut world = World::new();
 
-    let roughness = PI / 4.0;
+    let roughness = 0.0;
     let red = Diffuse::new(ConstantTexture::new(0.65, 0.05, 0.05), roughness);
     let green = Diffuse::new(ConstantTexture::new(0.12, 0.45, 0.15), roughness);
     let white = Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73), roughness);
