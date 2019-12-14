@@ -132,13 +132,10 @@ fn main() {
         println!("[{}] Denoising image...",
                  denoise_start_time.format("%H:%M:%S"));
 
-        let output_image = denoise(&pixels, width, height);
+        let denoised_output = denoise(&pixels, width, height);
+        let denoised_buffer: ImageBuf<u8, Rgb> = ImageBuf::new_from(width, height, denoised_output);
 
-        image::save_buffer("denoised_render.png",
-                           &output_image[..],
-                           width as u32,
-                           height as u32,
-                           image::RGB(8)).expect("Failed to save output image");
+        image2::io::write("denoised_render.png", &denoised_buffer).unwrap();
 
         let denoise_end_time: DateTime<Local> = Local::now();
         println!("[{}] Finished denoising in {}. Render saved to denoised_render.png.",
