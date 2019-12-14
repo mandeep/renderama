@@ -1,5 +1,4 @@
 use std::f32;
-use std::f32::consts::PI;
 use std::sync::Arc;
 
 use glam::Vec3;
@@ -17,7 +16,7 @@ use triangle::TriangleMesh;
 use volume::Volume;
 use world::World;
 
-pub fn three_spheres_scene(width: u32, height: u32) -> (String, Camera, BVH, Plane) {
+pub fn three_spheres_scene(width: usize, height: usize) -> (String, Camera, BVH, Plane) {
     let origin = Vec3::new(0.0, 3.0, 6.0);
     let lookat = Vec3::new(0.0, 0.0, -1.5);
     let view = Vec3::new(0.0, 1.0, 0.0);
@@ -77,7 +76,7 @@ pub fn three_spheres_scene(width: u32, height: u32) -> (String, Camera, BVH, Pla
     (String::from("Three Spheres"), camera, bvh, light)
 }
 
-pub fn random_spheres_scene(width: u32, height: u32) -> (String, Camera, BVH, Plane) {
+pub fn random_spheres_scene(width: usize, height: usize) -> (String, Camera, BVH, Plane) {
     let origin = Vec3::new(13.0, 2.0, 3.0);
     let lookat = Vec3::new(0.0, 0.0, 0.0);
     let view = Vec3::new(0.0, 1.0, 0.0);
@@ -190,7 +189,7 @@ pub fn random_spheres_scene(width: u32, height: u32) -> (String, Camera, BVH, Pl
     (String::from("Random Spheres"), camera, bvh, light)
 }
 
-pub fn earth_scene(width: u32, height: u32) -> (String, Camera, World, Plane) {
+pub fn earth_scene(width: usize, height: usize) -> (String, Camera, World, Plane) {
     let origin = Vec3::new(13.0, 2.0, 3.0);
     let lookat = Vec3::new(0.0, 0.0, 0.0);
     let view = Vec3::new(0.0, 1.0, 0.0);
@@ -227,7 +226,7 @@ pub fn earth_scene(width: u32, height: u32) -> (String, Camera, World, Plane) {
     (String::from("Earth"), camera, world, light)
 }
 
-pub fn motion_scene(width: u32, height: u32) -> (String, Camera, BVH, Plane) {
+pub fn motion_scene(width: usize, height: usize) -> (String, Camera, BVH, Plane) {
     let origin = Vec3::new(13.0, 2.0, 3.0);
     let lookat = Vec3::new(0.0, 0.0, 0.0);
     let view = Vec3::new(0.0, 1.0, 0.0);
@@ -290,7 +289,7 @@ pub fn motion_scene(width: u32, height: u32) -> (String, Camera, BVH, Plane) {
     (String::from("Motion Blur"), camera, bvh, light)
 }
 
-pub fn simple_light_scene(width: u32, height: u32) -> (String, Camera, BVH, Plane) {
+pub fn simple_light_scene(width: usize, height: usize) -> (String, Camera, BVH, Plane) {
     let origin = Vec3::new(13.0, 3.0, 3.0);
     let lookat = Vec3::new(0.0, 0.0, 0.0);
     let view = Vec3::new(0.0, 1.0, 0.0);
@@ -348,7 +347,7 @@ pub fn simple_light_scene(width: u32, height: u32) -> (String, Camera, BVH, Plan
     (String::from("Simple Light"), camera, bvh, light_shape)
 }
 
-pub fn cornell_box_scene(width: u32, height: u32) -> (String, Camera, BVH, Plane) {
+pub fn cornell_box_scene(width: usize, height: usize) -> (String, Camera, BVH, Plane) {
     let origin = Vec3::new(278.0, 278.0, -800.0);
     let lookat = Vec3::new(278.0, 278.0, 0.0);
     let view = Vec3::new(0.0, 1.0, 0.0);
@@ -412,7 +411,7 @@ pub fn cornell_box_scene(width: u32, height: u32) -> (String, Camera, BVH, Plane
     (String::from("Cornell Box"), camera, bvh, light_shape)
 }
 
-pub fn spheres_in_box_scene(width: u32, height: u32) -> (String, Camera, BVH, Plane) {
+pub fn spheres_in_box_scene(width: usize, height: usize) -> (String, Camera, BVH, Plane) {
     let origin = Vec3::new(478.0, 278.0, -600.0);
     let lookat = Vec3::new(278.0, 278.0, 0.0);
     let view = Vec3::new(0.0, 1.0, 0.0);
