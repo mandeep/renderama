@@ -22,12 +22,10 @@ pub struct Ray {
 impl Ray {
     /// Create a new Ray with origin at `a` and direction towards `b`
     pub fn new(origin: Vec3, direction: Vec3, time: f32) -> Ray {
-        let direction = direction.normalize();
-        let inverse_direction = direction.reciprocal();
         Ray { origin: origin,
-              direction: direction,
+              direction: direction.normalize(),
               time: time,
-              inverse_direction: inverse_direction }
+              inverse_direction: direction.reciprocal() }
     }
 
     /// Find the point on the ray given the parameter of the direction vector
