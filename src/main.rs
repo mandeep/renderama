@@ -3,6 +3,7 @@
 extern crate chrono;
 extern crate glam;
 extern crate image;
+extern crate image2;
 extern crate nalgebra;
 extern crate pbr;
 extern crate rand;
@@ -40,6 +41,7 @@ use std::time::{Duration, Instant};
 
 use chrono::{DateTime, Local};
 use glam::Vec3;
+use image2::{ImageBuf, Rgb};
 use pbr::ProgressBar;
 use rand::thread_rng;
 use rayon::prelude::*;
@@ -50,7 +52,7 @@ use denoise::denoise;
 fn main() {
     let rendering_time = Instant::now();
 
-    let (width, height): (u32, u32) = (2048, 2048);
+    let (width, height): (usize, usize) = (2048, 2048);
     let args: Vec<String> = env::args().collect();
     let samples: u32 = args[1].parse().unwrap();
     let bounces: u32 = 10;
@@ -80,12 +82,12 @@ fn main() {
         }
     });
 
-    let mut pixels = vec![image::Rgb([0, 0, 0]); (width * height) as usize];
-    pixels.par_iter_mut().enumerate().for_each(|(i, pixel)| {
+    let mut pixels = vec![0u8; 3 * width * height];
+    pixels.par_chunks_mut(3).enumerate().for_each(|(i, pixel)| {
         let mut color = Vec3::zero();
 
-        let x = i % width as usize;
-        let y = i / width as usize;
+        let x = i % width;
+        let y = height - (i / width) - 1;
 
         let mut rng = thread_rng();
 
@@ -107,7 +109,9 @@ fn main() {
         color.set_y(utils::clamp_rgb(255.0 * utils::gamma_correct(color.y(), 2.2)));
         color.set_z(utils::clamp_rgb(255.0 * utils::gamma_correct(color.z(), 2.2)));
 
-        *pixel = image::Rgb([color.x() as u8, color.y() as u8, color.z() as u8]);
+        pixel[0] = color.x() as u8;
+        pixel[1] = color.y() as u8;
+        pixel[2] = color.z() as u8;
 
         atomic_counter.fetch_add(1, Ordering::SeqCst);
     });
@@ -117,13 +121,9 @@ fn main() {
              render_end_time.format("%H:%M:%S"),
              utils::format_time(rendering_time.elapsed()));
 
-    let mut buffer = image::ImageBuffer::new(width, height);
-    buffer.enumerate_pixels_mut().for_each(|(x, y, pixel)| {
-                                     let index = (y * width + x) as usize;
-                                     *pixel = pixels[index];
-                                 });
+    let buffer: ImageBuf<u8, Rgb> = ImageBuf::new_from(width, height, pixels.clone());
 
-    image::ImageRgb8(buffer).flipv().save("render.png").unwrap();
+    image2::io::write("render.png", &buffer).unwrap();
 
     #[cfg(feature = "denoise")]
     {
@@ -132,7 +132,7 @@ fn main() {
         println!("[{}] Denoising image...",
                  denoise_start_time.format("%H:%M:%S"));
 
-        let output_image = denoise(&pixels, width as usize, height as usize);
+        let output_image = denoise(&pixels, width, height);
 
         image::save_buffer("denoised_render.png",
                            &output_image[..],
