@@ -82,7 +82,7 @@ fn main() {
         }
     });
 
-    let mut pixels = vec![0u8; 3 * width * height];
+    let mut pixels = vec![0.0f32; 3 * width * height];
     pixels.par_chunks_mut(3).enumerate().for_each(|(i, pixel)| {
         let mut color = Vec3::zero();
 
@@ -105,25 +105,21 @@ fn main() {
 
         color /= samples as f32;
 
-        color.set_x(utils::clamp_rgb(255.0 * utils::gamma_correct(color.x(), 2.2)));
-        color.set_y(utils::clamp_rgb(255.0 * utils::gamma_correct(color.y(), 2.2)));
-        color.set_z(utils::clamp_rgb(255.0 * utils::gamma_correct(color.z(), 2.2)));
-
-        pixel[0] = color.x() as u8;
-        pixel[1] = color.y() as u8;
-        pixel[2] = color.z() as u8;
+        pixel[0] = color.x();
+        pixel[1] = color.y();
+        pixel[2] = color.z();
 
         atomic_counter.fetch_add(1, Ordering::SeqCst);
     });
 
     let render_end_time: DateTime<Local> = Local::now();
-    println!("[{}] Finished rendering in {}. Render saved to render.png.",
+    println!("[{}] Finished rendering in {}. Render saved to render.hdr.",
              render_end_time.format("%H:%M:%S"),
              utils::format_time(rendering_time.elapsed()));
 
-    let buffer: ImageBuf<u8, Rgb> = ImageBuf::new_from(width, height, pixels.clone());
+    let buffer: ImageBuf<f32, Rgb> = ImageBuf::new_from(width, height, pixels.clone());
 
-    image2::io::write("render.png", &buffer).unwrap();
+    image2::io::write("render.hdr", &buffer).unwrap();
 
     #[cfg(feature = "denoise")]
     {
@@ -135,10 +131,10 @@ fn main() {
         let denoised_output = denoise(&pixels, width, height);
         let denoised_buffer: ImageBuf<u8, Rgb> = ImageBuf::new_from(width, height, denoised_output);
 
-        image2::io::write("denoised_render.png", &denoised_buffer).unwrap();
+        image2::io::write("denoised_render.hdr", &denoised_buffer).unwrap();
 
         let denoise_end_time: DateTime<Local> = Local::now();
-        println!("[{}] Finished denoising in {}. Render saved to denoised_render.png.",
+        println!("[{}] Finished denoising in {}. Render saved to denoised_render.hdr.",
                  denoise_end_time.format("%H:%M:%S"),
                  utils::format_time(denoising_time.elapsed()));
     }
