@@ -50,3 +50,13 @@ pub fn de_nan(color: &Vec3) -> Vec3 {
 
     correction
 }
+
+/// Find the maximum value of a Vec<f32>
+pub fn f32_max(vector: &Vec<f32>) -> f32 {
+    vector.iter().cloned().fold(0.0 / 0.0, f32::max)
+}
+
+/// Find the minimum value of a Vec<f32>
+pub fn f32_min(vector: &Vec<f32>) -> f32 {
+    vector.iter().cloned().fold(0.0 / 0.0, f32::min)
+}
