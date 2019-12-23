@@ -20,6 +20,7 @@ mod hitable;
 mod materials;
 mod pdf;
 mod plane;
+mod post;
 mod ray;
 mod rectangle;
 mod scene;
