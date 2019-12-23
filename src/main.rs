@@ -129,13 +129,14 @@ fn main() {
                  denoise_start_time.format("%H:%M:%S"));
 
         let denoised_output = denoise(&pixels, width, height);
-        let denoised_buffer: ImageBuf<u8, Rgb> = ImageBuf::new_from(width, height, denoised_output);
-
-        image2::io::write("denoised_render.hdr", &denoised_buffer).unwrap();
 
         let denoise_end_time: DateTime<Local> = Local::now();
         println!("[{}] Finished denoising in {}. Render saved to denoised_render.hdr.",
                  denoise_end_time.format("%H:%M:%S"),
                  utils::format_time(denoising_time.elapsed()));
+
+        let denoised_buffer: ImageBuf<f32, Rgb> = ImageBuf::new_from(width, height, denoised_output);
+
+        image2::io::write("render.hdr", &denoised_buffer).unwrap();
     }
 }
