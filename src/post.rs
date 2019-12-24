@@ -2,20 +2,20 @@ use image::ImageBuffer;
 
 use utils;
 
-
 /// Blur an ImageBuffer n amount of times
 ///
 /// Because the blur function in the image library
 /// outputs a new image rather than mutating the input,
 /// we can use recursion to blur the image more than once.
-pub fn blur_image(image: ImageBuffer<image::Rgb<f32>, Vec<f32>>, n: usize) -> ImageBuffer<image::Rgb<f32>, Vec<f32>> {
+pub fn blur_image(image: ImageBuffer<image::Rgb<f32>, Vec<f32>>,
+                  n: usize)
+                  -> ImageBuffer<image::Rgb<f32>, Vec<f32>> {
     if n == 0 {
         image
     } else {
         let buffer = image::imageops::blur(&image, 8.0);
         blur_image(buffer, n - 1)
     }
-
 }
 
 /// Apply a bloom filter to the high luminance values of the buffer
