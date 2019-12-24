@@ -19,7 +19,7 @@ pub fn blur_image(image: ImageBuffer<image::Rgb<f32>, Vec<f32>>,
 }
 
 /// Apply a bloom filter to the high luminance values of the buffer
-pub fn bloom_filter(buffer: &Vec<f32>, width: usize, height: usize) -> Vec<f32> {
+pub fn apply_bloom_filter(buffer: &Vec<f32>, width: usize, height: usize) -> Vec<f32> {
     let min_luminance = utils::f32_min(&buffer);
     let max_luminance = utils::f32_max(&buffer);
 
