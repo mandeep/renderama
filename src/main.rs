@@ -138,6 +138,6 @@ fn main() {
 
         let denoised_buffer: ImageBuf<f32, Rgb> = ImageBuf::new_from(width, height, denoised_output);
 
-        image2::io::write("render.hdr", &denoised_buffer).unwrap();
+        image2::io::write("denoised_render.hdr", &denoised_buffer).unwrap();
     }
 }
