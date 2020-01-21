@@ -7,16 +7,7 @@ use rand::Rng;
 
 use basis::OrthonormalBasis;
 use hitable::Hitable;
-
-pub fn random_cosine_direction(rng: &mut ThreadRng) -> Vec3 {
-    let r1 = rng.gen::<f32>();
-    let r2 = rng.gen::<f32>();
-    let z = (1.0 - r2).sqrt();
-    let phi = 2.0 * PI * r1;
-    let x = phi.cos() * 2.0 * r2.sqrt();
-    let y = phi.sin() * 2.0 * r2.sqrt();
-    Vec3::new(x, y, z)
-}
+use sampling::uniform_sample_hemisphere;
 
 pub enum PDF<'a> {
     CosinePDF {
@@ -54,7 +45,7 @@ impl<'a> PDF<'a> {
 
     pub fn generate(&self, rng: &mut ThreadRng) -> Vec3 {
         match self {
-            PDF::CosinePDF { uvw } => uvw.local(&random_cosine_direction(rng)),
+            PDF::CosinePDF { uvw } => uvw.local(&uniform_sample_hemisphere(rng)),
             PDF::HitablePDF { origin, hitable } => hitable.pdf_random(*origin, rng),
             PDF::MixturePDF { cosine_pdf,
                               hitable_pdf, } => {
