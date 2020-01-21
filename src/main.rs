@@ -23,6 +23,7 @@ mod plane;
 mod post;
 mod ray;
 mod rectangle;
+mod sampling;
 mod scene;
 mod sphere;
 mod texture;
