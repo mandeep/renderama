@@ -4,7 +4,8 @@ use glam::Vec3;
 use rand::rngs::ThreadRng;
 use rand::Rng;
 
-use ray::{pick_sphere_point, Ray};
+use integrator::pick_sphere_point;
+use ray::Ray;
 
 pub struct Camera {
     pub lower_left_corner: Vec3,

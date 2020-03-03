@@ -6,8 +6,9 @@ use rand::rngs::ThreadRng;
 
 use basis::OrthonormalBasis;
 use hitable::HitRecord;
+use integrator::pick_sphere_point;
 use pdf::PDF;
-use ray::{pick_sphere_point, Ray};
+use ray::Ray;
 use texture::Texture;
 
 pub struct ScatterRecord<'a> {
