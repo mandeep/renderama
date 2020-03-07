@@ -39,7 +39,7 @@ pub fn pick_sphere_point(rng: &mut ThreadRng) -> Vec3 {
 /// the color at the ray's hit point. The depth has been set to an arbitrary
 /// limit of 50 which can lead to bias rendering.
 ///
-pub fn compute_color(mut ray: Ray,
+pub fn render_path_integrator(mut ray: Ray,
                      world: &BVH,
                      bounces: u32,
                      light_source: &Plane,
