@@ -98,7 +98,7 @@ fn main() {
             let u = (x as f32 + rand::random::<f32>()) / width as f32;
             let v = (y as f32 + rand::random::<f32>()) / height as f32;
             let ray = camera.get_ray(u, v, &mut rng);
-            color += utils::de_nan(&integrator::compute_color(ray,
+            color += utils::de_nan(&integrator::render_path_integrator(ray,
                                                         &world,
                                                         bounces,
                                                         &light_source,
