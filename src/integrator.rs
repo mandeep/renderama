@@ -50,7 +50,7 @@ pub fn render_path_integrator(mut ray: Ray,
     let mut throughput = Vec3::one();
 
     for bounce in 0..=bounces {
-        if let Some(hit_record) = world.hit(&ray, 1e-2, f32::MAX) {
+        if let Some(hit_record) = world.hit(&ray, 1e-4, f32::MAX) {
             let emitted = hit_record.material.emitted(&ray, &hit_record);
             color += throughput * emitted;
 
@@ -104,7 +104,7 @@ pub fn render_path_integrator(mut ray: Ray,
 }
 
 pub fn render_normals(ray: Ray, world: &BVH) -> Vec3 {
-    if let Some(hit) = world.hit(&ray, 1e-2, f32::MAX) {
+    if let Some(hit) = world.hit(&ray, 1e-4, f32::MAX) {
         let normal = hit.shading_normal;
         0.5 * Vec3::new(normal.x() + 1.0, normal.y() + 1.0, normal.z() + 1.0)
     } else {
