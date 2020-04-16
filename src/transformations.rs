@@ -136,13 +136,13 @@ impl Hitable for Scale {
     /// Reference: http://woo4.me/raytracer/translations/
     fn hit(&self, ray: &Ray, t0: f32, t1: f32) -> Option<HitRecord> {
         let origin = ray.origin / self.scalar;
-        let direction = ray.direction / self.scalar;
+        let direction = (ray.direction / self.scalar).normalize();
 
         let scaled_ray = Ray::new(origin, direction, ray.time);
 
         if let Some(mut hit) = self.hitable.hit(&scaled_ray, t0, t1) {
             hit.point = hit.point * self.scalar;
-            // hit.normal = &hit.normal / self.scalar;
+            hit.shading_normal = (hit.shading_normal / self.scalar).normalize();
             Some(hit)
         } else {
             None
