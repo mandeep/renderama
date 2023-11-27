@@ -2,8 +2,7 @@
 =============================
 
 Renderama is a path tracer in progress based off of Peter Shirley's
-Ray Tracing Minibook series and Matt Pharr, Wenzel Jakob,
-and Greg Humphreys' Physically Based Rendering.
+Ray Tracing Minibook series.
 
 ![Spheres](random_spheres.png)
 ![SpheresInBox](spheres_in_box.png)
