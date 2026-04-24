@@ -1,9 +1,7 @@
-![Renderama](images/header.png)
+![Renderama](docs/images/header.png)
 =============================
 
 Renderama is a path tracer in progress based off of Peter Shirley's
-Ray Tracing Minibook series.
+[Ray Tracing Minibook](https://raytracing.github.io/) series with additional methods added from [Physically Based Rendering](https://pbrt.org/) and research papers from [Pixar Animation Studios](https://renderman.pixar.com/). 
 
-![Spheres](images/random_spheres.png)
-![SpheresInBox](images/spheres_in_box.png)
-![CornellBox](images/cornell_box_denoised.png)
+![CornellBox](docs/images/cornell_box_bunny.png)
