@@ -37,7 +37,7 @@ pub trait Material: Send + Sync {
                _ray: &Ray,
                _record: &HitRecord,
                _rng: &mut ThreadRng)
-               -> Option<ScatterRecord> {
+               -> Option<ScatterRecord<'_>> {
         None
     }
 
@@ -59,7 +59,7 @@ impl Empty {
     }
 }
 impl Material for Empty {
-    fn scatter(&self, _ray: &Ray, _hit: &HitRecord, _rng: &mut ThreadRng) -> Option<ScatterRecord> {
+    fn scatter(&self, _ray: &Ray, _hit: &HitRecord, _rng: &mut ThreadRng) -> Option<ScatterRecord<'_>> {
         None
     }
 }
@@ -95,7 +95,7 @@ impl Material for Diffuse {
                ray: &Ray,
                record: &HitRecord,
                _rng: &mut ThreadRng)
-               -> Option<ScatterRecord> {
+               -> Option<ScatterRecord<'_>> {
         let scattered = Ray::new(record.point, ray.direction, ray.time);
         let attenuation = self.albedo.value(record.u, record.v, &record.point);
         let pdf = PDF::CosinePDF { uvw: OrthonormalBasis::new(&record.shading_normal) };
@@ -199,7 +199,7 @@ impl Material for Reflective {
     /// factor is also added in to account for the reflection fuzz due to
     /// the size of the sphere. The target minus the record.point is used
     /// to determine the ray that is being reflected from the surface of the material.
-    fn scatter(&self, ray: &Ray, record: &HitRecord, rng: &mut ThreadRng) -> Option<ScatterRecord> {
+    fn scatter(&self, ray: &Ray, record: &HitRecord, rng: &mut ThreadRng) -> Option<ScatterRecord<'_>> {
         let reflected: Vec3 = reflect(ray.direction, record.shading_normal);
         let specular_ray = Ray::new(record.point,
                                     reflected + self.fuzz * pick_sphere_point(rng),
@@ -244,24 +244,40 @@ impl Material for Refractive {
                ray: &Ray,
                record: &HitRecord,
                _rng: &mut ThreadRng)
-               -> Option<ScatterRecord> {
+               -> Option<ScatterRecord<'_>> {
         let reflected: Vec3 = reflect(ray.direction, record.shading_normal);
         let incident: f32 = ray.direction.dot(record.shading_normal);
 
-        let (outward_normal, refractive_index, cosine) = if incident > 0.0 {
-            (-record.shading_normal,
-             self.refractive_index,
-             self.refractive_index * ray.direction.dot(record.shading_normal)
-             / ray.direction.length())
+        // ray.direction is unit-length (Ray::new normalizes), so `incident` is cos(theta_i)
+        // with a sign indicating entering (negative) or exiting (positive).
+        //
+        // eta_ratio is n_from / n_to:
+        //   entering glass: air -> glass, so 1 / refractive_index
+        //   exiting glass: glass -> air, so refractive_index / 1
+        //
+        // The cosine we pass to Schlick is the cosine in the less-dense medium (air).
+        //   entering: that's |cos theta_i| on the incident (air) side
+        //   exiting:  that's |cos theta_t| on the transmitted (air) side,
+        //             computed from Snell's law
+        let (outward_normal, eta_ratio, schlick_cosine) = if incident > 0.0 {
+            // Exiting the material. cos_theta_i is on the glass side.
+            let cos_theta_i = incident;
+            let sin2_theta_i = (1.0 - cos_theta_i * cos_theta_i).max(0.0);
+            let sin2_theta_t = self.refractive_index * self.refractive_index * sin2_theta_i;
+            let cos_theta_t_sq = 1.0 - sin2_theta_t;
+            // If cos_theta_t_sq < 0, we get total internal reflection and refract() will
+            // return None; the schlick_cosine value won't be used in that case.
+            let cos_theta_t = cos_theta_t_sq.max(0.0).sqrt();
+            (-record.shading_normal, self.refractive_index, cos_theta_t)
         } else {
-            (record.shading_normal,
-             1.0 / self.refractive_index,
-             -ray.direction.dot(record.shading_normal) / ray.direction.length())
+            // Entering the material. cos_theta_i is on the air side.
+            let cos_theta_i = -incident;
+            (record.shading_normal, 1.0 / self.refractive_index, cos_theta_i)
         };
 
-        let refracted = refract(ray.direction, outward_normal, refractive_index);
+        let refracted = refract(ray.direction, outward_normal, eta_ratio);
         let reflect_probability = match refracted {
-            Some(_) => schlick(cosine, self.refractive_index),
+            Some(_) => schlick(schlick_cosine, self.refractive_index),
             None => 1.0,
         };
 
@@ -295,7 +311,7 @@ impl Material for Light {
                _ray: &Ray,
                _record: &HitRecord,
                _rng: &mut ThreadRng)
-               -> Option<ScatterRecord> {
+               -> Option<ScatterRecord<'_>> {
         None
     }
 
@@ -321,7 +337,7 @@ impl Isotropic {
 }
 
 impl Material for Isotropic {
-    fn scatter(&self, ray: &Ray, record: &HitRecord, rng: &mut ThreadRng) -> Option<ScatterRecord> {
+    fn scatter(&self, ray: &Ray, record: &HitRecord, rng: &mut ThreadRng) -> Option<ScatterRecord<'_>> {
         let scattered = Ray::new(record.point, pick_sphere_point(rng), ray.time);
         let attenuation = self.albedo.value(record.u, record.v, &record.point);
         let pdf = PDF::CosinePDF { uvw: OrthonormalBasis::new(&record.shading_normal) };
