@@ -36,27 +36,27 @@ pub fn find_offset_point(point: Vec3, geometric_normal: Vec3) -> Vec3 {
     let float_scale: f32 = 1.0 / 65536.0;
     let int_scale: f32 = 256.0;
 
-    let offset_int: Vector3<u32> = Vector3::new((int_scale * geometric_normal.x()) as u32,
-                                                (int_scale * geometric_normal.y()) as u32,
-                                                (int_scale * geometric_normal.z()) as u32);
+    let offset_int: Vector3<i32> = Vector3::new((int_scale * geometric_normal.x()) as i32,
+                                                (int_scale * geometric_normal.y()) as i32,
+                                                (int_scale * geometric_normal.z()) as i32);
 
     let mut point_int = Vec3::zero();
 
     if point.x() < 0.0 {
-        point_int.set_x(f32::from_bits(f32::to_bits(point.x()).wrapping_sub(offset_int.x)));
+        point_int.set_x(f32::from_bits(f32::to_bits(point.x()).wrapping_sub(offset_int.x as u32)));
     } else {
-        point_int.set_x(f32::from_bits(f32::to_bits(point.x()).wrapping_add(offset_int.x)));
+        point_int.set_x(f32::from_bits(f32::to_bits(point.x()).wrapping_add(offset_int.x as u32)));
     }
     if point.y() < 0.0 {
-        point_int.set_y(f32::from_bits(f32::to_bits(point.y()).wrapping_sub(offset_int.y)));
+        point_int.set_y(f32::from_bits(f32::to_bits(point.y()).wrapping_sub(offset_int.y as u32)));
     } else {
-        point_int.set_y(f32::from_bits(f32::to_bits(point.y()).wrapping_add(offset_int.y)));
+        point_int.set_y(f32::from_bits(f32::to_bits(point.y()).wrapping_add(offset_int.y as u32)));
     }
 
     if point.z() < 0.0 {
-        point_int.set_z(f32::from_bits(f32::to_bits(point.z()).wrapping_sub(offset_int.z)));
+        point_int.set_z(f32::from_bits(f32::to_bits(point.z()).wrapping_sub(offset_int.z as u32)));
     } else {
-        point_int.set_z(f32::from_bits(f32::to_bits(point.z()).wrapping_add(offset_int.z)));
+        point_int.set_z(f32::from_bits(f32::to_bits(point.z()).wrapping_add(offset_int.z as u32)));
     }
 
     let mut new_offset: Vec3 = point_int.clone();
