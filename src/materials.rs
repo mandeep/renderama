@@ -212,6 +212,7 @@ impl Material for Reflective {
 #[derive(Clone)]
 pub struct Refractive {
     pub refractive_index: f32,
+    pub absorption: Vec3,
 }
 
 impl Refractive {
@@ -222,8 +223,8 @@ impl Refractive {
     /// how much of the light is refracted when entering the material.
     /// fuzz accounts for the fuzziness of the reflections due to the size of the sphere.
     /// Generally, the larger the sphere, the fuzzier the reflections will be.
-    pub fn new(index: f32) -> Refractive {
-        Refractive { refractive_index: index }
+    pub fn new(index: f32, albedo: Vec3) -> Refractive {
+        Refractive { refractive_index: index, absorption: albedo }
     }
 }
 
@@ -281,7 +282,12 @@ impl Material for Refractive {
             None => 1.0,
         };
 
-        let attenuation = Vec3::new(1.0, 1.0, 1.0);
+        let attenuation = if incident > 0.0 {
+            self.absorption
+        } else {
+            Vec3::one()
+        };
+
         let pdf = PDF::CosinePDF { uvw: OrthonormalBasis::new(&record.shading_normal) };
 
         if rand::random::<f32>() < reflect_probability {
@@ -342,5 +348,51 @@ impl Material for Isotropic {
         let attenuation = self.albedo.value(record.u, record.v, &record.point);
         let pdf = PDF::CosinePDF { uvw: OrthonormalBasis::new(&record.shading_normal) };
         Some(ScatterRecord::new(scattered, attenuation, pdf, true))
+    }
+}
+
+#[derive(Clone)]
+pub struct Plastic {
+    pub albedo: Arc<dyn Texture>,
+    pub roughness: f32,  // 0 = mirror smooth, 1 = very rough
+    pub ior: f32,        // typically 1.5 for plastic/ceramic
+}
+
+impl Plastic {
+    pub fn new<T: Texture + 'static>(albedo: T, roughness: f32, ior: f32) -> Plastic {
+        Plastic {
+            albedo: Arc::new(albedo),
+            roughness: roughness.max(0.01),
+            ior,
+        }
+    }
+}
+
+impl Material for Plastic {
+    fn scatter(&self, ray: &Ray, record: &HitRecord, rng: &mut ThreadRng) -> Option<ScatterRecord<'_>> {
+        let cos_theta_i = (-ray.direction).dot(record.shading_normal).max(0.0);
+        let fresnel = schlick(cos_theta_i, self.ior);
+
+        // Probabilistically pick specular or diffuse based on Fresnel
+        if rand::random::<f32>() < fresnel {
+            // Specular: GGX-perturbed reflection
+            let reflected = reflect(ray.direction, record.shading_normal);
+            // Perturb by roughness - simple approximation, not proper GGX but good enough
+            let perturbed = (reflected + self.roughness * self.roughness * pick_sphere_point(rng)).normalize();
+            let specular_ray = Ray::new(record.point, perturbed, ray.time);
+            let pdf = PDF::CosinePDF { uvw: OrthonormalBasis::new(&record.shading_normal) };
+            Some(ScatterRecord::new(specular_ray, Vec3::one(), pdf, true))
+        } else {
+            // Diffuse: Lambertian
+            let scattered = Ray::new(record.point, ray.direction, ray.time);
+            let attenuation = self.albedo.value(record.u, record.v, &record.point);
+            let pdf = PDF::CosinePDF { uvw: OrthonormalBasis::new(&record.shading_normal) };
+            Some(ScatterRecord::new(scattered, attenuation, pdf, false))
+        }
+    }
+
+    fn scattering_pdf(&self, _wo: &Ray, record: &HitRecord, wi: &Ray) -> f32 {
+        let cosine = record.shading_normal.dot(wi.direction.normalize()).max(0.0);
+        cosine / std::f32::consts::PI
     }
 }
