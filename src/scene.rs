@@ -6,7 +6,7 @@ use glam::Vec3;
 use bvh::BVH;
 use camera::Camera;
 use hitable::FlipNormals;
-use materials::{Diffuse, Empty, Light, Reflective, Refractive};
+use materials::{Diffuse, Empty, Light, Plastic, Reflective, Refractive};
 use plane::{Axis, Plane};
 use rectangle::Rectangle;
 use sphere::Sphere;
@@ -58,7 +58,7 @@ pub fn three_spheres_scene(width: usize, height: usize) -> (String, Camera, BVH,
     world.add(Sphere::new(Vec3::new(0.0, 0.1, -2.0),
                           Vec3::new(0.0, 0.1, -2.0),
                           0.5,
-                          Refractive::new(1.5),
+                          Refractive::new(1.5, Vec3::one()),
                           0.0,
                           1.0));
 
@@ -146,9 +146,9 @@ pub fn random_spheres_scene(width: usize, height: usize) -> (String, Camera, BVH
                                           0.0,
                                           1.0));
                 } else {
-                    world.add(Sphere::new(center, center, 0.2, Refractive::new(1.5), 0.0, 1.0));
+                    world.add(Sphere::new(center, center, 0.2, Refractive::new(1.5, Vec3::one()), 0.0, 1.0));
 
-                    world.add(Sphere::new(center, center, -0.19, Refractive::new(1.5), 0.0, 1.0));
+                    world.add(Sphere::new(center, center, -0.19, Refractive::new(1.5, Vec3::one()), 0.0, 1.0));
                 }
             }
         }
@@ -164,14 +164,14 @@ pub fn random_spheres_scene(width: usize, height: usize) -> (String, Camera, BVH
     world.add(Sphere::new(Vec3::new(0.0, 1.0, 0.0),
                           Vec3::new(0.0, 1.0, 0.0),
                           1.0,
-                          Refractive::new(1.5),
+                          Refractive::new(1.5, Vec3::one()),
                           0.0,
                           1.0));
 
     world.add(Sphere::new(Vec3::new(0.0, 1.0, 0.0),
                           Vec3::new(0.0, 1.0, 0.0),
                           -0.99,
-                          Refractive::new(1.5),
+                          Refractive::new(1.5, Vec3::one()),
                           0.0,
                           1.0));
 
@@ -287,80 +287,6 @@ pub fn motion_scene(width: usize, height: usize) -> (String, Camera, BVH, Plane)
     let light = Plane::new(Axis::XY, 0.0, 0.0, 0.0, 0.0, 0.0, Empty::new());
 
     (String::from("Motion Blur"), camera, bvh, light)
-}
-
-pub fn simple_light_scene(width: usize, height: usize) -> (String, Camera, BVH, Plane) {
-    let origin = Vec3::new(13.0, 3.0, 3.0);
-    let lookat = Vec3::new(0.0, 0.0, 0.0);
-    let view = Vec3::new(0.0, 1.0, 0.0);
-    let fov = 50.0;
-    let aspect_ratio = (width / height) as f32;
-    let aperture = 0.1;
-    let focus_distance = 10.0;
-    let time0 = 0.0;
-    let time1 = 1.0;
-    let atmosphere = false;
- 
-    let camera = Camera::new(origin, lookat, view, fov, aspect_ratio,
-                             aperture, focus_distance,
-                             time0, time1, atmosphere);
- 
-    let mut world = World::new();
- 
-    // Ground
-    world.add(Sphere::new(Vec3::new(0.0, -1000.0, 0.0),
-                          Vec3::new(0.0, -1000.0, 0.0),
-                          1000.0,
-                          Diffuse::new(ConstantTexture::new(0.5, 0.5, 0.5), 0.0),
-                          0.0, 1.0));
- 
-    // Suzanne, at y = 2
-    world.add(Translate::new(
-        Vec3::new(0.0, 2.0, 0.0),
-        Rotate::new(90.0, TriangleMesh::from(
-            "models/suzanne.obj",
-            Arc::new(Diffuse::new(ConstantTexture::new(1.0, 0.0, 0.0), 0.0))
-        ))
-    ));
- 
-    // Overhead rectangular light. Axis::XZ, y = 6 (above Suzanne's head).
-    // Plane::hit for Axis::XZ sets normal = (0,1,0); but for lighting
-    // we want the panel to illuminate downward, so we wrap in FlipNormals
-    // so the useful side faces -y (down, toward the scene).
-    // r0..r1 covers x in [-2, 2], s0..s1 covers z in [-2, 2]. k = 6.
-    let rect_light_geometry = Plane::new(Axis::XZ,
-                                         -2.0, 2.0,
-                                         -2.0, 2.0,
-                                          6.0,
-                                          Light::new(ConstantTexture::new(4.0, 4.0, 4.0)));
- 
-    // Add the light to the world with its normals flipped so the
-    // emissive side faces down. Without this, Light::emitted returns
-    // zero for rays hitting it from below (the camera-facing side).
-    world.add(FlipNormals::of(rect_light_geometry));
- 
-    // Optional extra accent: keep the sphere light too for fill.
-    // Comment out if you want a single-light scene.
-    world.add(Sphere::new(Vec3::new(0.0, 7.0, 4.0),
-                          Vec3::new(0.0, 7.0, 4.0),
-                          1.0,
-                          Light::new(ConstantTexture::new(4.0, 4.0, 4.0)),
-                          0.0, 1.0));
- 
-    let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
- 
-    // NEE target: the SAME geometry as the real rectangular light.
-    // Emission value here is irrelevant — the integrator only uses this
-    // Plane for sampling directions and PDFs, not for shading.
-    // Note: do NOT FlipNormals this one — pdf_value/pdf_random don't
-    // care about orientation the same way; they sample the rectangle area.
-    let light_shape = Plane::new(Axis::XZ,
-                                 -2.0, 2.0,
-                                 -2.0, 2.0,
-                                  6.0,
-                                  Light::new(ConstantTexture::new(0.0, 0.0, 0.0)));
- 
-    (String::from("Simple Light"), camera, bvh, light_shape)
 }
 
 pub fn cornell_box_scene(width: usize, height: usize) -> (String, Camera, BVH, Plane) {
@@ -480,7 +406,7 @@ pub fn spheres_in_box_scene(width: usize, height: usize) -> (String, Camera, BVH
     world.add(Sphere::new(Vec3::new(260.0, 150.0, 45.0),
                           Vec3::new(260.0, 150.0, 45.0),
                           50.0,
-                          Refractive::new(1.5),
+                          Refractive::new(1.5, Vec3::one()),
                           0.0,
                           1.0));
 
@@ -494,7 +420,7 @@ pub fn spheres_in_box_scene(width: usize, height: usize) -> (String, Camera, BVH
     let boundary = Sphere::new(Vec3::new(360.0, 150.0, 145.0),
                                Vec3::new(360.0, 150.0, 145.0),
                                70.0,
-                               Refractive::new(1.5),
+                               Refractive::new(1.5, Vec3::one()),
                                0.0,
                                1.0);
 
@@ -505,7 +431,7 @@ pub fn spheres_in_box_scene(width: usize, height: usize) -> (String, Camera, BVH
     let fog = Sphere::new(Vec3::new(0.0, 0.0, 0.0),
                           Vec3::new(0.0, 0.0, 0.0),
                           5000.0,
-                          Refractive::new(1.5),
+                          Refractive::new(1.5, Vec3::one()),
                           0.0,
                           1.0);
 
@@ -561,6 +487,7 @@ pub fn cornell_box_bunny_scene(width: usize, height: usize)
     let camera = Camera::new(origin, lookat, view, fov, aspect_ratio,
                              aperture, focus_distance,
                              time0, time1, atmosphere);
+
  
     let mut world = World::new();
  
@@ -621,8 +548,8 @@ pub fn cornell_box_bunny_scene(width: usize, height: usize)
     // then rotates, then translates — which is what we want.
     // -------------------------------------------------------------
     let bunny_material = Arc::new(
-        Refractive::new(2.4)
-        // Diffuse::new(ConstantTexture::new(0.06, 0.25, 1.0), 0.0)
+        Refractive::new(2.4, Vec3::one())
+        // Plastic::new(ConstantTexture::new(0.0, 0.17, 0.90), 0.3, 1.5)
     );
  
     let bunny_mesh = TriangleMesh::from("models/bunny.obj", bunny_material);
