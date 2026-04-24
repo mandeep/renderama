@@ -82,37 +82,28 @@ impl Hitable for BVH {
     }
 }
 
-/// Compare the coordinates of two bounding volumes.
+/// Compare two bounding volumes along the given axis.
 ///
-/// We compare two bounding volumes based on their minimum
-/// slab and return the order with the volume with the
-/// least minimum first.
+/// We compare by centroid (midpoint of the AABB on that axis) rather
+/// than by the minimum corner. Centroid-based partitioning produces
+/// more balanced BVH trees, especially when primitives vary in size.
 fn box_compare(a: &Arc<dyn Hitable>,
                b: &Arc<dyn Hitable>,
                axis: usize,
                start_time: f32,
                end_time: f32)
                -> Ordering {
-    if axis == 0 {
-        a.bounding_box(start_time, end_time)
-         .unwrap()
-         .minimum
-         .x()
-         .partial_cmp(&b.bounding_box(start_time, end_time).unwrap().minimum.x())
-         .unwrap()
-    } else if axis == 1 {
-        a.bounding_box(start_time, end_time)
-         .unwrap()
-         .minimum
-         .y()
-         .partial_cmp(&b.bounding_box(start_time, end_time).unwrap().minimum.y())
-         .unwrap()
-    } else {
-        a.bounding_box(start_time, end_time)
-         .unwrap()
-         .minimum
-         .z()
-         .partial_cmp(&b.bounding_box(start_time, end_time).unwrap().minimum.z())
-         .unwrap()
-    }
+    let box_a = a.bounding_box(start_time, end_time).unwrap();
+    let box_b = b.bounding_box(start_time, end_time).unwrap();
+
+    let centroid_a = (box_a.minimum + box_a.maximum) * 0.5;
+    let centroid_b = (box_b.minimum + box_b.maximum) * 0.5;
+
+    let (a_val, b_val) = match axis {
+        0 => (centroid_a.x(), centroid_b.x()),
+        1 => (centroid_a.y(), centroid_b.y()),
+        _ => (centroid_a.z(), centroid_b.z()),
+    };
+
+    a_val.partial_cmp(&b_val).unwrap()
 }
