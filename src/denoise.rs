@@ -4,13 +4,16 @@
 pub fn denoise(input: &Vec<f32>, width: usize, height: usize) -> Vec<f32> {
     let mut filter_output = vec![0.0f32; input.len()];
 
-    let mut device = oidn::Device::new();
-    let mut filter = oidn::RayTracing::new(&mut device);
-    filter.set_srgb(true).set_img_dims(width, height);
-    filter.execute(&input[..], &mut filter_output[..]);
+    let device = oidn::Device::new();
+
+    oidn::RayTracing::new(&device)
+        .hdr(true)
+        .image_dimensions(width, height)
+        .filter(&input[..], &mut filter_output[..])
+        .expect("Filter config error!");
 
     if let Err(e) = device.get_error() {
-        println!("Error denosing image: {}", e.1);
+        println!("Error denoising image: {}", e.1);
     }
 
     filter_output
