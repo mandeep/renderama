@@ -64,13 +64,20 @@ pub fn render_path_integrator(mut ray: Ray,
                     let mixture_pdf = PDF::MixturePDF { cosine_pdf: &scatter_record.pdf,
                                                         hitable_pdf: &hitable_pdf };
 
-                    let mut offset_point = hit_record.point;
-                    if hit_record.geometric_normal != hit_record.shading_normal {
-                        offset_point =
-                            find_offset_point(hit_record.point, hit_record.geometric_normal);
-                        offset_point += pick_sphere_point(rng);
-                    }
-                    let scattered = Ray::new(offset_point, mixture_pdf.generate(rng), ray.time);
+                    // Offset the scatter origin along the geometric normal to avoid
+                    // self-intersection. We always do this (not just when geometric and
+                    // shading normals differ) because surfaces with matching normals still
+                    // self-intersect at grazing angles.
+                    let scattered_direction = mixture_pdf.generate(rng);
+                    let offset_normal = if scattered_direction.dot(hit_record.geometric_normal)
+                                           > 0.0
+                    {
+                        hit_record.geometric_normal
+                    } else {
+                        -hit_record.geometric_normal
+                    };
+                    let offset_point = find_offset_point(hit_record.point, offset_normal);
+                    let scattered = Ray::new(offset_point, scattered_direction, ray.time);
                     let pdf = mixture_pdf.value(scattered.direction);
                     let scattering_pdf = hit_record.material
                                                    .scattering_pdf(&ray, &hit_record, &scattered);
