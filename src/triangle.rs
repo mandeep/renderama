@@ -213,7 +213,7 @@ impl TriangleMesh {
                                  mesh.indices[3 * i + 2] as usize);
                 let (v0, v1, v2) = (positions[a], positions[b], positions[c]);
                 let (n0, n1, n2) = (normals[a], normals[b], normals[c]);
- 
+
                 let triangle = Triangle::from_box(v0, v1, v2, n0, n1, n2, material.clone());
                 triangles.push(triangle);
             }
