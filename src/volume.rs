@@ -30,8 +30,14 @@ impl Volume {
 
 impl Hitable for Volume {
     fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
-        if let Some(mut hit1) = self.boundary.hit(&ray, f32::MIN, f32::MAX) {
-            if let Some(mut hit2) = self.boundary.hit(&ray, hit1.parameter + 0.0001, f32::MAX) {
+        // Find both intersections of the ray with the volume's boundary.
+        // We search the entire ray range (not just [t_min, t_max]) because
+        // a ray origin inside the volume would miss the near boundary otherwise.
+        // We then clamp against [t_min, t_max] below.
+        if let Some(mut hit1) = self.boundary.hit(&ray, f32::NEG_INFINITY, f32::INFINITY) {
+            if let Some(mut hit2) =
+                self.boundary.hit(&ray, hit1.parameter + 0.0001, f32::INFINITY)
+            {
                 if hit1.parameter < t_min {
                     hit1.parameter = t_min
                 };
