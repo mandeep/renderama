@@ -1,7 +1,32 @@
+// build.rs
+use std::env;
+use std::fs;
+use std::path::PathBuf;
+
 fn main() {
-    // Old versions of the `getrandom` crate (pulled in transitively via `rand 0.7`)
-    // call `SystemFunction036` on Windows but don't declare the link dependency
-    // on advapi32. Modern MSVC linkers don't auto-resolve this, so we add it here.
     #[cfg(target_os = "windows")]
     println!("cargo:rustc-link-lib=advapi32");
+
+    if env::var("CARGO_FEATURE_DENOISE").is_ok() {
+        if let Ok(oidn_dir) = env::var("OIDN_DIR") {
+            let bin = PathBuf::from(&oidn_dir).join("bin");
+            
+            // target/{debug|release}/
+            let profile = env::var("PROFILE").unwrap();
+            let out_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap())
+                .join("target")
+                .join(&profile);
+            
+            fs::create_dir_all(&out_dir).ok();
+            
+            for dll in &["OpenImageDenoise.dll", "OpenImageDenoise_core.dll",
+                         "OpenImageDenoise_device_cpu.dll", "tbb12.dll"] {
+                let src = bin.join(dll);
+                let dst = out_dir.join(dll);
+                if src.exists() && !dst.exists() {
+                    fs::copy(&src, &dst).ok();
+                }
+            }
+        }
+    }
 }

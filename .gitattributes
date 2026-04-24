@@ -1,0 +1,28 @@
+# Auto-detect text files and normalize line endings to LF in the repo
+* text=auto eol=lf
+
+# Rust source is always text with LF
+*.rs text eol=lf
+*.toml text eol=lf
+*.md text eol=lf
+
+# Shell scripts must be LF even on Windows
+*.sh text eol=lf
+
+# Windows batch files need CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# OIDN vendored binaries — treat as binary, no diff/merge
+vendor/oidn/bin/*.dll binary
+vendor/oidn/bin/*.exe binary
+vendor/oidn/lib/*.lib binary
+vendor/oidn/lib/*.so* binary
+vendor/oidn/lib/*.dylib binary
+
+# 3D assets
+*.obj text eol=lf
+*.hdr binary
+*.exr binary
+*.png binary
+*.jpg binary
