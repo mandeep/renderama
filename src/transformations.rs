@@ -140,9 +140,17 @@ impl Hitable for Scale {
 
         let scaled_ray = Ray::new(origin, direction, ray.time);
 
-        if let Some(mut hit) = self.hitable.hit(&scaled_ray, t0, t1) {
+        // The inner hitable works in scaled-local space. Distances there
+        // are 1/scalar times world distances, so scale t bounds accordingly
+        // for correct BVH pruning, and scale the returned t back to world
+        // space so the outer BVH's depth comparison works correctly.
+        let scaled_t0 = t0 / self.scalar;
+        let scaled_t1 = t1 / self.scalar;
+
+        if let Some(mut hit) = self.hitable.hit(&scaled_ray, scaled_t0, scaled_t1) {
             hit.point = hit.point * self.scalar;
             hit.shading_normal = (hit.shading_normal / self.scalar).normalize();
+            hit.parameter = hit.parameter * self.scalar;
             Some(hit)
         } else {
             None
