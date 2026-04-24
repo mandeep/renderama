@@ -34,7 +34,7 @@ impl AABB {
 
         diff.as_ref()
             .iter()
-            .position(|&e| e == diff.min_element())
+            .position(|&e| e == diff.max_element())
             .unwrap()
     }
 
