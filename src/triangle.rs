@@ -1,15 +1,14 @@
 use std::f32;
-use std::path::Path;
 use std::sync::Arc;
 
 use glam::Vec3;
 use tobj;
 
 use aabb::AABB;
+use bvh::BVH;
 use hitable::{HitRecord, Hitable};
 use materials::Material;
 use ray::Ray;
-use world::World;
 
 #[derive(Clone)]
 pub struct Triangle {
@@ -24,7 +23,7 @@ pub struct Triangle {
 
 pub struct TriangleMesh {
     triangles: Vec<Triangle>,
-    hitables: World,
+    accelerator: BVH,
     material: Arc<dyn Material>,
 }
 
@@ -83,39 +82,42 @@ impl Hitable for Triangle {
     /// Journal of Graphics Tools Vol. 2 Issue 1, 1997
     /// http://www.acm.org/jgt/papers/MollerTrumbore97/
     ///
-    fn hit(&self, ray: &Ray, position_min: f32, _position_max: f32) -> Option<HitRecord> {
+    fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitRecord> {
         let edge1 = self.v1 - self.v0;
         let edge2 = self.v2 - self.v0;
 
         let pvec = ray.direction.cross(edge2);
         let determinant = edge1.dot(pvec);
 
-        if determinant < position_min {
+        // Reject rays that are (nearly) parallel to the triangle. We do NOT
+        // backface-cull here because a path tracer needs to hit both sides
+        // (e.g. refraction exiting a mesh).
+        if determinant.abs() < 1e-8 {
             return None;
         }
 
-        let tvec = ray.origin - self.v0;
-        let mut u = tvec.dot(pvec);
+        let inverse_determinant = 1.0 / determinant;
 
-        if u < 0.0 || u > determinant {
+        let tvec = ray.origin - self.v0;
+        let u = tvec.dot(pvec) * inverse_determinant;
+        if u < 0.0 || u > 1.0 {
             return None;
         }
 
         let qvec = tvec.cross(edge1);
-        let mut v = ray.direction.dot(qvec);
-
-        if v < 0.0 || u + v > determinant {
+        let v = ray.direction.dot(qvec) * inverse_determinant;
+        if v < 0.0 || u + v > 1.0 {
             return None;
         }
 
-        let mut t = edge2.dot(qvec);
+        let t = edge2.dot(qvec) * inverse_determinant;
+        if t < position_min || t > position_max {
+            return None;
+        }
 
-        let inverse_determinant = 1.0 / determinant;
-        t *= inverse_determinant;
-        u *= inverse_determinant;
-        v *= inverse_determinant;
-
-        let point = u * self.v0 + v * self.v1 + (1.0 - u - v) * self.v2;
+        // Möller-Trumbore barycentrics: (1-u-v) weights v0, u weights v1, v weights v2.
+        // Use point_at_parameter to get the hit position directly from the ray.
+        let point = ray.point_at_parameter(t);
         let geometric_normal = edge1.cross(edge2).normalize();
         let shading_normal = ((1.0 - u - v) * self.n0 + u * self.n1 + v * self.n2).normalize();
 
@@ -139,20 +141,33 @@ impl Hitable for Triangle {
 
 impl TriangleMesh {
     pub fn new(triangles: Vec<Triangle>, material: Arc<dyn Material>) -> TriangleMesh {
-        let mut world = World::new();
+        let mut hitables: Vec<Arc<dyn Hitable>> = triangles.iter()
+                                                           .map(|t| {
+                                                               Arc::new(t.clone())
+                                                               as Arc<dyn Hitable>
+                                                           })
+                                                           .collect();
 
-        for triangle in &triangles {
-            world.add(triangle.clone());
-        }
+        let accelerator = BVH::new(&mut hitables, 0.0, 1.0);
 
-        TriangleMesh { triangles: triangles,
-                       hitables: world,
-                       material: material }
+        TriangleMesh { triangles,
+                       accelerator,
+                       material }
     }
 
     pub fn from(filepath: &str, material: Arc<dyn Material>) -> TriangleMesh {
-        let obj = tobj::load_obj(&Path::new(&filepath));
-        let (models, _) = obj.unwrap();
+        // single_index + triangulate: tobj reindexes so positions and normals
+        // are parallel arrays, and quads/ngons are split into triangles.
+        let load_options = tobj::LoadOptions {
+            single_index: true,
+            triangulate: true,
+            ignore_points: true,
+            ignore_lines: true,
+            ..Default::default()
+        };
+
+        let (models, _materials) =
+            tobj::load_obj(filepath, &load_options).expect("Failed to load OBJ");
 
         let mut triangles: Vec<Triangle> = Vec::new();
         for model in models {
@@ -163,18 +178,42 @@ impl TriangleMesh {
                                            .map(|i| Vec3::new(i[0], i[1], i[2]))
                                            .collect();
 
-            let normals: Vec<Vec3> = mesh.normals
-                                         .chunks(3)
-                                         .map(|i| Vec3::new(i[0], i[1], i[2]))
-                                         .collect();
+            // Use the file's normals if present. Otherwise, compute smooth
+            // per-vertex normals by averaging area-weighted face normals.
+            let normals: Vec<Vec3> = if !mesh.normals.is_empty() {
+                mesh.normals.chunks(3)
+                            .map(|i| Vec3::new(i[0], i[1], i[2]))
+                            .collect()
+            } else {
+                let mut computed = vec![Vec3::zero(); positions.len()];
+                for i in 0..mesh.indices.len() / 3 {
+                    let (a, b, c) = (mesh.indices[3 * i] as usize,
+                                     mesh.indices[3 * i + 1] as usize,
+                                     mesh.indices[3 * i + 2] as usize);
+                    let edge1 = positions[b] - positions[a];
+                    let edge2 = positions[c] - positions[a];
+                    let face_normal = edge1.cross(edge2);  // area-weighted
+                    computed[a] += face_normal;
+                    computed[b] += face_normal;
+                    computed[c] += face_normal;
+                }
+                for n in computed.iter_mut() {
+                    if n.length_squared() > 1e-20 {
+                        *n = n.normalize();
+                    } else {
+                        *n = Vec3::new(0.0, 1.0, 0.0);
+                    }
+                }
+                computed
+            };
 
             for i in 0..mesh.indices.len() / 3 {
-                let (i, j, k) =
-                    (mesh.indices[3 * i], mesh.indices[3 * i + 1], mesh.indices[3 * i + 2]);
-                let (v0, v1, v2) =
-                    (positions[i as usize], positions[j as usize], positions[k as usize]);
-                let (n0, n1, n2) = (normals[i as usize], normals[j as usize], normals[k as usize]);
-
+                let (a, b, c) = (mesh.indices[3 * i] as usize,
+                                 mesh.indices[3 * i + 1] as usize,
+                                 mesh.indices[3 * i + 2] as usize);
+                let (v0, v1, v2) = (positions[a], positions[b], positions[c]);
+                let (n0, n1, n2) = (normals[a], normals[b], normals[c]);
+ 
                 let triangle = Triangle::from_box(v0, v1, v2, n0, n1, n2, material.clone());
                 triangles.push(triangle);
             }
@@ -186,7 +225,7 @@ impl TriangleMesh {
 
 impl Hitable for TriangleMesh {
     fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitRecord> {
-        self.hitables.hit(&ray, position_min, position_max)
+        self.accelerator.hit(&ray, position_min, position_max)
     }
 
     fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
