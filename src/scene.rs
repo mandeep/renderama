@@ -318,7 +318,7 @@ pub fn simple_light_scene(width: usize, height: usize) -> (String, Camera, BVH, 
     world.add(Translate::new(
         Vec3::new(0.0, 2.0, 0.0),
         Rotate::new(90.0, TriangleMesh::from(
-            "suzanne.obj",
+            "models/suzanne.obj",
             Arc::new(Diffuse::new(ConstantTexture::new(1.0, 0.0, 0.0), 0.0))
         ))
     ));
@@ -625,7 +625,7 @@ pub fn cornell_box_bunny_scene(width: usize, height: usize)
         // Diffuse::new(ConstantTexture::new(0.06, 0.25, 1.0), 0.0)
     );
  
-    let bunny_mesh = TriangleMesh::from("bunny.obj", bunny_material);
+    let bunny_mesh = TriangleMesh::from("models/bunny.obj", bunny_material);
  
     world.add(Translate::new(
         Vec3::new(224.0, -66.0, 278.0),
