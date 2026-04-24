@@ -7,3 +7,6 @@
 
 # Omit OptiPNG backup files
 *.bak
+
+denoised_render.hdr
+render.hdr
