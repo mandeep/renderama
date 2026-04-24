@@ -60,7 +60,7 @@ fn main() {
     let samples: u32 = args.get(1).and_then(|s| s.parse().ok()).unwrap_or(128);
     let bounces: u32 = 10;
 
-    let (name, camera, world, light_source) = scene::cornell_box_bunny_scene(width, height);
+    let (name, camera, world, light_source) = scene::cornell_box_lucy_scene(width, height);
 
     let render_start_time: DateTime<Local> = Local::now();
     println!("[{}] Rendering '{}' scene with {} samples at {} x {} dimensions...",

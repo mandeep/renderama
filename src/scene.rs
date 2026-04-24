@@ -483,20 +483,19 @@ pub fn cornell_box_bunny_scene(width: usize, height: usize)
     let time0 = 0.0;
     let time1 = 1.0;
     let atmosphere = false;
- 
+
     let camera = Camera::new(origin, lookat, view, fov, aspect_ratio,
                              aperture, focus_distance,
                              time0, time1, atmosphere);
 
- 
     let mut world = World::new();
- 
+
     let roughness = 0.0;
     let red   = Diffuse::new(ConstantTexture::new(0.65, 0.05, 0.05), roughness);
     let green = Diffuse::new(ConstantTexture::new(0.12, 0.45, 0.15), roughness);
     let white = Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73), roughness);
     let light = Light::new(ConstantTexture::new(25.0, 18.0, 10.0));
- 
+
     // Cornell box walls — identical to the classic scene.
     //
     // Right wall (red) at x = 555, facing -x (into the room).
@@ -504,56 +503,38 @@ pub fn cornell_box_bunny_scene(width: usize, height: usize)
                                          0.0, 555.0,
                                          0.0, 555.0,
                                          555.0, red)));
- 
+
     // Left wall (green) at x = 0, facing +x.
     world.add(Plane::new(Axis::YZ, 0.0, 555.0, 0.0, 555.0, 0.0, green));
- 
+
     // Ceiling light — a rectangle cut into the top.
     world.add(FlipNormals::of(Plane::new(Axis::XZ,
                                          213.0, 343.0,
                                          227.0, 332.0,
                                          554.0, light)));
- 
+
     // Ceiling (white) at y = 555, facing -y.
     world.add(FlipNormals::of(Plane::new(Axis::XZ,
                                          0.0, 555.0,
                                          0.0, 555.0,
                                          555.0, white.clone())));
- 
+
     // Floor (white) at y = 0, facing +y.
     world.add(Plane::new(Axis::XZ, 0.0, 555.0, 0.0, 555.0, 0.0, white.clone()));
- 
+
     // Back wall (white) at z = 555, facing -z (toward camera).
     world.add(FlipNormals::of(Plane::new(Axis::XY,
                                          0.0, 555.0,
                                          0.0, 555.0,
                                          555.0, white.clone())));
- 
-    // -------------------------------------------------------------
-    // Suzanne in the middle of the room.
-    //
-    // The mesh is centered near the origin in local space, roughly
-    // 2.7 x 2.0 x 1.7 units in size. We:
-    //   1. Scale by 120 so she's appropriately sized for the 555-unit room
-    //      (about 240 units tall, so a bit less than half the room height).
-    //   2. Rotate 180 degrees around Y so she faces the camera (the default
-    //      Suzanne faces +Z, but the camera looks toward +Z from -z=-800,
-    //      meaning the camera sees her from the +Z side — flipping orients
-    //      her face toward us). Tweak this angle to taste.
-    //   3. Translate to the center of the room in X and Z, and to y=170
-    //      so she sits roughly mid-height with a bit of floor below her.
-    //
-    // Transform composition in this codebase is outside-in: the outermost
-    // wrapper applies last. So Translate(Rotate(Scale(mesh))) scales first,
-    // then rotates, then translates — which is what we want.
-    // -------------------------------------------------------------
+
     let bunny_material = Arc::new(
         Refractive::new(2.4, Vec3::one())
         // Plastic::new(ConstantTexture::new(0.0, 0.17, 0.90), 0.3, 1.5)
     );
- 
+
     let bunny_mesh = TriangleMesh::from("models/bunny.obj", bunny_material);
- 
+
     world.add(Translate::new(
         Vec3::new(224.0, -66.0, 278.0),
         Rotate::new(180.0,
@@ -561,7 +542,91 @@ pub fn cornell_box_bunny_scene(width: usize, height: usize)
     ));
 
     let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
+
+    // NEE target: same geometry as the ceiling light. Emission is zero
+    // because the integrator only uses this Plane for sampling directions
+    // and PDFs, not for shading contributions.
+    let light = Light::new(ConstantTexture::new(0.0, 0.0, 0.0));
+    let light_shape = Plane::new(Axis::XZ,
+                                 213.0, 343.0,
+                                 227.0, 332.0,
+                                 554.0, light);
+
+    (String::from("Cornell Box with Stanford Bunny"), camera, bvh, light_shape)
+}
+
+pub fn cornell_box_lucy_scene(width: usize, height: usize)
+                                 -> (String, Camera, BVH, Plane) {
+    // Same camera as the classic Cornell box so the framing looks identical.
+    let origin = Vec3::new(278.0, 278.0, -800.0);
+    let lookat = Vec3::new(278.0, 278.0, 0.0);
+    let view = Vec3::new(0.0, 1.0, 0.0);
+    let fov = 40.0;
+    let aspect_ratio = (width / height) as f32;
+    let aperture = 0.0;
+    let focus_distance = 10.0;
+    let time0 = 0.0;
+    let time1 = 1.0;
+    let atmosphere = false;
+
+    let camera = Camera::new(origin, lookat, view, fov, aspect_ratio,
+                             aperture, focus_distance,
+                             time0, time1, atmosphere);
  
+    let mut world = World::new();
+
+    let roughness = 0.0;
+    let red   = Diffuse::new(ConstantTexture::new(0.65, 0.05, 0.05), roughness);
+    let green = Diffuse::new(ConstantTexture::new(0.12, 0.45, 0.15), roughness);
+    let white = Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73), roughness);
+    let light = Light::new(ConstantTexture::new(25.0, 18.0, 10.0));
+
+    // Cornell box walls — identical to the classic scene.
+    //
+    // Right wall (red) at x = 555, facing -x (into the room).
+    world.add(FlipNormals::of(Plane::new(Axis::YZ,
+                                         0.0, 555.0,
+                                         0.0, 555.0,
+                                         555.0, red)));
+
+    // Left wall (green) at x = 0, facing +x.
+    world.add(Plane::new(Axis::YZ, 0.0, 555.0, 0.0, 555.0, 0.0, green));
+
+    // Ceiling light — a rectangle cut into the top.
+    world.add(FlipNormals::of(Plane::new(Axis::XZ,
+                                         213.0, 343.0,
+                                         227.0, 332.0,
+                                         554.0, light)));
+
+    // Ceiling (white) at y = 555, facing -y.
+    world.add(FlipNormals::of(Plane::new(Axis::XZ,
+                                         0.0, 555.0,
+                                         0.0, 555.0,
+                                         555.0, white.clone())));
+
+    // Floor (white) at y = 0, facing +y.
+    world.add(Plane::new(Axis::XZ, 0.0, 555.0, 0.0, 555.0, 0.0, white.clone()));
+
+    // Back wall (white) at z = 555, facing -z (toward camera).
+    world.add(FlipNormals::of(Plane::new(Axis::XY,
+                                         0.0, 555.0,
+                                         0.0, 555.0,
+                                         555.0, white.clone())));
+
+    let lucy_material = Arc::new(
+        Diffuse::new(ConstantTexture::new(0.92, 0.88, 0.82), 0.0)
+    );
+
+    let lucy_mesh = TriangleMesh::from("models/lucy.obj", lucy_material);
+
+    world.add(Translate::new(
+        Vec3::new(70.0, 181.0, 241.0),
+        Rotate::new(0.0,
+            Scale::new(0.30, lucy_mesh))
+    ));
+
+    let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
+
     // NEE target: same geometry as the ceiling light. Emission is zero
     // because the integrator only uses this Plane for sampling directions
     // and PDFs, not for shading contributions.
@@ -571,6 +636,5 @@ pub fn cornell_box_bunny_scene(width: usize, height: usize)
                                  227.0, 332.0,
                                  554.0, light);
  
-    (String::from("Cornell Box with Stanford Bunny"), camera, bvh, light_shape)
+    (String::from("Cornell Box with Lucy"), camera, bvh, light_shape)
 }
- 
