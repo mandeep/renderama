@@ -44,32 +44,65 @@ impl Hitable for Translate {
 
 #[derive(Clone)]
 pub struct Rotate {
-    sin_theta: f32,
-    cos_theta: f32,
+    cos_theta_x: f32, sin_theta_x: f32,
+    cos_theta_y: f32, sin_theta_y: f32,
+    cos_theta_z: f32, sin_theta_z: f32,
     hitable: Arc<dyn Hitable>,
 }
 
 impl Rotate {
-    pub fn new<H: Hitable + 'static>(angle: f32, hitable: H) -> Rotate {
-        let hitable = Arc::new(hitable);
-        let radians = (PI / 180.0) * angle;
-        let sin_theta = radians.sin();
-        let cos_theta = radians.cos();
-        Rotate { sin_theta,
-                 cos_theta,
-                 hitable }
+    pub fn new<H: Hitable + 'static>(theta_x: f32, theta_y: f32, theta_z: f32, hitable: H) -> Rotate {
+        let (tx, ty, tz) = (theta_x.to_radians(), theta_y.to_radians(), theta_z.to_radians());
+        Rotate {
+            cos_theta_x: tx.cos(), sin_theta_x: tx.sin(),
+            cos_theta_y: ty.cos(), sin_theta_y: ty.sin(),
+            cos_theta_z: tz.cos(), sin_theta_z: tz.sin(),
+            hitable: Arc::new(hitable),
+        }
     }
 
-    pub fn rotate(&self, vector: &Vec3) -> Vec3 {
-        Vec3::new(self.cos_theta * vector.x() - self.sin_theta * vector.z(),
-                  vector.y(),
-                  self.sin_theta * vector.x() + self.cos_theta * vector.z())
+    /// Forward rotation: applies X, then Y, then Z (extrinsic order)
+    fn rotate(&self, v: &Vec3) -> Vec3 {
+        // Rotate around X
+        let v = Vec3::new(
+            v.x(),
+            self.cos_theta_x * v.y() - self.sin_theta_x * v.z(),
+            self.sin_theta_x * v.y() + self.cos_theta_x * v.z(),
+        );
+        // Rotate around Y (matches original Rotate sign convention)
+        let v = Vec3::new(
+            self.cos_theta_y * v.x() - self.sin_theta_y * v.z(),
+            v.y(),
+            self.sin_theta_y * v.x() + self.cos_theta_y * v.z(),
+        );
+        // Rotate around Z
+        Vec3::new(
+            self.cos_theta_z * v.x() - self.sin_theta_z * v.y(),
+            self.sin_theta_z * v.x() + self.cos_theta_z * v.y(),
+            v.z(),
+        )
     }
 
-    pub fn rotate_inv(&self, vector: &Vec3) -> Vec3 {
-        Vec3::new(self.cos_theta * vector.x() + self.sin_theta * vector.z(),
-                  vector.y(),
-                  -self.sin_theta * vector.x() + self.cos_theta * vector.z())
+    /// Inverse rotation: applies Z⁻¹, then Y⁻¹, then X⁻¹
+    fn rotate_inv(&self, v: &Vec3) -> Vec3 {
+        // Inverse Z
+        let v = Vec3::new(
+            self.cos_theta_z * v.x() + self.sin_theta_z * v.y(),
+            -self.sin_theta_z * v.x() + self.cos_theta_z * v.y(),
+            v.z(),
+        );
+        // Inverse Y
+        let v = Vec3::new(
+            self.cos_theta_y * v.x() + self.sin_theta_y * v.z(),
+            v.y(),
+            -self.sin_theta_y * v.x() + self.cos_theta_y * v.z(),
+        );
+        // Inverse X
+        Vec3::new(
+            v.x(),
+            self.cos_theta_x * v.y() + self.sin_theta_x * v.z(),
+            -self.sin_theta_x * v.y() + self.cos_theta_x * v.z(),
+        )
     }
 }
 
@@ -77,12 +110,12 @@ impl Hitable for Rotate {
     fn hit(&self, ray: &Ray, t0: f32, t1: f32) -> Option<HitRecord> {
         let origin = self.rotate(&ray.origin);
         let direction = self.rotate(&ray.direction);
-
         let rotated_ray = Ray::new(origin, direction, ray.time);
 
         if let Some(mut hit) = self.hitable.hit(&rotated_ray, t0, t1) {
             hit.point = self.rotate_inv(&hit.point);
             hit.shading_normal = self.rotate_inv(&hit.shading_normal);
+            hit.geometric_normal = self.rotate_inv(&hit.geometric_normal);
             Some(hit)
         } else {
             None
@@ -90,30 +123,18 @@ impl Hitable for Rotate {
     }
 
     fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB> {
-        if let Some(mut bbox) = self.hitable.bounding_box(t0, t1) {
-            let mut minimum = Vec3::splat(f32::MAX);
-            let mut maximum = Vec3::splat(f32::MIN);
-            (0..2).for_each(|i| {
-                      (0..2).for_each(|j| {
-                                (0..2).for_each(|k| {
-                                          let x = i as f32 * bbox.maximum.x()
-                                                  + (1 - i) as f32 * bbox.minimum.x();
-                                          let y = j as f32 * bbox.maximum.y()
-                                                  + (1 - j) as f32 * bbox.minimum.y();
-                                          let z = k as f32 * bbox.maximum.z()
-                                                  + (1 - k) as f32 * bbox.minimum.z();
-                                          let newx = self.cos_theta * x + self.sin_theta * z;
-                                          let newz = -self.sin_theta * x + self.cos_theta * z;
-                                          let rotation = Vec3::new(newx, y, newz);
-                                          maximum = maximum.max(rotation);
-                                          minimum = minimum.min(rotation);
-                                      });
-                            });
-                  });
-
-            bbox.minimum = minimum;
-            bbox.maximum = maximum;
-            Some(bbox)
+        if let Some(bbox) = self.hitable.bounding_box(t0, t1) {
+            let mut min = Vec3::splat(f32::MAX);
+            let mut max = Vec3::splat(f32::MIN);
+            for i in 0..8 {
+                let x = if i & 1 != 0 { bbox.maximum.x() } else { bbox.minimum.x() };
+                let y = if i & 2 != 0 { bbox.maximum.y() } else { bbox.minimum.y() };
+                let z = if i & 4 != 0 { bbox.maximum.z() } else { bbox.minimum.z() };
+                let corner = self.rotate_inv(&Vec3::new(x, y, z));
+                min = min.min(corner);
+                max = max.max(corner);
+            }
+            Some(AABB::from(min, max))
         } else {
             None
         }
