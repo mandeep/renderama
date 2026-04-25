@@ -671,7 +671,7 @@ pub fn cornell_box_object_scene(width: usize, height: usize)
     let dragon = TriangleMesh::from("models/dragon.obj", dragon_material);
     world.add(Translate::new(Vec3::new(283.0, 98.0, 268.0), Rotate::new(0.0, -60.0, 0.0, Scale::new(350.0, dragon))));
 
-    let bunny_material = Arc::new(Refractive::new(1.5, Vec3::one()));
+    let bunny_material = Arc::new(Refractive::new(1.5, Vec3::ONE));
     let bunny = TriangleMesh::from("models/bunny.obj", bunny_material);
     world.add(Translate::new(Vec3::new(110.0, -25.0, 140.0), Rotate::new(0.0, 180.0, 0.0, Scale::new(750.0, bunny))));
 
