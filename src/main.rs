@@ -60,7 +60,7 @@ fn main() {
     let samples: u32 = args.get(1).and_then(|s| s.parse().ok()).unwrap_or(128);
     let bounces: u32 = 10;
 
-    let (name, camera, world, light_source) = scene::cornell_box_lucy_scene(width, height);
+    let (name, camera, world, light_source) = scene::cornell_box_object_scene(width, height);
 
     let render_start_time: DateTime<Local> = Local::now();
     println!("[{}] Rendering '{}' scene with {} samples at {} x {} dimensions...",
@@ -97,6 +97,10 @@ fn main() {
             let u = (x as f32 + rand::random::<f32>()) / width as f32;
             let v = (y as f32 + rand::random::<f32>()) / height as f32;
             let ray = camera.get_ray(u, v, &mut rng);
+
+            // render_normals is used for debugging
+            // color += utils::de_nan(&integrator::render_normals(ray, &world));
+
             color += utils::de_nan(&integrator::render_path_integrator(ray,
                                                         &world,
                                                         bounces,

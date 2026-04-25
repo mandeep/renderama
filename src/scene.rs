@@ -338,12 +338,12 @@ pub fn cornell_box_scene(width: usize, height: usize) -> (String, Camera, BVH, P
     let p1 = Vec3::new(165.0, 165.0, 165.0);
 
     world.add(Translate::new(Vec3::new(130.0, 0.0, 65.0),
-                             Rotate::new(-18.0, Rectangle::new(p0, p1, Arc::new(white.clone())))));
+                             Rotate::new(0.0, -18.0, 0.0, Rectangle::new(p0, p1, Arc::new(white.clone())))));
 
     let p2 = Vec3::new(165.0, 330.0, 165.0);
 
     world.add(Translate::new(Vec3::new(265.0, 0.0, 295.0),
-                             Rotate::new(15.0, Rectangle::new(p0, p2, Arc::new(white.clone())))));
+                             Rotate::new(0.0, 15.0, 0.0, Rectangle::new(p0, p2, Arc::new(white.clone())))));
 
     let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
 
@@ -459,7 +459,7 @@ pub fn spheres_in_box_scene(width: usize, height: usize) -> (String, Camera, BVH
 
         let sphere = Sphere::new(center, center, 10.0, white.clone(), 0.0, 1.0);
 
-        world.add(Translate::new(Vec3::new(-100.0, 270.0, 395.0), Rotate::new(15.0, sphere)));
+        world.add(Translate::new(Vec3::new(-100.0, 270.0, 395.0), Rotate::new(0.0, 15.0, 0.0, sphere)));
     }
 
     let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
@@ -537,7 +537,7 @@ pub fn cornell_box_bunny_scene(width: usize, height: usize)
 
     world.add(Translate::new(
         Vec3::new(224.0, -66.0, 278.0),
-        Rotate::new(180.0,
+        Rotate::new(0.0, 180.0, 0.0,
             Scale::new(2000.0, bunny_mesh))
     ));
 
@@ -621,7 +621,7 @@ pub fn cornell_box_lucy_scene(width: usize, height: usize)
 
     world.add(Translate::new(
         Vec3::new(70.0, 181.0, 241.0),
-        Rotate::new(0.0,
+        Rotate::new(0.0, 0.0, 0.0,
             Scale::new(0.30, lucy_mesh))
     ));
 
@@ -637,4 +637,56 @@ pub fn cornell_box_lucy_scene(width: usize, height: usize)
                                  554.0, light);
  
     (String::from("Cornell Box with Lucy"), camera, bvh, light_shape)
+}
+
+pub fn cornell_box_object_scene(width: usize, height: usize)
+                              -> (String, Camera, BVH, Plane) {
+    let origin = Vec3::new(278.0, 278.0, -800.0);
+    let lookat = Vec3::new(278.0, 278.0, 0.0);
+    let view = Vec3::new(0.0, 1.0, 0.0);
+    let fov = 40.0;
+    let aspect_ratio = (width / height) as f32;
+
+    let camera = Camera::new(origin, lookat, view, fov, aspect_ratio,
+                             0.0, 10.0, 0.0, 1.0, false);
+
+    let mut world = World::new();
+
+    let roughness = 0.0;
+    let red   = Diffuse::new(ConstantTexture::new(0.65, 0.05, 0.05), roughness);
+    let green = Diffuse::new(ConstantTexture::new(0.12, 0.45, 0.15), roughness);
+    let white = Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73), roughness);
+    let light_material = Light::new(ConstantTexture::new(25.0, 18.0, 10.0));
+
+    // Cornell walls
+    world.add(FlipNormals::of(Plane::new(Axis::YZ, 0.0, 555.0, 0.0, 555.0, 555.0, red)));
+    world.add(Plane::new(Axis::YZ, 0.0, 555.0, 0.0, 555.0, 0.0, green));
+    world.add(FlipNormals::of(Plane::new(Axis::XZ, 213.0, 343.0, 227.0, 332.0, 554.0, light_material)));
+    world.add(FlipNormals::of(Plane::new(Axis::XZ, 0.0, 555.0, 0.0, 555.0, 555.0, white.clone())));
+    world.add(Plane::new(Axis::XZ, 0.0, 555.0, 0.0, 555.0, 0.0, white.clone()));
+    world.add(FlipNormals::of(Plane::new(Axis::XY, 0.0, 555.0, 0.0, 555.0, 555.0, white.clone())));
+
+    let lucy_material = Arc::new(Diffuse::new(ConstantTexture::new(0.92, 0.88, 0.82), 0.0));
+    let lucy = TriangleMesh::from("models/lucy.obj", lucy_material);
+    world.add(Translate::new(Vec3::new(200.0, 182.0, 364.0), Rotate::new(0.0, 0.0, 0.0, Scale::new(0.30, lucy))));
+
+    let dragon_material = Arc::new(Plastic::new(ConstantTexture::new(0.7, 0.85, 0.45), 0.3, 1.5));
+    let dragon = TriangleMesh::from("models/dragon.obj", dragon_material);
+    world.add(Translate::new(Vec3::new(283.0, 98.0, 268.0), Rotate::new(0.0, -60.0, 0.0, Scale::new(350.0, dragon))));
+
+    let bunny_material = Arc::new(Refractive::new(1.5, Vec3::one()));
+    let bunny = TriangleMesh::from("models/bunny.obj", bunny_material);
+    world.add(Translate::new(Vec3::new(110.0, -25.0, 140.0), Rotate::new(0.0, 180.0, 0.0, Scale::new(750.0, bunny))));
+
+    let buddha_material = Arc::new(Diffuse::new(ConstantTexture::new(0.55, 0.50, 0.45), 0.0));
+    let buddha = TriangleMesh::from("models/buddha_relief.obj", buddha_material);
+    world.add(Translate::new(Vec3::new(273.0, 180.0, 582.0), Rotate::new(-90.0, 180.0, 0.0, Scale::new(24.0, buddha))));
+
+
+    let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
+
+    let light = Light::new(ConstantTexture::new(0.0, 0.0, 0.0));
+    let light_shape = Plane::new(Axis::XZ, 213.0, 343.0, 227.0, 332.0, 554.0, light);
+
+    (String::from("Cornell Box with Multiple Objects"), camera, bvh, light_shape)
 }
