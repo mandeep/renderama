@@ -1,5 +1,4 @@
 use std::f32;
-use std::f32::consts::PI;
 use std::sync::Arc;
 
 use glam::Vec3;
