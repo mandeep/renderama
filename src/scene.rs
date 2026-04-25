@@ -665,19 +665,19 @@ pub fn cornell_box_object_scene(width: usize, height: usize)
 
     let lucy_material = Arc::new(Diffuse::new(ConstantTexture::new(0.92, 0.88, 0.82), 0.0));
     let lucy = TriangleMesh::from("models/lucy.obj", lucy_material);
-    world.add(Translate::new(Vec3::new(200.0, 182.0, 364.0), Rotate::new(0.0, 0.0, 0.0, Scale::new(0.30, lucy))));
+    world.add(TransformedMesh::new(Vec3::new(200.0, 182.0, 364.0), Vec3::new(0.0, 0.0, 0.0), 0.30, lucy));
 
     let dragon_material = Arc::new(Plastic::new(ConstantTexture::new(0.7, 0.85, 0.45), 0.3, 1.5));
     let dragon = TriangleMesh::from("models/dragon.obj", dragon_material);
-    world.add(Translate::new(Vec3::new(283.0, 98.0, 268.0), Rotate::new(0.0, -60.0, 0.0, Scale::new(350.0, dragon))));
+    world.add(TransformedMesh::new(Vec3::new(283.0, 98.0, 268.0), Vec3::new(0.0, -60.0, 0.0), 350.0, dragon));
 
     let bunny_material = Arc::new(Refractive::new(1.5, Vec3::ONE));
     let bunny = TriangleMesh::from("models/bunny.obj", bunny_material);
-    world.add(Translate::new(Vec3::new(110.0, -25.0, 140.0), Rotate::new(0.0, 180.0, 0.0, Scale::new(750.0, bunny))));
+    world.add(TransformedMesh::new(Vec3::new(110.0, -25.0, 140.0), Vec3::new(0.0, 180.0, 0.0), 750.0, bunny));
 
     let buddha_material = Arc::new(Diffuse::new(ConstantTexture::new(0.55, 0.50, 0.45), 0.0));
     let buddha = TriangleMesh::from("models/buddha_relief.obj", buddha_material);
-    world.add(Translate::new(Vec3::new(273.0, 180.0, 582.0), Rotate::new(-90.0, 180.0, 0.0, Scale::new(24.0, buddha))));
+    world.add(TransformedMesh::new(Vec3::new(273.0, 180.0, 582.0), Vec3::new(-90.0, 180.0, 0.0), 24.0, buddha));
 
 
     let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
