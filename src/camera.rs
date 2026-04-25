@@ -75,7 +75,7 @@ impl Camera {
     /// Get the ray that is coming from the camera into the world
     pub fn get_ray(&self, s: f32, t: f32, mut rng: &mut ThreadRng) -> Ray {
         let radius: Vec3 = self.lens_radius * pick_sphere_point(&mut rng);
-        let offset: Vec3 = self.u * radius.x() + self.v * radius.y();
+        let offset: Vec3 = self.u * radius.x + self.v * radius.y;
         let time = self.start_time + rng.gen::<f32>() * (self.end_time - self.start_time);
         Ray::new(self.origin + offset,
                  self.lower_left_corner + s * self.horizontal + t * self.vertical

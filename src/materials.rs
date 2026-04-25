@@ -42,7 +42,7 @@ pub trait Material: Send + Sync {
     }
 
     fn emitted(&self, _ray: &Ray, _hit: &HitRecord) -> Vec3 {
-        Vec3::zero()
+        Vec3::new(0.0, 0.0, 0.0)
     }
 
     fn scattering_pdf(&self, _ray: &Ray, _record: &HitRecord, _scattered: &Ray) -> f32 {
@@ -285,7 +285,7 @@ impl Material for Refractive {
         let attenuation = if incident > 0.0 {
             self.absorption
         } else {
-            Vec3::one()
+            Vec3::ONE
         };
 
         let pdf = PDF::CosinePDF { uvw: OrthonormalBasis::new(&record.shading_normal) };
@@ -325,7 +325,7 @@ impl Material for Light {
         if hit.shading_normal.dot(ray.direction) < 0.0 {
             self.emit.value(hit.u, hit.v, &hit.point)
         } else {
-            Vec3::zero()
+            Vec3::ZERO
         }
     }
 }
@@ -381,7 +381,7 @@ impl Material for Plastic {
             let perturbed = (reflected + self.roughness * self.roughness * pick_sphere_point(rng)).normalize();
             let specular_ray = Ray::new(record.point, perturbed, ray.time);
             let pdf = PDF::CosinePDF { uvw: OrthonormalBasis::new(&record.shading_normal) };
-            Some(ScatterRecord::new(specular_ray, Vec3::one(), pdf, true))
+            Some(ScatterRecord::new(specular_ray, Vec3::ONE, pdf, true))
         } else {
             // Diffuse: Lambertian
             let scattered = Ray::new(record.point, ray.direction, ray.time);

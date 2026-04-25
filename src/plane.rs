@@ -69,14 +69,14 @@ impl Hitable for Plane {
     fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitRecord> {
         match self.axis {
             Axis::XY => {
-                let t = (self.k - ray.origin.z()) / ray.direction.z();
+                let t = (self.k - ray.origin.z) / ray.direction.z;
 
                 if t < position_min || t > position_max {
                     return None;
                 }
 
-                let x = ray.origin.x() + t * ray.direction.x();
-                let y = ray.origin.y() + t * ray.direction.y();
+                let x = ray.origin.x + t * ray.direction.x;
+                let y = ray.origin.y + t * ray.direction.y;
 
                 if x < self.r0 || x > self.r1 || y < self.s0 || y > self.s1 {
                     return None;
@@ -95,14 +95,14 @@ impl Hitable for Plane {
                 Some(record)
             }
             Axis::YZ => {
-                let t = (self.k - ray.origin.x()) / ray.direction.x();
+                let t = (self.k - ray.origin.x) / ray.direction.x;
 
                 if t < position_min || t > position_max {
                     return None;
                 }
 
-                let y = ray.origin.y() + t * ray.direction.y();
-                let z = ray.origin.z() + t * ray.direction.z();
+                let y = ray.origin.y + t * ray.direction.y;
+                let z = ray.origin.z + t * ray.direction.z;
 
                 if y < self.r0 || y > self.r1 || z < self.s0 || z > self.s1 {
                     return None;
@@ -121,14 +121,14 @@ impl Hitable for Plane {
                 Some(record)
             }
             Axis::XZ => {
-                let t = (self.k - ray.origin.y()) / ray.direction.y();
+                let t = (self.k - ray.origin.y) / ray.direction.y;
 
                 if t < position_min || t > position_max {
                     return None;
                 }
 
-                let x = ray.origin.x() + t * ray.direction.x();
-                let z = ray.origin.z() + t * ray.direction.z();
+                let x = ray.origin.x + t * ray.direction.x;
+                let z = ray.origin.z + t * ray.direction.z;
 
                 if x < self.r0 || x > self.r1 || z < self.s0 || z > self.s1 {
                     return None;

@@ -25,7 +25,7 @@ impl AABB {
     /// Calculate the surface area of the bounding box
     pub fn surface_area(&self) -> f32 {
         let diff = self.maximum - self.minimum;
-        2.0 * (diff.x() * diff.y() + diff.y() * diff.z() + diff.z() * diff.x())
+        2.0 * (diff.x * diff.y + diff.y * diff.z + diff.z * diff.x)
     }
 
     /// Find the longest axis of the bounding box
