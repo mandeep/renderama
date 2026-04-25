@@ -38,9 +38,9 @@ impl Hitable for World {
             HitRecord::new(0.0,
                            0.0,
                            0.0,
-                           Vec3::zero(),
-                           Vec3::zero(),
-                           Vec3::zero(),
+                           Vec3::ZERO,
+                           Vec3::ZERO,
+                           Vec3::ZERO,
                            Arc::new(Diffuse::new(ConstantTexture::new(0.0, 0.0, 0.0), 0.0)));
         let mut hit_anything: bool = false;
         let mut closest_so_far: f32 = position_max;

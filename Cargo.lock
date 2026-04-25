@@ -233,9 +233,9 @@ dependencies = [
 
 [[package]]
 name = "glam"
-version = "0.8.2"
+version = "0.32.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9e984e7412cd7cce57671037f1f55a625cda90b21d2c6ae3511a3ea6741f840f"
+checksum = "f70749695b063ecbf6b62949ccccde2e733ec3ecbbd71d467dca4e5c6c97cca0"
 
 [[package]]
 name = "hashbrown"

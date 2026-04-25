@@ -11,7 +11,7 @@ use plane::{Axis, Plane};
 use rectangle::Rectangle;
 use sphere::Sphere;
 use texture::{ConstantTexture, ImageTexture};
-use transformations::{Rotate, Scale, Translate};
+use transformations::{TransformedMesh, Rotate, Scale, Translate};
 use triangle::TriangleMesh;
 use volume::Volume;
 use world::World;
@@ -58,7 +58,7 @@ pub fn three_spheres_scene(width: usize, height: usize) -> (String, Camera, BVH,
     world.add(Sphere::new(Vec3::new(0.0, 0.1, -2.0),
                           Vec3::new(0.0, 0.1, -2.0),
                           0.5,
-                          Refractive::new(1.5, Vec3::one()),
+                          Refractive::new(1.5, Vec3::ONE),
                           0.0,
                           1.0));
 
@@ -146,9 +146,9 @@ pub fn random_spheres_scene(width: usize, height: usize) -> (String, Camera, BVH
                                           0.0,
                                           1.0));
                 } else {
-                    world.add(Sphere::new(center, center, 0.2, Refractive::new(1.5, Vec3::one()), 0.0, 1.0));
+                    world.add(Sphere::new(center, center, 0.2, Refractive::new(1.5, Vec3::ONE), 0.0, 1.0));
 
-                    world.add(Sphere::new(center, center, -0.19, Refractive::new(1.5, Vec3::one()), 0.0, 1.0));
+                    world.add(Sphere::new(center, center, -0.19, Refractive::new(1.5, Vec3::ONE), 0.0, 1.0));
                 }
             }
         }
@@ -164,14 +164,14 @@ pub fn random_spheres_scene(width: usize, height: usize) -> (String, Camera, BVH
     world.add(Sphere::new(Vec3::new(0.0, 1.0, 0.0),
                           Vec3::new(0.0, 1.0, 0.0),
                           1.0,
-                          Refractive::new(1.5, Vec3::one()),
+                          Refractive::new(1.5, Vec3::ONE),
                           0.0,
                           1.0));
 
     world.add(Sphere::new(Vec3::new(0.0, 1.0, 0.0),
                           Vec3::new(0.0, 1.0, 0.0),
                           -0.99,
-                          Refractive::new(1.5, Vec3::one()),
+                          Refractive::new(1.5, Vec3::ONE),
                           0.0,
                           1.0));
 
@@ -406,7 +406,7 @@ pub fn spheres_in_box_scene(width: usize, height: usize) -> (String, Camera, BVH
     world.add(Sphere::new(Vec3::new(260.0, 150.0, 45.0),
                           Vec3::new(260.0, 150.0, 45.0),
                           50.0,
-                          Refractive::new(1.5, Vec3::one()),
+                          Refractive::new(1.5, Vec3::ONE),
                           0.0,
                           1.0));
 
@@ -420,7 +420,7 @@ pub fn spheres_in_box_scene(width: usize, height: usize) -> (String, Camera, BVH
     let boundary = Sphere::new(Vec3::new(360.0, 150.0, 145.0),
                                Vec3::new(360.0, 150.0, 145.0),
                                70.0,
-                               Refractive::new(1.5, Vec3::one()),
+                               Refractive::new(1.5, Vec3::ONE),
                                0.0,
                                1.0);
 
@@ -431,7 +431,7 @@ pub fn spheres_in_box_scene(width: usize, height: usize) -> (String, Camera, BVH
     let fog = Sphere::new(Vec3::new(0.0, 0.0, 0.0),
                           Vec3::new(0.0, 0.0, 0.0),
                           5000.0,
-                          Refractive::new(1.5, Vec3::one()),
+                          Refractive::new(1.5, Vec3::ONE),
                           0.0,
                           1.0);
 
@@ -529,36 +529,15 @@ pub fn cornell_box_bunny_scene(width: usize, height: usize)
                                          0.0, 555.0,
                                          555.0, white.clone())));
  
-    // -------------------------------------------------------------
-    // Suzanne in the middle of the room.
-    //
-    // The mesh is centered near the origin in local space, roughly
-    // 2.7 x 2.0 x 1.7 units in size. We:
-    //   1. Scale by 120 so she's appropriately sized for the 555-unit room
-    //      (about 240 units tall, so a bit less than half the room height).
-    //   2. Rotate 180 degrees around Y so she faces the camera (the default
-    //      Suzanne faces +Z, but the camera looks toward +Z from -z=-800,
-    //      meaning the camera sees her from the +Z side — flipping orients
-    //      her face toward us). Tweak this angle to taste.
-    //   3. Translate to the center of the room in X and Z, and to y=170
-    //      so she sits roughly mid-height with a bit of floor below her.
-    //
-    // Transform composition in this codebase is outside-in: the outermost
-    // wrapper applies last. So Translate(Rotate(Scale(mesh))) scales first,
-    // then rotates, then translates — which is what we want.
-    // -------------------------------------------------------------
     let bunny_material = Arc::new(
-        Refractive::new(2.4, Vec3::one())
+        Refractive::new(2.4, Vec3::ONE)
         // Plastic::new(ConstantTexture::new(0.0, 0.17, 0.90), 0.3, 1.5)
     );
  
     let bunny_mesh = TriangleMesh::from("models/bunny.obj", bunny_material);
  
-    world.add(Translate::new(
-        Vec3::new(224.0, -66.0, 278.0),
-        Rotate::new(180.0,
-            Scale::new(2000.0, bunny_mesh))
-    ));
+    // world.add(Translate::new(Vec3::new(224.0, -66.0, 278.0), Rotate::new(180.0, Scale::new(2000.0, bunny_mesh))));
+    world.add(TransformedMesh::new(Vec3::new(224.0, -66.0, 278.0), Vec3::new(0.0, 180.0, 0.0), 2000.0, bunny_mesh));
 
     let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
  

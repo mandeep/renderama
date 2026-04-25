@@ -48,8 +48,8 @@ impl Sphere {
 }
 
 fn get_sphere_uv(p: &Vec3) -> (f32, f32) {
-    let phi = p.z().atan2(p.x());
-    let theta = p.y().asin();
+    let phi = p.z.atan2(p.x);
+    let theta = p.y.asin();
     let u = 1.0 - (phi + PI) / (2.0 * PI);
     let v = (theta + PI / 2.0) / PI;
     (u, v)

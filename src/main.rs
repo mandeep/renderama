@@ -55,12 +55,12 @@ use denoise::denoise;
 fn main() {
     let rendering_time = Instant::now();
 
-    let (width, height): (usize, usize) = (2048, 2048);
+    let (width, height): (usize, usize) = (2000, 1000);
     let args: Vec<String> = env::args().collect();
     let samples: u32 = args.get(1).and_then(|s| s.parse().ok()).unwrap_or(128);
     let bounces: u32 = 10;
 
-    let (name, camera, world, light_source) = scene::cornell_box_bunny_scene(width, height);
+    let (name, camera, world, light_source) = scene::random_spheres_scene(width, height);
 
     let render_start_time: DateTime<Local> = Local::now();
     println!("[{}] Rendering '{}' scene with {} samples at {} x {} dimensions...",
@@ -86,7 +86,7 @@ fn main() {
 
     let mut pixels = vec![0.0f32; 3 * width * height];
     pixels.par_chunks_mut(3).enumerate().for_each(|(i, pixel)| {
-        let mut color = Vec3::zero();
+        let mut color = Vec3::ZERO;
 
         let x = i % width;
         let y = height - (i / width) - 1;
@@ -107,9 +107,9 @@ fn main() {
 
         color /= samples as f32;
 
-        pixel[0] = color.x();
-        pixel[1] = color.y();
-        pixel[2] = color.z();
+        pixel[0] = color.x;
+        pixel[1] = color.y;
+        pixel[2] = color.z;
 
         atomic_counter.fetch_add(1, Ordering::SeqCst);
     });

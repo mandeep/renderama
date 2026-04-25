@@ -185,7 +185,7 @@ impl TriangleMesh {
                             .map(|i| Vec3::new(i[0], i[1], i[2]))
                             .collect()
             } else {
-                let mut computed = vec![Vec3::zero(); positions.len()];
+                let mut computed = vec![Vec3::ZERO; positions.len()];
                 for i in 0..mesh.indices.len() / 3 {
                     let (a, b, c) = (mesh.indices[3 * i] as usize,
                                      mesh.indices[3 * i + 1] as usize,

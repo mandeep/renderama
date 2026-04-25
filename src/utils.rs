@@ -37,15 +37,15 @@ pub fn gamma_correct(luminance: f32, gamma: f32) -> f32 {
 
 /// Check if a computed color contains any NaNs
 pub fn de_nan(color: &Vec3) -> Vec3 {
-    let mut correction = Vec3::new(color.x(), color.y(), color.z());
-    if correction.x().is_nan() {
-        correction.set_x(0.0);
+    let mut correction = Vec3::new(color.x, color.y, color.z);
+    if correction.x.is_nan() {
+        correction.x= 0.0;
     }
-    if correction.y().is_nan() {
-        correction.set_y(0.0);
+    if correction.y.is_nan() {
+        correction.y= 0.0;
     }
-    if correction.z().is_nan() {
-        correction.set_z(0.0);
+    if correction.z.is_nan() {
+        correction.z= 0.0;
     }
 
     correction

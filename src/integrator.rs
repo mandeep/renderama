@@ -46,8 +46,8 @@ pub fn render_path_integrator(mut ray: Ray,
                      atmosphere: bool,
                      rng: &mut ThreadRng)
                      -> Vec3 {
-    let mut color = Vec3::zero();
-    let mut throughput = Vec3::one();
+    let mut color = Vec3::ZERO;
+    let mut throughput = Vec3::ONE;
 
     for bounce in 0..=bounces {
         if let Some(hit_record) = world.hit(&ray, 1e-4, f32::MAX) {
@@ -91,11 +91,11 @@ pub fn render_path_integrator(mut ray: Ray,
             }
         } else {
             if atmosphere {
-                let point: f32 = 0.5 * (ray.direction.y() + 1.0);
+                let point: f32 = 0.5 * (ray.direction.y + 1.0);
                 let lerp = (1.0 - point) * Vec3::splat(1.0) + point * Vec3::new(0.5, 0.7, 1.0);
                 color = throughput * lerp;
             } else {
-                color = Vec3::zero();
+                color = Vec3::ZERO;
             }
         }
 
@@ -113,9 +113,9 @@ pub fn render_path_integrator(mut ray: Ray,
 pub fn render_normals(ray: Ray, world: &BVH) -> Vec3 {
     if let Some(hit) = world.hit(&ray, 1e-4, f32::MAX) {
         let normal = hit.shading_normal;
-        0.5 * Vec3::new(normal.x() + 1.0, normal.y() + 1.0, normal.z() + 1.0)
+        0.5 * Vec3::new(normal.x + 1.0, normal.y + 1.0, normal.z + 1.0)
     } else {
-        let point = 0.5 * (ray.direction.normalize().y() + 1.0);
+        let point = 0.5 * (ray.direction.normalize().y + 1.0);
         (1.0 - point) * Vec3::new(1.0, 1.0, 1.0) + point * Vec3::new(0.5, 0.7, 1.0)
     }
 }

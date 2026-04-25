@@ -15,12 +15,12 @@ impl OrthonormalBasis {
     pub fn new(normal: &Vec3) -> OrthonormalBasis {
         let w = normal.normalize();
 
-        let sign = 1.0f32.copysign(w.z());
-        let a = -1.0 / (sign + w.z());
-        let b = w.x() * w.y() * a;
+        let sign = 1.0f32.copysign(w.z);
+        let a = -1.0 / (sign + w.z);
+        let b = w.x * w.y * a;
 
-        let u = Vec3::new(1.0 + sign * w.x() * w.x() * a, sign * b, -sign * w.x());
-        let v = Vec3::new(b, sign + w.y() * w.y() * a, -w.y());
+        let u = Vec3::new(1.0 + sign * w.x * w.x * a, sign * b, -sign * w.x);
+        let v = Vec3::new(b, sign + w.y * w.y * a, -w.y);
 
         OrthonormalBasis { axis: vec![u, v, w] }
     }
@@ -38,7 +38,7 @@ impl OrthonormalBasis {
     }
 
     pub fn local(&self, v: &Vec3) -> Vec3 {
-        v.x() * self.u() + v.y() * self.v() + v.z() * self.w()
+        v.x * self.u() + v.y * self.v() + v.z * self.w()
     }
 }
 
@@ -54,6 +54,6 @@ mod tests {
         let frame = OrthonormalBasis::new(&normal);
         let matrix = Mat3::from_cols(frame.axis[0], frame.axis[1], frame.axis[2]);
 
-        assert_eq!(matrix * matrix.transpose(), Mat3::identity());
+        assert_eq!(matrix * matrix.transpose(), Mat3::IDENTITY);
     }
 }
