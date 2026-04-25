@@ -44,7 +44,7 @@ impl TransformedMesh {
         
         // Match your Rotate's sign convention (Y rotation matches original)
         let rot_x = Mat4::from_rotation_x(rx);
-        let rot_y = Mat4::from_rotation_y(-ry);  // verify sign matches your Rotate
+        let rot_y = Mat4::from_rotation_y(ry);
         let rot_z = Mat4::from_rotation_z(rz);
         
         let translate_mat = Mat4::from_translation(translate);
