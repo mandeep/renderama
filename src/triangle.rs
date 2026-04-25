@@ -1,7 +1,7 @@
 use std::f32;
 use std::sync::Arc;
 
-use glam::Vec3;
+use glam::{Vec2, Vec3};
 use tobj;
 
 use aabb::AABB;
@@ -18,6 +18,10 @@ pub struct Triangle {
     n0: Vec3,
     n1: Vec3,
     n2: Vec3,
+    uv0: Vec2,
+    uv1: Vec2,
+    uv2: Vec2,
+
     material: Arc<dyn Material>,
 }
 
@@ -35,6 +39,9 @@ impl Triangle {
                                       n0: Vec3,
                                       n1: Vec3,
                                       n2: Vec3,
+                                      uv0: Vec2,
+                                      uv1: Vec2,
+                                      uv2: Vec2,
                                       material: M)
                                       -> Triangle {
         let material = Arc::new(material);
@@ -44,6 +51,9 @@ impl Triangle {
                    n0: n0,
                    n1: n1,
                    n2: n2,
+                   uv0: uv0,
+                   uv1: uv1,
+                   uv2: uv2,
                    material: material }
     }
 
@@ -53,6 +63,9 @@ impl Triangle {
                     n0: Vec3,
                     n1: Vec3,
                     n2: Vec3,
+                    uv0: Vec2,
+                    uv1: Vec2,
+                    uv2: Vec2,
                     material: Arc<dyn Material>)
                     -> Triangle {
         Triangle { v0: v0,
@@ -61,6 +74,9 @@ impl Triangle {
                    n0: n0,
                    n1: n1,
                    n2: n2,
+                   uv0: uv0,
+                   uv1: uv1,
+                   uv2: uv2,
                    material: material }
     }
 
@@ -121,9 +137,13 @@ impl Hitable for Triangle {
         let geometric_normal = edge1.cross(edge2).normalize();
         let shading_normal = ((1.0 - u - v) * self.n0 + u * self.n1 + v * self.n2).normalize();
 
+        // Interpolate texture coordinates with the same barycentric weights.
+        let w = 1.0 - u - v;
+        let interpolated_uv = w * self.uv0 + u * self.uv1 + v * self.uv2;
+
         Some(HitRecord::new(t,
-                            u,
-                            v,
+                            interpolated_uv.x,
+                            interpolated_uv.y,
                             point,
                             geometric_normal,
                             shading_normal,
@@ -178,6 +198,14 @@ impl TriangleMesh {
                                            .map(|i| Vec3::new(i[0], i[1], i[2]))
                                            .collect();
 
+            let uvs: Vec<Vec2> = if !mesh.texcoords.is_empty() {
+                                            mesh.texcoords.chunks(2)
+                                                        .map(|c| Vec2::new(c[0], c[1]))
+                                                        .collect()
+                                        } else {
+                                            vec![Vec2::ZERO; positions.len()]
+                                        };
+
             // Use the file's normals if present. Otherwise, compute smooth
             // per-vertex normals by averaging area-weighted face normals.
             let normals: Vec<Vec3> = if !mesh.normals.is_empty() {
@@ -213,8 +241,9 @@ impl TriangleMesh {
                                  mesh.indices[3 * i + 2] as usize);
                 let (v0, v1, v2) = (positions[a], positions[b], positions[c]);
                 let (n0, n1, n2) = (normals[a], normals[b], normals[c]);
+                let (uv0, uv1, uv2) = (uvs[a], uvs[b], uvs[c]);
 
-                let triangle = Triangle::from_box(v0, v1, v2, n0, n1, n2, material.clone());
+                let triangle = Triangle::from_box(v0, v1, v2, n0, n1, n2, uv0, uv1, uv2, material.clone());
                 triangles.push(triangle);
             }
         }
