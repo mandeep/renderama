@@ -675,7 +675,8 @@ pub fn cornell_box_object_scene(width: usize, height: usize)
     let bunny = TriangleMesh::from("models/bunny.obj", bunny_material);
     world.add(TransformedMesh::new(Vec3::new(110.0, -25.0, 140.0), Vec3::new(0.0, 180.0, 0.0), 750.0, bunny));
 
-    let buddha_material = Arc::new(Diffuse::new(ConstantTexture::new(0.55, 0.50, 0.45), 0.0));
+    let buddha_texture = ImageTexture::new("models/buddha_relief_diffuse.jpeg");
+    let buddha_material = Arc::new(Diffuse::new(buddha_texture, 0.0));
     let buddha = TriangleMesh::from("models/buddha_relief.obj", buddha_material);
     world.add(TransformedMesh::new(Vec3::new(273.0, 180.0, 582.0), Vec3::new(-90.0, 180.0, 0.0), 24.0, buddha));
 
