@@ -3,13 +3,12 @@ use std::sync::Arc;
 
 use glam::Vec3;
 use rand::rngs::ThreadRng;
-use rand::Rng;
 
 use basis::OrthonormalBasis;
 use hitable::HitRecord;
 use integrator::pick_sphere_point;
 use pdf::PDF;
-use ray::{find_offset_point, Ray};
+use ray::Ray;
 use texture::Texture;
 
 pub struct ScatterRecord<'a> {
@@ -63,159 +62,6 @@ impl Material for Empty {
     fn scatter(&self, _ray: &Ray, _hit: &HitRecord, _rng: &mut ThreadRng) -> Option<ScatterRecord<'_>> {
         None
     }
-}
-
-#[derive(Clone)]
-pub struct DisneyBSDF {
-    pub base_color: Arc<dyn Texture>,
-    pub metallic: f32,        // 0 = dielectric, 1 = metal
-    pub roughness: f32,       // 0 = mirror, 1 = totally rough
-    pub transmission: f32,    // 0 = opaque, 1 = transmissive
-    pub ior: f32,             // refraction index for dielectrics
-}
-
-impl DisneyBSDF {
-    pub fn new<T: Texture + 'static>(
-        base_color: T,
-        metallic: f32,
-        roughness: f32,
-        transmission: f32,
-        ior: f32,
-    ) -> DisneyBSDF {
-
-        DisneyBSDF {
-            base_color: Arc::new(base_color),
-            metallic: metallic.clamp(0.0, 1.0),
-            roughness: roughness.clamp(0.04, 1.0),  // clamp away from 0 for stability
-            transmission: transmission.clamp(0.0, 1.0),
-            ior,
-        }
-    }
-}
-
-impl Material for DisneyBSDF {
-    fn scatter(&self, ray: &Ray, hit: &HitRecord, rng: &mut ThreadRng) -> Option<ScatterRecord<'_>> {
-        let n = hit.shading_normal;
-        let view = -ray.direction.normalize();
-
-        // Flip normal to face the view side. Critical for transmission materials
-        // because back-face hits (rays exiting glass) need Fresnel computed
-        // against the correct hemisphere.
-        let n_view = if view.dot(n) > 0.0 { n } else { -n };
-        let cos_theta_v = view.dot(n_view).max(0.0001);
-
-        let base_color = self.base_color.value(hit.u, hit.v, &hit.point);
-
-        // Fresnel at this incidence angle.
-        let f0_dielectric = ((1.0 - self.ior) / (1.0 + self.ior)).powi(2);
-        let f0 = Vec3::splat(f0_dielectric).lerp(base_color, self.metallic);
-        let fresnel = f0 + (Vec3::ONE - f0) * (1.0 - cos_theta_v).powi(5);
-
-        let fresnel_avg = (fresnel.x + fresnel.y + fresnel.z) / 3.0;
-
-        // Lobe weights
-        let specular_weight = fresnel_avg;
-        let diffuse_weight = (1.0 - self.metallic) * (1.0 - fresnel_avg) * (1.0 - self.transmission);
-        let transmission_weight = (1.0 - self.metallic) * (1.0 - fresnel_avg) * self.transmission;
-
-        let total = specular_weight + diffuse_weight + transmission_weight;
-        let r = rng.gen::<f32>();
-        let r_scaled = r * total;
-
-        if r_scaled < specular_weight {
-            // SPECULAR REFLECTION
-            let half_vec = sample_ggx_half_vector(n_view, self.roughness, rng);
-            let reflected = reflect(ray.direction.normalize(), half_vec);
-
-            if reflected.dot(n_view) <= 0.0 {
-                return None;
-            }
-
-            let attenuation = if self.metallic >= 0.5 {
-                base_color
-            } else {
-                Vec3::ONE
-            };
-
-            let offset = find_offset_point(hit.point, hit.geometric_normal);
-            let scattered = Ray::new(offset, reflected, ray.time);
-            let pdf = PDF::CosinePDF { uvw: OrthonormalBasis::new(&n_view) };
-            Some(ScatterRecord::new(scattered, attenuation, pdf, true))
-        } else if r_scaled < specular_weight + diffuse_weight {
-            // DIFFUSE
-            let attenuation = base_color * (1.0 - self.metallic);
-            let offset = find_offset_point(hit.point, hit.geometric_normal);
-            let scattered = Ray::new(offset, ray.direction, ray.time);
-            let pdf = PDF::CosinePDF { uvw: OrthonormalBasis::new(&n_view) };
-            Some(ScatterRecord::new(scattered, attenuation, pdf, false))
-        } else {
-            // TRANSMISSION
-            let direction = ray.direction.normalize();
-            let incident = direction.dot(n);
-
-            let (outward_normal, eta_ratio) = if incident > 0.0 {
-                // Exiting glass
-                (-n, self.ior)
-            } else {
-                // Entering glass
-                (n, 1.0 / self.ior)
-            };
-
-            let cos_i = (-direction).dot(outward_normal);
-            let sin_t_squared = eta_ratio * eta_ratio * (1.0 - cos_i * cos_i);
-
-            if sin_t_squared > 1.0 {
-                // Total internal reflection
-                let reflected = reflect(direction, n);
-                let scattered = Ray::new(hit.point, reflected, ray.time);
-                let pdf = PDF::CosinePDF { uvw: OrthonormalBasis::new(&n) };
-                return Some(ScatterRecord::new(scattered, Vec3::ONE, pdf, true));
-            }
-
-            let cos_t = (1.0 - sin_t_squared).sqrt();
-            let refracted = eta_ratio * direction + (eta_ratio * cos_i - cos_t) * outward_normal;
-
-            let attenuation = if incident > 0.0 {
-                base_color
-            } else {
-                Vec3::ONE
-            };
-
-            let scattered = Ray::new(hit.point, refracted, ray.time);
-            let pdf = PDF::CosinePDF { uvw: OrthonormalBasis::new(&n) };
-            Some(ScatterRecord::new(scattered, attenuation, pdf, true))
-        }
-    }
-
-    fn scattering_pdf(&self, _wo: &Ray, hit: &HitRecord, wi: &Ray) -> f32 {
-        let cosine = hit.shading_normal.dot(wi.direction.normalize()).max(0.0);
-        cosine / PI
-    }
-}
-
-
-fn sample_ggx_half_vector(n: Vec3, roughness: f32, rng: &mut ThreadRng) -> Vec3 {
-    let alpha = roughness * roughness;
-    let alpha_sq = alpha * alpha;
-
-    let r1: f32 = rng.gen();
-    let r2: f32 = rng.gen();
-
-    let phi = 2.0 * PI * r1;
-    let cos_theta_sq = (1.0 - r2) / (1.0 + (alpha_sq - 1.0) * r2);
-    let cos_theta = cos_theta_sq.sqrt();
-    let sin_theta = (1.0 - cos_theta_sq).sqrt();
-
-    // Local tangent-space sampled direction
-    let local = Vec3::new(
-        sin_theta * phi.cos(),
-        sin_theta * phi.sin(),
-        cos_theta,
-    );
-
-    // Transform into world space using orthonormal basis from normal
-    let basis = OrthonormalBasis::new(&n);
-    basis.local(&local).normalize()
 }
 
 #[derive(Clone)]

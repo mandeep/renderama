@@ -6,7 +6,7 @@ use glam::Vec3;
 use bvh::BVH;
 use camera::Camera;
 use hitable::FlipNormals;
-use materials::{Diffuse, DisneyBSDF, Empty, Light, Plastic, Reflective, Refractive};
+use materials::{Diffuse, Empty, Light, Plastic, Reflective, Refractive};
 use plane::{Axis, Plane};
 use rectangle::Rectangle;
 use sphere::Sphere;
@@ -663,20 +663,20 @@ pub fn cornell_box_object_scene(width: usize, height: usize)
     world.add(Plane::new(Axis::XZ, 0.0, 555.0, 0.0, 555.0, 0.0, white.clone()));
     world.add(FlipNormals::of(Plane::new(Axis::XY, 0.0, 555.0, 0.0, 555.0, 555.0, white.clone())));
 
-    let lucy_material = Arc::new(DisneyBSDF::new(SolidColor::new(0.92, 0.88, 0.82), 0.0, 0.7, 0.0, 1.5));
+    let lucy_material = Arc::new(Diffuse::new(SolidColor::new(0.92, 0.88, 0.82), 0.0));
     let lucy = TriangleMesh::from("models/lucy.obj", lucy_material);
     world.add(TransformedMesh::new(Vec3::new(200.0, 182.0, 364.0), Vec3::new(0.0, 0.0, 0.0), 0.30, lucy));
 
-    let dragon_material = Arc::new(DisneyBSDF::new(SolidColor::new(0.7, 0.85, 0.45), 0.0, 0.3, 0.0, 1.5));
+    let dragon_material = Arc::new(Plastic::new(SolidColor::new(0.7, 0.85, 0.45), 0.3, 1.5));
     let dragon = TriangleMesh::from("models/dragon.obj", dragon_material);
     world.add(TransformedMesh::new(Vec3::new(283.0, 98.0, 268.0), Vec3::new(0.0, -60.0, 0.0), 350.0, dragon));
 
-    let bunny_material = Arc::new(DisneyBSDF::new(SolidColor::new(1.0, 1.0, 1.0), 0.0, 0.04, 1.0, 1.5));
+    let bunny_material = Arc::new(Refractive::new(1.5, Vec3::ONE));
     let bunny = TriangleMesh::from("models/bunny.obj", bunny_material);
     world.add(TransformedMesh::new(Vec3::new(110.0, -25.0, 140.0), Vec3::new(0.0, 180.0, 0.0), 750.0, bunny));
 
     let buddha_texture = ImageTexture::new("models/buddha_relief_diffuse.jpeg");
-    let buddha_material = Arc::new(DisneyBSDF::new(buddha_texture, 0.0, 0.9, 0.0, 1.5));
+    let buddha_material = Arc::new(Diffuse::new(buddha_texture, 0.0));
     let buddha = TriangleMesh::from("models/buddha_relief.obj", buddha_material);
     world.add(TransformedMesh::new(Vec3::new(273.0, 180.0, 582.0), Vec3::new(-90.0, 180.0, 0.0), 24.0, buddha));
 
