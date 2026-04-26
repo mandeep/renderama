@@ -10,7 +10,7 @@ use materials::{Diffuse, Empty, Light, Plastic, Reflective, Refractive};
 use plane::{Axis, Plane};
 use rectangle::Rectangle;
 use sphere::Sphere;
-use texture::{ConstantTexture, ImageTexture};
+use texture::{SolidColor, ImageTexture};
 use transformations::{TransformedMesh, Rotate, Scale, Translate};
 use triangle::TriangleMesh;
 use volume::Volume;
@@ -44,7 +44,7 @@ pub fn three_spheres_scene(width: usize, height: usize) -> (String, Camera, BVH,
     world.add(Sphere::new(Vec3::new(0.6, 0.0, -1.0),
                           Vec3::new(0.6, 0.0, -1.0),
                           0.5,
-                          Diffuse::new(ConstantTexture::new(0.75, 0.25, 0.25), 0.0),
+                          Diffuse::new(SolidColor::new(0.75, 0.25, 0.25), 0.0),
                           0.0,
                           1.0));
 
@@ -65,7 +65,7 @@ pub fn three_spheres_scene(width: usize, height: usize) -> (String, Camera, BVH,
     world.add(Sphere::new(Vec3::new(0.0, -100.5, -1.0),
                           Vec3::new(0.0, -100.5, -1.0),
                           100.0,
-                          Diffuse::new(ConstantTexture::new(0.5, 0.5, 0.5), 0.0),
+                          Diffuse::new(SolidColor::new(0.5, 0.5, 0.5), 0.0),
                           0.0,
                           1.0));
 
@@ -104,7 +104,7 @@ pub fn random_spheres_scene(width: usize, height: usize) -> (String, Camera, BVH
     world.add(Sphere::new(Vec3::new(0.0, -1000.0, 0.0),
                           Vec3::new(0.0, -1000.0, 0.0),
                           1000.0,
-                          Diffuse::new(ConstantTexture::new(0.5, 0.5, 0.5), 0.0),
+                          Diffuse::new(SolidColor::new(0.5, 0.5, 0.5), 0.0),
                           0.0,
                           1.0));
 
@@ -120,7 +120,7 @@ pub fn random_spheres_scene(width: usize, height: usize) -> (String, Camera, BVH
                     world.add(Sphere::new(center,
                                      center,
                                      0.2,
-                                     Diffuse::new(ConstantTexture::new(rand::random::<f32>()
+                                     Diffuse::new(SolidColor::new(rand::random::<f32>()
                                                                        * rand::random::<f32>(),
                                                                        rand::random::<f32>()
                                                                        * rand::random::<f32>(),
@@ -157,7 +157,7 @@ pub fn random_spheres_scene(width: usize, height: usize) -> (String, Camera, BVH
     world.add(Sphere::new(Vec3::new(-2.0, 1.0, 0.0),
                           Vec3::new(-2.0, 1.0, 0.0),
                           1.0,
-                          Diffuse::new(ConstantTexture::new(0.75, 0.25, 0.25), 0.0),
+                          Diffuse::new(SolidColor::new(0.75, 0.25, 0.25), 0.0),
                           0.0,
                           1.0));
 
@@ -254,7 +254,7 @@ pub fn motion_scene(width: usize, height: usize) -> (String, Camera, BVH, Plane)
     world.add(Sphere::new(Vec3::new(0.0, -1000.0, 0.0),
                           Vec3::new(0.0, -1000.0, 0.0),
                           1000.0,
-                          Diffuse::new(ConstantTexture::new(0.5, 0.5, 0.5), 0.0),
+                          Diffuse::new(SolidColor::new(0.5, 0.5, 0.5), 0.0),
                           0.0,
                           1.0));
 
@@ -265,7 +265,7 @@ pub fn motion_scene(width: usize, height: usize) -> (String, Camera, BVH, Plane)
     world.add(Sphere::new(center,
                           center + Vec3::new(0.0, 0.5 * rand::random::<f32>(), 0.0),
                           0.2,
-                          Diffuse::new(ConstantTexture::new(rand::random::<f32>()
+                          Diffuse::new(SolidColor::new(rand::random::<f32>()
                                                             * rand::random::<f32>(),
                                                             rand::random::<f32>()
                                                             * rand::random::<f32>(),
@@ -278,7 +278,7 @@ pub fn motion_scene(width: usize, height: usize) -> (String, Camera, BVH, Plane)
     world.add(Sphere::new(Vec3::new(-2.0, 1.0, 0.0),
                           Vec3::new(-2.0, 1.0, 0.0),
                           1.0,
-                          Diffuse::new(ConstantTexture::new(0.75, 0.25, 0.25), 0.0),
+                          Diffuse::new(SolidColor::new(0.75, 0.25, 0.25), 0.0),
                           0.0,
                           1.0));
 
@@ -315,10 +315,10 @@ pub fn cornell_box_scene(width: usize, height: usize) -> (String, Camera, BVH, P
     let mut world = World::new();
 
     let roughness = 0.0;
-    let red = Diffuse::new(ConstantTexture::new(0.65, 0.05, 0.05), roughness);
-    let green = Diffuse::new(ConstantTexture::new(0.12, 0.45, 0.15), roughness);
-    let white = Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73), roughness);
-    let light = Light::new(ConstantTexture::new(35.0, 20.2, 5.6));
+    let red = Diffuse::new(SolidColor::new(0.65, 0.05, 0.05), roughness);
+    let green = Diffuse::new(SolidColor::new(0.12, 0.45, 0.15), roughness);
+    let white = Diffuse::new(SolidColor::new(0.73, 0.73, 0.73), roughness);
+    let light = Light::new(SolidColor::new(35.0, 20.2, 5.6));
 
     // add the walls of the cornell box to the world
     world.add(FlipNormals::of(Plane::new(Axis::YZ, 0.0, 555.0, 0.0, 555.0, 555.0, red)));
@@ -347,7 +347,7 @@ pub fn cornell_box_scene(width: usize, height: usize) -> (String, Camera, BVH, P
 
     let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
 
-    let light = Light::new(ConstantTexture::new(0.0, 0.0, 0.0));
+    let light = Light::new(SolidColor::new(0.0, 0.0, 0.0));
     let light_shape = Plane::new(Axis::XZ, 213.0, 343.0, 227.0, 332.0, 554.0, light);
 
     (String::from("Cornell Box"), camera, bvh, light_shape)
@@ -378,10 +378,10 @@ pub fn spheres_in_box_scene(width: usize, height: usize) -> (String, Camera, BVH
 
     let mut world = World::new();
 
-    let white = Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73), 0.0);
-    let orange = Diffuse::new(ConstantTexture::new(1.0, 0.10, 0.0), 0.0);
-    let light = Light::new(ConstantTexture::new(7.0, 7.0, 7.0));
-    let ground = Diffuse::new(ConstantTexture::new(0.48, 0.83, 0.53), 0.0);
+    let white = Diffuse::new(SolidColor::new(0.73, 0.73, 0.73), 0.0);
+    let orange = Diffuse::new(SolidColor::new(1.0, 0.10, 0.0), 0.0);
+    let light = Light::new(SolidColor::new(7.0, 7.0, 7.0));
+    let ground = Diffuse::new(SolidColor::new(0.48, 0.83, 0.53), 0.0);
 
     let number_of_boxes = 20;
 
@@ -426,7 +426,7 @@ pub fn spheres_in_box_scene(width: usize, height: usize) -> (String, Camera, BVH
 
     world.add(boundary.clone());
 
-    world.add(Volume::new(0.2, boundary.clone(), ConstantTexture::new(0.2, 0.4, 0.9)));
+    world.add(Volume::new(0.2, boundary.clone(), SolidColor::new(0.2, 0.4, 0.9)));
 
     let fog = Sphere::new(Vec3::new(0.0, 0.0, 0.0),
                           Vec3::new(0.0, 0.0, 0.0),
@@ -435,7 +435,7 @@ pub fn spheres_in_box_scene(width: usize, height: usize) -> (String, Camera, BVH
                           0.0,
                           1.0);
 
-    world.add(Volume::new(0.0001, fog, ConstantTexture::new(1.0, 1.0, 1.0)));
+    world.add(Volume::new(0.0001, fog, SolidColor::new(1.0, 1.0, 1.0)));
 
     world.add(Sphere::new(Vec3::new(400.0, 200.0, 400.0),
                           Vec3::new(400.0, 200.0, 400.0),
@@ -447,7 +447,7 @@ pub fn spheres_in_box_scene(width: usize, height: usize) -> (String, Camera, BVH
     world.add(Sphere::new(Vec3::new(220.0, 280.0, 300.0),
                           Vec3::new(220.0, 280.0, 300.0),
                           80.0,
-                          Diffuse::new(ConstantTexture::new(0.6, 0.6, 0.6), 0.0),
+                          Diffuse::new(SolidColor::new(0.6, 0.6, 0.6), 0.0),
                           0.0,
                           1.0));
 
@@ -464,7 +464,7 @@ pub fn spheres_in_box_scene(width: usize, height: usize) -> (String, Camera, BVH
 
     let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
 
-    let light = Light::new(ConstantTexture::new(0.0, 0.0, 0.0));
+    let light = Light::new(SolidColor::new(0.0, 0.0, 0.0));
     let light_shape = Plane::new(Axis::XZ, 123.0, 423.0, 147.0, 412.0, 554.0, light);
 
     (String::from("Spheres in Box"), camera, bvh, light_shape)
@@ -491,10 +491,10 @@ pub fn cornell_box_bunny_scene(width: usize, height: usize)
     let mut world = World::new();
 
     let roughness = 0.0;
-    let red   = Diffuse::new(ConstantTexture::new(0.65, 0.05, 0.05), roughness);
-    let green = Diffuse::new(ConstantTexture::new(0.12, 0.45, 0.15), roughness);
-    let white = Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73), roughness);
-    let light = Light::new(ConstantTexture::new(25.0, 18.0, 10.0));
+    let red   = Diffuse::new(SolidColor::new(0.65, 0.05, 0.05), roughness);
+    let green = Diffuse::new(SolidColor::new(0.12, 0.45, 0.15), roughness);
+    let white = Diffuse::new(SolidColor::new(0.73, 0.73, 0.73), roughness);
+    let light = Light::new(SolidColor::new(25.0, 18.0, 10.0));
 
     // Cornell box walls — identical to the classic scene.
     //
@@ -530,7 +530,7 @@ pub fn cornell_box_bunny_scene(width: usize, height: usize)
  
     let bunny_material = Arc::new(
         Refractive::new(2.4, Vec3::ONE)
-        // Plastic::new(ConstantTexture::new(0.0, 0.17, 0.90), 0.3, 1.5)
+        // Plastic::new(SolidColor::new(0.0, 0.17, 0.90), 0.3, 1.5)
     );
 
     let bunny_mesh = TriangleMesh::from("models/bunny.obj", bunny_material);
@@ -543,7 +543,7 @@ pub fn cornell_box_bunny_scene(width: usize, height: usize)
     // NEE target: same geometry as the ceiling light. Emission is zero
     // because the integrator only uses this Plane for sampling directions
     // and PDFs, not for shading contributions.
-    let light = Light::new(ConstantTexture::new(0.0, 0.0, 0.0));
+    let light = Light::new(SolidColor::new(0.0, 0.0, 0.0));
     let light_shape = Plane::new(Axis::XZ,
                                  213.0, 343.0,
                                  227.0, 332.0,
@@ -573,10 +573,10 @@ pub fn cornell_box_lucy_scene(width: usize, height: usize)
     let mut world = World::new();
 
     let roughness = 0.0;
-    let red   = Diffuse::new(ConstantTexture::new(0.65, 0.05, 0.05), roughness);
-    let green = Diffuse::new(ConstantTexture::new(0.12, 0.45, 0.15), roughness);
-    let white = Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73), roughness);
-    let light = Light::new(ConstantTexture::new(25.0, 18.0, 10.0));
+    let red   = Diffuse::new(SolidColor::new(0.65, 0.05, 0.05), roughness);
+    let green = Diffuse::new(SolidColor::new(0.12, 0.45, 0.15), roughness);
+    let white = Diffuse::new(SolidColor::new(0.73, 0.73, 0.73), roughness);
+    let light = Light::new(SolidColor::new(25.0, 18.0, 10.0));
 
     // Cornell box walls — identical to the classic scene.
     //
@@ -611,7 +611,7 @@ pub fn cornell_box_lucy_scene(width: usize, height: usize)
                                          555.0, white.clone())));
 
     let lucy_material = Arc::new(
-        Diffuse::new(ConstantTexture::new(0.92, 0.88, 0.82), 0.0)
+        Diffuse::new(SolidColor::new(0.92, 0.88, 0.82), 0.0)
     );
 
     let lucy_mesh = TriangleMesh::from("models/lucy.obj", lucy_material);
@@ -627,7 +627,7 @@ pub fn cornell_box_lucy_scene(width: usize, height: usize)
     // NEE target: same geometry as the ceiling light. Emission is zero
     // because the integrator only uses this Plane for sampling directions
     // and PDFs, not for shading contributions.
-    let light = Light::new(ConstantTexture::new(0.0, 0.0, 0.0));
+    let light = Light::new(SolidColor::new(0.0, 0.0, 0.0));
     let light_shape = Plane::new(Axis::XZ,
                                  213.0, 343.0,
                                  227.0, 332.0,
@@ -650,10 +650,10 @@ pub fn cornell_box_object_scene(width: usize, height: usize)
     let mut world = World::new();
 
     let roughness = 0.0;
-    let red   = Diffuse::new(ConstantTexture::new(0.65, 0.05, 0.05), roughness);
-    let green = Diffuse::new(ConstantTexture::new(0.12, 0.45, 0.15), roughness);
-    let white = Diffuse::new(ConstantTexture::new(0.73, 0.73, 0.73), roughness);
-    let light_material = Light::new(ConstantTexture::new(25.0, 18.0, 10.0));
+    let red   = Diffuse::new(SolidColor::new(0.65, 0.05, 0.05), roughness);
+    let green = Diffuse::new(SolidColor::new(0.12, 0.45, 0.15), roughness);
+    let white = Diffuse::new(SolidColor::new(0.73, 0.73, 0.73), roughness);
+    let light_material = Light::new(SolidColor::new(25.0, 18.0, 10.0));
 
     // Cornell walls
     world.add(FlipNormals::of(Plane::new(Axis::YZ, 0.0, 555.0, 0.0, 555.0, 555.0, red)));
@@ -663,11 +663,11 @@ pub fn cornell_box_object_scene(width: usize, height: usize)
     world.add(Plane::new(Axis::XZ, 0.0, 555.0, 0.0, 555.0, 0.0, white.clone()));
     world.add(FlipNormals::of(Plane::new(Axis::XY, 0.0, 555.0, 0.0, 555.0, 555.0, white.clone())));
 
-    let lucy_material = Arc::new(Diffuse::new(ConstantTexture::new(0.92, 0.88, 0.82), 0.0));
+    let lucy_material = Arc::new(Diffuse::new(SolidColor::new(0.92, 0.88, 0.82), 0.0));
     let lucy = TriangleMesh::from("models/lucy.obj", lucy_material);
     world.add(TransformedMesh::new(Vec3::new(200.0, 182.0, 364.0), Vec3::new(0.0, 0.0, 0.0), 0.30, lucy));
 
-    let dragon_material = Arc::new(Plastic::new(ConstantTexture::new(0.7, 0.85, 0.45), 0.3, 1.5));
+    let dragon_material = Arc::new(Plastic::new(SolidColor::new(0.7, 0.85, 0.45), 0.3, 1.5));
     let dragon = TriangleMesh::from("models/dragon.obj", dragon_material);
     world.add(TransformedMesh::new(Vec3::new(283.0, 98.0, 268.0), Vec3::new(0.0, -60.0, 0.0), 350.0, dragon));
 
@@ -683,7 +683,7 @@ pub fn cornell_box_object_scene(width: usize, height: usize)
 
     let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
 
-    let light = Light::new(ConstantTexture::new(0.0, 0.0, 0.0));
+    let light = Light::new(SolidColor::new(0.0, 0.0, 0.0));
     let light_shape = Plane::new(Axis::XZ, 213.0, 343.0, 227.0, 332.0, 554.0, light);
 
     (String::from("Cornell Box with Multiple Objects"), camera, bvh, light_shape)

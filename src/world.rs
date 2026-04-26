@@ -6,7 +6,7 @@ use aabb::AABB;
 use hitable::{HitRecord, Hitable};
 use materials::Diffuse;
 use ray::Ray;
-use texture::ConstantTexture;
+use texture::SolidColor;
 
 #[derive(Clone)]
 /// The World struct holds all of the objects in the scene
@@ -41,7 +41,7 @@ impl Hitable for World {
                            Vec3::ZERO,
                            Vec3::ZERO,
                            Vec3::ZERO,
-                           Arc::new(Diffuse::new(ConstantTexture::new(0.0, 0.0, 0.0), 0.0)));
+                           Arc::new(Diffuse::new(SolidColor::new(0.0, 0.0, 0.0), 0.0)));
         let mut hit_anything: bool = false;
         let mut closest_so_far: f32 = position_max;
 
