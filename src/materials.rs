@@ -379,7 +379,7 @@ impl Plastic {
 impl Material for Plastic {
     fn scatter(&self, ray: &Ray, record: &HitRecord, rng: &mut ThreadRng) -> Option<ScatterRecord<'_>> {
         let cos_theta_i = (-ray.direction).dot(record.shading_normal).max(0.0);
-        let fresnel = schlick(cos_theta_i, self.ior);
+        let fresnel = fresnel_coefficient(cos_theta_i, 1.0, self.ior);
 
         // Probabilistically pick specular or diffuse based on Fresnel
         if rand::random::<f32>() < fresnel {
