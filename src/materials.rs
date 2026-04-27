@@ -72,7 +72,7 @@ pub struct Diffuse {
 }
 
 impl Diffuse {
-    /// Create a new Diffuse material with the given albedo
+    /// Create a new Diffuse material with the given albedo and sigma (roughness)
     ///
     /// albedo is a Vec3 of the RGB values assigned to the material
     /// where each value is a float between 0.0 and 1.0.
