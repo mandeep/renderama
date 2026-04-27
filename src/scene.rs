@@ -16,14 +16,14 @@ use triangle::TriangleMesh;
 use volume::Volume;
 use world::World;
 
-pub fn three_spheres_scene(width: usize, height: usize) -> (String, Camera, BVH, Plane) {
+pub fn three_spheres_scene(width: usize, height: usize) -> (String, Camera, BVH, Option<Plane>) {
     let origin = Vec3::new(0.0, 3.0, 6.0);
     let lookat = Vec3::new(0.0, 0.0, -1.5);
     let view = Vec3::new(0.0, 1.0, 0.0);
     let fov = 20.0;
     let aspect_ratio = (width / height) as f32;
-    let aperture = 0.1;
-    let focus_distance = 10.0;
+    let aperture = 0.01;
+    let focus_distance = (lookat - origin).length();
     let time0 = 0.0;
     let time1 = 1.0;
     let atmosphere = true;
@@ -71,12 +71,12 @@ pub fn three_spheres_scene(width: usize, height: usize) -> (String, Camera, BVH,
 
     let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
 
-    let light = Plane::new(Axis::XY, 0.0, 0.0, 0.0, 0.0, 0.0, Empty::new());
+    let light = None;
 
     (String::from("Three Spheres"), camera, bvh, light)
 }
 
-pub fn random_spheres_scene(width: usize, height: usize) -> (String, Camera, BVH, Plane) {
+pub fn random_spheres_scene(width: usize, height: usize) -> (String, Camera, BVH, Option<Plane>) {
     let origin = Vec3::new(13.0, 2.0, 3.0);
     let lookat = Vec3::new(0.0, 0.0, 0.0);
     let view = Vec3::new(0.0, 1.0, 0.0);
@@ -184,7 +184,7 @@ pub fn random_spheres_scene(width: usize, height: usize) -> (String, Camera, BVH
 
     let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
 
-    let light = Plane::new(Axis::XY, 0.0, 0.0, 0.0, 0.0, 0.0, Empty::new());
+    let light = None;
 
     (String::from("Random Spheres"), camera, bvh, light)
 }
@@ -637,7 +637,7 @@ pub fn cornell_box_lucy_scene(width: usize, height: usize)
 }
 
 pub fn cornell_box_object_scene(width: usize, height: usize)
-                              -> (String, Camera, BVH, Plane) {
+                              -> (String, Camera, BVH, Option<Plane>) {
     let origin = Vec3::new(278.0, 278.0, -800.0);
     let lookat = Vec3::new(278.0, 278.0, 0.0);
     let view = Vec3::new(0.0, 1.0, 0.0);
@@ -684,7 +684,7 @@ pub fn cornell_box_object_scene(width: usize, height: usize)
     let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
 
     let light = Light::new(SolidColor::new(0.0, 0.0, 0.0));
-    let light_shape = Plane::new(Axis::XZ, 213.0, 343.0, 227.0, 332.0, 554.0, light);
+    let light_shape = Some(Plane::new(Axis::XZ, 213.0, 343.0, 227.0, 332.0, 554.0, light));
 
     (String::from("Cornell Box with Multiple Objects"), camera, bvh, light_shape)
 }
