@@ -59,30 +59,26 @@ pub fn render_path_integrator(mut ray: Ray,
                     throughput *= scatter_record.attenuation;
                     ray = scatter_record.specular_ray;
                 } else {
-                    let hitable_pdf = PDF::HitablePDF { origin: hit_record.point,
-                                                        hitable: Arc::new(light_source.clone()) };
-                    let mixture_pdf = PDF::MixturePDF { cosine_pdf: &scatter_record.pdf,
-                                                        hitable_pdf: &hitable_pdf };
+                    let importance_pdf = PDF::ImportancePDF { origin: hit_record.point, hitable: Arc::new(light_source.clone()) };
+                    let hybrid_pdf = PDF::HybridPDF { material_pdf: &scatter_record.pdf, importance_pdf: &importance_pdf };
 
+                    let scattered_direction = hybrid_pdf.generate(rng);
                     // Offset the scatter origin along the geometric normal to avoid
                     // self-intersection. We always do this (not just when geometric and
                     // shading normals differ) because surfaces with matching normals still
                     // self-intersect at grazing angles.
-                    let scattered_direction = mixture_pdf.generate(rng);
-                    let offset_normal = if scattered_direction.dot(hit_record.geometric_normal)
-                                           > 0.0
-                    {
+                    let offset_normal = if scattered_direction.dot(hit_record.geometric_normal) > 0.0 {
                         hit_record.geometric_normal
                     } else {
                         -hit_record.geometric_normal
                     };
                     let offset_point = find_offset_point(hit_record.point, offset_normal);
                     let scattered = Ray::new(offset_point, scattered_direction, ray.time);
-                    let pdf = mixture_pdf.value(scattered.direction);
+                    let pdf_value = hybrid_pdf.value(scattered.direction);
                     let scattering_pdf = hit_record.material
                                                    .scattering_pdf(&ray, &hit_record, &scattered);
 
-                    throughput *= (scattering_pdf * scatter_record.attenuation) / pdf;
+                    throughput *= (scattering_pdf * scatter_record.attenuation) / pdf_value;
 
                     ray = scattered;
                 }

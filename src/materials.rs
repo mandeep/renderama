@@ -98,7 +98,7 @@ impl Material for Diffuse {
                -> Option<ScatterRecord<'_>> {
         let scattered = Ray::new(record.point, ray.direction, ray.time);
         let attenuation = self.albedo.value(record.u, record.v, &record.point);
-        let pdf = PDF::CosinePDF { uvw: OrthonormalBasis::new(&record.shading_normal) };
+        let pdf = PDF::MaterialPDF { uvw: OrthonormalBasis::new(&record.shading_normal) };
         Some(ScatterRecord::new(scattered, attenuation, pdf, false))
     }
 
@@ -232,7 +232,7 @@ impl Material for Reflective {
         let specular_ray = Ray::new(record.point,
                                     reflected + self.fuzz * pick_sphere_point(rng),
                                     ray.time);
-        let pdf = PDF::CosinePDF { uvw: OrthonormalBasis::new(&record.shading_normal) };
+        let pdf = PDF::MaterialPDF { uvw: OrthonormalBasis::new(&record.shading_normal) };
         Some(ScatterRecord::new(specular_ray, self.albedo, pdf, true))
     }
 }
@@ -295,7 +295,7 @@ impl Material for Refractive {
             Vec3::ONE
         };
 
-        let pdf = PDF::CosinePDF { uvw: OrthonormalBasis::new(&record.shading_normal) };
+        let pdf = PDF::MaterialPDF { uvw: OrthonormalBasis::new(&record.shading_normal) };
 
         if rand::random::<f32>() < reflect_probability {
             let reflected: Vec3 = reflect(ray.direction, record.shading_normal);
@@ -354,7 +354,7 @@ impl Material for Isotropic {
     fn scatter(&self, ray: &Ray, record: &HitRecord, rng: &mut ThreadRng) -> Option<ScatterRecord<'_>> {
         let scattered = Ray::new(record.point, pick_sphere_point(rng), ray.time);
         let attenuation = self.albedo.value(record.u, record.v, &record.point);
-        let pdf = PDF::CosinePDF { uvw: OrthonormalBasis::new(&record.shading_normal) };
+        let pdf = PDF::MaterialPDF { uvw: OrthonormalBasis::new(&record.shading_normal) };
         Some(ScatterRecord::new(scattered, attenuation, pdf, true))
     }
 }
@@ -386,13 +386,13 @@ impl Material for Plastic {
             // Specular path
             let reflected = reflect(ray.direction, record.shading_normal);
             let specular_ray = Ray::new(record.point, reflected, ray.time);
-            let pdf = PDF::CosinePDF { uvw: OrthonormalBasis::new(&record.shading_normal) };
+            let pdf = PDF::MaterialPDF { uvw: OrthonormalBasis::new(&record.shading_normal) };
             Some(ScatterRecord::new(specular_ray, Vec3::ONE, pdf, true))
         } else {
             // Diffuse path
             let scattered = Ray::new(record.point, ray.direction, ray.time);
             let attenuation = self.albedo.value(record.u, record.v, &record.point);
-            let pdf = PDF::CosinePDF { uvw: OrthonormalBasis::new(&record.shading_normal) };
+            let pdf = PDF::MaterialPDF { uvw: OrthonormalBasis::new(&record.shading_normal) };
             Some(ScatterRecord::new(scattered, attenuation, pdf, false))
         }
     }

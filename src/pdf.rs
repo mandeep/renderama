@@ -10,23 +10,23 @@ use hitable::Hitable;
 use sampling::uniform_sample_hemisphere;
 
 pub enum PDF<'a> {
-    CosinePDF {
+    MaterialPDF {
         uvw: OrthonormalBasis,
     },
-    HitablePDF {
+    ImportancePDF {
         origin: Vec3,
         hitable: Arc<dyn Hitable>,
     },
-    MixturePDF {
-        cosine_pdf: &'a PDF<'a>,
-        hitable_pdf: &'a PDF<'a>,
+    HybridPDF {
+        material_pdf: &'a PDF<'a>,
+        importance_pdf: &'a PDF<'a>,
     },
 }
 
 impl<'a> PDF<'a> {
     pub fn value(&self, direction: Vec3) -> f32 {
         match self {
-            PDF::CosinePDF { uvw } => {
+            PDF::MaterialPDF { uvw } => {
                 let cosine = direction.normalize().dot(uvw.w());
 
                 if cosine > 0.0 {
@@ -35,24 +35,23 @@ impl<'a> PDF<'a> {
                     0.0
                 }
             }
-            PDF::HitablePDF { origin, hitable } => hitable.pdf_value(*origin, direction),
-            PDF::MixturePDF { cosine_pdf,
-                              hitable_pdf, } => {
-                0.5 * cosine_pdf.value(direction) + 0.5 * hitable_pdf.value(direction)
+            PDF::ImportancePDF { origin, hitable } => hitable.pdf_value(*origin, direction),
+            PDF::HybridPDF { material_pdf, importance_pdf, } => {
+                0.5 * material_pdf.value(direction) + 0.5 * importance_pdf.value(direction)
             }
         }
     }
 
     pub fn generate(&self, rng: &mut ThreadRng) -> Vec3 {
         match self {
-            PDF::CosinePDF { uvw } => uvw.local(&uniform_sample_hemisphere(rng)),
-            PDF::HitablePDF { origin, hitable } => hitable.pdf_random(*origin, rng),
-            PDF::MixturePDF { cosine_pdf,
-                              hitable_pdf, } => {
+            PDF::MaterialPDF { uvw } => uvw.local(&uniform_sample_hemisphere(rng)),
+            PDF::ImportancePDF { origin, hitable } => hitable.pdf_random(*origin, rng),
+            PDF::HybridPDF { material_pdf,
+                              importance_pdf, } => {
                 if rng.gen::<f32>() < 0.5 {
-                    cosine_pdf.generate(rng)
+                    material_pdf.generate(rng)
                 } else {
-                    hitable_pdf.generate(rng)
+                    importance_pdf.generate(rng)
                 }
             }
         }
