@@ -663,13 +663,13 @@ pub fn cornell_box_object_scene(width: usize, height: usize)
     world.add(Plane::new(Axis::XZ, 0.0, 555.0, 0.0, 555.0, 0.0, white.clone()));
     world.add(FlipNormals::of(Plane::new(Axis::XY, 0.0, 555.0, 0.0, 555.0, 555.0, white.clone())));
 
-    let lucy_material = Arc::new(Diffuse::new(SolidColor::new(0.92, 0.88, 0.82), 0.0));
+    let lucy_material = Arc::new(Diffuse::new(SolidColor::new(0.92, 0.88, 0.82), 0.05));
     let lucy = TriangleMesh::from("models/lucy.obj", lucy_material);
-    world.add(TransformedMesh::new(Vec3::new(200.0, 182.0, 364.0), Vec3::new(0.0, 0.0, 0.0), 0.30, lucy));
+    world.add(TransformedMesh::new(Vec3::new(200.0, 180.0, 364.0), Vec3::new(0.0, 0.0, 0.0), 0.30, lucy));
 
     let dragon_material = Arc::new(Plastic::new(SolidColor::new(0.7, 0.85, 0.45), 0.3, 1.5));
     let dragon = TriangleMesh::from("models/dragon.obj", dragon_material);
-    world.add(TransformedMesh::new(Vec3::new(283.0, 98.0, 268.0), Vec3::new(0.0, -60.0, 0.0), 350.0, dragon));
+    world.add(TransformedMesh::new(Vec3::new(283.0, 96.0, 268.0), Vec3::new(0.0, -60.0, 0.0), 350.0, dragon));
 
     let bunny_material = Arc::new(Refractive::new(1.5, Vec3::ONE));
     let bunny = TriangleMesh::from("models/bunny.obj", bunny_material);
