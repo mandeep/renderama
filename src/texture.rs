@@ -37,7 +37,7 @@ pub struct ImageTexture {
 /// Create a new texture from the given data and image dimensions
 impl ImageTexture {
     pub fn new(filename: &str) -> ImageTexture {
-        ImageTexture { im: image::open(filename).unwrap().flipv().to_rgb() }
+        ImageTexture { im: image::open(filename).unwrap().flipv().to_rgb8() }
     }
 }
 

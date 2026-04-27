@@ -3,7 +3,6 @@
 extern crate chrono;
 extern crate glam;
 extern crate image;
-extern crate image2;
 extern crate nalgebra;
 extern crate pbr;
 extern crate rand;
@@ -44,7 +43,7 @@ use std::time::{Duration, Instant};
 
 use chrono::{DateTime, Local};
 use glam::Vec3;
-use image2::{ImageBuf, Rgb};
+use image::{ImageBuffer, Rgb};
 use pbr::ProgressBar;
 use rand::thread_rng;
 use rayon::prelude::*;
@@ -119,13 +118,13 @@ fn main() {
     });
 
     let render_end_time: DateTime<Local> = Local::now();
-    println!("[{}] Finished rendering in {}. Render saved to render.hdr.",
+    println!("[{}] Finished rendering in {}. Render saved to render.exr.",
              render_end_time.format("%H:%M:%S"),
              utils::format_time(rendering_time.elapsed()));
 
-    let buffer: ImageBuf<f32, Rgb> = ImageBuf::new_from(width, height, pixels.clone());
+    let buffer: ImageBuffer<Rgb<f32>, Vec<f32>> = ImageBuffer::from_raw(width as u32, height as u32, pixels.clone()).unwrap();
 
-    image2::io::write("render.hdr", &buffer).unwrap();
+    buffer.save("render.exr").unwrap();
 
     #[cfg(feature = "denoise")]
     {
@@ -137,12 +136,12 @@ fn main() {
         let denoised_output = denoise(&pixels, width, height);
 
         let denoise_end_time: DateTime<Local> = Local::now();
-        println!("[{}] Finished denoising in {}. Render saved to denoised_render.hdr.",
+        println!("[{}] Finished denoising in {}. Render saved to denoised_render.exr.",
                  denoise_end_time.format("%H:%M:%S"),
                  utils::format_time(denoising_time.elapsed()));
 
-        let denoised_buffer: ImageBuf<f32, Rgb> = ImageBuf::new_from(width, height, denoised_output);
+        let denoised_buffer: ImageBuffer<Rgb<f32>, Vec<f32>> = ImageBuffer::from_raw(width as u32, height as u32, denoised_output).unwrap();
 
-        image2::io::write("denoised_render.hdr", &denoised_buffer).unwrap();
+        denoised_buffer.save("denoised_render.exr").unwrap();
     }
 }
