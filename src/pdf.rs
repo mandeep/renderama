@@ -21,6 +21,9 @@ pub enum PDF<'a> {
         material_pdf: &'a PDF<'a>,
         importance_pdf: &'a PDF<'a>,
     },
+    FallbackPDF {
+        uvw: OrthonormalBasis
+    }
 }
 
 impl<'a> PDF<'a> {
@@ -38,6 +41,15 @@ impl<'a> PDF<'a> {
             PDF::ImportancePDF { origin, hitable } => hitable.pdf_value(*origin, direction),
             PDF::HybridPDF { material_pdf, importance_pdf, } => {
                 0.5 * material_pdf.value(direction) + 0.5 * importance_pdf.value(direction)
+            },
+            PDF::FallbackPDF { uvw } => {
+                let cosine = direction.normalize().dot(uvw.w());
+
+                if cosine > 0.0 {
+                    cosine / PI
+                } else {
+                    0.0
+                }
             }
         }
     }
@@ -53,7 +65,8 @@ impl<'a> PDF<'a> {
                 } else {
                     importance_pdf.generate(rng)
                 }
-            }
+            },
+            PDF::FallbackPDF { uvw } => uvw.local(&uniform_sample_hemisphere(rng)),
         }
     }
 }

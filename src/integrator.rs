@@ -6,6 +6,7 @@ use rand::rngs::ThreadRng;
 use rand::Rng;
 use rand_distr::{Distribution, Normal};
 
+use basis::OrthonormalBasis;
 use bvh::BVH;
 use hitable::Hitable;
 use pdf::PDF;
@@ -42,7 +43,7 @@ pub fn pick_sphere_point(rng: &mut ThreadRng) -> Vec3 {
 pub fn render_path_integrator(mut ray: Ray,
                      world: &BVH,
                      bounces: u32,
-                     light_source: &Plane,
+                     light_source: &Option<Plane>,
                      atmosphere: bool,
                      rng: &mut ThreadRng)
                      -> Vec3 {
@@ -59,8 +60,20 @@ pub fn render_path_integrator(mut ray: Ray,
                     throughput *= scatter_record.attenuation;
                     ray = scatter_record.specular_ray;
                 } else {
-                    let importance_pdf = PDF::ImportancePDF { origin: hit_record.point, hitable: Arc::new(light_source.clone()) };
-                    let hybrid_pdf = PDF::HybridPDF { material_pdf: &scatter_record.pdf, importance_pdf: &importance_pdf };
+                    let fallback_pdf = PDF::FallbackPDF { uvw: OrthonormalBasis::new(&hit_record.shading_normal) };
+                    let importance_pdf = light_source.as_ref().map(|light| {
+                        PDF::ImportancePDF { origin: hit_record.point, hitable: Arc::new(light.clone())}
+                    });
+                    let hybrid_pdf = match &importance_pdf {
+                        Some(sample_target_pdf) => PDF::HybridPDF {
+                            material_pdf: &scatter_record.pdf,
+                            importance_pdf: sample_target_pdf,
+                        },
+                        None => PDF::HybridPDF {
+                            material_pdf: &scatter_record.pdf,
+                            importance_pdf: &fallback_pdf,
+                        },
+                    };
 
                     let scattered_direction = hybrid_pdf.generate(rng);
                     // Offset the scatter origin along the geometric normal to avoid
