@@ -377,21 +377,19 @@ impl Plastic {
 }
 
 impl Material for Plastic {
-    fn scatter(&self, ray: &Ray, record: &HitRecord, rng: &mut ThreadRng) -> Option<ScatterRecord<'_>> {
+    fn scatter(&self, ray: &Ray, record: &HitRecord, _rng: &mut ThreadRng) -> Option<ScatterRecord<'_>> {
         let cos_theta_i = (-ray.direction).dot(record.shading_normal).max(0.0);
         let fresnel = fresnel_coefficient(cos_theta_i, 1.0, self.ior);
 
         // Probabilistically pick specular or diffuse based on Fresnel
         if rand::random::<f32>() < fresnel {
-            // Specular: GGX-perturbed reflection
+            // Specular path
             let reflected = reflect(ray.direction, record.shading_normal);
-            // Perturb by roughness - simple approximation, not proper GGX but good enough
-            let perturbed = (reflected + self.roughness * self.roughness * pick_sphere_point(rng)).normalize();
-            let specular_ray = Ray::new(record.point, perturbed, ray.time);
+            let specular_ray = Ray::new(record.point, reflected, ray.time);
             let pdf = PDF::CosinePDF { uvw: OrthonormalBasis::new(&record.shading_normal) };
             Some(ScatterRecord::new(specular_ray, Vec3::ONE, pdf, true))
         } else {
-            // Diffuse: Lambertian
+            // Diffuse path
             let scattered = Ray::new(record.point, ray.direction, ray.time);
             let attenuation = self.albedo.value(record.u, record.v, &record.point);
             let pdf = PDF::CosinePDF { uvw: OrthonormalBasis::new(&record.shading_normal) };
