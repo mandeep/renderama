@@ -25,19 +25,19 @@ pub struct Plane {
     s0: f32,
     s1: f32,
     k: f32,
-    material: Arc<dyn Material>,
+    material: Arc<Material>,
 }
 
 impl Plane {
-    pub fn new<M: Material + 'static>(axis: Axis,
+    pub fn new(axis: Axis,
                                       r0: f32,
                                       r1: f32,
                                       s0: f32,
                                       s1: f32,
                                       k: f32,
-                                      material: M)
+                                      material: Arc<Material>)
                                       -> Plane {
-        let material = Arc::new(material);
+
         Plane { axis,
                 r0,
                 r1,
@@ -53,7 +53,7 @@ impl Plane {
                     s0: f32,
                     s1: f32,
                     k: f32,
-                    material: Arc<dyn Material>)
+                    material: Arc<Material>)
                     -> Plane {
         Plane { axis,
                 r0,

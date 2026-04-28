@@ -13,7 +13,7 @@ pub struct Sphere {
     pub start_center: Vec3,
     pub end_center: Vec3,
     pub radius: f32,
-    pub material: Arc<dyn Material>,
+    pub material: Arc<Material>,
     pub start_time: f32,
     pub end_time: f32,
 }
@@ -24,14 +24,14 @@ impl Sphere {
     /// We use the 'static lifetime so that we can create a Arc material
     /// within the function rather than having to pass a Arc material
     /// as an input parameter.
-    pub fn new<M: Material + 'static>(start_center: Vec3,
+    pub fn new(start_center: Vec3,
                                       end_center: Vec3,
                                       radius: f32,
-                                      material: M,
+                                      material: Arc<Material>,
                                       start_time: f32,
                                       end_time: f32)
                                       -> Sphere {
-        let material = Arc::new(material);
+
         Sphere { start_center,
                  end_center,
                  radius,

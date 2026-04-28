@@ -9,6 +9,7 @@ use rand_distr::{Distribution, Normal};
 use basis::OrthonormalBasis;
 use bvh::BVH;
 use hitable::Hitable;
+use materials::MaterialTrait;
 use pdf::PDF;
 use plane::Plane;
 use ray::{find_offset_point, Ray};

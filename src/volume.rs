@@ -12,16 +12,17 @@ use texture::Texture;
 pub struct Volume {
     density: f32,
     boundary: Arc<dyn Hitable>,
-    material: Arc<dyn Material>,
+    material: Arc<Material>,
 }
 
 impl Volume {
-    pub fn new<H: Hitable + 'static, T: Texture + 'static>(density: f32,
+    pub fn new<H: Hitable + 'static>(density: f32,
                                                            boundary: H,
-                                                           texture: T)
+                                                           texture: Arc<Texture>,)
                                                            -> Volume {
         let boundary = Arc::new(boundary);
-        let material = Arc::new(Isotropic::new(texture));
+        let material = Arc::new(Isotropic::new(texture).into());
+
         Volume { density,
                  boundary,
                  material }

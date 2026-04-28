@@ -1,8 +1,41 @@
 use glam::Vec3;
 use image;
 
+#[derive(Clone)]
+pub enum Texture {
+    SolidColor(SolidColor),
+    ImageTexture(ImageTexture),
+}
+
+impl Texture {
+    pub fn value(&self, u: f32, v: f32, w: &Vec3) -> Vec3 {
+        match self {
+            Texture::SolidColor(texture) => texture.value(u, v, w),
+            Texture::ImageTexture(texture) => texture.value(u, v, w),
+        }
+    }
+}
+
+macro_rules! impl_from_texture {
+    ($($t:ty => $v:ident),*) => {
+        $(
+            impl From<$t> for Texture {
+                fn from(m: $t) -> Self {
+                    Texture::$v(m)
+                }
+            }
+        )*
+    };
+}
+
+impl_from_texture!(
+    SolidColor => SolidColor,
+    ImageTexture => ImageTexture
+);
+
+
 /// Texture trait can be implemented so that textures can be applied to materials
-pub trait Texture: Send + Sync {
+pub trait TextureTrait: Send + Sync {
     fn value(&self, u: f32, v: f32, p: &Vec3) -> Vec3;
 }
 
@@ -22,7 +55,7 @@ impl SolidColor {
 /// Implement the Texture trait for SolidColor
 /// This allows the SolidColor's color to be retrieved
 /// as well as the SolidColor to be cloned.
-impl Texture for SolidColor {
+impl TextureTrait for SolidColor {
     fn value(&self, _u: f32, _v: f32, _p: &Vec3) -> Vec3 {
         self.color
     }
@@ -43,7 +76,7 @@ impl ImageTexture {
 
 /// Determine which pixel to retrieve from the image by
 /// converting pixel coordinates to UV coordinates
-impl Texture for ImageTexture {
+impl TextureTrait for ImageTexture {
     fn value(&self, u: f32, v: f32, _p: &Vec3) -> Vec3 {
         let i = 0.0f32.max((u * self.im.width() as f32).min(self.im.width() as f32 - 1.0));
         let j = 0.0f32.max((v * self.im.height() as f32).min(self.im.height() as f32 - 1.0));

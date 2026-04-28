@@ -21,19 +21,18 @@ pub struct Triangle {
     uv0: Vec2,
     uv1: Vec2,
     uv2: Vec2,
-
-    material: Arc<dyn Material>,
+    material: Arc<Material>
 }
 
 pub struct TriangleMesh {
     triangles: Vec<Triangle>,
     accelerator: BVH,
-    material: Arc<dyn Material>,
+    material: Arc<Material>,
 }
 
 impl Triangle {
     /// Create a new triangle with vertices v0, v1, and v2
-    pub fn new<M: Material + 'static>(v0: Vec3,
+    pub fn new(v0: Vec3,
                                       v1: Vec3,
                                       v2: Vec3,
                                       n0: Vec3,
@@ -42,9 +41,9 @@ impl Triangle {
                                       uv0: Vec2,
                                       uv1: Vec2,
                                       uv2: Vec2,
-                                      material: M)
+                                      material: Arc<Material>)
                                       -> Triangle {
-        let material = Arc::new(material);
+
         Triangle { v0: v0,
                    v1: v1,
                    v2: v2,
@@ -66,7 +65,7 @@ impl Triangle {
                     uv0: Vec2,
                     uv1: Vec2,
                     uv2: Vec2,
-                    material: Arc<dyn Material>)
+                    material: Arc<Material>)
                     -> Triangle {
         Triangle { v0: v0,
                    v1: v1,
@@ -77,7 +76,8 @@ impl Triangle {
                    uv0: uv0,
                    uv1: uv1,
                    uv2: uv2,
-                   material: material }
+                   material: material
+                   }
     }
 
     pub fn minimum(&self) -> Vec3 {
@@ -160,7 +160,7 @@ impl Hitable for Triangle {
 }
 
 impl TriangleMesh {
-    pub fn new(triangles: Vec<Triangle>, material: Arc<dyn Material>) -> TriangleMesh {
+    pub fn new(triangles: Vec<Triangle>, material: Arc<Material>) -> TriangleMesh {
         let mut hitables: Vec<Arc<dyn Hitable>> = triangles.iter()
                                                            .map(|t| {
                                                                Arc::new(t.clone())
@@ -175,7 +175,7 @@ impl TriangleMesh {
                        material }
     }
 
-    pub fn from(filepath: &str, material: Arc<dyn Material>) -> TriangleMesh {
+    pub fn from(filepath: &str, material: Arc<Material>) -> TriangleMesh {
         // single_index + triangulate: tobj reindexes so positions and normals
         // are parallel arrays, and quads/ngons are split into triangles.
         let load_options = tobj::LoadOptions {
