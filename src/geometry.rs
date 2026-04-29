@@ -65,4 +65,45 @@ impl Geometry {
             _ => Vec3::new(1.0, 0.0, 0.0)
         }
     }
+
+    pub fn reversed(self) -> Self {
+        Geometry::ReverseOrientation(Box::new(self))
+    }
+}
+
+macro_rules! impl_from_for_geometry {
+    // Direct variants: From<T> wraps as Variant(t)
+    ($($variant:ident => $type:ty),* $(,)?) => {
+        $(
+            impl From<$type> for Geometry {
+                fn from(value: $type) -> Self {
+                    Geometry::$variant(value)
+                }
+            }
+        )*
+    };
+}
+
+macro_rules! impl_from_boxed_for_geometry {
+    // Boxed variants: From<T> wraps as Variant(Box::new(t))
+    ($($variant:ident => $type:ty),* $(,)?) => {
+        $(
+            impl From<$type> for Geometry {
+                fn from(value: $type) -> Self {
+                    Geometry::$variant(Box::new(value))
+                }
+            }
+        )*
+    };
+}
+
+impl_from_for_geometry! {
+    Plane => Plane,
+    Sphere => Sphere,
+    Triangle => Triangle,
+}
+
+impl_from_boxed_for_geometry! {
+    TriangleMesh => TriangleMesh,
+    TransformedMesh => TransformedMesh,
 }
