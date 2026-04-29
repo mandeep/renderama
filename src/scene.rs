@@ -28,215 +28,192 @@ impl Scene {
     }
 }
 
-// pub fn three_spheres_scene(width: usize, height: usize) -> (String, Camera, BVH, Option<Plane>) {
-//     let origin = Vec3::new(0.0, 3.0, 6.0);
-//     let lookat = Vec3::new(0.0, 0.0, -1.5);
-//     let view = Vec3::new(0.0, 1.0, 0.0);
-//     let fov = 20.0;
-//     let aspect_ratio = (width / height) as f32;
-//     let aperture = 0.01;
-//     let focus_distance = (lookat - origin).length();
-//     let time0 = 0.0;
-//     let time1 = 1.0;
-//     let atmosphere = true;
+pub fn three_spheres_scene(width: usize, height: usize) -> (String, Camera, Scene, Option<Plane>) {
+    let origin = Vec3::new(0.0, 3.0, 6.0);
+    let lookat = Vec3::new(0.0, 0.0, -1.5);
+    let view = Vec3::new(0.0, 1.0, 0.0);
+    let fov = 20.0;
+    let aspect_ratio = (width / height) as f32;
+    let aperture = 0.01;
+    let focus_distance = (lookat - origin).length();
+    let time0 = 0.0;
+    let time1 = 1.0;
+    let atmosphere = true;
 
-//     let camera = Camera::new(origin,
-//                              lookat,
-//                              view,
-//                              fov,
-//                              aspect_ratio,
-//                              aperture,
-//                              focus_distance,
-//                              time0,
-//                              time1,
-//                              atmosphere);
+    let camera = Camera::new(origin,
+                             lookat,
+                             view,
+                             fov,
+                             aspect_ratio,
+                             aperture,
+                             focus_distance,
+                             time0,
+                             time1,
+                             atmosphere);
 
-//     let mut world = World::new();
+    let mut world = World::new();
+    let mut materials: Vec<Material> = Vec::new();
 
-//     world.add(Sphere::new(Vec3::new(0.6, 0.0, -1.0),
-//                           Vec3::new(0.6, 0.0, -1.0),
-//                           0.5,
-//                           Diffuse::new(SolidColor::new(0.75, 0.25, 0.25), 0.0),
-//                           0.0,
-//                           1.0));
+    let red_idx = mat!(materials, Diffuse::new(SolidColor::new(0.75, 0.25, 0.25).into(), 0.0));
 
-//     world.add(Sphere::new(Vec3::new(-0.6, 0.0, -1.0),
-//                           Vec3::new(-0.6, 0.0, -1.0),
-//                           0.5,
-//                           Reflective::new(Vec3::new(0.5, 0.5, 0.5), 0.1),
-//                           0.0,
-//                           1.0));
 
-//     world.add(Sphere::new(Vec3::new(0.0, 0.1, -2.0),
-//                           Vec3::new(0.0, 0.1, -2.0),
-//                           0.5,
-//                           Refractive::new(1.5, Vec3::ONE),
-//                           0.0,
-//                           1.0));
+    world.add(Geometry::Sphere(Sphere::new(Vec3::new(0.6, 0.0, -1.0),
+                          Vec3::new(0.6, 0.0, -1.0),
+                          0.5,
+                          red_idx,
+                          0.0,
+                          1.0)));
 
-//     world.add(Sphere::new(Vec3::new(0.0, -100.5, -1.0),
-//                           Vec3::new(0.0, -100.5, -1.0),
-//                           100.0,
-//                           Diffuse::new(SolidColor::new(0.5, 0.5, 0.5), 0.0),
-//                           0.0,
-//                           1.0));
+    let metal_idx = mat!(materials, Reflective::new(Vec3::new(0.5, 0.5, 0.5), 0.1));
 
-//     let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
+    world.add(Geometry::Sphere(Sphere::new(Vec3::new(-0.6, 0.0, -1.0),
+                          Vec3::new(-0.6, 0.0, -1.0),
+                          0.5,
+                          metal_idx,
+                          0.0,
+                          1.0)));
 
-//     let light = None;
+    let glass_idx = mat!(materials, Refractive::new(1.5, Vec3::ONE));
 
-//     (String::from("Three Spheres"), camera, bvh, light)
-// }
+    world.add(Geometry::Sphere(Sphere::new(Vec3::new(0.0, 0.1, -2.0),
+                          Vec3::new(0.0, 0.1, -2.0),
+                          0.5,
+                          glass_idx,
+                          0.0,
+                          1.0)));
 
-// pub fn random_spheres_scene(width: usize, height: usize) -> (String, Camera, BVH, Option<Plane>) {
-//     let origin = Vec3::new(13.0, 2.0, 3.0);
-//     let lookat = Vec3::new(0.0, 0.0, 0.0);
-//     let view = Vec3::new(0.0, 1.0, 0.0);
-//     let fov = 20.0;
-//     let aspect_ratio = (width / height) as f32;
-//     let aperture = 0.1;
-//     let focus_distance = 10.0;
-//     let time0 = 0.0;
-//     let time1 = 1.0;
-//     let atmosphere = true;
+    let floor_idx = mat!(materials, Diffuse::new(SolidColor::new(0.5, 0.5, 0.5).into(), 0.0));
+    world.add(Geometry::Sphere(Sphere::new(Vec3::new(0.0, -100.5, -1.0),
+                          Vec3::new(0.0, -100.5, -1.0),
+                          100.0,
+                          floor_idx,
+                          0.0,
+                          1.0)));
 
-//     let camera = Camera::new(origin,
-//                              lookat,
-//                              view,
-//                              fov,
-//                              aspect_ratio,
-//                              aperture,
-//                              focus_distance,
-//                              time0,
-//                              time1,
-//                              atmosphere);
+    let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
 
-//     let mut world = World::new();
+    let light = None;
 
-//     world.add(Sphere::new(Vec3::new(0.0, -1000.0, 0.0),
-//                           Vec3::new(0.0, -1000.0, 0.0),
-//                           1000.0,
-//                           Diffuse::new(SolidColor::new(0.5, 0.5, 0.5), 0.0),
-//                           0.0,
-//                           1.0));
+    let scene = Scene::new(materials, bvh);
 
-//     for a in -11..11 {
-//         for b in -11..11 {
-//             let material = rand::random::<f32>();
-//             let center: Vec3 = Vec3::new(a as f32 + 0.9 * rand::random::<f32>(),
-//                                          0.2,
-//                                          b as f32 + 0.9 * rand::random::<f32>());
+    (String::from("Three Spheres"), camera, scene, light)
+}
 
-//             if (center - Vec3::new(4.0, 0.2, 0.0)).length() > 0.9 {
-//                 if material < 0.75 {
-//                     world.add(Sphere::new(center,
-//                                      center,
-//                                      0.2,
-//                                      Diffuse::new(SolidColor::new(rand::random::<f32>()
-//                                                                        * rand::random::<f32>(),
-//                                                                        rand::random::<f32>()
-//                                                                        * rand::random::<f32>(),
-//                                                                        rand::random::<f32>()
-//                                                                        * rand::random::<f32>()),
-//                                                   0.0),
-//                                      0.0,
-//                                      1.0));
-//                 } else if material < 0.95 {
-//                     world.add(Sphere::new(center,
-//                                           center,
-//                                           0.2,
-//                                           Reflective::new(Vec3::new(0.5
-//                                                                     * (1.0
-//                                                                        * rand::random::<f32>()),
-//                                                                     0.5
-//                                                                     * (1.0
-//                                                                        * rand::random::<f32>()),
-//                                                                     0.5
-//                                                                     * (1.0
-//                                                                        * rand::random::<f32>())),
-//                                                           0.5 * rand::random::<f32>()),
-//                                           0.0,
-//                                           1.0));
-//                 } else {
-//                     world.add(Sphere::new(center, center, 0.2, Refractive::new(1.5, Vec3::ONE), 0.0, 1.0));
+pub fn random_spheres_scene(width: usize, height: usize) -> (String, Camera, Scene, Option<Plane>) {
+    let origin = Vec3::new(13.0, 2.0, 3.0);
+    let lookat = Vec3::new(0.0, 0.0, 0.0);
+    let view = Vec3::new(0.0, 1.0, 0.0);
+    let fov = 20.0;
+    let aspect_ratio = (width / height) as f32;
+    let aperture = 0.1;
+    let focus_distance = 10.0;
+    let time0 = 0.0;
+    let time1 = 1.0;
+    let atmosphere = true;
 
-//                     world.add(Sphere::new(center, center, -0.19, Refractive::new(1.5, Vec3::ONE), 0.0, 1.0));
-//                 }
-//             }
-//         }
-//     }
+    let camera = Camera::new(origin,
+                             lookat,
+                             view,
+                             fov,
+                             aspect_ratio,
+                             aperture,
+                             focus_distance,
+                             time0,
+                             time1,
+                             atmosphere);
 
-//     world.add(Sphere::new(Vec3::new(-2.0, 1.0, 0.0),
-//                           Vec3::new(-2.0, 1.0, 0.0),
-//                           1.0,
-//                           Diffuse::new(SolidColor::new(0.75, 0.25, 0.25), 0.0),
-//                           0.0,
-//                           1.0));
+    let mut world = World::new();
+    let mut materials: Vec<Material> = Vec::new();
 
-//     world.add(Sphere::new(Vec3::new(0.0, 1.0, 0.0),
-//                           Vec3::new(0.0, 1.0, 0.0),
-//                           1.0,
-//                           Refractive::new(1.5, Vec3::ONE),
-//                           0.0,
-//                           1.0));
+    let floor_idx = mat!(materials, Diffuse::new(SolidColor::new(0.5, 0.5, 0.5).into(), 0.0));
 
-//     world.add(Sphere::new(Vec3::new(0.0, 1.0, 0.0),
-//                           Vec3::new(0.0, 1.0, 0.0),
-//                           -0.99,
-//                           Refractive::new(1.5, Vec3::ONE),
-//                           0.0,
-//                           1.0));
+    world.add(Sphere::new(Vec3::new(0.0, -1000.0, 0.0),
+                          Vec3::new(0.0, -1000.0, 0.0),
+                          1000.0,
+                          floor_idx,
+                          0.0,
+                          1.0).into());
 
-//     world.add(Sphere::new(Vec3::new(2.0, 1.0, 0.0),
-//                           Vec3::new(2.0, 1.0, 0.0),
-//                           1.0,
-//                           Reflective::new(Vec3::new(0.5, 0.5, 0.5), 0.05),
-//                           0.0,
-//                           1.0));
+    for a in -11..11 {
+        for b in -11..11 {
+            let material = rand::random::<f32>();
+            let center: Vec3 = Vec3::new(a as f32 + 0.9 * rand::random::<f32>(),
+                                         0.2,
+                                         b as f32 + 0.9 * rand::random::<f32>());
 
-//     let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
+            if (center - Vec3::new(4.0, 0.2, 0.0)).length() > 0.9 {
+                if material < 0.75 {
+                    let material = SolidColor::new(rand::random::<f32>() * rand::random::<f32>(),
+                                                   rand::random::<f32>() * rand::random::<f32>(),
+                                                   rand::random::<f32>() * rand::random::<f32>());
+                    // let roughness = rand::distributions::Uniform::new(0.0, 1.0);
+                    let random_idx = mat!(materials, Diffuse::new(material.into(), 0.0));
+                    world.add(Sphere::new(center, center, 0.2, random_idx, 0.0, 1.0).into());
+                } else if material < 0.95 {
+                    let material = Reflective::new(Vec3::new(0.5
+                                                                    * (1.0
+                                                                       * rand::random::<f32>()),
+                                                                    0.5
+                                                                    * (1.0
+                                                                       * rand::random::<f32>()),
+                                                                    0.5
+                                                                    * (1.0
+                                                                       * rand::random::<f32>())),
+                                                          0.5 * rand::random::<f32>());
+                    let random_idx = mat!(materials, material);
+                    world.add(Sphere::new(center,
+                                          center,
+                                          0.2,
+                                          random_idx,
+                                          0.0,
+                                          1.0).into());
+                } else {
+                    let refl_idx = mat!(materials, Refractive::new(1.5, Vec3::ONE));
+                    world.add(Sphere::new(center, center, 0.2, refl_idx, 0.0, 1.0).into());
+                    let refr_idx = mat!(materials, Refractive::new(1.5, Vec3::ONE));
+                    world.add(Sphere::new(center, center, -0.19,refr_idx, 0.0, 1.0).into());
+                }
+            }
+        }
+    }
+    let red_idx = mat!(materials, Diffuse::new(SolidColor::new(0.75, 0.25, 0.25).into(), 0.0));
+    world.add(Sphere::new(Vec3::new(-2.0, 1.0, 0.0),
+                          Vec3::new(-2.0, 1.0, 0.0),
+                          1.0,
+                          red_idx,
+                          0.0,
+                          1.0).into());
 
-//     let light = None;
+    let refr_idx1 = mat!(materials, Refractive::new(1.5, Vec3::ONE));
+    world.add(Sphere::new(Vec3::new(0.0, 1.0, 0.0),
+                          Vec3::new(0.0, 1.0, 0.0),
+                          1.0,
+                          refr_idx1,
+                          0.0,
+                          1.0).into());
 
-//     (String::from("Random Spheres"), camera, bvh, light)
-// }
+    world.add(Sphere::new(Vec3::new(0.0, 1.0, 0.0),
+                          Vec3::new(0.0, 1.0, 0.0),
+                          -0.99,
+                          refr_idx1,
+                          0.0,
+                          1.0).into());
 
-// pub fn earth_scene(width: usize, height: usize) -> (String, Camera, World, Plane) {
-//     let origin = Vec3::new(13.0, 2.0, 3.0);
-//     let lookat = Vec3::new(0.0, 0.0, 0.0);
-//     let view = Vec3::new(0.0, 1.0, 0.0);
-//     let fov = 20.0;
-//     let aspect_ratio = (width / height) as f32;
-//     let aperture = 0.1;
-//     let focus_distance = 10.0;
-//     let time0 = 0.0;
-//     let time1 = 1.0;
-//     let atmosphere = false;
+    let refl_idx = mat!(materials, Reflective::new(Vec3::new(0.5, 0.5, 0.5), 0.05));
+    world.add(Sphere::new(Vec3::new(2.0, 1.0, 0.0),
+                          Vec3::new(2.0, 1.0, 0.0),
+                          1.0,
+                          refl_idx,
+                          0.0,
+                          1.0).into());
 
-//     let camera = Camera::new(origin,
-//                              lookat,
-//                              view,
-//                              fov,
-//                              aspect_ratio,
-//                              aperture,
-//                              focus_distance,
-//                              time0,
-//                              time1,
-//                              atmosphere);
+    let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
+    let scene = Scene::new(materials, bvh);
 
-//     let mut world = World::new();
+    let light = None;
 
-//     world.add(Sphere::new(Vec3::new(0.0, 0.0, 0.0),
-//                           Vec3::new(0.0, 0.0, 0.0),
-//                           2.0,
-//                           Diffuse::new(ImageTexture::new("world_topo_nasa.jpg"), 0.0),
-//                           0.0,
-//                           1.0));
-
-//     let light = Plane::new(Axis::XY, 0.0, 0.0, 0.0, 0.0, 0.0, Empty::new());
-
-//     (String::from("Earth"), camera, world, light)
-// }
+    (String::from("Random Spheres"), camera, scene, light)
+}
 
 // pub fn motion_scene(width: usize, height: usize) -> (String, Camera, BVH, Plane) {
 //     let origin = Vec3::new(13.0, 2.0, 3.0);
@@ -480,172 +457,6 @@ impl Scene {
 //     let light_shape = Plane::new(Axis::XZ, 123.0, 423.0, 147.0, 412.0, 554.0, light);
 
 //     (String::from("Spheres in Box"), camera, bvh, light_shape)
-// }
-
-// pub fn cornell_box_bunny_scene(width: usize, height: usize)
-//                                  -> (String, Camera, BVH, Plane) {
-//     // Same camera as the classic Cornell box so the framing looks identical.
-//     let origin = Vec3::new(278.0, 278.0, -800.0);
-//     let lookat = Vec3::new(278.0, 278.0, 0.0);
-//     let view = Vec3::new(0.0, 1.0, 0.0);
-//     let fov = 40.0;
-//     let aspect_ratio = (width / height) as f32;
-//     let aperture = 0.0;
-//     let focus_distance = 10.0;
-//     let time0 = 0.0;
-//     let time1 = 1.0;
-//     let atmosphere = false;
-
-//     let camera = Camera::new(origin, lookat, view, fov, aspect_ratio,
-//                              aperture, focus_distance,
-//                              time0, time1, atmosphere);
-
-//     let mut world = World::new();
-
-//     let roughness = 0.0;
-//     let red   = Diffuse::new(SolidColor::new(0.65, 0.05, 0.05), roughness);
-//     let green = Diffuse::new(SolidColor::new(0.12, 0.45, 0.15), roughness);
-//     let white = Diffuse::new(SolidColor::new(0.73, 0.73, 0.73), roughness);
-//     let light = Light::new(SolidColor::new(25.0, 18.0, 10.0));
-
-//     // Cornell box walls — identical to the classic scene.
-//     //
-//     // Right wall (red) at x = 555, facing -x (into the room).
-//     world.add(FlipNormals::of(Plane::new(Axis::YZ,
-//                                          0.0, 555.0,
-//                                          0.0, 555.0,
-//                                          555.0, red)));
-
-//     // Left wall (green) at x = 0, facing +x.
-//     world.add(Plane::new(Axis::YZ, 0.0, 555.0, 0.0, 555.0, 0.0, green));
-
-//     // Ceiling light — a rectangle cut into the top.
-//     world.add(FlipNormals::of(Plane::new(Axis::XZ,
-//                                          213.0, 343.0,
-//                                          227.0, 332.0,
-//                                          554.0, light)));
-
-//     // Ceiling (white) at y = 555, facing -y.
-//     world.add(FlipNormals::of(Plane::new(Axis::XZ,
-//                                          0.0, 555.0,
-//                                          0.0, 555.0,
-//                                          555.0, white.clone())));
-
-//     // Floor (white) at y = 0, facing +y.
-//     world.add(Plane::new(Axis::XZ, 0.0, 555.0, 0.0, 555.0, 0.0, white.clone()));
-
-//     // Back wall (white) at z = 555, facing -z (toward camera).
-//     world.add(FlipNormals::of(Plane::new(Axis::XY,
-//                                          0.0, 555.0,
-//                                          0.0, 555.0,
-//                                          555.0, white.clone())));
- 
-//     let bunny_material = Arc::new(
-//         Refractive::new(2.4, Vec3::ONE)
-//         // Plastic::new(SolidColor::new(0.0, 0.17, 0.90), 0.3, 1.5)
-//     );
-
-//     let bunny_mesh = TriangleMesh::from("models/bunny.obj", bunny_material);
- 
-//     // world.add(Translate::new(Vec3::new(224.0, -66.0, 278.0), Rotate::new(180.0, Scale::new(2000.0, bunny_mesh))));
-//     world.add(TransformedMesh::new(Vec3::new(224.0, -66.0, 278.0), Vec3::new(0.0, 180.0, 0.0), 2000.0, bunny_mesh));
-
-//     let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
-
-//     // NEE target: same geometry as the ceiling light. Emission is zero
-//     // because the integrator only uses this Plane for sampling directions
-//     // and PDFs, not for shading contributions.
-//     let light = Light::new(SolidColor::new(0.0, 0.0, 0.0));
-//     let light_shape = Plane::new(Axis::XZ,
-//                                  213.0, 343.0,
-//                                  227.0, 332.0,
-//                                  554.0, light);
-
-//     (String::from("Cornell Box with Stanford Bunny"), camera, bvh, light_shape)
-// }
-
-// pub fn cornell_box_lucy_scene(width: usize, height: usize)
-//                                  -> (String, Camera, BVH, Plane) {
-//     // Same camera as the classic Cornell box so the framing looks identical.
-//     let origin = Vec3::new(278.0, 278.0, -800.0);
-//     let lookat = Vec3::new(278.0, 278.0, 0.0);
-//     let view = Vec3::new(0.0, 1.0, 0.0);
-//     let fov = 40.0;
-//     let aspect_ratio = (width / height) as f32;
-//     let aperture = 0.0;
-//     let focus_distance = 10.0;
-//     let time0 = 0.0;
-//     let time1 = 1.0;
-//     let atmosphere = false;
-
-//     let camera = Camera::new(origin, lookat, view, fov, aspect_ratio,
-//                              aperture, focus_distance,
-//                              time0, time1, atmosphere);
- 
-//     let mut world = World::new();
-
-//     let roughness = 0.0;
-//     let red   = Diffuse::new(SolidColor::new(0.65, 0.05, 0.05), roughness);
-//     let green = Diffuse::new(SolidColor::new(0.12, 0.45, 0.15), roughness);
-//     let white = Diffuse::new(SolidColor::new(0.73, 0.73, 0.73), roughness);
-//     let light = Light::new(SolidColor::new(25.0, 18.0, 10.0));
-
-//     // Cornell box walls — identical to the classic scene.
-//     //
-//     // Right wall (red) at x = 555, facing -x (into the room).
-//     world.add(FlipNormals::of(Plane::new(Axis::YZ,
-//                                          0.0, 555.0,
-//                                          0.0, 555.0,
-//                                          555.0, red)));
-
-//     // Left wall (green) at x = 0, facing +x.
-//     world.add(Plane::new(Axis::YZ, 0.0, 555.0, 0.0, 555.0, 0.0, green));
-
-//     // Ceiling light — a rectangle cut into the top.
-//     world.add(FlipNormals::of(Plane::new(Axis::XZ,
-//                                          213.0, 343.0,
-//                                          227.0, 332.0,
-//                                          554.0, light)));
-
-//     // Ceiling (white) at y = 555, facing -y.
-//     world.add(FlipNormals::of(Plane::new(Axis::XZ,
-//                                          0.0, 555.0,
-//                                          0.0, 555.0,
-//                                          555.0, white.clone())));
-
-//     // Floor (white) at y = 0, facing +y.
-//     world.add(Plane::new(Axis::XZ, 0.0, 555.0, 0.0, 555.0, 0.0, white.clone()));
-
-//     // Back wall (white) at z = 555, facing -z (toward camera).
-//     world.add(FlipNormals::of(Plane::new(Axis::XY,
-//                                          0.0, 555.0,
-//                                          0.0, 555.0,
-//                                          555.0, white.clone())));
-
-//     let lucy_material = Arc::new(
-//         Diffuse::new(SolidColor::new(0.92, 0.88, 0.82), 0.0)
-//     );
-
-//     let lucy_mesh = TriangleMesh::from("models/lucy.obj", lucy_material);
-
-//     world.add(Translate::new(
-//         Vec3::new(70.0, 181.0, 241.0),
-//         Rotate::new(0.0, 0.0, 0.0,
-//             Scale::new(0.30, lucy_mesh))
-//     ));
-
-//     let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
-
-//     // NEE target: same geometry as the ceiling light. Emission is zero
-//     // because the integrator only uses this Plane for sampling directions
-//     // and PDFs, not for shading contributions.
-//     let light = Light::new(SolidColor::new(0.0, 0.0, 0.0));
-//     let light_shape = Plane::new(Axis::XZ,
-//                                  213.0, 343.0,
-//                                  227.0, 332.0,
-//                                  554.0, light);
- 
-//     (String::from("Cornell Box with Lucy"), camera, bvh, light_shape)
 // }
 
 pub fn cornell_box_object_scene(width: usize, height: usize)
