@@ -16,7 +16,7 @@ pub struct HitRecord {
     pub point: Vec3,
     pub geometric_normal: Vec3,
     pub shading_normal: Vec3,
-    pub material: Arc<Material>,
+    pub material_id: u32,
 }
 
 impl HitRecord {
@@ -27,7 +27,7 @@ impl HitRecord {
                point: Vec3,
                geometric_normal: Vec3,
                shading_normal: Vec3,
-               material: Arc<Material>)
+               material_id: u32)
                -> HitRecord {
         HitRecord { parameter: parameter,
                     u: u,
@@ -35,7 +35,7 @@ impl HitRecord {
                     point: point,
                     geometric_normal: geometric_normal,
                     shading_normal: shading_normal,
-                    material: material }
+                    material_id: material_id }
     }
 }
 

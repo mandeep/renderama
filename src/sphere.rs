@@ -13,7 +13,7 @@ pub struct Sphere {
     pub start_center: Vec3,
     pub end_center: Vec3,
     pub radius: f32,
-    pub material: Arc<Material>,
+    pub material_id: u32,
     pub start_time: f32,
     pub end_time: f32,
 }
@@ -27,7 +27,7 @@ impl Sphere {
     pub fn new(start_center: Vec3,
                                       end_center: Vec3,
                                       radius: f32,
-                                      material: Arc<Material>,
+                                      material_id: u32,
                                       start_time: f32,
                                       end_time: f32)
                                       -> Sphere {
@@ -35,7 +35,7 @@ impl Sphere {
         Sphere { start_center,
                  end_center,
                  radius,
-                 material,
+                 material_id,
                  start_time,
                  end_time }
     }
@@ -86,7 +86,7 @@ impl Hitable for Sphere {
                                                point,
                                                normal,
                                                normal,
-                                               self.material.clone()));
+                                               self.material_id));
                 }
             }
         }

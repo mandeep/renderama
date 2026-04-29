@@ -4,7 +4,6 @@ use glam::Vec3;
 
 use aabb::AABB;
 use hitable::{HitRecord, Hitable};
-use materials::Empty;
 use ray::Ray;
 
 #[derive(Clone)]
@@ -40,7 +39,7 @@ impl Hitable for World {
                            Vec3::ZERO,
                            Vec3::ZERO,
                            Vec3::ZERO,
-                           Arc::new(Empty::new().into()));
+                           0);
         let mut hit_anything: bool = false;
         let mut closest_so_far: f32 = position_max;
 

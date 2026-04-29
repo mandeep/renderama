@@ -1,5 +1,4 @@
 use std::f32;
-use std::sync::Arc;
 
 use glam::Vec3;
 use rand::rngs::ThreadRng;
@@ -7,7 +6,6 @@ use rand::Rng;
 
 use aabb::AABB;
 use hitable::{HitRecord, Hitable};
-use materials::Material;
 use ray::Ray;
 
 #[derive(Clone)]
@@ -25,43 +23,16 @@ pub struct Plane {
     s0: f32,
     s1: f32,
     k: f32,
-    material: Arc<Material>,
+    material_id: u32,
 }
 
 impl Plane {
-    pub fn new(axis: Axis,
-                                      r0: f32,
-                                      r1: f32,
-                                      s0: f32,
-                                      s1: f32,
-                                      k: f32,
-                                      material: Arc<Material>)
-                                      -> Plane {
-
-        Plane { axis,
-                r0,
-                r1,
-                s0,
-                s1,
-                k,
-                material }
+    pub fn new(axis: Axis, r0: f32, r1: f32, s0: f32, s1: f32, k: f32, material_id: u32) -> Plane {
+        Plane { axis, r0, r1, s0, s1, k, material_id }
     }
 
-    pub fn from_box(axis: Axis,
-                    r0: f32,
-                    r1: f32,
-                    s0: f32,
-                    s1: f32,
-                    k: f32,
-                    material: Arc<Material>)
-                    -> Plane {
-        Plane { axis,
-                r0,
-                r1,
-                s0,
-                s1,
-                k,
-                material }
+    pub fn from_box(axis: Axis, r0: f32, r1: f32, s0: f32, s1: f32, k: f32, material_id: u32) -> Plane {
+        Plane { axis, r0, r1, s0, s1, k, material_id }
     }
 }
 
@@ -90,7 +61,7 @@ impl Hitable for Plane {
                                             ray.point_at_parameter(t),
                                             normal,
                                             normal,
-                                            self.material.clone());
+                                            self.material_id);
 
                 Some(record)
             }
@@ -116,7 +87,7 @@ impl Hitable for Plane {
                                             ray.point_at_parameter(t),
                                             normal,
                                             normal,
-                                            self.material.clone());
+                                            self.material_id);
 
                 Some(record)
             }
@@ -142,7 +113,7 @@ impl Hitable for Plane {
                                             ray.point_at_parameter(t),
                                             normal,
                                             normal,
-                                            self.material.clone());
+                                            self.material_id);
 
                 Some(record)
             }

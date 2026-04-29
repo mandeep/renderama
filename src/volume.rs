@@ -5,27 +5,21 @@ use glam::Vec3;
 
 use aabb::AABB;
 use hitable::{HitRecord, Hitable};
-use materials::{Isotropic, Material};
+use materials::{Isotropic};
 use ray::Ray;
 use texture::Texture;
 
 pub struct Volume {
     density: f32,
     boundary: Arc<dyn Hitable>,
-    material: Arc<Material>,
+    material_id: u32,
 }
 
 impl Volume {
-    pub fn new<H: Hitable + 'static>(density: f32,
-                                                           boundary: H,
-                                                           texture: Arc<Texture>,)
-                                                           -> Volume {
+    pub fn new<H: Hitable + 'static>(density: f32, boundary: H, material_id: u32) -> Volume {
         let boundary = Arc::new(boundary);
-        let material = Arc::new(Isotropic::new(texture).into());
 
-        Volume { density,
-                 boundary,
-                 material }
+        Volume { density, boundary, material_id }
     }
 }
 
@@ -60,7 +54,7 @@ impl Hitable for Volume {
                                                    point,
                                                    normal,
                                                    normal,
-                                                   self.material.clone()));
+                                                   self.material_id));
                     }
                 }
             }

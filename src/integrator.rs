@@ -8,11 +8,11 @@ use rand_distr::{Distribution, Normal};
 
 use basis::OrthonormalBasis;
 use bvh::BVH;
-use hitable::Hitable;
-use materials::MaterialTrait;
+use hitable::{Hitable};
 use pdf::PDF;
 use plane::Plane;
 use ray::{find_offset_point, Ray};
+use scene::Scene;
 
 /// Pick a random point on the unit sphere
 ///
@@ -42,7 +42,7 @@ pub fn pick_sphere_point(rng: &mut ThreadRng) -> Vec3 {
 /// limit of 50 which can lead to bias rendering.
 ///
 pub fn render_path_integrator(mut ray: Ray,
-                     world: &BVH,
+                     scene: &Scene,
                      bounces: u32,
                      light_source: &Option<Plane>,
                      atmosphere: bool,
@@ -52,11 +52,12 @@ pub fn render_path_integrator(mut ray: Ray,
     let mut throughput = Vec3::ONE;
 
     for bounce in 0..=bounces {
-        if let Some(hit_record) = world.hit(&ray, 1e-4, f32::MAX) {
-            let emitted = hit_record.material.emitted(&ray, &hit_record);
+        if let Some(hit_record) = scene.world.hit(&ray, 1e-4, f32::MAX) {
+            let material = &scene.materials[hit_record.material_id as usize];
+            let emitted = material.emitted(&ray, &hit_record);
             color += throughput * emitted;
 
-            if let Some(scatter_record) = hit_record.material.scatter(&ray, &hit_record, rng) {
+            if let Some(scatter_record) = material.scatter(&ray, &hit_record, rng) {
                 if scatter_record.specular {
                     throughput *= scatter_record.attenuation;
                     ray = scatter_record.specular_ray;
@@ -89,8 +90,7 @@ pub fn render_path_integrator(mut ray: Ray,
                     let offset_point = find_offset_point(hit_record.point, offset_normal);
                     let scattered = Ray::new(offset_point, scattered_direction, ray.time);
                     let pdf_value = hybrid_pdf.value(scattered.direction);
-                    let scattering_pdf = hit_record.material
-                                                   .scattering_pdf(&ray, &hit_record, &scattered);
+                    let scattering_pdf = material.scattering_pdf(&ray, &hit_record, &scattered);
 
                     throughput *= (scattering_pdf * scatter_record.attenuation) / pdf_value;
 

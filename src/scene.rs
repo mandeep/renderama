@@ -12,9 +12,22 @@ use rectangle::Rectangle;
 use sphere::Sphere;
 use texture::{SolidColor, ImageTexture};
 use transformations::{TransformedMesh, Rotate, Scale, Translate};
-use triangle::TriangleMesh;
+use triangle::{Triangle, TriangleMesh};
 use volume::Volume;
 use world::World;
+use mat;
+
+
+pub struct Scene {
+    pub materials: Vec<Material>,
+    pub world: BVH,
+}
+
+impl Scene {
+    fn new(materials: Vec<Material>, accelerator: BVH) -> Scene {
+        Scene { materials: materials, world: accelerator }
+    }
+}
 
 // pub fn three_spheres_scene(width: usize, height: usize) -> (String, Camera, BVH, Option<Plane>) {
 //     let origin = Vec3::new(0.0, 3.0, 6.0);
@@ -637,7 +650,7 @@ use world::World;
 // }
 
 pub fn cornell_box_object_scene(width: usize, height: usize)
-                              -> (String, Camera, BVH, Option<Plane>) {
+                              -> (String, Camera, Scene, Option<Plane>) {
     let origin = Vec3::new(278.0, 278.0, -800.0);
     let lookat = Vec3::new(278.0, 278.0, 0.0);
     let view = Vec3::new(0.0, 1.0, 0.0);
@@ -648,43 +661,45 @@ pub fn cornell_box_object_scene(width: usize, height: usize)
                              0.0, 10.0, 0.0, 1.0, false);
 
     let mut world = World::new();
+    let mut materials: Vec<Material> = Vec::new();
 
     let roughness = 0.0;
-    let red   = Arc::new(Diffuse::new(SolidColor::new(0.65, 0.05, 0.05).into(), roughness).into());
-    let green = Arc::new(Diffuse::new(SolidColor::new(0.12, 0.45, 0.15).into(), roughness).into());
-    let white: Arc<Material> = Arc::new(Diffuse::new(SolidColor::new(0.73, 0.73, 0.73).into(), roughness).into());
-    let light_material = Arc::new(Light::new(SolidColor::new(25.0, 18.0, 10.0).into()).into());
+    let red_id = mat!(materials, Diffuse::new(SolidColor::new(0.65, 0.05, 0.05).into(), roughness));
+    let green_id = mat!(materials, Diffuse::new(SolidColor::new(0.12, 0.45, 0.15).into(), roughness));
+    let white_id = mat!(materials, Diffuse::new(SolidColor::new(0.73, 0.73, 0.73).into(), roughness));
+    let light_material = mat!(materials, Light::new(SolidColor::new(25.0, 18.0, 10.0).into()));
 
     // Cornell walls
-    world.add(FlipNormals::of(Plane::new(Axis::YZ, 0.0, 555.0, 0.0, 555.0, 555.0, red)));
-    world.add(Plane::new(Axis::YZ, 0.0, 555.0, 0.0, 555.0, 0.0, green));
+    world.add(FlipNormals::of(Plane::new(Axis::YZ, 0.0, 555.0, 0.0, 555.0, 555.0, red_id)));
+    world.add(Plane::new(Axis::YZ, 0.0, 555.0, 0.0, 555.0, 0.0, green_id));
     world.add(FlipNormals::of(Plane::new(Axis::XZ, 213.0, 343.0, 227.0, 332.0, 554.0, light_material)));
-    world.add(FlipNormals::of(Plane::new(Axis::XZ, 0.0, 555.0, 0.0, 555.0, 555.0, white.clone())));
-    world.add(Plane::new(Axis::XZ, 0.0, 555.0, 0.0, 555.0, 0.0, white.clone()));
-    world.add(FlipNormals::of(Plane::new(Axis::XY, 0.0, 555.0, 0.0, 555.0, 555.0, white.clone())));
+    world.add(FlipNormals::of(Plane::new(Axis::XZ, 0.0, 555.0, 0.0, 555.0, 555.0, white_id)));
+    world.add(Plane::new(Axis::XZ, 0.0, 555.0, 0.0, 555.0, 0.0, white_id));
+    world.add(FlipNormals::of(Plane::new(Axis::XY, 0.0, 555.0, 0.0, 555.0, 555.0, white_id)));
 
-    let lucy_material = Arc::new(Diffuse::new(SolidColor::new(0.92, 0.88, 0.82).into(), 0.05).into());
+    let lucy_material = mat!(materials, Diffuse::new(SolidColor::new(0.92, 0.88, 0.82).into(), 0.05));
     let lucy = TriangleMesh::from("models/lucy.obj", lucy_material);
     world.add(TransformedMesh::new(Vec3::new(200.0, 180.0, 364.0), Vec3::new(0.0, 0.0, 0.0), 0.30, lucy));
 
-    let dragon_material = Arc::new(Plastic::new(SolidColor::new(0.7, 0.85, 0.45).into(), 0.3, 1.5).into());
+    let dragon_material = mat!(materials, Plastic::new(SolidColor::new(0.7, 0.85, 0.45).into(), 0.3, 1.5));
     let dragon = TriangleMesh::from("models/dragon.obj", dragon_material);
     world.add(TransformedMesh::new(Vec3::new(283.0, 96.0, 268.0), Vec3::new(0.0, -60.0, 0.0), 350.0, dragon));
 
-    let bunny_material = Arc::new(Refractive::new(1.5, Vec3::ONE).into());
+    let bunny_material = mat!(materials, Refractive::new(1.5, Vec3::ONE));
     let bunny = TriangleMesh::from("models/bunny.obj", bunny_material);
     world.add(TransformedMesh::new(Vec3::new(110.0, -25.0, 140.0), Vec3::new(0.0, 180.0, 0.0), 750.0, bunny));
 
     let buddha_texture = ImageTexture::new("models/buddha_relief_diffuse.jpeg").into();
-    let buddha_material = Arc::new(Diffuse::new(buddha_texture, 0.0).into());
+    let buddha_material = mat!(materials, Diffuse::new(buddha_texture, 0.0));
     let buddha = TriangleMesh::from("models/buddha_relief.obj", buddha_material);
     world.add(TransformedMesh::new(Vec3::new(273.0, 180.0, 582.0), Vec3::new(-90.0, 180.0, 0.0), 24.0, buddha));
 
-
     let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
 
-    let light = Arc::new(Light::new(SolidColor::new(0.0, 0.0, 0.0).into()).into());
+    let light = mat!(materials, Light::new(SolidColor::new(0.0, 0.0, 0.0).into()));
     let light_shape = Some(Plane::new(Axis::XZ, 213.0, 343.0, 227.0, 332.0, 554.0, light));
 
-    (String::from("Cornell Box with Multiple Objects"), camera, bvh, light_shape)
+    let scene = Scene::new(materials, bvh);
+
+    (String::from("Cornell Box with Multiple Objects"), camera, scene, light_shape)
 }

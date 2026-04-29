@@ -59,7 +59,7 @@ fn main() {
     let samples: u32 = args.get(1).and_then(|s| s.parse().ok()).unwrap_or(128);
     let bounces: u32 = 10;
 
-    let (name, camera, world, light_source) = scene::cornell_box_object_scene(width, height);
+    let (name, camera, scene, light_source) = scene::cornell_box_object_scene(width, height);
 
     let render_start_time: DateTime<Local> = Local::now();
     println!("[{}] Rendering '{}' scene with {} samples at {} x {} dimensions...",
@@ -101,7 +101,7 @@ fn main() {
             // color += utils::de_nan(&integrator::render_normals(ray, &world));
 
             color += utils::de_nan(&integrator::render_path_integrator(ray,
-                                                        &world,
+                                                        &scene,
                                                         bounces,
                                                         &light_source,
                                                         camera.atmosphere,

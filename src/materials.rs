@@ -14,7 +14,6 @@ use texture::Texture;
 #[derive(Clone)]
 pub enum Material {
     Diffuse(Diffuse),
-    Empty(Empty),
     Isotropic(Isotropic),
     Light(Light),
     Plastic(Plastic),
@@ -36,13 +35,21 @@ macro_rules! impl_from_material {
 
 impl_from_material!(
     Diffuse => Diffuse,
-    Empty => Empty,
-    Light => Light,
     Isotropic => Isotropic,
+    Light => Light,
     Plastic => Plastic,
     Reflective => Reflective,
     Refractive => Refractive
 );
+
+#[macro_export]
+macro_rules! mat {
+    ($vec:expr, $material:expr) => {{
+        let id = $vec.len() as u32;
+        $vec.push($material.into());
+        id
+    }};
+}
 
 pub struct ScatterRecord<'a> {
     pub specular_ray: Ray,
@@ -64,50 +71,38 @@ impl<'a> ScatterRecord<'a> {
     }
 }
 
-/// The Material trait is responsible for giving a color to the object implementing the trait
-pub trait MaterialTrait: Send + Sync {
-    fn scatter(&self,
-               _ray: &Ray,
-               _record: &HitRecord,
-               _rng: &mut ThreadRng)
-               -> Option<ScatterRecord<'_>> {
-        None
-    }
-
-    fn emitted(&self, _ray: &Ray, _hit: &HitRecord) -> Vec3 {
-        Vec3::new(0.0, 0.0, 0.0)
-    }
-
-    fn scattering_pdf(&self, _ray: &Ray, _record: &HitRecord, _scattered: &Ray) -> f32 {
-        1.0
-    }
-}
-
-macro_rules! match_material {
-    ($self:expr, $mat:ident => $body:expr) => {
-        match $self {
-            Material::Diffuse($mat) => $body,
-            Material::Empty($mat) => $body,
-            Material::Isotropic($mat) => $body,
-            Material::Light($mat) => $body,
-            Material::Plastic($mat) => $body,
-            Material::Reflective($mat) => $body,
-            Material::Refractive($mat) => $body,
+impl Material {
+    pub fn scatter(&self, ray: &Ray, hit: &HitRecord, rng: &mut ThreadRng) -> Option<ScatterRecord<'_>> {
+        match self {
+            Material::Diffuse(m) => m.scatter(ray, hit, rng),
+            Material::Isotropic(m) => m.scatter(ray, hit, rng),
+            Material::Light(m) => m.scatter(ray, hit, rng),
+            Material::Plastic(m) => m.scatter(ray, hit, rng),
+            Material::Reflective(m) => m.scatter(ray, hit, rng),
+            Material::Refractive(m) => m.scatter(ray, hit, rng),
         }
-    };
-}
-
-impl MaterialTrait for Material {
-    fn scatter(&self, ray: &Ray, hit: &HitRecord, rng: &mut ThreadRng) -> Option<ScatterRecord<'_>> {
-        match_material!(self, m => m.scatter(ray, hit, rng))
     }
 
-    fn emitted(&self, ray: &Ray, hit: &HitRecord) -> Vec3 {
-        match_material!(self, m => m.emitted(ray, hit))
+    pub fn emitted(&self, ray: &Ray, hit: &HitRecord) -> Vec3 {
+        match self {
+            Material::Light(m) => m.emitted(ray, hit),
+            Material::Diffuse(_)
+            | Material::Isotropic(_)
+            | Material::Plastic(_)
+            | Material::Reflective(_)
+            | Material::Refractive(_) => Vec3::ZERO,
+        }
     }
 
-    fn scattering_pdf(&self, ray: &Ray, hit: &HitRecord, scattered: &Ray) -> f32 {
-        match_material!(self, m => m.scattering_pdf(ray, hit, scattered))
+    pub fn scattering_pdf(&self, ray: &Ray, hit: &HitRecord, scattered: &Ray) -> f32 {
+        match self {
+            Material::Diffuse(m) => m.scattering_pdf(ray, hit, scattered),
+            Material::Plastic(m) => m.scattering_pdf(ray, hit, scattered),
+            Material::Isotropic(_) => 1.0,
+            Material::Reflective(_) => 0.0,
+            Material::Refractive(_) => 0.0,
+            Material::Light(_) => 0.0,
+        }
     }
 }
 
@@ -117,11 +112,6 @@ pub struct Empty {}
 impl Empty {
     pub fn new() -> Empty {
         Empty {}
-    }
-}
-impl MaterialTrait for Empty {
-    fn scatter(&self, _ray: &Ray, _hit: &HitRecord, _rng: &mut ThreadRng) -> Option<ScatterRecord<'_>> {
-        None
     }
 }
 
@@ -147,10 +137,7 @@ impl Diffuse {
                   alpha,
                   beta }
     }
-}
 
-impl MaterialTrait for Diffuse {
-    /// Scatter a new ray from the hit point of the surface
     fn scatter(&self,
                ray: &Ray,
                record: &HitRecord,
@@ -185,6 +172,7 @@ impl MaterialTrait for Diffuse {
         nl * (self.alpha + self.beta * s / t)
     }
 }
+
 
 /// Compute the reflect vector given the light vector and the normal vector of the surface
 ///
@@ -278,7 +266,7 @@ impl Reflective {
     }
 }
 
-impl MaterialTrait for Reflective {
+impl Reflective {
     /// Retrieve the color of the given material
     ///
     /// For spheres, the center of the sphere is given by the record.point
@@ -314,9 +302,7 @@ impl Refractive {
     pub fn new(index: f32, albedo: Vec3) -> Refractive {
         Refractive { refractive_index: index, absorption: albedo }
     }
-}
 
-impl MaterialTrait for Refractive {
     /// Retrieve the color of the given material
     ///
     /// For spheres, the center of the sphere is given by the record.point
@@ -378,9 +364,7 @@ impl Light {
         let emit = Arc::new(emit);
         Light { emit: emit }
     }
-}
 
-impl MaterialTrait for Light {
     fn scatter(&self,
                _ray: &Ray,
                _record: &HitRecord,
@@ -407,9 +391,7 @@ impl Isotropic {
     pub fn new(albedo: Arc<Texture>) -> Isotropic {
         Isotropic { albedo }
     }
-}
 
-impl MaterialTrait for Isotropic {
     fn scatter(&self, ray: &Ray, record: &HitRecord, rng: &mut ThreadRng) -> Option<ScatterRecord<'_>> {
         let scattered = Ray::new(record.point, pick_sphere_point(rng), ray.time);
         let attenuation = self.albedo.value(record.u, record.v, &record.point);
@@ -434,9 +416,7 @@ impl Plastic {
             ior,
         }
     }
-}
 
-impl MaterialTrait for Plastic {
     fn scatter(&self, ray: &Ray, record: &HitRecord, _rng: &mut ThreadRng) -> Option<ScatterRecord<'_>> {
         let cos_theta_i = (-ray.direction).dot(record.shading_normal).max(0.0);
         let fresnel = fresnel_coefficient(cos_theta_i, 1.0, self.ior);

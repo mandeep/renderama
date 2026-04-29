@@ -7,7 +7,6 @@ use tobj;
 use aabb::AABB;
 use bvh::BVH;
 use hitable::{HitRecord, Hitable};
-use materials::Material;
 use ray::Ray;
 
 #[derive(Clone)]
@@ -21,13 +20,13 @@ pub struct Triangle {
     uv0: Vec2,
     uv1: Vec2,
     uv2: Vec2,
-    material: Arc<Material>
+    material_id: u32
 }
 
 pub struct TriangleMesh {
     triangles: Vec<Triangle>,
     accelerator: BVH,
-    material: Arc<Material>,
+    material_id: u32,
 }
 
 impl Triangle {
@@ -41,7 +40,7 @@ impl Triangle {
                                       uv0: Vec2,
                                       uv1: Vec2,
                                       uv2: Vec2,
-                                      material: Arc<Material>)
+                                      material_id: u32)
                                       -> Triangle {
 
         Triangle { v0: v0,
@@ -53,7 +52,7 @@ impl Triangle {
                    uv0: uv0,
                    uv1: uv1,
                    uv2: uv2,
-                   material: material }
+                   material_id: material_id }
     }
 
     pub fn from_box(v0: Vec3,
@@ -65,7 +64,7 @@ impl Triangle {
                     uv0: Vec2,
                     uv1: Vec2,
                     uv2: Vec2,
-                    material: Arc<Material>)
+                    material_id: u32)
                     -> Triangle {
         Triangle { v0: v0,
                    v1: v1,
@@ -76,7 +75,7 @@ impl Triangle {
                    uv0: uv0,
                    uv1: uv1,
                    uv2: uv2,
-                   material: material
+                   material_id: material_id
                    }
     }
 
@@ -147,7 +146,7 @@ impl Hitable for Triangle {
                             point,
                             geometric_normal,
                             shading_normal,
-                            self.material.clone()))
+                            self.material_id))
     }
 
     /// Create a bounding box around the triangle
@@ -160,7 +159,7 @@ impl Hitable for Triangle {
 }
 
 impl TriangleMesh {
-    pub fn new(triangles: Vec<Triangle>, material: Arc<Material>) -> TriangleMesh {
+    pub fn new(triangles: Vec<Triangle>, material_id: u32) -> TriangleMesh {
         let mut hitables: Vec<Arc<dyn Hitable>> = triangles.iter()
                                                            .map(|t| {
                                                                Arc::new(t.clone())
@@ -172,10 +171,10 @@ impl TriangleMesh {
 
         TriangleMesh { triangles,
                        accelerator,
-                       material }
+                       material_id }
     }
 
-    pub fn from(filepath: &str, material: Arc<Material>) -> TriangleMesh {
+    pub fn from(filepath: &str, material_id: u32) -> TriangleMesh {
         // single_index + triangulate: tobj reindexes so positions and normals
         // are parallel arrays, and quads/ngons are split into triangles.
         let load_options = tobj::LoadOptions {
@@ -243,12 +242,12 @@ impl TriangleMesh {
                 let (n0, n1, n2) = (normals[a], normals[b], normals[c]);
                 let (uv0, uv1, uv2) = (uvs[a], uvs[b], uvs[c]);
 
-                let triangle = Triangle::from_box(v0, v1, v2, n0, n1, n2, uv0, uv1, uv2, material.clone());
+                let triangle = Triangle::from_box(v0, v1, v2, n0, n1, n2, uv0, uv1, uv2, material_id);
                 triangles.push(triangle);
             }
         }
 
-        TriangleMesh::new(triangles, material)
+        TriangleMesh::new(triangles, material_id)
     }
 }
 
