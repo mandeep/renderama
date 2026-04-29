@@ -1,12 +1,12 @@
 use std::f32;
-use std::sync::Arc;
 
 use glam::{Vec2, Vec3};
 use tobj;
 
 use aabb::AABB;
 use bvh::BVH;
-use hitable::{HitRecord, Hitable};
+use geometry::Geometry;
+use hitable::{HitRecord};
 use ray::Ray;
 
 #[derive(Clone)]
@@ -23,10 +23,10 @@ pub struct Triangle {
     material_id: u32
 }
 
+#[derive(Clone)]
 pub struct TriangleMesh {
     triangles: Vec<Triangle>,
     accelerator: BVH,
-    material_id: u32,
 }
 
 impl Triangle {
@@ -86,9 +86,7 @@ impl Triangle {
     pub fn maximum(&self) -> Vec3 {
         self.v0.max(self.v1.max(self.v2))
     }
-}
 
-impl Hitable for Triangle {
     /// Determine whether or not a ray hits the triangle
     ///
     /// Reference:
@@ -97,7 +95,7 @@ impl Hitable for Triangle {
     /// Journal of Graphics Tools Vol. 2 Issue 1, 1997
     /// http://www.acm.org/jgt/papers/MollerTrumbore97/
     ///
-    fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitRecord> {
+    pub fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitRecord> {
         let edge1 = self.v1 - self.v0;
         let edge2 = self.v2 - self.v0;
 
@@ -153,25 +151,21 @@ impl Hitable for Triangle {
     ///
     /// The bounding box is created using the minimum
     /// and maximum points of all of the vertices
-    fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
+    pub fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
         Some(AABB::from(self.minimum(), self.maximum()))
     }
 }
 
 impl TriangleMesh {
-    pub fn new(triangles: Vec<Triangle>, material_id: u32) -> TriangleMesh {
-        let mut hitables: Vec<Arc<dyn Hitable>> = triangles.iter()
-                                                           .map(|t| {
-                                                               Arc::new(t.clone())
-                                                               as Arc<dyn Hitable>
-                                                           })
-                                                           .collect();
+    pub fn new(triangles: Vec<Triangle>) -> TriangleMesh {
+        let mut geometries: Vec<Geometry> = triangles
+            .iter()
+            .cloned()
+            .map(Geometry::Triangle)
+            .collect();
+        let accelerator = BVH::new(&mut geometries, 0.0, 1.0);
 
-        let accelerator = BVH::new(&mut hitables, 0.0, 1.0);
-
-        TriangleMesh { triangles,
-                       accelerator,
-                       material_id }
+        TriangleMesh { triangles, accelerator }
     }
 
     pub fn from(filepath: &str, material_id: u32) -> TriangleMesh {
@@ -247,16 +241,14 @@ impl TriangleMesh {
             }
         }
 
-        TriangleMesh::new(triangles, material_id)
+        TriangleMesh::new(triangles)
     }
-}
 
-impl Hitable for TriangleMesh {
-    fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitRecord> {
+    pub fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitRecord> {
         self.accelerator.hit(&ray, position_min, position_max)
     }
 
-    fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
+    pub fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
         let mut minimum = Vec3::splat(f32::MAX);
         let mut maximum = Vec3::splat(f32::MIN);
 

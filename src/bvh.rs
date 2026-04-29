@@ -1,7 +1,6 @@
-use std::sync::Arc;
-
 use aabb::AABB;
-use hitable::{HitRecord, Hitable};
+use hitable::HitRecord;
+use geometry::Geometry;
 use ray::Ray;
 use glam::Vec3;
 
@@ -22,7 +21,7 @@ enum BVHNode {
     },
     Leaf {
         bbox: AABB,
-        hitable: Arc<dyn Hitable>,
+        geometry: Geometry,
     },
 }
 
@@ -47,7 +46,7 @@ enum TreeNode {
     },
     Leaf {
         bbox: AABB,
-        hitable: Arc<dyn Hitable>,
+        geometry: Geometry,
     },
 }
 
@@ -60,21 +59,8 @@ impl TreeNode {
     }
 }
 
-impl BVH {
-    pub fn new(world: &mut Vec<Arc<dyn Hitable>>, start_time: f32, end_time: f32) -> BVH {
-        // Build the tree using SAH, then flatten it.
-        let tree = build_tree(world, start_time, end_time);
-        let bbox = tree.bbox().clone();
-        
-        let mut nodes = Vec::new();
-        flatten(&tree, &mut nodes);
-        
-        BVH { nodes, bbox }
-    }
-}
-
 /// Recursively builds a TreeNode using binned SAH.
-fn build_tree(world: &mut Vec<Arc<dyn Hitable>>, start_time: f32, end_time: f32) -> TreeNode {
+fn build_tree(world: &mut Vec<Geometry>, start_time: f32, end_time: f32) -> TreeNode {
     let n = world.len();
 
     // compute the bounding box that contains all of the objects in the world and their bounding boxes
@@ -87,7 +73,7 @@ fn build_tree(world: &mut Vec<Arc<dyn Hitable>>, start_time: f32, end_time: f32)
     if n == 1 {
         return TreeNode::Leaf {
             bbox: main_box,
-            hitable: world[0].clone(),
+            geometry: world[0].clone(),
         };
     }
 
@@ -96,8 +82,8 @@ fn build_tree(world: &mut Vec<Arc<dyn Hitable>>, start_time: f32, end_time: f32)
         let right_box = world[1].bounding_box(start_time, end_time).unwrap();
         return TreeNode::Internal {
             bbox: main_box,
-            left: Box::new(TreeNode::Leaf { bbox: left_box, hitable: world[0].clone() }),
-            right: Box::new(TreeNode::Leaf { bbox: right_box, hitable: world[1].clone() }),
+            left: Box::new(TreeNode::Leaf { bbox: left_box, geometry: world[0].clone() }),
+            right: Box::new(TreeNode::Leaf { bbox: right_box, geometry: world[1].clone() }),
         };
     }
 
@@ -279,10 +265,10 @@ fn flatten(tree: &TreeNode, nodes: &mut Vec<BVHNode>) -> u32 {
     let my_index = nodes.len() as u32;
     
     match tree {
-        TreeNode::Leaf { bbox, hitable } => {
+        TreeNode::Leaf { bbox, geometry } => {
             nodes.push(BVHNode::Leaf {
                 bbox: bbox.clone(),
-                hitable: hitable.clone(),
+                geometry: geometry.clone(),
             });
         }
         TreeNode::Internal { bbox, left, right } => {
@@ -319,13 +305,25 @@ fn axis_value(vector: Vec3, axis: usize) -> f32 {
 
 /// Compute the centroid of an object's bounding box along the given axis
 /// Used for sorting in small lists
-fn centroid(hit: &Arc<dyn Hitable>, axis: usize, t0: f32, t1: f32) -> f32 {
+fn centroid(hit: &Geometry, axis: usize, t0: f32, t1: f32) -> f32 {
     let bbox = hit.bounding_box(t0, t1).unwrap();
     axis_value((bbox.minimum + bbox.maximum) * 0.5, axis)
 }
 
-impl Hitable for BVH {
-    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
+
+impl BVH {
+    pub fn new(world: &mut Vec<Geometry>, start_time: f32, end_time: f32) -> BVH {
+        // Build the tree using SAH, then flatten it.
+        let tree = build_tree(world, start_time, end_time);
+        let bbox = tree.bbox().clone();
+        
+        let mut nodes = Vec::new();
+        flatten(&tree, &mut nodes);
+        
+        BVH { nodes, bbox }
+    }
+
+    pub fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
         // Iterative traversal with explicit stack.
         // Stack size 64 supports trees up to depth 64, which covers
         // millions of objects with safety margin.
@@ -353,9 +351,9 @@ impl Hitable for BVH {
                         stack_pointer += 1;
                     }
                 }
-                BVHNode::Leaf { bbox, hitable } => {
+                BVHNode::Leaf { bbox, geometry } => {
                     if bbox.hit(ray, t_min, closest_t) {
-                        if let Some(hit) = hitable.hit(ray, t_min, closest_t) {
+                        if let Some(hit) = geometry.hit(ray, t_min, closest_t) {
                             if hit.parameter < closest_t {
                                 closest_t = hit.parameter;
                                 best_hit = Some(hit);
@@ -369,7 +367,7 @@ impl Hitable for BVH {
         best_hit
     }
     
-    fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
+    pub fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
         Some(self.bbox.clone())
     }
 }

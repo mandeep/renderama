@@ -1,85 +1,92 @@
-use std::sync::Arc;
-
 use glam::Vec3;
 
 use aabb::AABB;
-use hitable::{FlipNormals, HitRecord, Hitable};
-use materials::Material;
+use geometry::Geometry;
+use hitable::HitRecord;
 use plane::{Axis, Plane};
 use ray::Ray;
-use world::World;
 
 pub struct Rectangle {
     p0: Vec3,
     p1: Vec3,
+    geometry: Vec<Geometry>,
     material_id: u32,
-    hitables: World,
 }
 
 impl Rectangle {
     pub fn new(p0: Vec3, p1: Vec3, material_id: u32) -> Rectangle {
-        let mut hitables = World::new();
+        let mut geometry: Vec<Geometry> = Vec::new();
 
-        hitables.add(Plane::from_box(Axis::XY,
+        geometry.push(
+            Geometry::Plane(
+                Plane::from_box(Axis::XY,
                                      p0.x,
                                      p1.x,
                                      p0.y,
                                      p1.y,
                                      p1.z,
-                                     material_id));
+                                     material_id)));
 
-        hitables.add(FlipNormals::of(Plane::from_box(Axis::XY,
+        geometry.push(
+            Geometry::ReverseOrientation(Box::new(
+                Geometry::Plane(Plane::from_box(Axis::XY,
                                                      p0.x,
                                                      p1.x,
                                                      p0.y,
                                                      p1.y,
                                                      p0.z,
-                                                     material_id)));
+                                                     material_id)))));
 
-        hitables.add(Plane::from_box(Axis::XZ,
+        geometry.push(Geometry::Plane(
+            Plane::from_box(Axis::XZ,
                                      p0.x,
                                      p1.x,
                                      p0.z,
                                      p1.z,
                                      p1.y,
-                                     material_id));
+                                     material_id)));
 
-        hitables.add(FlipNormals::of(Plane::from_box(Axis::XZ,
+        geometry.push(Geometry::ReverseOrientation(Box::new(
+                Geometry::Plane(Plane::from_box(Axis::XZ,
                                                      p0.x,
                                                      p1.x,
                                                      p0.z,
                                                      p1.z,
                                                      p0.y,
-                                                     material_id)));
+                                                     material_id)))));
 
-        hitables.add(Plane::from_box(Axis::YZ,
+        geometry.push(Geometry::Plane(
+            Plane::from_box(Axis::YZ,
                                      p0.y,
                                      p1.y,
                                      p0.z,
                                      p1.z,
                                      p1.x,
-                                     material_id));
+                                     material_id)));
 
-        hitables.add(FlipNormals::of(Plane::from_box(Axis::YZ,
+        geometry.push(Geometry::ReverseOrientation(Box::new(
+            Geometry::Plane(Plane::from_box(Axis::YZ,
                                                      p0.y,
                                                      p1.y,
                                                      p0.z,
                                                      p1.z,
                                                      p0.x,
-                                                     material_id)));
+                                                     material_id)))));
         Rectangle { p0,
                     p1,
-                    material_id,
-                    hitables }
-    }
-}
-
-impl Hitable for Rectangle {
-    fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitRecord> {
-        self.hitables.hit(&ray, position_min, position_max)
+                    geometry,
+                    material_id
+                  }
     }
 
-    fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
+    pub fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitRecord> {
+        self.geometry
+        .iter()
+        .filter_map(|g| g.hit(ray, position_min, position_max))
+        .min_by(|a, b| a.parameter.partial_cmp(&b.parameter).unwrap())
+    }
+
+    pub fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
         Some(AABB::from(self.p0, self.p1))
     }
 }

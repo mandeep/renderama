@@ -1,12 +1,11 @@
 use std::f32;
-use std::sync::Arc;
 
 use glam::Vec3;
 
 use bvh::BVH;
 use camera::Camera;
-use hitable::FlipNormals;
-use materials::{Diffuse, Empty, Light, Plastic, Reflective, Refractive, Material};
+use geometry::{Geometry};
+use materials::{Diffuse, Light, Plastic, Reflective, Refractive, Material};
 use plane::{Axis, Plane};
 use rectangle::Rectangle;
 use sphere::Sphere;
@@ -670,29 +669,29 @@ pub fn cornell_box_object_scene(width: usize, height: usize)
     let light_material = mat!(materials, Light::new(SolidColor::new(25.0, 18.0, 10.0).into()));
 
     // Cornell walls
-    world.add(FlipNormals::of(Plane::new(Axis::YZ, 0.0, 555.0, 0.0, 555.0, 555.0, red_id)));
-    world.add(Plane::new(Axis::YZ, 0.0, 555.0, 0.0, 555.0, 0.0, green_id));
-    world.add(FlipNormals::of(Plane::new(Axis::XZ, 213.0, 343.0, 227.0, 332.0, 554.0, light_material)));
-    world.add(FlipNormals::of(Plane::new(Axis::XZ, 0.0, 555.0, 0.0, 555.0, 555.0, white_id)));
-    world.add(Plane::new(Axis::XZ, 0.0, 555.0, 0.0, 555.0, 0.0, white_id));
-    world.add(FlipNormals::of(Plane::new(Axis::XY, 0.0, 555.0, 0.0, 555.0, 555.0, white_id)));
+    world.add(Geometry::ReverseOrientation(Box::new(Geometry::Plane(Plane::new(Axis::YZ, 0.0, 555.0, 0.0, 555.0, 555.0, red_id)))));
+    world.add(Geometry::Plane(Plane::new(Axis::YZ, 0.0, 555.0, 0.0, 555.0, 0.0, green_id)));
+    world.add(Geometry::ReverseOrientation(Box::new(Geometry::Plane(Plane::new(Axis::XZ, 213.0, 343.0, 227.0, 332.0, 554.0, light_material)))));
+    world.add(Geometry::ReverseOrientation(Box::new(Geometry::Plane(Plane::new(Axis::XZ, 0.0, 555.0, 0.0, 555.0, 555.0, white_id)))));
+    world.add(Geometry::Plane(Plane::new(Axis::XZ, 0.0, 555.0, 0.0, 555.0, 0.0, white_id)));
+    world.add(Geometry::ReverseOrientation(Box::new(Geometry::Plane(Plane::new(Axis::XY, 0.0, 555.0, 0.0, 555.0, 555.0, white_id)))));
 
     let lucy_material = mat!(materials, Diffuse::new(SolidColor::new(0.92, 0.88, 0.82).into(), 0.05));
-    let lucy = TriangleMesh::from("models/lucy.obj", lucy_material);
-    world.add(TransformedMesh::new(Vec3::new(200.0, 180.0, 364.0), Vec3::new(0.0, 0.0, 0.0), 0.30, lucy));
+    let lucy = Geometry::TriangleMesh(Box::new(TriangleMesh::from("models/lucy.obj", lucy_material)));
+    world.add(Geometry::TransformedMesh(Box::new(TransformedMesh::new(Vec3::new(200.0, 180.0, 364.0), Vec3::new(0.0, 0.0, 0.0), 0.30, lucy))));
 
     let dragon_material = mat!(materials, Plastic::new(SolidColor::new(0.7, 0.85, 0.45).into(), 0.3, 1.5));
-    let dragon = TriangleMesh::from("models/dragon.obj", dragon_material);
-    world.add(TransformedMesh::new(Vec3::new(283.0, 96.0, 268.0), Vec3::new(0.0, -60.0, 0.0), 350.0, dragon));
+    let dragon = Geometry::TriangleMesh(Box::new(TriangleMesh::from("models/dragon.obj", dragon_material)));
+    world.add(Geometry::TransformedMesh(Box::new(TransformedMesh::new(Vec3::new(283.0, 96.0, 268.0), Vec3::new(0.0, -60.0, 0.0), 350.0, dragon))));
 
     let bunny_material = mat!(materials, Refractive::new(1.5, Vec3::ONE));
-    let bunny = TriangleMesh::from("models/bunny.obj", bunny_material);
-    world.add(TransformedMesh::new(Vec3::new(110.0, -25.0, 140.0), Vec3::new(0.0, 180.0, 0.0), 750.0, bunny));
+    let bunny = Geometry::TriangleMesh(Box::new(TriangleMesh::from("models/bunny.obj", bunny_material)));
+    world.add(Geometry::TransformedMesh(Box::new(TransformedMesh::new(Vec3::new(110.0, -25.0, 140.0), Vec3::new(0.0, 180.0, 0.0), 750.0, bunny))));
 
     let buddha_texture = ImageTexture::new("models/buddha_relief_diffuse.jpeg").into();
     let buddha_material = mat!(materials, Diffuse::new(buddha_texture, 0.0));
-    let buddha = TriangleMesh::from("models/buddha_relief.obj", buddha_material);
-    world.add(TransformedMesh::new(Vec3::new(273.0, 180.0, 582.0), Vec3::new(-90.0, 180.0, 0.0), 24.0, buddha));
+    let buddha = Geometry::TriangleMesh(Box::new(TriangleMesh::from("models/buddha_relief.obj", buddha_material)));
+    world.add(Geometry::TransformedMesh(Box::new(TransformedMesh::new(Vec3::new(273.0, 180.0, 582.0), Vec3::new(-90.0, 180.0, 0.0), 24.0, buddha))));
 
     let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
 

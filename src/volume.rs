@@ -1,29 +1,24 @@
 use std::f32;
-use std::sync::Arc;
 
 use glam::Vec3;
 
 use aabb::AABB;
-use hitable::{HitRecord, Hitable};
-use materials::{Isotropic};
+use geometry::Geometry;
+use hitable::HitRecord;
 use ray::Ray;
-use texture::Texture;
 
 pub struct Volume {
     density: f32,
-    boundary: Arc<dyn Hitable>,
+    boundary: Geometry,
     material_id: u32,
 }
 
 impl Volume {
-    pub fn new<H: Hitable + 'static>(density: f32, boundary: H, material_id: u32) -> Volume {
-        let boundary = Arc::new(boundary);
+    pub fn new(density: f32, boundary: Geometry, material_id: u32) -> Volume {
 
         Volume { density, boundary, material_id }
     }
-}
 
-impl Hitable for Volume {
     fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
         // Find both intersections of the ray with the volume's boundary.
         // We search the entire ray range (not just [t_min, t_max]) because

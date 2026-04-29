@@ -1,5 +1,4 @@
 use std::f32;
-use std::sync::Arc;
 
 use glam::Vec3;
 use rand::rngs::ThreadRng;
@@ -8,7 +7,7 @@ use rand_distr::{Distribution, Normal};
 
 use basis::OrthonormalBasis;
 use bvh::BVH;
-use hitable::{Hitable};
+use geometry::Geometry;
 use pdf::PDF;
 use plane::Plane;
 use ray::{find_offset_point, Ray};
@@ -64,7 +63,7 @@ pub fn render_path_integrator(mut ray: Ray,
                 } else {
                     let fallback_pdf = PDF::FallbackPDF { uvw: OrthonormalBasis::new(&hit_record.shading_normal) };
                     let importance_pdf = light_source.as_ref().map(|light| {
-                        PDF::ImportancePDF { origin: hit_record.point, hitable: Arc::new(light.clone())}
+                        PDF::ImportancePDF { origin: hit_record.point, geometry: Geometry::Plane(light.clone())}
                     });
                     let hybrid_pdf = match &importance_pdf {
                         Some(sample_target_pdf) => PDF::HybridPDF {

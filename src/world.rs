@@ -1,15 +1,14 @@
-use std::sync::Arc;
-
 use glam::Vec3;
 
 use aabb::AABB;
-use hitable::{HitRecord, Hitable};
+use geometry::Geometry;
+use hitable::{HitRecord};
 use ray::Ray;
 
 #[derive(Clone)]
 /// The World struct holds all of the objects in the scene
 pub struct World {
-    pub objects: Vec<Arc<dyn Hitable>>,
+    pub objects: Vec<Geometry>,
 }
 
 impl World {
@@ -23,13 +22,10 @@ impl World {
     /// We use a 'static lifetime so that we can Arc
     /// object inside the function rather than having to
     /// pass object as an Arced object as an input parameter.
-    pub fn add<H: Hitable + 'static>(&mut self, object: H) {
-        let object = Arc::new(object);
+    pub fn add(&mut self, object: Geometry) {
         self.objects.push(object);
     }
-}
 
-impl Hitable for World {
     /// Determine if the given ray has hit any of the objects in the world
     fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitRecord> {
         let mut record =

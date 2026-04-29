@@ -15,6 +15,7 @@ mod basis;
 mod bvh;
 mod camera;
 mod denoise;
+mod geometry;
 mod hitable;
 mod integrator;
 mod materials;
