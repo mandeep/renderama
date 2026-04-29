@@ -77,10 +77,6 @@ pub fn render_path_integrator(mut ray: Ray,
                     };
 
                     let scattered_direction = hybrid_pdf.generate(rng);
-                    // Offset the scatter origin along the geometric normal to avoid
-                    // self-intersection. We always do this (not just when geometric and
-                    // shading normals differ) because surfaces with matching normals still
-                    // self-intersect at grazing angles.
                     let offset_normal = if scattered_direction.dot(hit_record.geometric_normal) > 0.0 {
                         hit_record.geometric_normal
                     } else {
@@ -102,10 +98,9 @@ pub fn render_path_integrator(mut ray: Ray,
             if atmosphere {
                 let point: f32 = 0.5 * (ray.direction.y + 1.0);
                 let lerp = (1.0 - point) * Vec3::splat(1.0) + point * Vec3::new(0.5, 0.7, 1.0);
-                color = throughput * lerp;
-            } else {
-                color = Vec3::ZERO;
+                color += throughput * lerp;
             }
+            break;
         }
 
         if bounce > 3 {
