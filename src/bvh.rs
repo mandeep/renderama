@@ -5,6 +5,11 @@ use ray::Ray;
 use glam::Vec3;
 
 const NUM_BUCKETS: usize = 16;
+const LEAF_FLAG: u32 = 1 << 31;
+
+fn is_leaf(idx: u32) -> bool { idx & LEAF_FLAG != 0 }
+fn leaf_index(idx: u32) -> usize { (idx & !LEAF_FLAG) as usize }
+fn make_leaf_ref(idx: usize) -> u32 { (idx as u32) | LEAF_FLAG }
 
 /// A node in the flattened BVH array.
 ///
@@ -21,8 +26,21 @@ enum BVHNode {
     },
     Leaf {
         bbox: AABB,
-        geometry: Geometry,
+        geometry: Box<Geometry>,
     },
+}
+
+#[derive(Clone, Copy)]
+struct InternalNode {
+    bbox: AABB,        // 24 bytes
+    left: u32,
+    right: u32,
+}  // 32 bytes — exactly half a cache line, two per line
+
+#[derive(Clone)]
+struct LeafNode {
+    bbox: AABB,
+    geometry: Geometry,  // unboxed is fine here, leaves are rarely touched
 }
 
 /// Flattened BVH stored as a Vec, traversed iteratively.
@@ -32,7 +50,9 @@ enum BVHNode {
 /// The root is always at index 0.
 #[derive(Clone)]
 pub struct BVH {
-    nodes: Vec<BVHNode>,
+    internals: Vec<InternalNode>,
+    leaves: Vec<LeafNode>,
+    root: u32,
     bbox: AABB, // root's bbox
 }
 
@@ -261,36 +281,34 @@ fn build_tree(world: &mut Vec<Geometry>, start_time: f32, end_time: f32) -> Tree
 }
 
 /// Flatten the tree into a Vec<BVHNode>. Returns the index of the root.
-fn flatten(tree: &TreeNode, nodes: &mut Vec<BVHNode>) -> u32 {
-    let my_index = nodes.len() as u32;
-    
+fn flatten(tree: &TreeNode, internals: &mut Vec<InternalNode>, leaves: &mut Vec<LeafNode>) -> u32 { 
     match tree {
         TreeNode::Leaf { bbox, geometry } => {
-            nodes.push(BVHNode::Leaf {
+            let index = leaves.len();
+            leaves.push(LeafNode {
                 bbox: bbox.clone(),
                 geometry: geometry.clone(),
             });
+
+            make_leaf_ref(index)
         }
         TreeNode::Internal { bbox, left, right } => {
-            // Reserve a slot for ourselves; we'll fill it in after children.
-            nodes.push(BVHNode::Internal {
-                bbox: bbox.clone(),
+            let index = internals.len();
+            internals.push(InternalNode {
+                bbox: *bbox,
                 left: 0,  // placeholder
                 right: 0, // placeholder
             });
             
-            let left_idx = flatten(left, nodes);
-            let right_idx = flatten(right, nodes);
+            let left_idx = flatten(left, internals, leaves);
+            let right_idx = flatten(right, internals, leaves);
             
-            // Patch in the actual indices.
-            if let BVHNode::Internal { left: l, right: r, .. } = &mut nodes[my_index as usize] {
-                *l = left_idx;
-                *r = right_idx;
-            }
+            internals[index].left = left_idx;
+            internals[index].right = right_idx;
+
+            index as u32
         }
     }
-    
-    my_index
 }
 
 
@@ -317,10 +335,12 @@ impl BVH {
         let tree = build_tree(world, start_time, end_time);
         let bbox = tree.bbox().clone();
         
-        let mut nodes = Vec::new();
-        flatten(&tree, &mut nodes);
+        let mut internals = Vec::new();
+        let mut leaves = Vec::new();
+
+        let root = flatten(&tree, &mut internals, &mut leaves);
         
-        BVH { nodes, bbox }
+        BVH { internals, leaves, root, bbox }
     }
 
     pub fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
@@ -333,33 +353,30 @@ impl BVH {
         let mut closest_t = t_max;
         let mut best_hit: Option<HitRecord> = None;
         
-        stack[stack_pointer] = 0;  // root
+        stack[stack_pointer] = self.root;  // root
         stack_pointer += 1;
         
         while stack_pointer > 0 {
             stack_pointer -= 1;
-            let node_idx = stack[stack_pointer] as usize;
-            
-            match &self.nodes[node_idx] {
-                BVHNode::Internal { bbox, left, right } => {
-                    if bbox.hit(ray, t_min, closest_t) {
-                        // Push both children. (Closest-first ordering optimization
-                        // could go here but adds complexity; basic version first.)
-                        stack[stack_pointer] = *left;
-                        stack_pointer += 1;
-                        stack[stack_pointer] = *right;
-                        stack_pointer += 1;
-                    }
-                }
-                BVHNode::Leaf { bbox, geometry } => {
-                    if bbox.hit(ray, t_min, closest_t) {
-                        if let Some(hit) = geometry.hit(ray, t_min, closest_t) {
-                            if hit.parameter < closest_t {
-                                closest_t = hit.parameter;
-                                best_hit = Some(hit);
-                            }
+            let node_ref = stack[stack_pointer];
+
+            if is_leaf(node_ref) {
+                let leaf = &self.leaves[leaf_index(node_ref)];
+                if leaf.bbox.hit(ray, t_min, closest_t) {
+                    if let Some(hit) = leaf.geometry.hit(ray, t_min, closest_t) {
+                        if hit.parameter < closest_t {
+                            closest_t = hit.parameter;
+                            best_hit = Some(hit);
                         }
                     }
+                }
+            } else {
+                let node = &self.internals[node_ref as usize];
+                if node.bbox.hit(ray, t_min, closest_t) {
+                    stack[stack_pointer] = node.left;
+                    stack_pointer += 1;
+                    stack[stack_pointer] = node.right;
+                    stack_pointer += 1;
                 }
             }
         }
