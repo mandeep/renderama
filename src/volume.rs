@@ -7,19 +7,20 @@ use geometry::Geometry;
 use hitable::HitRecord;
 use ray::Ray;
 
+#[derive(Clone)]
 pub struct Volume {
     density: f32,
-    boundary: Geometry,
+    boundary: Box<Geometry>,
     material_id: u32,
 }
 
 impl Volume {
     pub fn new(density: f32, boundary: Geometry, material_id: u32) -> Volume {
-
+        let boundary = Box::new(boundary);
         Volume { density, boundary, material_id }
     }
 
-    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
+    pub fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
         // Find both intersections of the ray with the volume's boundary.
         // We search the entire ray range (not just [t_min, t_max]) because
         // a ray origin inside the volume would miss the near boundary otherwise.
@@ -57,7 +58,7 @@ impl Volume {
         None
     }
 
-    fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB> {
+    pub fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB> {
         self.boundary.bounding_box(t0, t1)
     }
 }
