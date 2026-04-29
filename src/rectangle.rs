@@ -6,6 +6,7 @@ use hitable::HitRecord;
 use plane::{Axis, Plane};
 use ray::Ray;
 
+#[derive(Clone)]
 pub struct Rectangle {
     p0: Vec3,
     p1: Vec3,
@@ -83,6 +84,7 @@ impl Rectangle {
         self.geometry
         .iter()
         .filter_map(|g| g.hit(ray, position_min, position_max))
+        .filter(|hit| hit.parameter.is_finite())
         .min_by(|a, b| a.parameter.partial_cmp(&b.parameter).unwrap())
     }
 
