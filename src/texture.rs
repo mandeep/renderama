@@ -33,12 +33,6 @@ impl_from_texture!(
     ImageTexture => ImageTexture
 );
 
-
-/// Texture trait can be implemented so that textures can be applied to materials
-pub trait TextureTrait: Send + Sync {
-    fn value(&self, u: f32, v: f32, p: &Vec3) -> Vec3;
-}
-
 #[derive(Clone)]
 /// SolidColor is just a wrapping for a Vec3 of RGB values
 pub struct SolidColor {
@@ -50,13 +44,10 @@ impl SolidColor {
     pub fn new(r: f32, g: f32, b: f32) -> SolidColor {
         SolidColor { color: Vec3::new(r, g, b) }
     }
-}
 
-/// Implement the Texture trait for SolidColor
-/// This allows the SolidColor's color to be retrieved
-/// as well as the SolidColor to be cloned.
-impl TextureTrait for SolidColor {
-    fn value(&self, _u: f32, _v: f32, _p: &Vec3) -> Vec3 {
+    /// Determine which pixel to retrieve from the image by
+    /// converting pixel coordinates to UV coordinates
+    pub fn value(&self, _u: f32, _v: f32, _p: &Vec3) -> Vec3 {
         self.color
     }
 }
@@ -72,12 +63,10 @@ impl ImageTexture {
     pub fn new(filename: &str) -> ImageTexture {
         ImageTexture { im: image::open(filename).unwrap().flipv().to_rgb8() }
     }
-}
 
-/// Determine which pixel to retrieve from the image by
-/// converting pixel coordinates to UV coordinates
-impl TextureTrait for ImageTexture {
-    fn value(&self, u: f32, v: f32, _p: &Vec3) -> Vec3 {
+    /// Determine which pixel to retrieve from the image by
+    /// converting pixel coordinates to UV coordinates
+    pub fn value(&self, u: f32, v: f32, _p: &Vec3) -> Vec3 {
         let i = 0.0f32.max((u * self.im.width() as f32).min(self.im.width() as f32 - 1.0));
         let j = 0.0f32.max((v * self.im.height() as f32).min(self.im.height() as f32 - 1.0));
 
