@@ -8,7 +8,7 @@ use basis::OrthonormalBasis;
 use hitable::HitRecord;
 use integrator::pick_sphere_point;
 use pdf::PDF;
-use ray::Ray;
+use ray::{find_offset_point, Ray};
 use texture::Texture;
 
 #[derive(Clone)]
@@ -344,11 +344,13 @@ impl Refractive {
         let pdf = PDF::MaterialPDF { uvw: OrthonormalBasis::new(&record.shading_normal) };
 
         if rand::random::<f32>() < reflect_probability {
-            let reflected: Vec3 = reflect(ray.direction, record.shading_normal);
-            let specular_ray = Ray::new(record.point, reflected, ray.time);
+            let reflected: Vec3 = reflect(ray.direction, outward_normal);
+            let offset_point = find_offset_point(record.point, outward_normal);
+            let specular_ray = Ray::new(offset_point, reflected, ray.time);
             Some(ScatterRecord::new(specular_ray, attenuation, pdf, true))
         } else {
-            let specular_ray = Ray::new(record.point, refracted.unwrap(), ray.time);
+            let offset_point = find_offset_point(record.point, -outward_normal);
+            let specular_ray = Ray::new(offset_point, refracted.unwrap(), ray.time);
             Some(ScatterRecord::new(specular_ray, attenuation, pdf, true))
         }
     }
