@@ -60,3 +60,13 @@ pub fn f32_max(vector: &[f32]) -> f32 {
 pub fn f32_min(vector: &[f32]) -> f32 {
     vector.iter().cloned().fold(0.0 / 0.0, f32::min)
 }
+
+
+/// Convert from sgrb to linear color space
+pub fn srgb_to_linear(c: f32) -> f32 {
+    if c <= 0.04045 {
+        c / 12.92
+    } else {
+        ((c + 0.055) / 1.055).powf(2.4)
+    }
+}
