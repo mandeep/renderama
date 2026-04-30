@@ -1,8 +1,8 @@
 use glam::Vec3;
 
 use aabb::AABB;
+use events::HitEvent;
 use geometry::Geometry;
-use hitable::{HitRecord};
 use ray::Ray;
 
 #[derive(Clone)]
@@ -27,9 +27,9 @@ impl World {
     }
 
     /// Determine if the given ray has hit any of the objects in the world
-    fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitRecord> {
-        let mut record =
-            HitRecord::new(0.0,
+    fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitEvent> {
+        let mut event =
+            HitEvent::new(0.0,
                            0.0,
                            0.0,
                            Vec3::ZERO,
@@ -42,15 +42,15 @@ impl World {
         for object in &self.objects {
             match object.hit(ray, position_min, closest_so_far) {
                 None => (),
-                Some(hit_record) => {
+                Some(hit_event) => {
                     hit_anything = true;
-                    closest_so_far = hit_record.parameter;
-                    record = hit_record;
+                    closest_so_far = hit_event.parameter;
+                    event = hit_event;
                 }
             }
         }
 
-        if hit_anything { Some(record) } else { None }
+        if hit_anything { Some(event) } else { None }
     }
 
     fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB> {

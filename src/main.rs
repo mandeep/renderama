@@ -15,8 +15,8 @@ mod basis;
 mod bvh;
 mod camera;
 mod denoise;
+mod events;
 mod geometry;
-mod hitable;
 mod integrator;
 mod materials;
 mod pdf;
@@ -59,7 +59,7 @@ fn main() {
     let args: Vec<String> = env::args().collect();
     let samples: u32 = args.get(1).and_then(|s| s.parse().ok()).unwrap_or(128);
     let bounces: u32 = 10;
-    let (width, height): (usize, usize) = (2048, 2048);
+    let (width, height): (usize, usize) = (800, 800);
 
     let scene = scene::cornell_box_object_scene(width, height);
 

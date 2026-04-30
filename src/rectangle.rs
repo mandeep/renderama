@@ -1,8 +1,8 @@
 use glam::Vec3;
 
 use aabb::AABB;
+use events::HitEvent;
 use geometry::Geometry;
-use hitable::HitRecord;
 use plane::{Axis, Plane};
 use ray::Ray;
 
@@ -80,7 +80,7 @@ impl Rectangle {
                   }
     }
 
-    pub fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitRecord> {
+    pub fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitEvent> {
         self.geometry
         .iter()
         .filter_map(|g| g.hit(ray, position_min, position_max))

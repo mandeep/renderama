@@ -3,7 +3,7 @@ use rand::rngs::ThreadRng;
 use glam::Vec3;
 
 use aabb::AABB;
-use hitable::HitRecord;
+use events::HitEvent;
 use plane::Plane;
 use ray::Ray;
 use rectangle::Rectangle;
@@ -26,7 +26,7 @@ pub enum Geometry {
 }
 
 impl Geometry {
-    pub fn hit(&self, ray: &Ray, tmin: f32, tmax: f32) -> Option<HitRecord> {
+    pub fn hit(&self, ray: &Ray, tmin: f32, tmax: f32) -> Option<HitEvent> {
         match self {
             Geometry::Plane(p) => p.hit(ray, tmin, tmax),
             Geometry::Rectangle(r) => r.hit(ray, tmin, tmax),

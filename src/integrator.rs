@@ -42,43 +42,43 @@ pub fn render_path_integrator(mut ray: Ray, scene: &Scene, bounces: u32, rng: &m
     let mut throughput = Vec3::ONE;
 
     for bounce in 0..=bounces {
-        if let Some(hit_record) = scene.accelerator.hit(&ray, 1e-4, f32::MAX) {
-            let material = &scene.materials[hit_record.material_id as usize];
-            let emitted = material.emitted(&ray, &hit_record);
+        if let Some(hit_event) = scene.accelerator.hit(&ray, 1e-4, f32::MAX) {
+            let material = &scene.materials[hit_event.material_id as usize];
+            let emitted = material.emitted(&ray, &hit_event);
             color += throughput * emitted;
 
-            if let Some(scatter_record) = material.scatter(&ray, &hit_record, rng) {
-                if scatter_record.specular {
-                    throughput *= scatter_record.attenuation;
-                    ray = scatter_record.specular_ray;
+            if let Some(scatter_event) = material.scatter(&ray, &hit_event, rng) {
+                if scatter_event.specular {
+                    throughput *= scatter_event.attenuation;
+                    ray = scatter_event.specular_ray;
                 } else {
-                    let fallback_pdf = PDF::FallbackPDF { uvw: OrthonormalBasis::new(&hit_record.shading_normal) };
+                    let fallback_pdf = PDF::FallbackPDF { uvw: OrthonormalBasis::new(&hit_event.shading_normal) };
                     let importance_pdf = scene.light_source.as_ref().map(|light| {
-                        PDF::ImportancePDF { origin: hit_record.point, geometry: Geometry::Plane(light.clone())}
+                        PDF::ImportancePDF { origin: hit_event.point, geometry: Geometry::Plane(light.clone())}
                     });
                     let hybrid_pdf = match &importance_pdf {
                         Some(sample_target_pdf) => PDF::HybridPDF {
-                            material_pdf: &scatter_record.pdf,
+                            material_pdf: &scatter_event.pdf,
                             importance_pdf: sample_target_pdf,
                         },
                         None => PDF::HybridPDF {
-                            material_pdf: &scatter_record.pdf,
+                            material_pdf: &scatter_event.pdf,
                             importance_pdf: &fallback_pdf,
                         },
                     };
 
                     let scattered_direction = hybrid_pdf.generate(rng);
-                    let offset_normal = if scattered_direction.dot(hit_record.geometric_normal) > 0.0 {
-                        hit_record.geometric_normal
+                    let offset_normal = if scattered_direction.dot(hit_event.geometric_normal) > 0.0 {
+                        hit_event.geometric_normal
                     } else {
-                        -hit_record.geometric_normal
+                        -hit_event.geometric_normal
                     };
-                    let offset_point = find_offset_point(hit_record.point, offset_normal);
+                    let offset_point = find_offset_point(hit_event.point, offset_normal);
                     let scattered = Ray::new(offset_point, scattered_direction, ray.time);
                     let pdf_value = hybrid_pdf.value(scattered.direction);
-                    let scattering_pdf = material.scattering_pdf(&ray, &hit_record, &scattered);
+                    let scattering_pdf = material.scattering_pdf(&ray, &hit_event, &scattered);
 
-                    throughput *= (scattering_pdf * scatter_record.attenuation) / pdf_value;
+                    throughput *= (scattering_pdf * scatter_event.attenuation) / pdf_value;
 
                     ray = scattered;
                 }

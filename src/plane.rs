@@ -5,7 +5,7 @@ use rand::rngs::ThreadRng;
 use rand::Rng;
 
 use aabb::AABB;
-use hitable::{HitRecord};
+use events::HitEvent;
 use ray::Ray;
 
 #[derive(Clone)]
@@ -35,7 +35,7 @@ impl Plane {
         Plane { axis, r0, r1, s0, s1, k, material_id }
     }
 
-    pub fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitRecord> {
+    pub fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitEvent> {
         match self.axis {
             Axis::XY => {
                 let t = (self.k - ray.origin.z) / ray.direction.z;
@@ -53,7 +53,7 @@ impl Plane {
 
                 let normal = Vec3::new(0.0, 0.0, 1.0);
 
-                let record = HitRecord::new(t,
+                let event = HitEvent::new(t,
                                             (x - self.r0) / (self.r1 - self.r0),
                                             (y - self.s0) / (self.s1 - self.s0),
                                             ray.point_at_parameter(t),
@@ -61,7 +61,7 @@ impl Plane {
                                             normal,
                                             self.material_id);
 
-                Some(record)
+                Some(event)
             }
             Axis::YZ => {
                 let t = (self.k - ray.origin.x) / ray.direction.x;
@@ -79,7 +79,7 @@ impl Plane {
 
                 let normal = Vec3::new(1.0, 0.0, 0.0);
 
-                let record = HitRecord::new(t,
+                let event = HitEvent::new(t,
                                             (y - self.r0) / (self.r1 - self.r0),
                                             (z - self.s0) / (self.s1 - self.s0),
                                             ray.point_at_parameter(t),
@@ -87,7 +87,7 @@ impl Plane {
                                             normal,
                                             self.material_id);
 
-                Some(record)
+                Some(event)
             }
             Axis::XZ => {
                 let t = (self.k - ray.origin.y) / ray.direction.y;
@@ -105,7 +105,7 @@ impl Plane {
 
                 let normal = Vec3::new(0.0, 1.0, 0.0);
 
-                let record = HitRecord::new(t,
+                let event = HitEvent::new(t,
                                             (x - self.r0) / (self.r1 - self.r0),
                                             (z - self.s0) / (self.s1 - self.s0),
                                             ray.point_at_parameter(t),
@@ -113,7 +113,7 @@ impl Plane {
                                             normal,
                                             self.material_id);
 
-                Some(record)
+                Some(event)
             }
         }
     }

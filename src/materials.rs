@@ -6,7 +6,7 @@ use rand::Rng;
 use rand::rngs::ThreadRng;
 
 use basis::OrthonormalBasis;
-use hitable::HitRecord;
+use events::{HitEvent, ScatterEvent};
 use integrator::pick_sphere_point;
 use pdf::PDF;
 use ray::{find_offset_point, Ray};
@@ -52,28 +52,8 @@ macro_rules! mat {
     }};
 }
 
-pub struct ScatterRecord<'a> {
-    pub specular_ray: Ray,
-    pub attenuation: Vec3,
-    pub pdf: PDF<'a>,
-    pub specular: bool,
-}
-
-impl<'a> ScatterRecord<'a> {
-    pub fn new(specular_ray: Ray,
-               attenuation: Vec3,
-               pdf: PDF<'a>,
-               specular: bool)
-               -> ScatterRecord<'a> {
-        ScatterRecord { specular_ray,
-                        attenuation,
-                        pdf,
-                        specular }
-    }
-}
-
 impl Material {
-    pub fn scatter(&self, ray: &Ray, hit: &HitRecord, rng: &mut ThreadRng) -> Option<ScatterRecord<'_>> {
+    pub fn scatter(&self, ray: &Ray, hit: &HitEvent, rng: &mut ThreadRng) -> Option<ScatterEvent<'_>> {
         match self {
             Material::Diffuse(m) => m.scatter(ray, hit, rng),
             Material::Isotropic(m) => m.scatter(ray, hit, rng),
@@ -84,7 +64,7 @@ impl Material {
         }
     }
 
-    pub fn emitted(&self, ray: &Ray, hit: &HitRecord) -> Vec3 {
+    pub fn emitted(&self, ray: &Ray, hit: &HitEvent) -> Vec3 {
         match self {
             Material::Light(m) => m.emitted(ray, hit),
             Material::Diffuse(_)
@@ -95,7 +75,7 @@ impl Material {
         }
     }
 
-    pub fn scattering_pdf(&self, ray: &Ray, hit: &HitRecord, scattered: &Ray) -> f32 {
+    pub fn scattering_pdf(&self, ray: &Ray, hit: &HitEvent, scattered: &Ray) -> f32 {
         match self {
             Material::Diffuse(m) => m.scattering_pdf(ray, hit, scattered),
             Material::Plastic(m) => m.scattering_pdf(ray, hit, scattered),
@@ -141,13 +121,13 @@ impl Diffuse {
 
     fn scatter(&self,
                ray: &Ray,
-               record: &HitRecord,
+               event: &HitEvent,
                _rng: &mut ThreadRng)
-               -> Option<ScatterRecord<'_>> {
-        let scattered = Ray::new(record.point, ray.direction, ray.time);
-        let attenuation = self.albedo.value(record.u, record.v, &record.point);
-        let pdf = PDF::MaterialPDF { uvw: OrthonormalBasis::new(&record.shading_normal) };
-        Some(ScatterRecord::new(scattered, attenuation, pdf, false))
+               -> Option<ScatterEvent<'_>> {
+        let scattered = Ray::new(event.point, ray.direction, ray.time);
+        let attenuation = self.albedo.value(event.u, event.v, &event.point);
+        let pdf = PDF::MaterialPDF { uvw: OrthonormalBasis::new(&event.shading_normal) };
+        Some(ScatterEvent::new(scattered, attenuation, pdf, false))
     }
 
     /// Reflect light according to the Oren-Nayar model
@@ -158,10 +138,10 @@ impl Diffuse {
     /// https://mimosa-pudica.net/improved-oren-nayar.html
     ///
     /// https://developer.blender.org/diffusion/C/browse/master/src/kernel/closure/bsdf_oren_nayar.h
-    fn scattering_pdf(&self, wo: &Ray, record: &HitRecord, wi: &Ray) -> f32 {
+    fn scattering_pdf(&self, wo: &Ray, event: &HitEvent, wi: &Ray) -> f32 {
         let l = wi.direction;
         let v = wo.direction;
-        let n = record.shading_normal;
+        let n = event.shading_normal;
 
         let nl = n.dot(l).max(0.0);
         let nv = n.dot(v).max(0.0);
@@ -269,19 +249,19 @@ impl Reflective {
 impl Reflective {
     /// Retrieve the color of the given material
     ///
-    /// For spheres, the center of the sphere is given by the record.point
-    /// plus the record.normal. We add a random point from the unit sphere
+    /// For spheres, the center of the sphere is given by the event.point
+    /// plus the event.normal. We add a random point from the unit sphere
     /// to uniformly distribute hit points on the sphere. A fuzziness
     /// factor is also added in to account for the reflection fuzz due to
-    /// the size of the sphere. The target minus the record.point is used
+    /// the size of the sphere. The target minus the event.point is used
     /// to determine the ray that is being reflected from the surface of the material.
-    fn scatter(&self, ray: &Ray, record: &HitRecord, rng: &mut ThreadRng) -> Option<ScatterRecord<'_>> {
-        let reflected: Vec3 = reflect(ray.direction, record.shading_normal);
-        let specular_ray = Ray::new(record.point,
+    fn scatter(&self, ray: &Ray, event: &HitEvent, rng: &mut ThreadRng) -> Option<ScatterEvent<'_>> {
+        let reflected: Vec3 = reflect(ray.direction, event.shading_normal);
+        let specular_ray = Ray::new(event.point,
                                     reflected + self.fuzz * pick_sphere_point(rng),
                                     ray.time);
-        let pdf = PDF::MaterialPDF { uvw: OrthonormalBasis::new(&record.shading_normal) };
-        Some(ScatterRecord::new(specular_ray, self.albedo, pdf, true))
+        let pdf = PDF::MaterialPDF { uvw: OrthonormalBasis::new(&event.shading_normal) };
+        Some(ScatterEvent::new(specular_ray, self.albedo, pdf, true))
     }
 }
 
@@ -305,11 +285,11 @@ impl Refractive {
 
     /// Retrieve the color of the given material
     ///
-    /// For spheres, the center of the sphere is given by the record.point
-    /// plus the record.normal. We add a random point from the unit sphere
+    /// For spheres, the center of the sphere is given by the event.point
+    /// plus the event.normal. We add a random point from the unit sphere
     /// to uniformly distribute hit points on the sphere. A fuzziness
     /// factor is also added in to account for the reflection fuzz due to
-    /// the size of the sphere. The target minus the record.point is used
+    /// the size of the sphere. The target minus the event.point is used
     /// to determine the ray that is being reflected from the surface of the material.
     ///
     /// See Peter Shirley's Ray Tracing in One Weekend for an overview of refractive
@@ -317,15 +297,15 @@ impl Refractive {
     /// Techniques for Computer Graphics by Peter Comininos.
     fn scatter(&self,
                ray: &Ray,
-               record: &HitRecord,
+               event: &HitEvent,
                rng: &mut ThreadRng)
-               -> Option<ScatterRecord<'_>> {
-        let incident: f32 = ray.direction.dot(record.shading_normal);
+               -> Option<ScatterEvent<'_>> {
+        let incident: f32 = ray.direction.dot(event.shading_normal);
 
         let (outward_normal, eta_i, eta_t, cos_theta_i) = if incident > 0.0 {
-            (-record.shading_normal, self.refractive_index, 1.0, incident)
+            (-event.shading_normal, self.refractive_index, 1.0, incident)
         } else {
-            (record.shading_normal, 1.0, self.refractive_index, -incident)
+            (event.shading_normal, 1.0, self.refractive_index, -incident)
         };
 
         let refracted = refract(ray.direction, outward_normal, eta_i / eta_t);
@@ -341,17 +321,17 @@ impl Refractive {
             Vec3::ONE
         };
 
-        let pdf = PDF::MaterialPDF { uvw: OrthonormalBasis::new(&record.shading_normal) };
+        let pdf = PDF::MaterialPDF { uvw: OrthonormalBasis::new(&event.shading_normal) };
 
         if rng.gen::<f32>() < reflect_probability {
             let reflected: Vec3 = reflect(ray.direction, outward_normal);
-            let offset_point = find_offset_point(record.point, outward_normal);
+            let offset_point = find_offset_point(event.point, outward_normal);
             let specular_ray = Ray::new(offset_point, reflected, ray.time);
-            Some(ScatterRecord::new(specular_ray, attenuation, pdf, true))
+            Some(ScatterEvent::new(specular_ray, attenuation, pdf, true))
         } else {
-            let offset_point = find_offset_point(record.point, -outward_normal);
+            let offset_point = find_offset_point(event.point, -outward_normal);
             let specular_ray = Ray::new(offset_point, refracted.unwrap(), ray.time);
-            Some(ScatterRecord::new(specular_ray, attenuation, pdf, true))
+            Some(ScatterEvent::new(specular_ray, attenuation, pdf, true))
         }
     }
 }
@@ -369,13 +349,13 @@ impl Light {
 
     fn scatter(&self,
                _ray: &Ray,
-               _record: &HitRecord,
+               _event: &HitEvent,
                _rng: &mut ThreadRng)
-               -> Option<ScatterRecord<'_>> {
+               -> Option<ScatterEvent<'_>> {
         None
     }
 
-    fn emitted(&self, ray: &Ray, hit: &HitRecord) -> Vec3 {
+    fn emitted(&self, ray: &Ray, hit: &HitEvent) -> Vec3 {
         if hit.shading_normal.dot(ray.direction) < 0.0 {
             self.emit.value(hit.u, hit.v, &hit.point)
         } else {
@@ -394,11 +374,11 @@ impl Isotropic {
         Isotropic { albedo }
     }
 
-    fn scatter(&self, ray: &Ray, record: &HitRecord, rng: &mut ThreadRng) -> Option<ScatterRecord<'_>> {
-        let scattered = Ray::new(record.point, pick_sphere_point(rng), ray.time);
-        let attenuation = self.albedo.value(record.u, record.v, &record.point);
-        let pdf = PDF::MaterialPDF { uvw: OrthonormalBasis::new(&record.shading_normal) };
-        Some(ScatterRecord::new(scattered, attenuation, pdf, true))
+    fn scatter(&self, ray: &Ray, event: &HitEvent, rng: &mut ThreadRng) -> Option<ScatterEvent<'_>> {
+        let scattered = Ray::new(event.point, pick_sphere_point(rng), ray.time);
+        let attenuation = self.albedo.value(event.u, event.v, &event.point);
+        let pdf = PDF::MaterialPDF { uvw: OrthonormalBasis::new(&event.shading_normal) };
+        Some(ScatterEvent::new(scattered, attenuation, pdf, true))
     }
 }
 
@@ -415,28 +395,28 @@ impl Plastic {
         Plastic { albedo, roughness: roughness.max(0.01), ior }
     }
 
-    fn scatter(&self, ray: &Ray, record: &HitRecord, rng: &mut ThreadRng) -> Option<ScatterRecord<'_>> {
-        let cos_theta_i = (-ray.direction).dot(record.shading_normal).max(0.0);
+    fn scatter(&self, ray: &Ray, event: &HitEvent, rng: &mut ThreadRng) -> Option<ScatterEvent<'_>> {
+        let cos_theta_i = (-ray.direction).dot(event.shading_normal).max(0.0);
         let fresnel = fresnel_coefficient(cos_theta_i, 1.0, self.ior);
 
         // Probabilistically pick specular or diffuse based on Fresnel
         if rng.gen::<f32>() < fresnel {
             // Specular path
-            let reflected = reflect(ray.direction, record.shading_normal);
-            let specular_ray = Ray::new(record.point, reflected, ray.time);
-            let pdf = PDF::MaterialPDF { uvw: OrthonormalBasis::new(&record.shading_normal) };
-            Some(ScatterRecord::new(specular_ray, Vec3::ONE, pdf, true))
+            let reflected = reflect(ray.direction, event.shading_normal);
+            let specular_ray = Ray::new(event.point, reflected, ray.time);
+            let pdf = PDF::MaterialPDF { uvw: OrthonormalBasis::new(&event.shading_normal) };
+            Some(ScatterEvent::new(specular_ray, Vec3::ONE, pdf, true))
         } else {
             // Diffuse path
-            let scattered = Ray::new(record.point, ray.direction, ray.time);
-            let attenuation = self.albedo.value(record.u, record.v, &record.point);
-            let pdf = PDF::MaterialPDF { uvw: OrthonormalBasis::new(&record.shading_normal) };
-            Some(ScatterRecord::new(scattered, attenuation, pdf, false))
+            let scattered = Ray::new(event.point, ray.direction, ray.time);
+            let attenuation = self.albedo.value(event.u, event.v, &event.point);
+            let pdf = PDF::MaterialPDF { uvw: OrthonormalBasis::new(&event.shading_normal) };
+            Some(ScatterEvent::new(scattered, attenuation, pdf, false))
         }
     }
 
-    fn scattering_pdf(&self, _wo: &Ray, record: &HitRecord, wi: &Ray) -> f32 {
-        let cosine = record.shading_normal.dot(wi.direction.normalize()).max(0.0);
+    fn scattering_pdf(&self, _wo: &Ray, event: &HitEvent, wi: &Ray) -> f32 {
+        let cosine = event.shading_normal.dot(wi.direction.normalize()).max(0.0);
         cosine / std::f32::consts::PI
     }
 }

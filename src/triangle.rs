@@ -5,8 +5,8 @@ use tobj;
 
 use aabb::AABB;
 use bvh::BVH;
+use events::HitEvent;
 use geometry::Geometry;
-use hitable::{HitRecord};
 use ray::Ray;
 
 #[derive(Clone)]
@@ -76,7 +76,7 @@ impl Triangle {
     /// Journal of Graphics Tools Vol. 2 Issue 1, 1997
     /// http://www.acm.org/jgt/papers/MollerTrumbore97/
     ///
-    pub fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitRecord> {
+    pub fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitEvent> {
         let edge1 = self.v1 - self.v0;
         let edge2 = self.v2 - self.v0;
 
@@ -119,7 +119,7 @@ impl Triangle {
         let w = 1.0 - u - v;
         let interpolated_uv = w * self.uv0 + u * self.uv1 + v * self.uv2;
 
-        Some(HitRecord::new(t,
+        Some(HitEvent::new(t,
                             interpolated_uv.x,
                             interpolated_uv.y,
                             point,
@@ -224,7 +224,7 @@ impl TriangleMesh {
         TriangleMesh::new(triangles)
     }
 
-    pub fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitRecord> {
+    pub fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitEvent> {
         self.accelerator.hit(ray, position_min, position_max)
     }
 

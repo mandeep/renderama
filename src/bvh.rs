@@ -1,5 +1,5 @@
 use aabb::AABB;
-use hitable::HitRecord;
+use events::HitEvent;
 use geometry::Geometry;
 use ray::Ray;
 use glam::Vec3;
@@ -343,7 +343,7 @@ impl BVH {
         BVH { internals, leaves, root, bbox }
     }
 
-    pub fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
+    pub fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitEvent> {
         // Iterative traversal with explicit stack.
         // Stack size 64 supports trees up to depth 64, which covers
         // millions of objects with safety margin.
@@ -351,7 +351,7 @@ impl BVH {
         let mut stack_pointer: usize = 0;
         
         let mut closest_t = t_max;
-        let mut best_hit: Option<HitRecord> = None;
+        let mut best_hit: Option<HitEvent> = None;
         
         stack[stack_pointer] = self.root;  // root
         stack_pointer += 1;

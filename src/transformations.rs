@@ -3,8 +3,8 @@ use std::f32;
 use glam::{Mat4, Vec3};
 
 use aabb::AABB;
+use events::HitEvent;
 use geometry::Geometry;
-use hitable::{HitRecord};
 use ray::Ray;
 
 /// A mesh with combined translation, rotation (XYZ Euler), and uniform scale,
@@ -97,7 +97,7 @@ impl TransformedMesh {
         }
     }
 
-    pub fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
+    pub fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitEvent> {
         // Transform ray into local space using the inverse matrix.
         let local_origin = self.inv_transform.transform_point3(ray.origin);
         let local_direction = self.inv_transform.transform_vector3(ray.direction);
@@ -146,7 +146,7 @@ impl Translate {
         Translate { offset, geometry }
     }
 
-    fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitRecord> {
+    fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitEvent> {
         let moved_ray = Ray::new(ray.origin - self.offset, ray.direction, ray.time);
         if let Some(mut hit) = self.geometry.hit(&moved_ray, position_min, position_max) {
             hit.point += self.offset;
@@ -230,7 +230,7 @@ impl Rotate {
         )
     }
 
-    fn hit(&self, ray: &Ray, t0: f32, t1: f32) -> Option<HitRecord> {
+    fn hit(&self, ray: &Ray, t0: f32, t1: f32) -> Option<HitEvent> {
         let origin = self.rotate(&ray.origin);
         let direction = self.rotate(&ray.direction);
         let rotated_ray = Ray::new(origin, direction, ray.time);
@@ -275,7 +275,7 @@ impl Scale {
     }
 
     /// Reference: http://woo4.me/raytracer/translations/
-    fn hit(&self, ray: &Ray, t0: f32, t1: f32) -> Option<HitRecord> {
+    fn hit(&self, ray: &Ray, t0: f32, t1: f32) -> Option<HitEvent> {
         let origin = ray.origin / self.scalar;
         let direction = (ray.direction / self.scalar).normalize();
 

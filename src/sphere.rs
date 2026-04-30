@@ -3,7 +3,7 @@ use std::f32::consts::PI;
 use glam::Vec3;
 
 use aabb::AABB;
-use hitable::{HitRecord};
+use events::HitEvent;
 use ray::Ray;
 
 
@@ -59,7 +59,7 @@ impl Sphere {
     /// a real root. No real roots signifies a miss, one real root signifies
     /// a hit at the boundary of the sphere, and two real roots signify a
     /// ray hitting one point on the sphere and leaving through another point.
-    pub fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitRecord> {
+    pub fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitEvent> {
         let sphere_center: Vec3 = ray.origin - self.center(ray.time);
         let a: f32 = ray.direction.dot(ray.direction);
         let b: f32 = sphere_center.dot(ray.direction);
@@ -77,7 +77,7 @@ impl Sphere {
                     let point = ray.point_at_parameter(root);
                     let normal = (point - self.center(ray.time)) / self.radius;
                     let (u, v) = get_sphere_uv(&normal);
-                    return Some(HitRecord::new(root,
+                    return Some(HitEvent::new(root,
                                                u,
                                                v,
                                                point,

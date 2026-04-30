@@ -3,8 +3,8 @@ use std::f32;
 use glam::Vec3;
 
 use aabb::AABB;
+use events::HitEvent;
 use geometry::Geometry;
-use hitable::HitRecord;
 use ray::Ray;
 
 #[derive(Clone)]
@@ -20,7 +20,7 @@ impl Volume {
         Volume { density, boundary, material_id }
     }
 
-    pub fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
+    pub fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitEvent> {
         // Find both intersections of the ray with the volume's boundary.
         // We search the entire ray range (not just [t_min, t_max]) because
         // a ray origin inside the volume would miss the near boundary otherwise.
@@ -44,7 +44,7 @@ impl Volume {
                         let t = hit1.parameter + hit_distance / ray.direction.length();
                         let point = ray.point_at_parameter(t);
                         let normal = Vec3::new(1.0, 0.0, 0.0);
-                        return Some(HitRecord::new(t,
+                        return Some(HitEvent::new(t,
                                                    0.0,
                                                    0.0,
                                                    point,
