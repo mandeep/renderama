@@ -3,8 +3,9 @@ use glam::Vec3;
 use aabb::AABB;
 use events::HitEvent;
 use geometry::Geometry;
-use plane::{Axis, Plane};
+use plane::{Axis, Bounds2D, Plane};
 use ray::Ray;
+
 
 #[derive(Clone)]
 pub struct Rectangle {
@@ -17,67 +18,18 @@ pub struct Rectangle {
 impl Rectangle {
     pub fn new(p0: Vec3, p1: Vec3, material_id: u32) -> Rectangle {
         let mut geometry: Vec<Geometry> = Vec::new();
+        let xy_bounds = Bounds2D::new(p0.x..p1.x, p0.y..p1.y);
+        let xz_bounds = Bounds2D::new(p0.x..p1.x, p0.z..p1.z);
+        let yz_bounds = Bounds2D::new(p0.y..p1.y, p0.z..p1.z);
 
-        geometry.push(
-            Geometry::Plane(
-                Plane::from_box(Axis::XY,
-                                     p0.x,
-                                     p1.x,
-                                     p0.y,
-                                     p1.y,
-                                     p1.z,
-                                     material_id)));
+        geometry.push(Plane::new(Axis::XY, xy_bounds, p1.z, material_id).into_geometry());
+        geometry.push(Plane::new(Axis::XY, xy_bounds, p0.z, material_id).into_reversed());
+        geometry.push(Plane::new(Axis::XZ, xz_bounds, p1.y, material_id).into_geometry());
+        geometry.push(Plane::new(Axis::XZ, xz_bounds, p0.y, material_id).into_reversed());
+        geometry.push(Plane::new(Axis::YZ, yz_bounds, p1.x, material_id).into_geometry());
+        geometry.push(Plane::new(Axis::YZ, yz_bounds, p0.x, material_id).into_reversed());
 
-        geometry.push(
-            Geometry::ReverseOrientation(Box::new(
-                Geometry::Plane(Plane::from_box(Axis::XY,
-                                                     p0.x,
-                                                     p1.x,
-                                                     p0.y,
-                                                     p1.y,
-                                                     p0.z,
-                                                     material_id)))));
-
-        geometry.push(Geometry::Plane(
-            Plane::from_box(Axis::XZ,
-                                     p0.x,
-                                     p1.x,
-                                     p0.z,
-                                     p1.z,
-                                     p1.y,
-                                     material_id)));
-
-        geometry.push(Geometry::ReverseOrientation(Box::new(
-                Geometry::Plane(Plane::from_box(Axis::XZ,
-                                                     p0.x,
-                                                     p1.x,
-                                                     p0.z,
-                                                     p1.z,
-                                                     p0.y,
-                                                     material_id)))));
-
-        geometry.push(Geometry::Plane(
-            Plane::from_box(Axis::YZ,
-                                     p0.y,
-                                     p1.y,
-                                     p0.z,
-                                     p1.z,
-                                     p1.x,
-                                     material_id)));
-
-        geometry.push(Geometry::ReverseOrientation(Box::new(
-            Geometry::Plane(Plane::from_box(Axis::YZ,
-                                                     p0.y,
-                                                     p1.y,
-                                                     p0.z,
-                                                     p1.z,
-                                                     p0.x,
-                                                     material_id)))));
-        Rectangle { p0,
-                    p1,
-                    geometry,
-                    material_id
-                  }
+        Rectangle { p0, p1, geometry, material_id }
     }
 
     pub fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitEvent> {

@@ -6,39 +6,85 @@ use rand::Rng;
 
 use aabb::AABB;
 use events::HitEvent;
+use geometry::Geometry;
 use ray::Ray;
 
 #[derive(Clone)]
+/// The three axes a plane can be created on
 pub enum Axis {
     XY,
     YZ,
     XZ,
 }
 
+#[derive(Clone, Copy, Debug)]
+/// Bounds2D is a type that allows for a more intuitive approach for creating
+/// planes. u_min and u_max are the minimum and maximum on the first axis, and
+/// v_min and v_max are the minimum and maximum on the second axis of the plane.
+pub struct Bounds2D {
+    pub u_min: f32,
+    pub u_max: f32,
+    pub v_min: f32,
+    pub v_max: f32,
+}
+
+impl Bounds2D {
+    /// Create a new Bounds2D from a range.
+    ///
+    /// # Examples
+    ///
+    /// Bounds2D::new(0.0..300.0, 0.0..200.0) creates a new bound
+    /// with one axis being from 0.0 to 300.0 and the other axis being from
+    /// 0.0 to 200.0.
+    pub fn new(u: std::ops::Range<f32>, v: std::ops::Range<f32>) -> Self {
+        Self { u_min: u.start, u_max: u.end, v_min: v.start, v_max: v.end }
+    }
+
+    pub fn u_extent(&self) -> f32 { self.u_max - self.u_min }
+    pub fn v_extent(&self) -> f32 { self.v_max - self.v_min }
+    pub fn area(&self) -> f32 { self.u_extent() * self.v_extent() }
+}
+
 #[derive(Clone)]
+/// Plane allows for the creation of an axis-aligned plane on the given Axis
+/// bounds is a Bounds2D that houses the range of the first and second axes
+/// offset is the third axis on which the plane sits
+/// material_id is the index to the material in the materials vec
 pub struct Plane {
     axis: Axis,
-    r0: f32,
-    r1: f32,
-    s0: f32,
-    s1: f32,
-    k: f32,
+    bounds: Bounds2D,
+    offset: f32,
     material_id: u32,
 }
 
 impl Plane {
-    pub fn new(axis: Axis, r0: f32, r1: f32, s0: f32, s1: f32, k: f32, material_id: u32) -> Plane {
-        Plane { axis, r0, r1, s0, s1, k, material_id }
+    /// Create a new plane
+    ///
+    /// # Examples
+    ///
+    /// Plane::new(Axis::YZ, Bounds2D::new(0.0..555.0, 0.0..555.0), 555.0, mat_idx)
+    /// This creates a plane on the YZ axis that sits at 555.0 on the X axis. The first
+    /// range shows 0.0 to 555.0 on the Y axis and the second range shows 0.0 to 555.0 on
+    /// the Z axis.
+    pub fn new(axis: Axis, bounds: Bounds2D, offset: f32, material_id: u32) -> Plane {
+        Plane { axis, bounds, offset, material_id }
     }
 
-    pub fn from_box(axis: Axis, r0: f32, r1: f32, s0: f32, s1: f32, k: f32, material_id: u32) -> Plane {
-        Plane { axis, r0, r1, s0, s1, k, material_id }
+    /// Convert the Plane into a Geometry for when adding to accelerators
+    pub fn into_geometry(self) -> Geometry {
+        Geometry::Plane(self)
+    }
+
+    /// Convert the Plane into a Plane with its normal flipped so that
+    /// the plane can be used in the opposite orientation
+    pub fn into_reversed(self) -> Geometry {
+        Geometry::ReverseOrientation(Box::new(Geometry::Plane(self)))
     }
 
     pub fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitEvent> {
         match self.axis {
             Axis::XY => {
-                let t = (self.k - ray.origin.z) / ray.direction.z;
+                let t = (self.offset - ray.origin.z) / ray.direction.z;
 
                 if t < position_min || t > position_max {
                     return None;
@@ -47,15 +93,15 @@ impl Plane {
                 let x = ray.origin.x + t * ray.direction.x;
                 let y = ray.origin.y + t * ray.direction.y;
 
-                if x < self.r0 || x > self.r1 || y < self.s0 || y > self.s1 {
+                if x < self.bounds.u_min || x > self.bounds.u_max || y < self.bounds.v_min || y > self.bounds.v_max {
                     return None;
                 }
 
                 let normal = Vec3::new(0.0, 0.0, 1.0);
 
                 let event = HitEvent::new(t,
-                                            (x - self.r0) / (self.r1 - self.r0),
-                                            (y - self.s0) / (self.s1 - self.s0),
+                                            (x - self.bounds.u_min) / (self.bounds.u_max - self.bounds.u_min),
+                                            (y - self.bounds.v_min) / (self.bounds.v_max - self.bounds.v_min),
                                             ray.point_at_parameter(t),
                                             normal,
                                             normal,
@@ -64,7 +110,7 @@ impl Plane {
                 Some(event)
             }
             Axis::YZ => {
-                let t = (self.k - ray.origin.x) / ray.direction.x;
+                let t = (self.offset - ray.origin.x) / ray.direction.x;
 
                 if t < position_min || t > position_max {
                     return None;
@@ -73,15 +119,15 @@ impl Plane {
                 let y = ray.origin.y + t * ray.direction.y;
                 let z = ray.origin.z + t * ray.direction.z;
 
-                if y < self.r0 || y > self.r1 || z < self.s0 || z > self.s1 {
+                if y < self.bounds.u_min || y > self.bounds.u_max || z < self.bounds.v_min || z > self.bounds.v_max {
                     return None;
                 }
 
                 let normal = Vec3::new(1.0, 0.0, 0.0);
 
                 let event = HitEvent::new(t,
-                                            (y - self.r0) / (self.r1 - self.r0),
-                                            (z - self.s0) / (self.s1 - self.s0),
+                                            (y - self.bounds.u_min) / (self.bounds.u_max - self.bounds.u_min),
+                                            (z - self.bounds.v_min) / (self.bounds.v_max - self.bounds.v_min),
                                             ray.point_at_parameter(t),
                                             normal,
                                             normal,
@@ -90,7 +136,7 @@ impl Plane {
                 Some(event)
             }
             Axis::XZ => {
-                let t = (self.k - ray.origin.y) / ray.direction.y;
+                let t = (self.offset - ray.origin.y) / ray.direction.y;
 
                 if t < position_min || t > position_max {
                     return None;
@@ -99,15 +145,15 @@ impl Plane {
                 let x = ray.origin.x + t * ray.direction.x;
                 let z = ray.origin.z + t * ray.direction.z;
 
-                if x < self.r0 || x > self.r1 || z < self.s0 || z > self.s1 {
+                if x < self.bounds.u_min || x > self.bounds.u_max || z < self.bounds.v_min || z > self.bounds.v_max {
                     return None;
                 }
 
                 let normal = Vec3::new(0.0, 1.0, 0.0);
 
                 let event = HitEvent::new(t,
-                                            (x - self.r0) / (self.r1 - self.r0),
-                                            (z - self.s0) / (self.s1 - self.s0),
+                                            (x - self.bounds.u_min) / (self.bounds.u_max - self.bounds.u_min),
+                                            (z - self.bounds.v_min) / (self.bounds.v_max - self.bounds.v_min),
                                             ray.point_at_parameter(t),
                                             normal,
                                             normal,
@@ -121,18 +167,18 @@ impl Plane {
     pub fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
         match self.axis {
             Axis::XY => {
-                let minimum = Vec3::new(self.r0, self.s0, self.k - 0.0001);
-                let maximum = Vec3::new(self.r1, self.s1, self.k + 0.0001);
+                let minimum = Vec3::new(self.bounds.u_min, self.bounds.v_min, self.offset - 0.0001);
+                let maximum = Vec3::new(self.bounds.u_max, self.bounds.v_max, self.offset + 0.0001);
                 Some(AABB::from(minimum, maximum))
             }
             Axis::YZ => {
-                let minimum = Vec3::new(self.k - 0.0001, self.r0, self.s0);
-                let maximum = Vec3::new(self.k + 0.0001, self.r1, self.s1);
+                let minimum = Vec3::new(self.offset - 0.0001, self.bounds.u_min, self.bounds.v_min);
+                let maximum = Vec3::new(self.offset + 0.0001, self.bounds.u_max, self.bounds.v_max);
                 Some(AABB::from(minimum, maximum))
             }
             Axis::XZ => {
-                let minimum = Vec3::new(self.r0, self.k - 0.0001, self.s0);
-                let maximum = Vec3::new(self.r1, self.k + 0.0001, self.s1);
+                let minimum = Vec3::new(self.bounds.u_min, self.offset - 0.0001, self.bounds.v_min);
+                let maximum = Vec3::new(self.bounds.u_max, self.offset + 0.0001, self.bounds.v_max);
                 Some(AABB::from(minimum, maximum))
             }
         }
@@ -140,7 +186,7 @@ impl Plane {
 
     pub fn pdf_value(&self, origin: Vec3, direction: Vec3) -> f32 {
         if let Some(hit) = self.hit(&Ray::new(origin, direction, 0.0), 0.001, f32::MAX) {
-            let area = (self.r1 - self.r0) * (self.s1 - self.s0);
+            let area = (self.bounds.u_max - self.bounds.u_min) * (self.bounds.v_max - self.bounds.v_min);
             let distance_squared = hit.parameter * hit.parameter * direction.length_squared();
             let cosine = direction.dot(hit.shading_normal).abs() / direction.length();
             distance_squared / (cosine * area)
@@ -150,9 +196,9 @@ impl Plane {
     }
 
     pub fn pdf_random(&self, origin: Vec3, rng: &mut ThreadRng) -> Vec3 {
-        let random_point = Vec3::new(self.r0 + rng.gen::<f32>() * (self.r1 - self.r0),
-                                     self.k,
-                                     self.s0 + rng.gen::<f32>() * (self.s1 - self.s0));
+        let random_point = Vec3::new(self.bounds.u_min + rng.gen::<f32>() * (self.bounds.u_max - self.bounds.u_min),
+                                     self.offset,
+                                     self.bounds.v_min + rng.gen::<f32>() * (self.bounds.v_max - self.bounds.v_min));
         random_point - origin
     }
 }
