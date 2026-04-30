@@ -18,17 +18,20 @@ use mat;
 
 
 pub struct Scene {
+    pub name: String,
+    pub accelerator: BVH,
     pub materials: Vec<Material>,
-    pub world: BVH,
+    pub camera: Camera,
+    pub light_source: Option<Plane>
 }
 
 impl Scene {
-    fn new(materials: Vec<Material>, accelerator: BVH) -> Scene {
-        Scene { materials: materials, world: accelerator }
+    fn new(name: String, accelerator: BVH, materials: Vec<Material>, camera: Camera, light_source: Option<Plane>) -> Scene {
+        Scene { name, materials, accelerator, camera, light_source }
     }
 }
 
-pub fn three_spheres_scene(width: usize, height: usize) -> (String, Camera, Scene, Option<Plane>) {
+pub fn three_spheres_scene(width: usize, height: usize) -> Scene {
     let origin = Vec3::new(0.0, 3.0, 6.0);
     let lookat = Vec3::new(0.0, 0.0, -1.5);
     let view = Vec3::new(0.0, 1.0, 0.0);
@@ -94,12 +97,12 @@ pub fn three_spheres_scene(width: usize, height: usize) -> (String, Camera, Scen
 
     let light = None;
 
-    let scene = Scene::new(materials, bvh);
+    let scene = Scene::new(String::from("Three Spheres"), bvh, materials, camera, light);
 
-    (String::from("Three Spheres"), camera, scene, light)
+    scene
 }
 
-pub fn random_spheres_scene(width: usize, height: usize) -> (String, Camera, Scene, Option<Plane>) {
+pub fn random_spheres_scene(width: usize, height: usize) -> Scene {
     let origin = Vec3::new(13.0, 2.0, 3.0);
     let lookat = Vec3::new(0.0, 0.0, 0.0);
     let view = Vec3::new(0.0, 1.0, 0.0);
@@ -208,14 +211,15 @@ pub fn random_spheres_scene(width: usize, height: usize) -> (String, Camera, Sce
                           1.0).into());
 
     let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
-    let scene = Scene::new(materials, bvh);
 
     let light = None;
 
-    (String::from("Random Spheres"), camera, scene, light)
+    let scene = Scene::new(String::from("Random Spheres"), bvh, materials, camera, light);
+
+    scene
 }
 
-pub fn cornell_box_scene(width: usize, height: usize) -> (String, Camera, Scene, Option<Plane>) {
+pub fn cornell_box_scene(width: usize, height: usize) -> Scene {
     let origin = Vec3::new(278.0, 278.0, -800.0);
     let lookat = Vec3::new(278.0, 278.0, 0.0);
     let view = Vec3::new(0.0, 1.0, 0.0);
@@ -257,12 +261,12 @@ pub fn cornell_box_scene(width: usize, height: usize) -> (String, Camera, Scene,
     let light = mat!(materials, Light::new(SolidColor::new(0.0, 0.0, 0.0).into()));
     let light_shape = Plane::new(Axis::XZ, 213.0, 343.0, 227.0, 332.0, 554.0, light);
 
-    let scene = Scene::new(materials, bvh);
+    let scene = Scene::new(String::from("Cornell Box"), bvh, materials, camera, Some(light_shape));
 
-    (String::from("Cornell Box"), camera, scene, Some(light_shape))
+    scene
 }
 
-pub fn spheres_in_box_scene(width: usize, height: usize) -> (String, Camera, Scene, Option<Plane>) {
+pub fn spheres_in_box_scene(width: usize, height: usize) -> Scene {
     let origin = Vec3::new(478.0, 278.0, -600.0);
     let lookat = Vec3::new(278.0, 278.0, 0.0);
     let view = Vec3::new(0.0, 1.0, 0.0);
@@ -386,12 +390,12 @@ pub fn spheres_in_box_scene(width: usize, height: usize) -> (String, Camera, Sce
     // let light = mat!(materials, Light::new(SolidColor::new(0.0, 0.0, 0.0).into()));
     let light_shape = Plane::new(Axis::XZ, 123.0, 423.0, 147.0, 412.0, 554.0, big_light);
 
-    let scene = Scene::new(materials, bvh);
+    let scene = Scene::new(String::from("Spheres in Box"), bvh, materials, camera, Some(light_shape));
 
-    (String::from("Spheres in Box"), camera, scene, Some(light_shape))
+    scene
 }
 
-pub fn cornell_box_bunny_scene(width: usize, height: usize) -> (String, Camera, Scene, Option<Plane>) {
+pub fn cornell_box_bunny_scene(width: usize, height: usize) -> Scene {
     // Same camera as the classic Cornell box so the framing looks identical.
     let origin = Vec3::new(278.0, 278.0, -800.0);
     let lookat = Vec3::new(278.0, 278.0, 0.0);
@@ -435,12 +439,12 @@ pub fn cornell_box_bunny_scene(width: usize, height: usize) -> (String, Camera, 
     let light = mat!(materials, Light::new(SolidColor::new(0.0, 0.0, 0.0).into()));
     let light_shape = Plane::new(Axis::XZ, 213.0, 343.0, 227.0, 332.0, 554.0, light);
 
-    let scene = Scene::new(materials, bvh);
+    let scene = Scene::new(String::from("Cornell Box with Stanford Bunny"), bvh, materials, camera, Some(light_shape));
 
-    (String::from("Cornell Box with Stanford Bunny"), camera, scene, Some(light_shape))
+    scene
 }
 
-pub fn cornell_box_object_scene(width: usize, height: usize) -> (String, Camera, Scene, Option<Plane>) {
+pub fn cornell_box_object_scene(width: usize, height: usize) -> Scene {
     let origin = Vec3::new(278.0, 278.0, -800.0);
     let lookat = Vec3::new(278.0, 278.0, 0.0);
     let view = Vec3::new(0.0, 1.0, 0.0);
@@ -489,7 +493,7 @@ pub fn cornell_box_object_scene(width: usize, height: usize) -> (String, Camera,
     let light = mat!(materials, Light::new(SolidColor::new(0.0, 0.0, 0.0).into()));
     let light_shape = Some(Plane::new(Axis::XZ, 213.0, 343.0, 227.0, 332.0, 554.0, light));
 
-    let scene = Scene::new(materials, bvh);
+    let scene = Scene::new(String::from("Cornell Box with Multiple Objects"), bvh, materials, camera, light_shape);
 
-    (String::from("Cornell Box with Multiple Objects"), camera, scene, light_shape)
+    scene
 }

@@ -60,12 +60,12 @@ fn main() {
     let bounces: u32 = 10;
     let (width, height): (usize, usize) = (2048, 2048);
 
-    let (name, camera, scene, light_source) = scene::cornell_box_object_scene(width, height);
+    let scene = scene::cornell_box_object_scene(width, height);
 
     let render_start_time: DateTime<Local> = Local::now();
     println!("[{}] Rendering '{}' scene with {} samples at {} x {} dimensions...",
              render_start_time.format("%H:%M:%S"),
-             name,
+             &scene.name,
              samples,
              width,
              height);
@@ -96,17 +96,12 @@ fn main() {
         (0..samples).for_each(|_| {
             let u = (x as f32 + rand::random::<f32>()) / width as f32;
             let v = (y as f32 + rand::random::<f32>()) / height as f32;
-            let ray = camera.get_ray(u, v, &mut rng);
+            let ray = scene.camera.get_ray(u, v, &mut rng);
 
             // render_normals is used for debugging
             // color += utils::de_nan(&integrator::render_normals(ray, &world));
 
-            color += utils::de_nan(&integrator::render_path_integrator(ray,
-                                                        &scene,
-                                                        bounces,
-                                                        &light_source,
-                                                        camera.atmosphere,
-                                                        &mut rng));
+            color += utils::de_nan(&integrator::render_path_integrator(ray, &scene, bounces, &mut rng));
         });
 
         color /= samples as f32;

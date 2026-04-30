@@ -38,18 +38,12 @@ pub fn pick_sphere_point(rng: &mut ThreadRng) -> Vec3 {
 /// the color at the ray's hit point. The depth has been set to an arbitrary
 /// limit of 50 which can lead to bias rendering.
 ///
-pub fn render_path_integrator(mut ray: Ray,
-                     scene: &Scene,
-                     bounces: u32,
-                     light_source: &Option<Plane>,
-                     atmosphere: bool,
-                     rng: &mut ThreadRng)
-                     -> Vec3 {
+pub fn render_path_integrator(mut ray: Ray, scene: &Scene, bounces: u32, rng: &mut ThreadRng) -> Vec3 {
     let mut color = Vec3::ZERO;
     let mut throughput = Vec3::ONE;
 
     for bounce in 0..=bounces {
-        if let Some(hit_record) = scene.world.hit(&ray, 1e-4, f32::MAX) {
+        if let Some(hit_record) = scene.accelerator.hit(&ray, 1e-4, f32::MAX) {
             let material = &scene.materials[hit_record.material_id as usize];
             let emitted = material.emitted(&ray, &hit_record);
             color += throughput * emitted;
@@ -60,7 +54,7 @@ pub fn render_path_integrator(mut ray: Ray,
                     ray = scatter_record.specular_ray;
                 } else {
                     let fallback_pdf = PDF::FallbackPDF { uvw: OrthonormalBasis::new(&hit_record.shading_normal) };
-                    let importance_pdf = light_source.as_ref().map(|light| {
+                    let importance_pdf = scene.light_source.as_ref().map(|light| {
                         PDF::ImportancePDF { origin: hit_record.point, geometry: Geometry::Plane(light.clone())}
                     });
                     let hybrid_pdf = match &importance_pdf {
@@ -93,7 +87,7 @@ pub fn render_path_integrator(mut ray: Ray,
                 break;
             }
         } else {
-            if atmosphere {
+            if scene.camera.atmosphere {
                 let point: f32 = 0.5 * (ray.direction.y + 1.0);
                 let lerp = (1.0 - point) * Vec3::splat(1.0) + point * Vec3::new(0.5, 0.7, 1.0);
                 color += throughput * lerp;
