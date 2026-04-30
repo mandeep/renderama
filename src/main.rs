@@ -99,7 +99,7 @@ fn main() {
             let ray = scene.camera.get_ray(u, v, &mut rng);
 
             // render_normals is used for debugging
-            // color += utils::de_nan(&integrator::render_normals(ray, &world));
+            // color += utils::de_nan(&integrator::render_normals(ray, &scene));
 
             color += utils::de_nan(&integrator::render_path_integrator(ray, &scene, bounces, &mut rng));
         });

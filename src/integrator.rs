@@ -6,7 +6,6 @@ use rand::Rng;
 use rand_distr::StandardNormal;
 
 use basis::OrthonormalBasis;
-use bvh::BVH;
 use geometry::Geometry;
 use pdf::PDF;
 use ray::{find_offset_point, Ray};
@@ -106,8 +105,8 @@ pub fn render_path_integrator(mut ray: Ray, scene: &Scene, bounces: u32, rng: &m
     return color;
 }
 
-pub fn render_normals(ray: Ray, world: &BVH) -> Vec3 {
-    if let Some(hit) = world.hit(&ray, 1e-4, f32::MAX) {
+pub fn render_normals(ray: Ray, scene: &Scene) -> Vec3 {
+    if let Some(hit) = scene.accelerator.hit(&ray, 1e-4, f32::MAX) {
         let normal = hit.shading_normal;
         0.5 * Vec3::new(normal.x + 1.0, normal.y + 1.0, normal.z + 1.0)
     } else {
