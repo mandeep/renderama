@@ -26,6 +26,7 @@ mod ray;
 mod rectangle;
 mod sampling;
 mod scene;
+mod scenes;
 mod sphere;
 mod texture;
 mod tone;
@@ -59,9 +60,9 @@ fn main() {
     let args: Vec<String> = env::args().collect();
     let samples: u32 = args.get(1).and_then(|s| s.parse().ok()).unwrap_or(128);
     let bounces: u32 = 10;
-    let (width, height): (usize, usize) = (800, 800);
+    let (width, height): (usize, usize) = (2048, 2048);
 
-    let scene = scene::cornell_box_object_scene(width, height);
+    let scene = scenes::cornell_box_object_scene(width, height);
 
     let render_start_time: DateTime<Local> = Local::now();
     println!("[{}] Rendering '{}' scene with {} samples at {} x {} dimensions...",
