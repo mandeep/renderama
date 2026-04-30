@@ -1,13 +1,11 @@
 use std::f32;
-use std::sync::Arc;
 
 use glam::Vec3;
 use rand::rngs::ThreadRng;
 use rand::Rng;
 
 use aabb::AABB;
-use hitable::{HitRecord, Hitable};
-use materials::Material;
+use hitable::{HitRecord};
 use ray::Ray;
 
 #[derive(Clone)]
@@ -25,48 +23,19 @@ pub struct Plane {
     s0: f32,
     s1: f32,
     k: f32,
-    material: Arc<dyn Material>,
+    material_id: u32,
 }
 
 impl Plane {
-    pub fn new<M: Material + 'static>(axis: Axis,
-                                      r0: f32,
-                                      r1: f32,
-                                      s0: f32,
-                                      s1: f32,
-                                      k: f32,
-                                      material: M)
-                                      -> Plane {
-        let material = Arc::new(material);
-        Plane { axis,
-                r0,
-                r1,
-                s0,
-                s1,
-                k,
-                material }
+    pub fn new(axis: Axis, r0: f32, r1: f32, s0: f32, s1: f32, k: f32, material_id: u32) -> Plane {
+        Plane { axis, r0, r1, s0, s1, k, material_id }
     }
 
-    pub fn from_box(axis: Axis,
-                    r0: f32,
-                    r1: f32,
-                    s0: f32,
-                    s1: f32,
-                    k: f32,
-                    material: Arc<dyn Material>)
-                    -> Plane {
-        Plane { axis,
-                r0,
-                r1,
-                s0,
-                s1,
-                k,
-                material }
+    pub fn from_box(axis: Axis, r0: f32, r1: f32, s0: f32, s1: f32, k: f32, material_id: u32) -> Plane {
+        Plane { axis, r0, r1, s0, s1, k, material_id }
     }
-}
 
-impl Hitable for Plane {
-    fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitRecord> {
+    pub fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitRecord> {
         match self.axis {
             Axis::XY => {
                 let t = (self.k - ray.origin.z) / ray.direction.z;
@@ -90,7 +59,7 @@ impl Hitable for Plane {
                                             ray.point_at_parameter(t),
                                             normal,
                                             normal,
-                                            self.material.clone());
+                                            self.material_id);
 
                 Some(record)
             }
@@ -116,7 +85,7 @@ impl Hitable for Plane {
                                             ray.point_at_parameter(t),
                                             normal,
                                             normal,
-                                            self.material.clone());
+                                            self.material_id);
 
                 Some(record)
             }
@@ -142,14 +111,14 @@ impl Hitable for Plane {
                                             ray.point_at_parameter(t),
                                             normal,
                                             normal,
-                                            self.material.clone());
+                                            self.material_id);
 
                 Some(record)
             }
         }
     }
 
-    fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
+    pub fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
         match self.axis {
             Axis::XY => {
                 let minimum = Vec3::new(self.r0, self.s0, self.k - 0.0001);
@@ -169,7 +138,7 @@ impl Hitable for Plane {
         }
     }
 
-    fn pdf_value(&self, origin: Vec3, direction: Vec3) -> f32 {
+    pub fn pdf_value(&self, origin: Vec3, direction: Vec3) -> f32 {
         if let Some(hit) = self.hit(&Ray::new(origin, direction, 0.0), 0.001, f32::MAX) {
             let area = (self.r1 - self.r0) * (self.s1 - self.s0);
             let distance_squared = hit.parameter * hit.parameter * direction.length_squared();
@@ -180,7 +149,7 @@ impl Hitable for Plane {
         }
     }
 
-    fn pdf_random(&self, origin: Vec3, rng: &mut ThreadRng) -> Vec3 {
+    pub fn pdf_random(&self, origin: Vec3, rng: &mut ThreadRng) -> Vec3 {
         let random_point = Vec3::new(self.r0 + rng.gen::<f32>() * (self.r1 - self.r0),
                                      self.k,
                                      self.s0 + rng.gen::<f32>() * (self.s1 - self.s0));

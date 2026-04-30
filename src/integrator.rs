@@ -1,5 +1,4 @@
 use std::f32;
-use std::sync::Arc;
 
 use glam::Vec3;
 use rand::rngs::ThreadRng;
@@ -8,10 +7,11 @@ use rand_distr::{Distribution, Normal};
 
 use basis::OrthonormalBasis;
 use bvh::BVH;
-use hitable::Hitable;
+use geometry::Geometry;
 use pdf::PDF;
 use plane::Plane;
 use ray::{find_offset_point, Ray};
+use scene::Scene;
 
 /// Pick a random point on the unit sphere
 ///
@@ -41,7 +41,7 @@ pub fn pick_sphere_point(rng: &mut ThreadRng) -> Vec3 {
 /// limit of 50 which can lead to bias rendering.
 ///
 pub fn render_path_integrator(mut ray: Ray,
-                     world: &BVH,
+                     scene: &Scene,
                      bounces: u32,
                      light_source: &Option<Plane>,
                      atmosphere: bool,
@@ -51,18 +51,19 @@ pub fn render_path_integrator(mut ray: Ray,
     let mut throughput = Vec3::ONE;
 
     for bounce in 0..=bounces {
-        if let Some(hit_record) = world.hit(&ray, 1e-4, f32::MAX) {
-            let emitted = hit_record.material.emitted(&ray, &hit_record);
+        if let Some(hit_record) = scene.world.hit(&ray, 1e-4, f32::MAX) {
+            let material = &scene.materials[hit_record.material_id as usize];
+            let emitted = material.emitted(&ray, &hit_record);
             color += throughput * emitted;
 
-            if let Some(scatter_record) = hit_record.material.scatter(&ray, &hit_record, rng) {
+            if let Some(scatter_record) = material.scatter(&ray, &hit_record, rng) {
                 if scatter_record.specular {
                     throughput *= scatter_record.attenuation;
                     ray = scatter_record.specular_ray;
                 } else {
                     let fallback_pdf = PDF::FallbackPDF { uvw: OrthonormalBasis::new(&hit_record.shading_normal) };
                     let importance_pdf = light_source.as_ref().map(|light| {
-                        PDF::ImportancePDF { origin: hit_record.point, hitable: Arc::new(light.clone())}
+                        PDF::ImportancePDF { origin: hit_record.point, geometry: Geometry::Plane(light.clone())}
                     });
                     let hybrid_pdf = match &importance_pdf {
                         Some(sample_target_pdf) => PDF::HybridPDF {
@@ -76,10 +77,6 @@ pub fn render_path_integrator(mut ray: Ray,
                     };
 
                     let scattered_direction = hybrid_pdf.generate(rng);
-                    // Offset the scatter origin along the geometric normal to avoid
-                    // self-intersection. We always do this (not just when geometric and
-                    // shading normals differ) because surfaces with matching normals still
-                    // self-intersect at grazing angles.
                     let offset_normal = if scattered_direction.dot(hit_record.geometric_normal) > 0.0 {
                         hit_record.geometric_normal
                     } else {
@@ -88,8 +85,7 @@ pub fn render_path_integrator(mut ray: Ray,
                     let offset_point = find_offset_point(hit_record.point, offset_normal);
                     let scattered = Ray::new(offset_point, scattered_direction, ray.time);
                     let pdf_value = hybrid_pdf.value(scattered.direction);
-                    let scattering_pdf = hit_record.material
-                                                   .scattering_pdf(&ray, &hit_record, &scattered);
+                    let scattering_pdf = material.scattering_pdf(&ray, &hit_record, &scattered);
 
                     throughput *= (scattering_pdf * scatter_record.attenuation) / pdf_value;
 
@@ -102,10 +98,9 @@ pub fn render_path_integrator(mut ray: Ray,
             if atmosphere {
                 let point: f32 = 0.5 * (ray.direction.y + 1.0);
                 let lerp = (1.0 - point) * Vec3::splat(1.0) + point * Vec3::new(0.5, 0.7, 1.0);
-                color = throughput * lerp;
-            } else {
-                color = Vec3::ZERO;
+                color += throughput * lerp;
             }
+            break;
         }
 
         if bounce > 3 {

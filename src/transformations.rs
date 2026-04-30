@@ -1,10 +1,10 @@
 use std::f32;
-use std::sync::Arc;
 
 use glam::{Mat4, Vec3};
 
 use aabb::AABB;
-use hitable::{HitRecord, Hitable};
+use geometry::Geometry;
+use hitable::{HitRecord};
 use ray::Ray;
 
 /// A mesh with combined translation, rotation (XYZ Euler), and uniform scale,
@@ -22,49 +22,7 @@ pub struct TransformedMesh {
     bbox: AABB,
     /// Uniform scale factor — needed to convert ray parameter t back to world space.
     scale: f32,
-    hitable: Arc<dyn Hitable>,
-}
-
-impl TransformedMesh {
-    pub fn new<H: Hitable + 'static>(
-        translate: Vec3,
-        rotate_xyz_degrees: Vec3,
-        scale: f32,
-        hitable: H,
-    ) -> TransformedMesh {
-        // Build the forward transform: local → world.
-        // Order: Scale, then Rotate (X then Y then Z), then Translate.
-        // This matches your existing Translate(Rotate(Scale(...))) composition.
-        
-        let scale_mat = Mat4::from_scale(Vec3::new(scale, scale, scale));
-        
-        let rx = rotate_xyz_degrees.x.to_radians();
-        let ry = rotate_xyz_degrees.y.to_radians();
-        let rz = rotate_xyz_degrees.z.to_radians();
-        
-        // Match your Rotate's sign convention (Y rotation matches original)
-        let rot_x = Mat4::from_rotation_x(rx);
-        let rot_y = Mat4::from_rotation_y(ry);
-        let rot_z = Mat4::from_rotation_z(rz);
-        
-        let translate_mat = Mat4::from_translation(translate);
-        
-        let forward = translate_mat * rot_z * rot_y * rot_x * scale_mat;
-        let inv = forward.inverse();
-        
-        // Compute world-space bounding box by transforming local bbox corners.
-        let local_bbox = hitable.bounding_box(0.0, 1.0).unwrap();
-        let bbox = transform_aabb(&local_bbox, &forward);
-        
-        TransformedMesh {
-            inv_transform: inv,
-            forward_transform: forward,
-            normal_transform: inv.transpose(),
-            bbox,
-            scale,
-            hitable: Arc::new(hitable),
-        }
-    }
+    geometry: Box<Geometry>,
 }
 
 fn transform_aabb(bbox: &AABB, transform: &Mat4) -> AABB {
@@ -96,8 +54,50 @@ fn transform_aabb(bbox: &AABB, transform: &Mat4) -> AABB {
     AABB::from(new_min, new_max)
 }
 
-impl Hitable for TransformedMesh {
-    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
+impl TransformedMesh {
+    pub fn new(
+        translate: Vec3,
+        rotate_xyz_degrees: Vec3,
+        scale: f32,
+        geometry: Geometry,
+    ) -> TransformedMesh {
+        // Build the forward transform: local → world.
+        // Order: Scale, then Rotate (X then Y then Z), then Translate.
+        // This matches your existing Translate(Rotate(Scale(...))) composition.
+        
+        let scale_mat = Mat4::from_scale(Vec3::new(scale, scale, scale));
+        
+        let rx = rotate_xyz_degrees.x.to_radians();
+        let ry = rotate_xyz_degrees.y.to_radians();
+        let rz = rotate_xyz_degrees.z.to_radians();
+        
+        // Match your Rotate's sign convention (Y rotation matches original)
+        let rot_x = Mat4::from_rotation_x(rx);
+        let rot_y = Mat4::from_rotation_y(ry);
+        let rot_z = Mat4::from_rotation_z(rz);
+        
+        let translate_mat = Mat4::from_translation(translate);
+        
+        let forward = translate_mat * rot_z * rot_y * rot_x * scale_mat;
+        let inv = forward.inverse();
+        
+        // Compute world-space bounding box by transforming local bbox corners.
+        let local_bbox = geometry.bounding_box(0.0, 1.0).unwrap();
+        let bbox = transform_aabb(&local_bbox, &forward);
+
+        let geometry = Box::new(geometry);
+        
+        TransformedMesh {
+            inv_transform: inv,
+            forward_transform: forward,
+            normal_transform: inv.transpose(),
+            bbox,
+            scale,
+            geometry,
+        }
+    }
+
+    pub fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
         // Transform ray into local space using the inverse matrix.
         let local_origin = self.inv_transform.transform_point3(ray.origin);
         let local_direction = self.inv_transform.transform_vector3(ray.direction);
@@ -114,7 +114,7 @@ impl Hitable for TransformedMesh {
         
         let local_ray = Ray::new(local_origin, local_direction_normalized, ray.time);
         
-        if let Some(mut hit) = self.hitable.hit(&local_ray, local_t_min, local_t_max) {
+        if let Some(mut hit) = self.geometry.hit(&local_ray, local_t_min, local_t_max) {
             // Transform hit point back to world space.
             hit.point = self.forward_transform.transform_point3(hit.point);
             
@@ -131,27 +131,24 @@ impl Hitable for TransformedMesh {
         }
     }
     
-    fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
+    pub fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
         Some(self.bbox.clone())
     }
 }
 
 pub struct Translate {
     offset: Vec3,
-    hitable: Arc<dyn Hitable>,
+    geometry: Geometry,
 }
 
 impl Translate {
-    pub fn new<H: Hitable + 'static>(offset: Vec3, hitable: H) -> Translate {
-        let hitable = Arc::new(hitable);
-        Translate { offset, hitable }
+    pub fn new(offset: Vec3, geometry: Geometry) -> Translate {
+        Translate { offset, geometry }
     }
-}
 
-impl Hitable for Translate {
     fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitRecord> {
         let moved_ray = Ray::new(ray.origin - self.offset, ray.direction, ray.time);
-        if let Some(mut hit) = self.hitable.hit(&moved_ray, position_min, position_max) {
+        if let Some(mut hit) = self.geometry.hit(&moved_ray, position_min, position_max) {
             hit.point += self.offset;
             Some(hit)
         } else {
@@ -160,7 +157,7 @@ impl Hitable for Translate {
     }
 
     fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB> {
-        if let Some(mut bbox) = self.hitable.bounding_box(t0, t1) {
+        if let Some(mut bbox) = self.geometry.bounding_box(t0, t1) {
             bbox.minimum += self.offset;
             bbox.maximum += self.offset;
             Some(bbox)
@@ -175,17 +172,17 @@ pub struct Rotate {
     cos_theta_x: f32, sin_theta_x: f32,
     cos_theta_y: f32, sin_theta_y: f32,
     cos_theta_z: f32, sin_theta_z: f32,
-    hitable: Arc<dyn Hitable>,
+    geometry: Geometry,
 }
 
 impl Rotate {
-    pub fn new<H: Hitable + 'static>(theta_x: f32, theta_y: f32, theta_z: f32, hitable: H) -> Rotate {
+    pub fn new(theta_x: f32, theta_y: f32, theta_z: f32, geometry: Geometry) -> Rotate {
         let (tx, ty, tz) = (theta_x.to_radians(), theta_y.to_radians(), theta_z.to_radians());
         Rotate {
             cos_theta_x: tx.cos(), sin_theta_x: tx.sin(),
             cos_theta_y: ty.cos(), sin_theta_y: ty.sin(),
             cos_theta_z: tz.cos(), sin_theta_z: tz.sin(),
-            hitable: Arc::new(hitable),
+            geometry
         }
     }
 
@@ -232,15 +229,13 @@ impl Rotate {
             -self.sin_theta_x * v.y + self.cos_theta_x * v.z,
         )
     }
-}
 
-impl Hitable for Rotate {
     fn hit(&self, ray: &Ray, t0: f32, t1: f32) -> Option<HitRecord> {
         let origin = self.rotate(&ray.origin);
         let direction = self.rotate(&ray.direction);
         let rotated_ray = Ray::new(origin, direction, ray.time);
 
-        if let Some(mut hit) = self.hitable.hit(&rotated_ray, t0, t1) {
+        if let Some(mut hit) = self.geometry.hit(&rotated_ray, t0, t1) {
             hit.point = self.rotate_inv(&hit.point);
             hit.shading_normal = self.rotate_inv(&hit.shading_normal);
             hit.geometric_normal = self.rotate_inv(&hit.geometric_normal);
@@ -251,7 +246,7 @@ impl Hitable for Rotate {
     }
 
     fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB> {
-        if let Some(bbox) = self.hitable.bounding_box(t0, t1) {
+        if let Some(bbox) = self.geometry.bounding_box(t0, t1) {
             let mut min = Vec3::splat(f32::MAX);
             let mut max = Vec3::splat(f32::MIN);
             for i in 0..8 {
@@ -271,17 +266,14 @@ impl Hitable for Rotate {
 
 pub struct Scale {
     scalar: f32,
-    hitable: Arc<dyn Hitable>,
+    geometry: Geometry,
 }
 
 impl Scale {
-    pub fn new<H: Hitable + 'static>(scalar: f32, hitable: H) -> Scale {
-        let hitable = Arc::new(hitable);
-        Scale { scalar, hitable }
+    pub fn new(scalar: f32, geometry: Geometry) -> Scale {
+        Scale { scalar, geometry }
     }
-}
 
-impl Hitable for Scale {
     /// Reference: http://woo4.me/raytracer/translations/
     fn hit(&self, ray: &Ray, t0: f32, t1: f32) -> Option<HitRecord> {
         let origin = ray.origin / self.scalar;
@@ -296,7 +288,7 @@ impl Hitable for Scale {
         let scaled_t0 = t0 / self.scalar;
         let scaled_t1 = t1 / self.scalar;
 
-        if let Some(mut hit) = self.hitable.hit(&scaled_ray, scaled_t0, scaled_t1) {
+        if let Some(mut hit) = self.geometry.hit(&scaled_ray, scaled_t0, scaled_t1) {
             hit.point = hit.point * self.scalar;
             hit.shading_normal = (hit.shading_normal / self.scalar).normalize();
             hit.parameter = hit.parameter * self.scalar;
@@ -307,7 +299,7 @@ impl Hitable for Scale {
     }
 
     fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB> {
-        if let Some(mut bbox) = self.hitable.bounding_box(t0, t1) {
+        if let Some(mut bbox) = self.geometry.bounding_box(t0, t1) {
             bbox.minimum *= self.scalar;
             bbox.maximum *= self.scalar;
             Some(bbox)

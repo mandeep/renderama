@@ -1,11 +1,15 @@
-use std::sync::Arc;
-
 use aabb::AABB;
-use hitable::{HitRecord, Hitable};
+use hitable::HitRecord;
+use geometry::Geometry;
 use ray::Ray;
 use glam::Vec3;
 
 const NUM_BUCKETS: usize = 16;
+const LEAF_FLAG: u32 = 1 << 31;
+
+fn is_leaf(idx: u32) -> bool { idx & LEAF_FLAG != 0 }
+fn leaf_index(idx: u32) -> usize { (idx & !LEAF_FLAG) as usize }
+fn make_leaf_ref(idx: usize) -> u32 { (idx as u32) | LEAF_FLAG }
 
 /// A node in the flattened BVH array.
 ///
@@ -22,8 +26,21 @@ enum BVHNode {
     },
     Leaf {
         bbox: AABB,
-        hitable: Arc<dyn Hitable>,
+        geometry: Box<Geometry>,
     },
+}
+
+#[derive(Clone, Copy)]
+struct InternalNode {
+    bbox: AABB,        // 24 bytes
+    left: u32,
+    right: u32,
+}  // 32 bytes — exactly half a cache line, two per line
+
+#[derive(Clone)]
+struct LeafNode {
+    bbox: AABB,
+    geometry: Geometry,  // unboxed is fine here, leaves are rarely touched
 }
 
 /// Flattened BVH stored as a Vec, traversed iteratively.
@@ -33,7 +50,9 @@ enum BVHNode {
 /// The root is always at index 0.
 #[derive(Clone)]
 pub struct BVH {
-    nodes: Vec<BVHNode>,
+    internals: Vec<InternalNode>,
+    leaves: Vec<LeafNode>,
+    root: u32,
     bbox: AABB, // root's bbox
 }
 
@@ -47,7 +66,7 @@ enum TreeNode {
     },
     Leaf {
         bbox: AABB,
-        hitable: Arc<dyn Hitable>,
+        geometry: Geometry,
     },
 }
 
@@ -60,21 +79,8 @@ impl TreeNode {
     }
 }
 
-impl BVH {
-    pub fn new(world: &mut Vec<Arc<dyn Hitable>>, start_time: f32, end_time: f32) -> BVH {
-        // Build the tree using SAH, then flatten it.
-        let tree = build_tree(world, start_time, end_time);
-        let bbox = tree.bbox().clone();
-        
-        let mut nodes = Vec::new();
-        flatten(&tree, &mut nodes);
-        
-        BVH { nodes, bbox }
-    }
-}
-
 /// Recursively builds a TreeNode using binned SAH.
-fn build_tree(world: &mut Vec<Arc<dyn Hitable>>, start_time: f32, end_time: f32) -> TreeNode {
+fn build_tree(world: &mut Vec<Geometry>, start_time: f32, end_time: f32) -> TreeNode {
     let n = world.len();
 
     // compute the bounding box that contains all of the objects in the world and their bounding boxes
@@ -87,7 +93,7 @@ fn build_tree(world: &mut Vec<Arc<dyn Hitable>>, start_time: f32, end_time: f32)
     if n == 1 {
         return TreeNode::Leaf {
             bbox: main_box,
-            hitable: world[0].clone(),
+            geometry: world[0].clone(),
         };
     }
 
@@ -96,8 +102,8 @@ fn build_tree(world: &mut Vec<Arc<dyn Hitable>>, start_time: f32, end_time: f32)
         let right_box = world[1].bounding_box(start_time, end_time).unwrap();
         return TreeNode::Internal {
             bbox: main_box,
-            left: Box::new(TreeNode::Leaf { bbox: left_box, hitable: world[0].clone() }),
-            right: Box::new(TreeNode::Leaf { bbox: right_box, hitable: world[1].clone() }),
+            left: Box::new(TreeNode::Leaf { bbox: left_box, geometry: world[0].clone() }),
+            right: Box::new(TreeNode::Leaf { bbox: right_box, geometry: world[1].clone() }),
         };
     }
 
@@ -275,36 +281,34 @@ fn build_tree(world: &mut Vec<Arc<dyn Hitable>>, start_time: f32, end_time: f32)
 }
 
 /// Flatten the tree into a Vec<BVHNode>. Returns the index of the root.
-fn flatten(tree: &TreeNode, nodes: &mut Vec<BVHNode>) -> u32 {
-    let my_index = nodes.len() as u32;
-    
+fn flatten(tree: &TreeNode, internals: &mut Vec<InternalNode>, leaves: &mut Vec<LeafNode>) -> u32 { 
     match tree {
-        TreeNode::Leaf { bbox, hitable } => {
-            nodes.push(BVHNode::Leaf {
+        TreeNode::Leaf { bbox, geometry } => {
+            let index = leaves.len();
+            leaves.push(LeafNode {
                 bbox: bbox.clone(),
-                hitable: hitable.clone(),
+                geometry: geometry.clone(),
             });
+
+            make_leaf_ref(index)
         }
         TreeNode::Internal { bbox, left, right } => {
-            // Reserve a slot for ourselves; we'll fill it in after children.
-            nodes.push(BVHNode::Internal {
-                bbox: bbox.clone(),
+            let index = internals.len();
+            internals.push(InternalNode {
+                bbox: *bbox,
                 left: 0,  // placeholder
                 right: 0, // placeholder
             });
             
-            let left_idx = flatten(left, nodes);
-            let right_idx = flatten(right, nodes);
+            let left_idx = flatten(left, internals, leaves);
+            let right_idx = flatten(right, internals, leaves);
             
-            // Patch in the actual indices.
-            if let BVHNode::Internal { left: l, right: r, .. } = &mut nodes[my_index as usize] {
-                *l = left_idx;
-                *r = right_idx;
-            }
+            internals[index].left = left_idx;
+            internals[index].right = right_idx;
+
+            index as u32
         }
     }
-    
-    my_index
 }
 
 
@@ -319,13 +323,27 @@ fn axis_value(vector: Vec3, axis: usize) -> f32 {
 
 /// Compute the centroid of an object's bounding box along the given axis
 /// Used for sorting in small lists
-fn centroid(hit: &Arc<dyn Hitable>, axis: usize, t0: f32, t1: f32) -> f32 {
+fn centroid(hit: &Geometry, axis: usize, t0: f32, t1: f32) -> f32 {
     let bbox = hit.bounding_box(t0, t1).unwrap();
     axis_value((bbox.minimum + bbox.maximum) * 0.5, axis)
 }
 
-impl Hitable for BVH {
-    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
+
+impl BVH {
+    pub fn new(world: &mut Vec<Geometry>, start_time: f32, end_time: f32) -> BVH {
+        // Build the tree using SAH, then flatten it.
+        let tree = build_tree(world, start_time, end_time);
+        let bbox = tree.bbox().clone();
+        
+        let mut internals = Vec::new();
+        let mut leaves = Vec::new();
+
+        let root = flatten(&tree, &mut internals, &mut leaves);
+        
+        BVH { internals, leaves, root, bbox }
+    }
+
+    pub fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
         // Iterative traversal with explicit stack.
         // Stack size 64 supports trees up to depth 64, which covers
         // millions of objects with safety margin.
@@ -335,33 +353,30 @@ impl Hitable for BVH {
         let mut closest_t = t_max;
         let mut best_hit: Option<HitRecord> = None;
         
-        stack[stack_pointer] = 0;  // root
+        stack[stack_pointer] = self.root;  // root
         stack_pointer += 1;
         
         while stack_pointer > 0 {
             stack_pointer -= 1;
-            let node_idx = stack[stack_pointer] as usize;
-            
-            match &self.nodes[node_idx] {
-                BVHNode::Internal { bbox, left, right } => {
-                    if bbox.hit(ray, t_min, closest_t) {
-                        // Push both children. (Closest-first ordering optimization
-                        // could go here but adds complexity; basic version first.)
-                        stack[stack_pointer] = *left;
-                        stack_pointer += 1;
-                        stack[stack_pointer] = *right;
-                        stack_pointer += 1;
-                    }
-                }
-                BVHNode::Leaf { bbox, hitable } => {
-                    if bbox.hit(ray, t_min, closest_t) {
-                        if let Some(hit) = hitable.hit(ray, t_min, closest_t) {
-                            if hit.parameter < closest_t {
-                                closest_t = hit.parameter;
-                                best_hit = Some(hit);
-                            }
+            let node_ref = stack[stack_pointer];
+
+            if is_leaf(node_ref) {
+                let leaf = &self.leaves[leaf_index(node_ref)];
+                if leaf.bbox.hit(ray, t_min, closest_t) {
+                    if let Some(hit) = leaf.geometry.hit(ray, t_min, closest_t) {
+                        if hit.parameter < closest_t {
+                            closest_t = hit.parameter;
+                            best_hit = Some(hit);
                         }
                     }
+                }
+            } else {
+                let node = &self.internals[node_ref as usize];
+                if node.bbox.hit(ray, t_min, closest_t) {
+                    stack[stack_pointer] = node.left;
+                    stack_pointer += 1;
+                    stack[stack_pointer] = node.right;
+                    stack_pointer += 1;
                 }
             }
         }
@@ -369,7 +384,7 @@ impl Hitable for BVH {
         best_hit
     }
     
-    fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
+    pub fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
         Some(self.bbox.clone())
     }
 }

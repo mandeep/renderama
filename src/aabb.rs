@@ -4,7 +4,7 @@ use glam::Vec3;
 
 use ray::Ray;
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub struct AABB {
     pub minimum: Vec3,
     pub maximum: Vec3,

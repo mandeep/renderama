@@ -15,6 +15,7 @@ mod basis;
 mod bvh;
 mod camera;
 mod denoise;
+mod geometry;
 mod hitable;
 mod integrator;
 mod materials;
@@ -54,12 +55,12 @@ use denoise::denoise;
 fn main() {
     let rendering_time = Instant::now();
 
-    let (width, height): (usize, usize) = (2048, 2048);
     let args: Vec<String> = env::args().collect();
     let samples: u32 = args.get(1).and_then(|s| s.parse().ok()).unwrap_or(128);
     let bounces: u32 = 10;
+    let (width, height): (usize, usize) = (2048, 2048);
 
-    let (name, camera, world, light_source) = scene::cornell_box_object_scene(width, height);
+    let (name, camera, scene, light_source) = scene::cornell_box_object_scene(width, height);
 
     let render_start_time: DateTime<Local> = Local::now();
     println!("[{}] Rendering '{}' scene with {} samples at {} x {} dimensions...",
@@ -101,7 +102,7 @@ fn main() {
             // color += utils::de_nan(&integrator::render_normals(ray, &world));
 
             color += utils::de_nan(&integrator::render_path_integrator(ray,
-                                                        &world,
+                                                        &scene,
                                                         bounces,
                                                         &light_source,
                                                         camera.atmosphere,
