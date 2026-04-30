@@ -37,6 +37,7 @@ mod world;
 
 use std::env;
 use std::f32;
+use rand::Rng;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use std::thread;
@@ -94,8 +95,8 @@ fn main() {
         let mut rng = thread_rng();
 
         (0..samples).for_each(|_| {
-            let u = (x as f32 + rand::random::<f32>()) / width as f32;
-            let v = (y as f32 + rand::random::<f32>()) / height as f32;
+            let u = (x as f32 + rng.gen::<f32>()) / width as f32;
+            let v = (y as f32 + rng.gen::<f32>()) / height as f32;
             let ray = scene.camera.get_ray(u, v, &mut rng);
 
             // render_normals is used for debugging

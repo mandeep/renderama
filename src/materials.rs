@@ -2,6 +2,7 @@ use std::f32::consts::PI;
 use std::sync::Arc;
 
 use glam::Vec3;
+use rand::Rng;
 use rand::rngs::ThreadRng;
 
 use basis::OrthonormalBasis;
@@ -318,7 +319,7 @@ impl Refractive {
     fn scatter(&self,
                ray: &Ray,
                record: &HitRecord,
-               _rng: &mut ThreadRng)
+               rng: &mut ThreadRng)
                -> Option<ScatterRecord<'_>> {
         let incident: f32 = ray.direction.dot(record.shading_normal);
 
@@ -343,7 +344,7 @@ impl Refractive {
 
         let pdf = PDF::MaterialPDF { uvw: OrthonormalBasis::new(&record.shading_normal) };
 
-        if rand::random::<f32>() < reflect_probability {
+        if rng.gen::<f32>() < reflect_probability {
             let reflected: Vec3 = reflect(ray.direction, outward_normal);
             let offset_point = find_offset_point(record.point, outward_normal);
             let specular_ray = Ray::new(offset_point, reflected, ray.time);
@@ -419,12 +420,12 @@ impl Plastic {
         }
     }
 
-    fn scatter(&self, ray: &Ray, record: &HitRecord, _rng: &mut ThreadRng) -> Option<ScatterRecord<'_>> {
+    fn scatter(&self, ray: &Ray, record: &HitRecord, rng: &mut ThreadRng) -> Option<ScatterRecord<'_>> {
         let cos_theta_i = (-ray.direction).dot(record.shading_normal).max(0.0);
         let fresnel = fresnel_coefficient(cos_theta_i, 1.0, self.ior);
 
         // Probabilistically pick specular or diffuse based on Fresnel
-        if rand::random::<f32>() < fresnel {
+        if rng.gen::<f32>() < fresnel {
             // Specular path
             let reflected = reflect(ray.direction, record.shading_normal);
             let specular_ray = Ray::new(record.point, reflected, ray.time);
