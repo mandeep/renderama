@@ -124,6 +124,8 @@ impl Diffuse {
                event: &HitEvent,
                _rng: &mut ThreadRng)
                -> Option<ScatterEvent<'_>> {
+        // ray.direction is passed here because the integrator generates
+        // an offset point itself for diffuse materials
         let scattered = Ray::new(event.point, ray.direction, ray.time);
         let attenuation = self.albedo.value(event.u, event.v, &event.point);
         let pdf = PDF::MaterialPDF { uvw: OrthonormalBasis::new(&event.shading_normal) };
