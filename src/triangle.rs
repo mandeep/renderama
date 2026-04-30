@@ -31,32 +31,11 @@ pub struct TriangleMesh {
 
 impl Triangle {
     /// Create a new triangle with vertices v0, v1, and v2
-    pub fn new(v0: Vec3,
-                                      v1: Vec3,
-                                      v2: Vec3,
-                                      n0: Vec3,
-                                      n1: Vec3,
-                                      n2: Vec3,
-                                      uv0: Vec2,
-                                      uv1: Vec2,
-                                      uv2: Vec2,
-                                      material_id: u32)
-                                      -> Triangle {
+    pub fn new(v0: Vec3, v1: Vec3, v2: Vec3,
+               n0: Vec3, n1: Vec3, n2: Vec3,
+               uv0: Vec2, uv1: Vec2, uv2: Vec2,
+               material_id: u32) -> Triangle {
 
-        Triangle { v0, v1, v2, n0, n1, n2, uv0, uv1, uv2, material_id }
-    }
-
-    pub fn from_box(v0: Vec3,
-                    v1: Vec3,
-                    v2: Vec3,
-                    n0: Vec3,
-                    n1: Vec3,
-                    n2: Vec3,
-                    uv0: Vec2,
-                    uv1: Vec2,
-                    uv2: Vec2,
-                    material_id: u32)
-                    -> Triangle {
         Triangle { v0, v1, v2, n0, n1, n2, uv0, uv1, uv2, material_id }
     }
 
@@ -216,7 +195,7 @@ impl TriangleMesh {
                 let (n0, n1, n2) = (normals[a], normals[b], normals[c]);
                 let (uv0, uv1, uv2) = (uvs[a], uvs[b], uvs[c]);
 
-                let triangle = Triangle::from_box(v0, v1, v2, n0, n1, n2, uv0, uv1, uv2, material_id);
+                let triangle = Triangle::new(v0, v1, v2, n0, n1, n2, uv0, uv1, uv2, material_id);
                 triangles.push(triangle);
             }
         }
