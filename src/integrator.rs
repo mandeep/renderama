@@ -3,13 +3,12 @@ use std::f32;
 use glam::Vec3;
 use rand::rngs::ThreadRng;
 use rand::Rng;
-use rand_distr::{Distribution, Normal};
+use rand_distr::StandardNormal;
 
 use basis::OrthonormalBasis;
 use bvh::BVH;
 use geometry::Geometry;
 use pdf::PDF;
-use plane::Plane;
 use ray::{find_offset_point, Ray};
 use scene::Scene;
 
@@ -24,10 +23,9 @@ use scene::Scene;
 /// Reference: http://mathworld.wolfram.com/SpherePointPicking.html
 ///
 pub fn pick_sphere_point(rng: &mut ThreadRng) -> Vec3 {
-    let normal_distribution = Normal::new(0.0, 1.0).unwrap();
-    let x = normal_distribution.sample(rng) as f32;
-    let y = normal_distribution.sample(rng) as f32;
-    let z = normal_distribution.sample(rng) as f32;
+    let x: f32 = rng.sample(StandardNormal);
+    let y: f32 = rng.sample(StandardNormal);
+    let z: f32 = rng.sample(StandardNormal);
 
     Vec3::new(x, y, z).normalize()
 }
