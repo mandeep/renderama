@@ -262,8 +262,7 @@ impl Reflective {
     /// for the fuzziness of the reflections due to the size of the sphere.
     /// Generally, the larger the sphere, the fuzzier the reflections will be.
     pub fn new(albedo: Vec3, fuzz: f32) -> Reflective {
-        Reflective { albedo: albedo,
-                     fuzz: fuzz }
+        Reflective { albedo, fuzz }
     }
 }
 
@@ -365,7 +364,7 @@ pub struct Light {
 impl Light {
     pub fn new(emit: Texture) -> Light {
         let emit = Arc::new(emit);
-        Light { emit: emit }
+        Light { emit }
     }
 
     fn scatter(&self,
@@ -413,11 +412,7 @@ pub struct Plastic {
 impl Plastic {
     pub fn new(albedo: Texture, roughness: f32, ior: f32) -> Plastic {
         let albedo = Arc::new(albedo);
-        Plastic {
-            albedo: albedo,
-            roughness: roughness.max(0.01),
-            ior,
-        }
+        Plastic { albedo, roughness: roughness.max(0.01), ior }
     }
 
     fn scatter(&self, ray: &Ray, record: &HitRecord, rng: &mut ThreadRng) -> Option<ScatterRecord<'_>> {

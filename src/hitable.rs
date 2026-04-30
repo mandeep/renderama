@@ -23,12 +23,6 @@ impl HitRecord {
                shading_normal: Vec3,
                material_id: u32)
                -> HitRecord {
-        HitRecord { parameter: parameter,
-                    u: u,
-                    v: v,
-                    point: point,
-                    geometric_normal: geometric_normal,
-                    shading_normal: shading_normal,
-                    material_id: material_id }
+        HitRecord { parameter, u, v, point, geometric_normal, shading_normal, material_id }
     }
 }

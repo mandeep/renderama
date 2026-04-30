@@ -197,7 +197,7 @@ fn build_tree(world: &mut Vec<Geometry>, start_time: f32, end_time: f32) -> Tree
                 if let Some(bbox) = &bucket_boxes[bucket] {
                     left_box = Some(match &left_box {
                         Some(existing) => existing.surrounding_box(bbox),
-                        None => bbox.clone(),
+                        None => *bbox,
                     });
                 }
             }
@@ -208,7 +208,7 @@ fn build_tree(world: &mut Vec<Geometry>, start_time: f32, end_time: f32) -> Tree
                 if let Some(bbox) = &bucket_boxes[bucket] {
                     right_box = Some(match &right_box {
                         Some(existing) => existing.surrounding_box(bbox),
-                        None => bbox.clone(),
+                        None => *bbox,
                     });
                 }
             }
@@ -286,7 +286,7 @@ fn flatten(tree: &TreeNode, internals: &mut Vec<InternalNode>, leaves: &mut Vec<
         TreeNode::Leaf { bbox, geometry } => {
             let index = leaves.len();
             leaves.push(LeafNode {
-                bbox: bbox.clone(),
+                bbox: *bbox,
                 geometry: geometry.clone(),
             });
 
@@ -333,7 +333,7 @@ impl BVH {
     pub fn new(world: &mut Vec<Geometry>, start_time: f32, end_time: f32) -> BVH {
         // Build the tree using SAH, then flatten it.
         let tree = build_tree(world, start_time, end_time);
-        let bbox = tree.bbox().clone();
+        let bbox = *tree.bbox();
         
         let mut internals = Vec::new();
         let mut leaves = Vec::new();
@@ -385,6 +385,6 @@ impl BVH {
     }
     
     pub fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
-        Some(self.bbox.clone())
+        Some(self.bbox)
     }
 }

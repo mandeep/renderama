@@ -123,7 +123,7 @@ impl TransformedMesh {
             hit.geometric_normal = self.normal_transform.transform_vector3(hit.geometric_normal).normalize();
             
             // Convert local-space t to world-space t.
-            hit.parameter = hit.parameter / local_dir_length;
+            hit.parameter /= local_dir_length;
             
             Some(hit)
         } else {
@@ -132,7 +132,7 @@ impl TransformedMesh {
     }
     
     pub fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
-        Some(self.bbox.clone())
+        Some(self.bbox)
     }
 }
 
@@ -289,9 +289,9 @@ impl Scale {
         let scaled_t1 = t1 / self.scalar;
 
         if let Some(mut hit) = self.geometry.hit(&scaled_ray, scaled_t0, scaled_t1) {
-            hit.point = hit.point * self.scalar;
+            hit.point *= self.scalar;
             hit.shading_normal = (hit.shading_normal / self.scalar).normalize();
-            hit.parameter = hit.parameter * self.scalar;
+            hit.parameter *= self.scalar;
             Some(hit)
         } else {
             None

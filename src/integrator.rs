@@ -102,7 +102,7 @@ pub fn render_path_integrator(mut ray: Ray, scene: &Scene, bounces: u32, rng: &m
             throughput /= 1.0 - roulette_factor;
         }
     }
-    return color;
+    color
 }
 
 pub fn render_normals(ray: Ray, scene: &Scene) -> Vec3 {

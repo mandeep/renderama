@@ -13,10 +13,7 @@ pub struct Ray {
 impl Ray {
     /// Create a new Ray with origin at `a` and direction towards `b`
     pub fn new(origin: Vec3, direction: Vec3, time: f32) -> Ray {
-        Ray { origin: origin,
-              direction: direction.normalize(),
-              time: time,
-              inverse_direction: direction.recip() }
+        Ray { origin, direction: direction.normalize(), time, inverse_direction: direction.recip() }
     }
 
     /// Find the point on the ray given the parameter of the direction vector
@@ -59,7 +56,7 @@ pub fn find_offset_point(point: Vec3, geometric_normal: Vec3) -> Vec3 {
         point_int.z = f32::from_bits(f32::to_bits(point.z).wrapping_add(offset_int.z as u32));
     }
 
-    let mut new_offset: Vec3 = point_int.clone();
+    let mut new_offset: Vec3 = point_int;
 
     if point.x.abs() < origin {
         new_offset.x = point_int.x + float_scale * geometric_normal.x;

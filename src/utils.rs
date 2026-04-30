@@ -19,7 +19,7 @@ pub fn format_time(instant: Duration) -> String {
 /// undefined behavior:
 /// https://github.com/rust-lang/rust/issues/10184
 pub fn clamp_rgb(n: f32) -> f32 {
-    n.min(255.0).max(0.0)
+    n.clamp(0.0, 255.0)
 }
 
 /// Clamp a value between the lower bound and upper bound
@@ -52,11 +52,11 @@ pub fn de_nan(color: &Vec3) -> Vec3 {
 }
 
 /// Find the maximum value of a Vec<f32>
-pub fn f32_max(vector: &Vec<f32>) -> f32 {
+pub fn f32_max(vector: &[f32]) -> f32 {
     vector.iter().cloned().fold(0.0 / 0.0, f32::max)
 }
 
 /// Find the minimum value of a Vec<f32>
-pub fn f32_min(vector: &Vec<f32>) -> f32 {
+pub fn f32_min(vector: &[f32]) -> f32 {
     vector.iter().cloned().fold(0.0 / 0.0, f32::min)
 }

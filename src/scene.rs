@@ -97,9 +97,7 @@ pub fn three_spheres_scene(width: usize, height: usize) -> Scene {
 
     let light = None;
 
-    let scene = Scene::new(String::from("Three Spheres"), bvh, materials, camera, light);
-
-    scene
+    Scene::new(String::from("Three Spheres"), bvh, materials, camera, light)
 }
 
 pub fn random_spheres_scene(width: usize, height: usize) -> Scene {
@@ -214,9 +212,7 @@ pub fn random_spheres_scene(width: usize, height: usize) -> Scene {
 
     let light = None;
 
-    let scene = Scene::new(String::from("Random Spheres"), bvh, materials, camera, light);
-
-    scene
+    Scene::new(String::from("Random Spheres"), bvh, materials, camera, light)
 }
 
 pub fn cornell_box_scene(width: usize, height: usize) -> Scene {
@@ -261,9 +257,7 @@ pub fn cornell_box_scene(width: usize, height: usize) -> Scene {
     let light = mat!(materials, Light::new(SolidColor::new(0.0, 0.0, 0.0).into()));
     let light_shape = Plane::new(Axis::XZ, 213.0, 343.0, 227.0, 332.0, 554.0, light);
 
-    let scene = Scene::new(String::from("Cornell Box"), bvh, materials, camera, Some(light_shape));
-
-    scene
+    Scene::new(String::from("Cornell Box"), bvh, materials, camera, Some(light_shape))
 }
 
 pub fn spheres_in_box_scene(width: usize, height: usize) -> Scene {
@@ -387,12 +381,10 @@ pub fn spheres_in_box_scene(width: usize, height: usize) -> Scene {
     }
 
     let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
-    // let light = mat!(materials, Light::new(SolidColor::new(0.0, 0.0, 0.0).into()));
-    let light_shape = Plane::new(Axis::XZ, 123.0, 423.0, 147.0, 412.0, 554.0, big_light);
+    let light = mat!(materials, Light::new(SolidColor::new(0.0, 0.0, 0.0).into()));
+    let light_shape = Plane::new(Axis::XZ, 123.0, 423.0, 147.0, 412.0, 554.0, light);
 
-    let scene = Scene::new(String::from("Spheres in Box"), bvh, materials, camera, Some(light_shape));
-
-    scene
+    Scene::new(String::from("Spheres in Box"), bvh, materials, camera, Some(light_shape))
 }
 
 pub fn cornell_box_bunny_scene(width: usize, height: usize) -> Scene {
@@ -421,7 +413,6 @@ pub fn cornell_box_bunny_scene(width: usize, height: usize) -> Scene {
     let white_id = mat!(materials, Diffuse::new(SolidColor::new(0.73, 0.73, 0.73).into(), roughness));
     let light_material = mat!(materials, Light::new(SolidColor::new(25.0, 18.0, 10.0).into()));
 
-    // Cornell walls
     world.add(Geometry::ReverseOrientation(Box::new(Geometry::Plane(Plane::new(Axis::YZ, 0.0, 555.0, 0.0, 555.0, 555.0, red_id)))));
     world.add(Geometry::Plane(Plane::new(Axis::YZ, 0.0, 555.0, 0.0, 555.0, 0.0, green_id)));
     world.add(Geometry::ReverseOrientation(Box::new(Geometry::Plane(Plane::new(Axis::XZ, 213.0, 343.0, 227.0, 332.0, 554.0, light_material)))));
@@ -439,9 +430,7 @@ pub fn cornell_box_bunny_scene(width: usize, height: usize) -> Scene {
     let light = mat!(materials, Light::new(SolidColor::new(0.0, 0.0, 0.0).into()));
     let light_shape = Plane::new(Axis::XZ, 213.0, 343.0, 227.0, 332.0, 554.0, light);
 
-    let scene = Scene::new(String::from("Cornell Box with Stanford Bunny"), bvh, materials, camera, Some(light_shape));
-
-    scene
+    Scene::new(String::from("Cornell Box with Stanford Bunny"), bvh, materials, camera, Some(light_shape))
 }
 
 pub fn cornell_box_object_scene(width: usize, height: usize) -> Scene {
@@ -463,7 +452,6 @@ pub fn cornell_box_object_scene(width: usize, height: usize) -> Scene {
     let white_id = mat!(materials, Diffuse::new(SolidColor::new(0.73, 0.73, 0.73).into(), roughness));
     let light_material = mat!(materials, Light::new(SolidColor::new(25.0, 18.0, 10.0).into()));
 
-    // Cornell walls
     world.add(Geometry::ReverseOrientation(Box::new(Geometry::Plane(Plane::new(Axis::YZ, 0.0, 555.0, 0.0, 555.0, 555.0, red_id)))));
     world.add(Geometry::Plane(Plane::new(Axis::YZ, 0.0, 555.0, 0.0, 555.0, 0.0, green_id)));
     world.add(Geometry::ReverseOrientation(Box::new(Geometry::Plane(Plane::new(Axis::XZ, 213.0, 343.0, 227.0, 332.0, 554.0, light_material)))));
@@ -493,7 +481,5 @@ pub fn cornell_box_object_scene(width: usize, height: usize) -> Scene {
     let light = mat!(materials, Light::new(SolidColor::new(0.0, 0.0, 0.0).into()));
     let light_shape = Some(Plane::new(Axis::XZ, 213.0, 343.0, 227.0, 332.0, 554.0, light));
 
-    let scene = Scene::new(String::from("Cornell Box with Multiple Objects"), bvh, materials, camera, light_shape);
-
-    scene
+    Scene::new(String::from("Cornell Box with Multiple Objects"), bvh, materials, camera, light_shape)
 }

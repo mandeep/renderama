@@ -43,16 +43,7 @@ impl Triangle {
                                       material_id: u32)
                                       -> Triangle {
 
-        Triangle { v0: v0,
-                   v1: v1,
-                   v2: v2,
-                   n0: n0,
-                   n1: n1,
-                   n2: n2,
-                   uv0: uv0,
-                   uv1: uv1,
-                   uv2: uv2,
-                   material_id: material_id }
+        Triangle { v0, v1, v2, n0, n1, n2, uv0, uv1, uv2, material_id }
     }
 
     pub fn from_box(v0: Vec3,
@@ -66,17 +57,7 @@ impl Triangle {
                     uv2: Vec2,
                     material_id: u32)
                     -> Triangle {
-        Triangle { v0: v0,
-                   v1: v1,
-                   v2: v2,
-                   n0: n0,
-                   n1: n1,
-                   n2: n2,
-                   uv0: uv0,
-                   uv1: uv1,
-                   uv2: uv2,
-                   material_id: material_id
-                   }
+        Triangle { v0, v1, v2, n0, n1, n2, uv0, uv1, uv2, material_id }
     }
 
     pub fn minimum(&self) -> Vec3 {
@@ -176,7 +157,6 @@ impl TriangleMesh {
             triangulate: true,
             ignore_points: true,
             ignore_lines: true,
-            ..Default::default()
         };
 
         let (models, _materials) =
@@ -245,7 +225,7 @@ impl TriangleMesh {
     }
 
     pub fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitRecord> {
-        self.accelerator.hit(&ray, position_min, position_max)
+        self.accelerator.hit(ray, position_min, position_max)
     }
 
     pub fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {

@@ -62,7 +62,7 @@ pub struct ImageTexture {
 /// Create a new texture from the given data and image dimensions
 impl ImageTexture {
     pub fn new(filename: &str, scale: f32) -> ImageTexture {
-        ImageTexture { im: image::open(filename).unwrap().flipv().to_rgb8(), scale: scale }
+        ImageTexture { im: image::open(filename).unwrap().flipv().to_rgb8(), scale}
     }
 
     /// Determine which pixel to retrieve from the image by

@@ -50,7 +50,7 @@ impl World {
             }
         }
 
-        return if hit_anything { Some(record) } else { None };
+        if hit_anything { Some(record) } else { None }
     }
 
     fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB> {
