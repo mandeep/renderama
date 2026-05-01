@@ -79,5 +79,5 @@ pub fn three_spheres_scene(width: usize, height: usize) -> Scene {
 
     let light = None;
 
-    Scene::new(String::from("Three Spheres"), bvh, materials, camera, light)
+    Scene::new(String::from("Three Spheres"), bvh, materials, camera, light, None)
 }

@@ -58,5 +58,5 @@ pub fn cornell_box_bunny_scene(width: usize, height: usize) -> Scene {
     let light = mat!(materials, Light::new(SolidColor::new(0.0, 0.0, 0.0).into()));
     let light_shape = Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 554.0, light);
 
-    Scene::new(String::from("Cornell Box with Stanford Bunny"), bvh, materials, camera, Some(light_shape))
+    Scene::new(String::from("Cornell Box with Stanford Bunny"), bvh, materials, camera, Some(light_shape), None)
 }

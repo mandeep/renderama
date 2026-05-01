@@ -7,7 +7,7 @@ use camera::Camera;
 use materials::{Diffuse, Reflective, Refractive, Material};
 use scene::Scene;
 use sphere::Sphere;
-use texture::SolidColor;
+use texture::{EnvironmentMap, SolidColor, Texture};
 use world::World;
 use mat;
 
@@ -21,7 +21,7 @@ pub fn random_spheres_scene(width: usize, height: usize) -> Scene {
     let focus_distance = 10.0;
     let time0 = 0.0;
     let time1 = 1.0;
-    let atmosphere = true;
+    let atmosphere = false;
 
     let camera = Camera::new(origin,
                              lookat,
@@ -36,6 +36,8 @@ pub fn random_spheres_scene(width: usize, height: usize) -> Scene {
 
     let mut world = World::new();
     let mut materials: Vec<Material> = Vec::new();
+
+    let environment = EnvironmentMap::new("models/pure_sky_qwantani.exr").into();
 
     let floor_idx = mat!(materials, Diffuse::new(SolidColor::new(0.5, 0.5, 0.5).into(), 0.0));
 
@@ -123,5 +125,5 @@ pub fn random_spheres_scene(width: usize, height: usize) -> Scene {
 
     let light = None;
 
-    Scene::new(String::from("Random Spheres"), bvh, materials, camera, light)
+    Scene::new(String::from("Random Spheres"), bvh, materials, camera, light, Some(environment))
 }
