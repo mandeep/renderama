@@ -37,6 +37,8 @@ impl Bounds2D {
     /// with one axis being from 0.0 to 300.0 and the other axis being from
     /// 0.0 to 200.0.
     pub fn new(u: std::ops::Range<f32>, v: std::ops::Range<f32>) -> Self {
+        debug_assert!(u.start < u.end, "u range must have start < end, got {:?}", u);
+        debug_assert!(v.start < v.end, "v range must have start < end, got {:?}", v);
         Self { u_min: u.start, u_max: u.end, v_min: v.start, v_max: v.end }
     }
 
