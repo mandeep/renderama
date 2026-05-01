@@ -6,6 +6,7 @@ use tobj;
 use aabb::AABB;
 use bvh::BVH;
 use events::HitEvent;
+use materials::MaterialId;
 use geometry::Geometry;
 use ray::Ray;
 
@@ -20,7 +21,7 @@ pub struct Triangle {
     uv0: Vec2,
     uv1: Vec2,
     uv2: Vec2,
-    material_id: u32
+    material_id: MaterialId
 }
 
 #[derive(Clone)]
@@ -34,7 +35,7 @@ impl Triangle {
     pub fn new(v0: Vec3, v1: Vec3, v2: Vec3,
                n0: Vec3, n1: Vec3, n2: Vec3,
                uv0: Vec2, uv1: Vec2, uv2: Vec2,
-               material_id: u32) -> Triangle {
+               material_id: MaterialId) -> Triangle {
 
         Triangle { v0, v1, v2, n0, n1, n2, uv0, uv1, uv2, material_id }
     }
@@ -128,7 +129,7 @@ impl TriangleMesh {
         TriangleMesh { triangles, accelerator }
     }
 
-    pub fn from(filepath: &str, material_id: u32) -> TriangleMesh {
+    pub fn from(filepath: &str, material_id: MaterialId) -> TriangleMesh {
         // single_index + triangulate: tobj reindexes so positions and normals
         // are parallel arrays, and quads/ngons are split into triangles.
         let load_options = tobj::LoadOptions {

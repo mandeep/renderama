@@ -3,6 +3,7 @@ use glam::Vec3;
 use aabb::AABB;
 use events::HitEvent;
 use geometry::Geometry;
+use materials::MaterialId;
 use ray::Ray;
 
 #[derive(Clone)]
@@ -35,7 +36,7 @@ impl World {
                            Vec3::ZERO,
                            Vec3::ZERO,
                            Vec3::ZERO,
-                           0);
+                           MaterialId(0));
         let mut hit_anything: bool = false;
         let mut closest_so_far: f32 = position_max;
 

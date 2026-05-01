@@ -3,6 +3,7 @@ use glam::Vec3;
 use aabb::AABB;
 use events::HitEvent;
 use geometry::Geometry;
+use materials::MaterialId;
 use plane::{Axis, Bounds2D, Plane};
 use ray::Ray;
 
@@ -12,11 +13,11 @@ pub struct Rectangle {
     p0: Vec3,
     p1: Vec3,
     geometry: Vec<Geometry>,
-    material_id: u32,
+    material_id: MaterialId,
 }
 
 impl Rectangle {
-    pub fn new(p0: Vec3, p1: Vec3, material_id: u32) -> Rectangle {
+    pub fn new(p0: Vec3, p1: Vec3, material_id: MaterialId) -> Rectangle {
         let mut geometry: Vec<Geometry> = Vec::new();
         let xy_bounds = Bounds2D::new(p0.x..p1.x, p0.y..p1.y);
         let xz_bounds = Bounds2D::new(p0.x..p1.x, p0.z..p1.z);

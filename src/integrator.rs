@@ -43,7 +43,7 @@ pub fn render_path_integrator(mut ray: Ray, scene: &Scene, bounces: u32, rng: &m
 
     for bounce in 0..=bounces {
         if let Some(hit_event) = scene.accelerator.hit(&ray, 1e-4, f32::MAX) {
-            let material = &scene.materials[hit_event.material_id as usize];
+            let material = &scene.materials[hit_event.material_id.index()];
             let emitted = material.emitted(&ray, &hit_event);
             color += throughput * emitted;
 

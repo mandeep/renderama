@@ -12,6 +12,19 @@ use pdf::MaterialPDF;
 use ray::{find_offset_point, Ray};
 use texture::Texture;
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct MaterialId(pub u32);
+
+impl MaterialId {
+    pub fn new(index: u32) -> MaterialId {
+        MaterialId(index)
+    }
+
+    pub fn index(self) -> usize {
+        self.0 as usize
+    }
+}
+
 #[derive(Clone)]
 pub enum Material {
     Diffuse(Diffuse),
@@ -46,7 +59,7 @@ impl_from_material!(
 #[macro_export]
 macro_rules! mat {
     ($vec:expr, $material:expr) => {{
-        let id = $vec.len() as u32;
+        let id = $crate::materials::MaterialId::new($vec.len() as u32);
         $vec.push($material.into());
         id
     }};

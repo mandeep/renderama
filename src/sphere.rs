@@ -4,6 +4,7 @@ use glam::Vec3;
 
 use aabb::AABB;
 use events::HitEvent;
+use materials::MaterialId;
 use ray::Ray;
 
 
@@ -20,7 +21,7 @@ pub struct Sphere {
     pub start_center: Vec3,
     pub end_center: Vec3,
     pub radius: f32,
-    pub material_id: u32,
+    pub material_id: MaterialId,
     pub start_time: f32,
     pub end_time: f32,
 }
@@ -34,7 +35,7 @@ impl Sphere {
     pub fn new(start_center: Vec3,
                                       end_center: Vec3,
                                       radius: f32,
-                                      material_id: u32,
+                                      material_id: MaterialId,
                                       start_time: f32,
                                       end_time: f32)
                                       -> Sphere {

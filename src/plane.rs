@@ -7,6 +7,7 @@ use rand::Rng;
 use aabb::AABB;
 use events::HitEvent;
 use geometry::Geometry;
+use materials::MaterialId;
 use ray::Ray;
 
 #[derive(Clone)]
@@ -56,7 +57,7 @@ pub struct Plane {
     axis: Axis,
     bounds: Bounds2D,
     offset: f32,
-    material_id: u32,
+    material_id: MaterialId,
 }
 
 impl Plane {
@@ -68,7 +69,7 @@ impl Plane {
     /// This creates a plane on the YZ axis that sits at 555.0 on the X axis. The first
     /// range shows 0.0 to 555.0 on the Y axis and the second range shows 0.0 to 555.0 on
     /// the Z axis.
-    pub fn new(axis: Axis, bounds: Bounds2D, offset: f32, material_id: u32) -> Plane {
+    pub fn new(axis: Axis, bounds: Bounds2D, offset: f32, material_id: MaterialId) -> Plane {
         Plane { axis, bounds, offset, material_id }
     }
 

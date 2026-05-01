@@ -1,5 +1,6 @@
 use glam::Vec3;
 
+use materials::MaterialId;
 use pdf::MaterialPDF;
 use ray::Ray;
 
@@ -13,7 +14,7 @@ pub struct HitEvent {
     pub point: Vec3,
     pub geometric_normal: Vec3,
     pub shading_normal: Vec3,
-    pub material_id: u32,
+    pub material_id: MaterialId,
 }
 
 impl HitEvent {
@@ -24,7 +25,7 @@ impl HitEvent {
                point: Vec3,
                geometric_normal: Vec3,
                shading_normal: Vec3,
-               material_id: u32)
+               material_id: MaterialId)
                -> HitEvent {
         HitEvent { parameter, u, v, point, geometric_normal, shading_normal, material_id }
     }
