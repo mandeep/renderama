@@ -1,6 +1,6 @@
 [package]
 name = "renderama"
-version = "0.24.0"
+version = "0.25.0"
 authors = ["mandeep <mandeep@users.noreply.github.com>"]
 edition = "2015"
 build = "build.rs"
@@ -12,7 +12,6 @@ denoise = ["oidn"]
 chrono = "0.4.10"
 glam = "0.32.1"
 image = { version = "0.25", features = ["exr"] }
-# image2 = "0.11.3"
 nalgebra = "0.19.0"
 oidn = { version = "2.3.3", optional = true }
 pbr = "1.0.2"
