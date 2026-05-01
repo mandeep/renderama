@@ -5,7 +5,7 @@ use glam::Vec3;
 use bvh::BVH;
 use camera::Camera;
 use geometry::{Geometry};
-use materials::{Diffuse, Light, Reflective, Refractive, Material};
+use materials::{Diffuse, Isotropic, Light, Reflective, Refractive, Material};
 use plane::{Axis, Bounds2D, Plane};
 use rectangle::Rectangle;
 use scene::Scene;
@@ -94,7 +94,7 @@ pub fn spheres_in_box_scene(width: usize, height: usize) -> Scene {
     let cloned_boundary = boundary.clone();
     world.add(boundary);
 
-    let vol_idx = mat!(materials, Diffuse::new(SolidColor::new(0.2, 0.4, 0.9).into(), 0.0));
+    let vol_idx = mat!(materials, Isotropic::new(SolidColor::new(0.2, 0.4, 0.9).into()));
     world.add(Volume::new(0.2, cloned_boundary, vol_idx).into());
 
     let fog = Sphere::new(Vec3::new(0.0, 0.0, 0.0),
@@ -104,7 +104,7 @@ pub fn spheres_in_box_scene(width: usize, height: usize) -> Scene {
                           0.0,
                           1.0).into();
 
-    let fog_idx = mat!(materials, Diffuse::new(SolidColor::new(1.0, 1.0, 1.0).into(), 0.0));
+    let fog_idx = mat!(materials, Isotropic::new(SolidColor::new(1.0, 1.0, 1.0).into()));
     world.add(Volume::new(0.0001, fog, fog_idx).into());
 
     // Image provided by NASA; details can be found here:

@@ -373,7 +373,8 @@ pub struct Isotropic {
 }
 
 impl Isotropic {
-    pub fn new(albedo: Arc<Texture>) -> Isotropic {
+    pub fn new(albedo: Texture) -> Isotropic {
+        let albedo = Arc::new(albedo);
         Isotropic { albedo }
     }
 
