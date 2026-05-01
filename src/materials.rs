@@ -8,7 +8,7 @@ use rand::rngs::ThreadRng;
 use basis::OrthonormalBasis;
 use events::{HitEvent, ScatterEvent};
 use integrator::pick_sphere_point;
-use pdf::PDF;
+use pdf::MaterialPDF;
 use ray::{find_offset_point, Ray};
 use texture::Texture;
 
@@ -53,7 +53,7 @@ macro_rules! mat {
 }
 
 impl Material {
-    pub fn scatter(&self, ray: &Ray, hit: &HitEvent, rng: &mut ThreadRng) -> Option<ScatterEvent<'_>> {
+    pub fn scatter(&self, ray: &Ray, hit: &HitEvent, rng: &mut ThreadRng) -> Option<ScatterEvent> {
         match self {
             Material::Diffuse(m) => m.scatter(ray, hit, rng),
             Material::Isotropic(m) => m.scatter(ray, hit, rng),
@@ -119,16 +119,12 @@ impl Diffuse {
                   beta }
     }
 
-    fn scatter(&self,
-               ray: &Ray,
-               event: &HitEvent,
-               _rng: &mut ThreadRng)
-               -> Option<ScatterEvent<'_>> {
+    fn scatter(&self, ray: &Ray, event: &HitEvent, _rng: &mut ThreadRng) -> Option<ScatterEvent> {
         // ray.direction is passed here because the integrator generates
         // an offset point itself for diffuse materials
         let scattered = Ray::new(event.point, ray.direction, ray.time);
         let attenuation = self.albedo.value(event.u, event.v, &event.point);
-        let pdf = PDF::MaterialPDF { uvw: OrthonormalBasis::new(&event.shading_normal) };
+        let pdf = MaterialPDF::Cosine { uvw: OrthonormalBasis::new(&event.shading_normal) };
         Some(ScatterEvent::new(scattered, attenuation, pdf, false))
     }
 
@@ -257,12 +253,12 @@ impl Reflective {
     /// factor is also added in to account for the reflection fuzz due to
     /// the size of the sphere. The target minus the event.point is used
     /// to determine the ray that is being reflected from the surface of the material.
-    fn scatter(&self, ray: &Ray, event: &HitEvent, rng: &mut ThreadRng) -> Option<ScatterEvent<'_>> {
+    fn scatter(&self, ray: &Ray, event: &HitEvent, rng: &mut ThreadRng) -> Option<ScatterEvent> {
         let reflected: Vec3 = reflect(ray.direction, event.shading_normal);
         let specular_ray = Ray::new(event.point,
                                     reflected + self.fuzz * pick_sphere_point(rng),
                                     ray.time);
-        let pdf = PDF::MaterialPDF { uvw: OrthonormalBasis::new(&event.shading_normal) };
+        let pdf = MaterialPDF::Cosine { uvw: OrthonormalBasis::new(&event.shading_normal) };
         Some(ScatterEvent::new(specular_ray, self.albedo, pdf, true))
     }
 }
@@ -297,11 +293,7 @@ impl Refractive {
     /// See Peter Shirley's Ray Tracing in One Weekend for an overview of refractive
     /// scattering and Section 10.3.2 in Mathematical and Computer Programming
     /// Techniques for Computer Graphics by Peter Comininos.
-    fn scatter(&self,
-               ray: &Ray,
-               event: &HitEvent,
-               rng: &mut ThreadRng)
-               -> Option<ScatterEvent<'_>> {
+    fn scatter(&self, ray: &Ray, event: &HitEvent, rng: &mut ThreadRng) -> Option<ScatterEvent> {
         let incident: f32 = ray.direction.dot(event.shading_normal);
 
         let (outward_normal, eta_i, eta_t, cos_theta_i) = if incident > 0.0 {
@@ -323,7 +315,7 @@ impl Refractive {
             Vec3::ONE
         };
 
-        let pdf = PDF::MaterialPDF { uvw: OrthonormalBasis::new(&event.shading_normal) };
+        let pdf = MaterialPDF::Cosine { uvw: OrthonormalBasis::new(&event.shading_normal) };
 
         if rng.gen::<f32>() < reflect_probability {
             let reflected: Vec3 = reflect(ray.direction, outward_normal);
@@ -349,11 +341,7 @@ impl Light {
         Light { emit }
     }
 
-    fn scatter(&self,
-               _ray: &Ray,
-               _event: &HitEvent,
-               _rng: &mut ThreadRng)
-               -> Option<ScatterEvent<'_>> {
+    fn scatter(&self, _ray: &Ray, _event: &HitEvent, _rng: &mut ThreadRng) -> Option<ScatterEvent> {
         None
     }
 
@@ -376,10 +364,10 @@ impl Isotropic {
         Isotropic { albedo }
     }
 
-    fn scatter(&self, ray: &Ray, event: &HitEvent, rng: &mut ThreadRng) -> Option<ScatterEvent<'_>> {
+    fn scatter(&self, ray: &Ray, event: &HitEvent, rng: &mut ThreadRng) -> Option<ScatterEvent> {
         let scattered = Ray::new(event.point, pick_sphere_point(rng), ray.time);
         let attenuation = self.albedo.value(event.u, event.v, &event.point);
-        let pdf = PDF::MaterialPDF { uvw: OrthonormalBasis::new(&event.shading_normal) };
+        let pdf = MaterialPDF::Cosine { uvw: OrthonormalBasis::new(&event.shading_normal) };
         Some(ScatterEvent::new(scattered, attenuation, pdf, true))
     }
 }
@@ -397,7 +385,7 @@ impl Plastic {
         Plastic { albedo, roughness: roughness.max(0.01), ior }
     }
 
-    fn scatter(&self, ray: &Ray, event: &HitEvent, rng: &mut ThreadRng) -> Option<ScatterEvent<'_>> {
+    fn scatter(&self, ray: &Ray, event: &HitEvent, rng: &mut ThreadRng) -> Option<ScatterEvent> {
         let cos_theta_i = (-ray.direction).dot(event.shading_normal).max(0.0);
         let fresnel = fresnel_coefficient(cos_theta_i, 1.0, self.ior);
 
@@ -406,13 +394,13 @@ impl Plastic {
             // Specular path
             let reflected = reflect(ray.direction, event.shading_normal);
             let specular_ray = Ray::new(event.point, reflected, ray.time);
-            let pdf = PDF::MaterialPDF { uvw: OrthonormalBasis::new(&event.shading_normal) };
+            let pdf = MaterialPDF::Cosine { uvw: OrthonormalBasis::new(&event.shading_normal) };
             Some(ScatterEvent::new(specular_ray, Vec3::ONE, pdf, true))
         } else {
             // Diffuse path
             let scattered = Ray::new(event.point, ray.direction, ray.time);
             let attenuation = self.albedo.value(event.u, event.v, &event.point);
-            let pdf = PDF::MaterialPDF { uvw: OrthonormalBasis::new(&event.shading_normal) };
+            let pdf = MaterialPDF::Cosine { uvw: OrthonormalBasis::new(&event.shading_normal) };
             Some(ScatterEvent::new(scattered, attenuation, pdf, false))
         }
     }

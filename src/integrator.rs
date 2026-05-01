@@ -7,7 +7,7 @@ use rand_distr::StandardNormal;
 
 use basis::OrthonormalBasis;
 use geometry::Geometry;
-use pdf::PDF;
+use pdf::{HybridPDF, MaterialPDF};
 use ray::{find_offset_point, Ray};
 use scene::Scene;
 
@@ -52,20 +52,12 @@ pub fn render_path_integrator(mut ray: Ray, scene: &Scene, bounces: u32, rng: &m
                     throughput *= scatter_event.attenuation;
                     ray = scatter_event.specular_ray;
                 } else {
-                    let fallback_pdf = PDF::FallbackPDF { uvw: OrthonormalBasis::new(&hit_event.shading_normal) };
+                    let fallback_pdf = MaterialPDF::Fallback { uvw: OrthonormalBasis::new(&hit_event.shading_normal) };
                     let importance_pdf = scene.light_source.as_ref().map(|light| {
-                        PDF::ImportancePDF { origin: hit_event.point, geometry: Geometry::Plane(light.clone())}
+                        MaterialPDF::Importance { origin: hit_event.point, geometry: Geometry::Plane(light.clone())}
                     });
-                    let hybrid_pdf = match &importance_pdf {
-                        Some(sample_target_pdf) => PDF::HybridPDF {
-                            material_pdf: &scatter_event.pdf,
-                            importance_pdf: sample_target_pdf,
-                        },
-                        None => PDF::HybridPDF {
-                            material_pdf: &scatter_event.pdf,
-                            importance_pdf: &fallback_pdf,
-                        },
-                    };
+                    let importance_ref = importance_pdf.as_ref().unwrap_or(&fallback_pdf);
+                    let hybrid_pdf = HybridPDF::new(&scatter_event.pdf, importance_ref);
 
                     let scattered_direction = hybrid_pdf.generate(rng);
                     let offset_normal = if scattered_direction.dot(hit_event.geometric_normal) > 0.0 {

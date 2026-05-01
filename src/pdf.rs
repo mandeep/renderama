@@ -8,64 +8,63 @@ use basis::OrthonormalBasis;
 use geometry::Geometry;
 use sampling::uniform_sample_hemisphere;
 
-pub enum PDF<'a> {
-    MaterialPDF {
-        uvw: OrthonormalBasis,
-    },
-    ImportancePDF {
-        origin: Vec3,
-        geometry: Geometry,
-    },
-    HybridPDF {
-        material_pdf: &'a PDF<'a>,
-        importance_pdf: &'a PDF<'a>,
-    },
-    FallbackPDF {
-        uvw: OrthonormalBasis
-    }
+pub enum MaterialPDF {
+    Cosine { uvw: OrthonormalBasis },
+    Importance { origin: Vec3, geometry: Geometry },
+    Fallback { uvw: OrthonormalBasis }
 }
 
-impl<'a> PDF<'a> {
+impl MaterialPDF {
     pub fn value(&self, direction: Vec3) -> f32 {
         match self {
-            PDF::MaterialPDF { uvw } => {
+            MaterialPDF::Cosine { uvw } => {
                 let cosine = direction.normalize().dot(uvw.w());
-
-                if cosine > 0.0 {
-                    cosine / PI
-                } else {
-                    0.0
-                }
+                if cosine > 0.0 { cosine / PI } else { 0.0 }
             }
-            PDF::ImportancePDF { origin, geometry } => geometry.pdf_value(*origin, direction),
-            PDF::HybridPDF { material_pdf, importance_pdf, } => {
-                0.5 * material_pdf.value(direction) + 0.5 * importance_pdf.value(direction)
-            },
-            PDF::FallbackPDF { uvw } => {
+            MaterialPDF::Importance { origin, geometry } => {
+                geometry.pdf_value(*origin, direction)
+            }
+            MaterialPDF::Fallback { uvw } => {
                 let cosine = direction.normalize().dot(uvw.w());
-
-                if cosine > 0.0 {
-                    cosine / PI
-                } else {
-                    0.0
-                }
+                if cosine > 0.0 { cosine / PI } else { 0.0 }
             }
         }
     }
 
     pub fn generate(&self, rng: &mut ThreadRng) -> Vec3 {
         match self {
-            PDF::MaterialPDF { uvw } => uvw.local(&uniform_sample_hemisphere(rng)),
-            PDF::ImportancePDF { origin, geometry } => geometry.pdf_random(*origin, rng),
-            PDF::HybridPDF { material_pdf,
-                              importance_pdf, } => {
-                if rng.gen::<f32>() < 0.5 {
-                    material_pdf.generate(rng)
-                } else {
-                    importance_pdf.generate(rng)
-                }
-            },
-            PDF::FallbackPDF { uvw } => uvw.local(&uniform_sample_hemisphere(rng)),
+            MaterialPDF::Cosine { uvw } => {
+                uvw.local(&uniform_sample_hemisphere(rng))
+            }
+            MaterialPDF::Importance { origin, geometry } => {
+                geometry.pdf_random(*origin, rng)
+            }
+            MaterialPDF::Fallback { uvw } => {
+                uvw.local(&uniform_sample_hemisphere(rng))
+            }
+        }
+    }
+}
+
+pub struct HybridPDF<'a> {
+        material_pdf: &'a MaterialPDF,
+        importance_pdf: &'a MaterialPDF,
+}
+
+impl<'a> HybridPDF<'a> {
+    pub fn new(material_pdf: &'a MaterialPDF, importance_pdf: &'a MaterialPDF) -> HybridPDF<'a> {
+        HybridPDF { material_pdf, importance_pdf }
+    }
+
+    pub fn value(&self, direction: Vec3) -> f32 {
+        0.5 * self.material_pdf.value(direction) + 0.5 * self.importance_pdf.value(direction)
+    }
+
+    pub fn generate(&self, rng: &mut ThreadRng) -> Vec3 {
+        if rng.gen::<f32>() < 0.5 {
+            self.material_pdf.generate(rng)
+        } else {
+            self.importance_pdf.generate(rng)
         }
     }
 }

@@ -1,6 +1,6 @@
 use glam::Vec3;
 
-use pdf::PDF;
+use pdf::MaterialPDF;
 use ray::Ray;
 
 
@@ -29,15 +29,15 @@ impl HitEvent {
         HitEvent { parameter, u, v, point, geometric_normal, shading_normal, material_id }
     }
 }
-pub struct ScatterEvent<'a> {
+pub struct ScatterEvent {
     pub specular_ray: Ray,
     pub attenuation: Vec3,
-    pub pdf: PDF<'a>,
+    pub pdf: MaterialPDF,
     pub specular: bool,
 }
 
-impl<'a> ScatterEvent<'a> {
-    pub fn new(specular_ray: Ray, attenuation: Vec3, pdf: PDF<'a>, specular: bool) -> ScatterEvent<'a> {
+impl ScatterEvent {
+    pub fn new(specular_ray: Ray, attenuation: Vec3, pdf: MaterialPDF, specular: bool) -> ScatterEvent {
         ScatterEvent { specular_ray, attenuation, pdf, specular }
     }
 }
