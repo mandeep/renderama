@@ -94,7 +94,7 @@ pub struct EnvironmentMap {
 /// Create a new map from the given data and image dimensions
 impl EnvironmentMap {
     pub fn new(filename: &str) -> EnvironmentMap {
-        EnvironmentMap { im: image::open(filename).unwrap().flipv().to_rgb32f() }
+        EnvironmentMap { im: image::open(filename).unwrap().to_rgb32f() }
     }
 
     /// Determine which pixel to retrieve from the image by
