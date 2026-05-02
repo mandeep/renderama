@@ -14,7 +14,12 @@ pub struct Scene {
 }
 
 impl Scene {
-    pub fn new(name: String, accelerator: BVH, materials: Vec<Material>, camera: Camera, light_source: Option<Plane>, environment: Option<Texture>) -> Scene {
+    pub fn new(name: String,
+               accelerator: BVH,
+               materials: Vec<Material>,
+               camera: Camera,
+               light_source: Option<Plane>,
+               environment: Option<Texture>) -> Scene {
         Scene { name, materials, accelerator, camera, light_source, environment }
     }
 }
