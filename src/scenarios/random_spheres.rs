@@ -21,7 +21,6 @@ pub fn random_spheres_scene(width: usize, height: usize) -> Scene {
     let focus_distance = 10.0;
     let time0 = 0.0;
     let time1 = 1.0;
-    let atmosphere = false;
 
     let camera = Camera::new(origin,
                              lookat,
@@ -31,8 +30,7 @@ pub fn random_spheres_scene(width: usize, height: usize) -> Scene {
                              aperture,
                              focus_distance,
                              time0,
-                             time1,
-                             atmosphere);
+                             time1);
 
     let mut world = World::new();
     let mut materials: Vec<Material> = Vec::new();
@@ -131,5 +129,5 @@ pub fn random_spheres_scene(width: usize, height: usize) -> Scene {
 
     let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
 
-    Scene::new(String::from("Random Spheres"), bvh, materials, camera, None, Some(environment))
+    Scene::new(String::from("Random Spheres"), bvh, materials, camera, None, Some(environment), false)
 }

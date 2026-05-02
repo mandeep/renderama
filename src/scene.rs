@@ -11,6 +11,7 @@ pub struct Scene {
     pub camera: Camera,
     pub light_source: Option<Plane>,
     pub environment: Option<Texture>,
+    pub atmosphere: bool,
 }
 
 impl Scene {
@@ -19,7 +20,8 @@ impl Scene {
                materials: Vec<Material>,
                camera: Camera,
                light_source: Option<Plane>,
-               environment: Option<Texture>) -> Scene {
-        Scene { name, materials, accelerator, camera, light_source, environment }
+               environment: Option<Texture>,
+               atmosphere: bool) -> Scene {
+        Scene { name, materials, accelerator, camera, light_source, environment, atmosphere }
     }
 }

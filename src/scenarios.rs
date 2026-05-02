@@ -5,11 +5,9 @@ mod cornell_box_bunny;
 mod cornell_box_objects;
 mod random_spheres;
 mod spheres_in_box;
-mod three_spheres;
 
 pub use self::cornell_box_boxes::*;
 pub use self::cornell_box_bunny::*;
 pub use self::cornell_box_objects::*;
 pub use self::random_spheres::*;
 pub use self::spheres_in_box::*;
-pub use self::three_spheres::*;
