@@ -48,9 +48,12 @@ pub fn cornell_box_bunny_scene(width: usize, height: usize) -> Scene {
     world.add(Plane::new(Axis::XY, Bounds2D::new(0.0..555.0, 0.0..555.0), 555.0, white_id).into_reversed());
 
     let bunny_material = mat!(materials, Refractive::new(1.5, Vec3::ONE));
-    let bunny_mesh = Geometry::TriangleMesh(Box::new(TriangleMesh::from("models/bunny.obj", bunny_material)));
- 
+    let bunny_mesh = Geometry::TriangleMesh(Box::new(TriangleMesh::from("docs/models/bunny.obj", bunny_material)));
     world.add(Geometry::TransformedMesh(Box::new(TransformedMesh::new(Vec3::new(224.0, -66.0, 278.0), Vec3::new(0.0, 180.0, 0.0), 2000.0, bunny_mesh))));
+
+    let lucy_material = mat!(materials, Diffuse::new(SolidColor::new(0.45, 0.55, 0.70).into(), 0.05));
+    let lucy = TriangleMesh::from("docs/models/lucy.obj", lucy_material).into();
+    world.add(TransformedMesh::new(Vec3::new(-50.0, 180.0, 364.0), Vec3::new(0.0, 0.0, 0.0), 0.30, lucy).into());
 
     let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
 

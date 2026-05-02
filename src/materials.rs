@@ -267,7 +267,7 @@ impl Reflective {
     /// the size of the sphere. The target minus the event.point is used
     /// to determine the ray that is being reflected from the surface of the material.
     fn scatter(&self, ray: &Ray, event: &HitEvent, rng: &mut ThreadRng) -> Option<ScatterEvent> {
-        let reflected: Vec3 = reflect(ray.direction, event.shading_normal);
+        let reflected: Vec3 = reflect(ray.direction, event.geometric_normal);
         let specular_ray = Ray::new(event.point,
                                     reflected + self.fuzz * pick_sphere_point(rng),
                                     ray.time);
@@ -307,36 +307,54 @@ impl Refractive {
     /// scattering and Section 10.3.2 in Mathematical and Computer Programming
     /// Techniques for Computer Graphics by Peter Comininos.
     fn scatter(&self, ray: &Ray, event: &HitEvent, rng: &mut ThreadRng) -> Option<ScatterEvent> {
-        let incident: f32 = ray.direction.dot(event.shading_normal);
+        let geometric_incident: f32 = ray.direction.dot(event.geometric_normal);
+        let entering = geometric_incident < 0.0;
 
-        let (outward_normal, eta_i, eta_t, cos_theta_i) = if incident > 0.0 {
-            (-event.shading_normal, self.refractive_index, 1.0, incident)
+        // Pick a forward-facing geometric normal (points back toward the ray origin).
+        let forward_geometric_normal = if entering {
+            event.geometric_normal
         } else {
-            (event.shading_normal, 1.0, self.refractive_index, -incident)
+            -event.geometric_normal
         };
 
-        let refracted = refract(ray.direction, outward_normal, eta_i / eta_t);
+       // For the shading side of refraction (Fresnel/Snell), use the shading normal,
+        // but make sure it agrees with the forward-facing geometric normal.
+        let shading_normal = if event.shading_normal.dot(forward_geometric_normal) < 0.0 {
+            -event.shading_normal
+        } else {
+            event.shading_normal
+        };
+
+        let (eta_i, eta_t) = if entering {
+            (1.0, self.refractive_index)
+        } else {
+            (self.refractive_index, 1.0)
+        };
+
+        let cos_theta_i = -ray.direction.dot(shading_normal); // positive
+
+        let refracted = refract(ray.direction, shading_normal, eta_i / eta_t);
 
         let reflect_probability = match refracted {
             Some(_) => fresnel_coefficient(cos_theta_i, eta_i, eta_t),
             None => 1.0,
         };
 
-        let attenuation = if incident > 0.0 {
-            self.absorption
-        } else {
+        let attenuation = if entering {
             Vec3::ONE
+        } else {
+            self.absorption
         };
 
         let pdf = MaterialPDF::Cosine { uvw: OrthonormalBasis::new(&event.shading_normal) };
 
         if rng.gen::<f32>() < reflect_probability {
-            let reflected: Vec3 = reflect(ray.direction, outward_normal);
-            let offset_point = find_offset_point(event.point, outward_normal);
+            let reflected: Vec3 = reflect(ray.direction, shading_normal);
+            let offset_point = find_offset_point(event.point, forward_geometric_normal);
             let specular_ray = Ray::new(offset_point, reflected, ray.time);
             Some(ScatterEvent::new(specular_ray, attenuation, pdf, true))
         } else {
-            let offset_point = find_offset_point(event.point, -outward_normal);
+            let offset_point = find_offset_point(event.point, -forward_geometric_normal);
             let specular_ray = Ray::new(offset_point, refracted.unwrap(), ray.time);
             Some(ScatterEvent::new(specular_ray, attenuation, pdf, true))
         }
