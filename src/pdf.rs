@@ -6,12 +6,11 @@ use rand::Rng;
 
 use basis::OrthonormalBasis;
 use geometry::Geometry;
-use sampling::uniform_sample_hemisphere;
+use sampling::cosine_sample_hemisphere;
 
 pub enum MaterialPDF {
     Cosine { uvw: OrthonormalBasis },
     Importance { origin: Vec3, geometry: Geometry },
-    Fallback { uvw: OrthonormalBasis }
 }
 
 impl MaterialPDF {
@@ -24,23 +23,16 @@ impl MaterialPDF {
             MaterialPDF::Importance { origin, geometry } => {
                 geometry.pdf_value(*origin, direction)
             }
-            MaterialPDF::Fallback { uvw } => {
-                let cosine = direction.normalize().dot(uvw.w());
-                if cosine > 0.0 { cosine / PI } else { 0.0 }
-            }
         }
     }
 
     pub fn generate(&self, rng: &mut ThreadRng) -> Vec3 {
         match self {
             MaterialPDF::Cosine { uvw } => {
-                uvw.local(&uniform_sample_hemisphere(rng))
+                uvw.local(&cosine_sample_hemisphere(rng))
             }
             MaterialPDF::Importance { origin, geometry } => {
                 geometry.pdf_random(*origin, rng)
-            }
-            MaterialPDF::Fallback { uvw } => {
-                uvw.local(&uniform_sample_hemisphere(rng))
             }
         }
     }
