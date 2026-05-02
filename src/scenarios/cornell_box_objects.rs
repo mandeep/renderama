@@ -21,7 +21,7 @@ pub fn cornell_box_object_scene(width: usize, height: usize) -> Scene {
     let aspect_ratio = (width / height) as f32;
 
     let camera = Camera::new(origin, lookat, view, fov, aspect_ratio,
-                             0.0, 10.0, 0.0, 1.0, false);
+                             0.0, 10.0, 0.0, 1.0);
 
     let mut world = World::new();
     let mut materials: Vec<Material> = Vec::new();
@@ -63,5 +63,5 @@ pub fn cornell_box_object_scene(width: usize, height: usize) -> Scene {
     let light = mat!(materials, Light::new(SolidColor::new(0.0, 0.0, 0.0).into()));
     let light_shape = Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 554.0, light);
 
-    Scene::new(String::from("Cornell Box with Multiple Objects"), bvh, materials, camera, Some(light_shape))
+    Scene::new(String::from("Cornell Box with Multiple Objects"), bvh, materials, camera, Some(light_shape), None, false)
 }

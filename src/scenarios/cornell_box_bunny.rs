@@ -25,11 +25,10 @@ pub fn cornell_box_bunny_scene(width: usize, height: usize) -> Scene {
     let focus_distance = 10.0;
     let time0 = 0.0;
     let time1 = 1.0;
-    let atmosphere = false;
 
     let camera = Camera::new(origin, lookat, view, fov, aspect_ratio,
                              aperture, focus_distance,
-                             time0, time1, atmosphere);
+                             time0, time1);
 
     let mut world = World::new();
     let mut materials: Vec<Material> = Vec::new();
@@ -58,5 +57,5 @@ pub fn cornell_box_bunny_scene(width: usize, height: usize) -> Scene {
     let light = mat!(materials, Light::new(SolidColor::new(0.0, 0.0, 0.0).into()));
     let light_shape = Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 554.0, light);
 
-    Scene::new(String::from("Cornell Box with Stanford Bunny"), bvh, materials, camera, Some(light_shape))
+    Scene::new(String::from("Cornell Box with Stanford Bunny"), bvh, materials, camera, Some(light_shape), None, false)
 }
