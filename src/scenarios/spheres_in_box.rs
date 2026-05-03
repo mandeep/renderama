@@ -137,7 +137,7 @@ pub fn spheres_in_box_scene(width: usize, height: usize) -> Scene {
 
     let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
     let light = mat!(materials, Light::new(SolidColor::new(0.0, 0.0, 0.0).into()));
-    let light_shape = Plane::new(Axis::XZ, Bounds2D::new(123.0..423.0, 147.0..412.0), 554.0, big_light);
+    let light_shape = Plane::new(Axis::XZ, Bounds2D::new(123.0..423.0, 147.0..412.0), 554.0, light);
 
     Scene::new(String::from("Spheres in Box"), bvh, materials, camera, Some(light_shape), None, false)
 }

@@ -3,6 +3,7 @@ use std::f32;
 use glam::Vec3;
 use nalgebra::Vector3;
 
+#[derive(Copy, Clone)]
 pub struct Ray {
     pub origin: Vec3,
     pub direction: Vec3,
