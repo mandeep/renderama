@@ -3,4 +3,5 @@
 [![Cornell Box](renders/cornell_box_denoised.png)](renders/cornell_box_denoised.png)
 [![Cornell Box with Dragon model](renders/cornell_box_dragon.png)](renders/cornell_box_dragon.png)
 [![Cornell Box with Bunny model](renders/cornell_box_bunny.png)](renders/cornell_box_bunny.png)
-[![Cornell Box with multiple models](renders/cornell_box_objects.png)](renders/cornell_box_objects.png)
+[![Cornell Box with Bunny and Buddha](renders/cornell_box_bunny_buddha.png)](renders/cornell_box_bunny_buddha.png)
+[![Cornell Box with Bunny, Dragon, Lucy, and Buddha Relief](renders/cornell_box_objects.png)](renders/cornell_box_objects.png)
