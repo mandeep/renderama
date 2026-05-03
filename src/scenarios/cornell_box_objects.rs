@@ -42,20 +42,20 @@ pub fn cornell_box_object_scene(width: usize, height: usize) -> Scene {
 
 
     let lucy_material = mat!(materials, Diffuse::new(SolidColor::new(0.92, 0.88, 0.82).into(), 0.05));
-    let lucy = TriangleMesh::from("models/lucy.obj", lucy_material).into();
+    let lucy = TriangleMesh::from("docs/models/lucy.obj", lucy_material).into();
     world.add(TransformedMesh::new(Vec3::new(200.0, 180.0, 364.0), Vec3::new(0.0, 0.0, 0.0), 0.30, lucy).into());
 
     let dragon_material = mat!(materials, Plastic::new(SolidColor::new(0.7, 0.85, 0.45).into(), 0.3, 1.5));
-    let dragon = TriangleMesh::from("models/dragon.obj", dragon_material).into();
+    let dragon = TriangleMesh::from("docs/models/dragon.obj", dragon_material).into();
     world.add(TransformedMesh::new(Vec3::new(283.0, 96.0, 268.0), Vec3::new(0.0, -60.0, 0.0), 350.0, dragon).into());
 
     let bunny_material = mat!(materials, Refractive::new(1.5, Vec3::ONE));
-    let bunny = TriangleMesh::from("models/bunny.obj", bunny_material).into();
+    let bunny = TriangleMesh::from("docs/models/bunny.obj", bunny_material).into();
     world.add(TransformedMesh::new(Vec3::new(110.0, -25.0, 140.0), Vec3::new(0.0, 180.0, 0.0), 750.0, bunny).into());
 
-    let buddha_texture = ImageTexture::new("models/buddha_relief_diffuse.jpeg", 1.0).into();
+    let buddha_texture = ImageTexture::new("docs/textures/buddha_relief_diffuse.jpeg", 1.0).into();
     let buddha_material = mat!(materials, Diffuse::new(buddha_texture, 0.0));
-    let buddha = TriangleMesh::from("models/buddha_relief.obj", buddha_material).into();
+    let buddha = TriangleMesh::from("docs/models/buddha_relief.obj", buddha_material).into();
     world.add(TransformedMesh::new(Vec3::new(273.0, 180.0, 530.0), Vec3::new(-90.0, 180.0, 0.0), 24.0, buddha).into());
 
     let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
