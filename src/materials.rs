@@ -267,10 +267,23 @@ impl Reflective {
     /// the size of the sphere. The target minus the event.point is used
     /// to determine the ray that is being reflected from the surface of the material.
     fn scatter(&self, ray: &Ray, event: &HitEvent, rng: &mut ThreadRng) -> Option<ScatterEvent> {
-        let reflected: Vec3 = reflect(ray.direction, event.geometric_normal);
-        let specular_ray = Ray::new(event.point,
-                                    reflected + self.fuzz * pick_sphere_point(rng),
-                                    ray.time);
+        let forward_geometric_normal = if ray.direction.dot(event.geometric_normal) < 0.0 {
+            event.geometric_normal
+        } else {
+            -event.geometric_normal
+        };
+
+        let shading_normal = if event.shading_normal.dot(forward_geometric_normal) < 0.0 {
+            -event.shading_normal
+        } else {
+            event.shading_normal
+        };
+
+        let reflected: Vec3 = reflect(ray.direction, shading_normal);
+        let scattered = reflected + self.fuzz * pick_sphere_point(rng);
+        let offset_point = find_offset_point(event.point, forward_geometric_normal);
+        let specular_ray = Ray::new(offset_point, scattered, ray.time);
+
         let pdf = MaterialPDF::Cosine { uvw: OrthonormalBasis::new(&event.shading_normal) };
         Some(ScatterEvent::new(specular_ray, self.albedo, pdf, true))
     }
@@ -414,7 +427,7 @@ pub struct Plastic {
 impl Plastic {
     pub fn new(albedo: Texture, roughness: f32, ior: f32) -> Plastic {
         let albedo = Arc::new(albedo);
-        Plastic { albedo, roughness: roughness.max(0.01), ior }
+        Plastic { albedo, roughness: roughness.max(0.0), ior }
     }
 
     fn scatter(&self, ray: &Ray, event: &HitEvent, rng: &mut ThreadRng) -> Option<ScatterEvent> {
@@ -425,7 +438,8 @@ impl Plastic {
         if rng.gen::<f32>() < fresnel {
             // Specular path
             let reflected = reflect(ray.direction, event.shading_normal);
-            let specular_ray = Ray::new(event.point, reflected, ray.time);
+            let perturbed = reflected + self.roughness * pick_sphere_point(rng);
+            let specular_ray = Ray::new(event.point, perturbed, ray.time);
             let pdf = MaterialPDF::Cosine { uvw: OrthonormalBasis::new(&event.shading_normal) };
             Some(ScatterEvent::new(specular_ray, Vec3::ONE, pdf, true))
         } else {
