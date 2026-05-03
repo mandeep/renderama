@@ -123,7 +123,7 @@ pub fn render_nee_integrator(mut ray: Ray, scene: &Scene, bounces: u32, rng: &mu
     let mut last_specular = true;
 
     for bounce in 0..=bounces {
-        if let Some(hit_event) = scene.accelerator.hit(&ray, 0.001, f32::MAX) {
+        if let Some(hit_event) = scene.accelerator.hit(&ray, 1e-4, f32::MAX) {
             let material = &scene.materials[hit_event.material_id.index()];
             
             // 1. Direct Emission
@@ -145,7 +145,7 @@ pub fn render_nee_integrator(mut ray: Ray, scene: &Scene, bounces: u32, rng: &mu
                         let light_dir_vec = light_geom.pdf_random(hit_event.point, rng);
                         let light_dist = light_dir_vec.length();
                         let light_dir = light_dir_vec.normalize();
-                        
+
                         // OFFSET: Move origin along the normal to prevent self-intersection[cite: 2]
                         let shadow_origin = hit_event.point + hit_event.geometric_normal * 0.001;
                         let shadow_ray = Ray::new(shadow_origin, light_dir, ray.time);
@@ -186,105 +186,6 @@ pub fn render_nee_integrator(mut ray: Ray, scene: &Scene, bounces: u32, rng: &mu
                     let s_pdf = material.scattering_pdf(&ray, &hit_event, &ray);
                     
                     throughput *= (s_pdf * scatter_event.attenuation) / pdf_val;
-                }
-            } else { break; }
-        } else {
-            if let Some(env) = &scene.environment {
-                color += throughput * env.value(0.0, 0.0, &ray.direction);
-            }
-            break;
-        }
-
-        // Russian Roulette
-        if bounce > 3 {
-            let q = (1.0 - throughput.max_element()).max(0.05);
-            if rng.gen::<f32>() < q { break; }
-            throughput /= 1.0 - q;
-        }
-    }
-    color
-}
-
-pub fn render_nee_mis_integrator(mut ray: Ray, scene: &Scene, bounces: u32, rng: &mut ThreadRng) -> Vec3 {
-    let mut color = Vec3::ZERO;
-    let mut throughput = Vec3::ONE;
-    let mut last_specular = true;
-
-    for bounce in 0..=bounces {
-        if let Some(hit_event) = scene.accelerator.hit(&ray, 0.001, f32::MAX) {
-            let material = &scene.materials[hit_event.material_id.index()];
-            
-            // 1. Direct Hit / Specular Hit
-            // We only add emission here if the hit was reached via a specular bounce 
-            // OR if it's the first hit. For diffuse bounces, the MIS block handles emission.
-            if last_specular {
-                color += throughput * material.emitted(&ray, &hit_event);
-            }
-
-            if let Some(scatter_event) = material.scatter(&ray, &hit_event, rng) {
-                if scatter_event.specular {
-                    throughput *= scatter_event.attenuation;
-                    ray = scatter_event.specular_ray;
-                    last_specular = true;
-                } else {
-                    last_specular = false;
-
-                    // 2. Setup MIS PDFs
-                    let importance_pdf = scene.light_source.as_ref().map(|light| {
-                        MaterialPDF::Importance { 
-                            origin: hit_event.point, 
-                            geometry: Geometry::Plane(light.clone()) 
-                        }
-                    });
-                    let importance_ref = importance_pdf.as_ref().unwrap_or(&scatter_event.pdf);
-                    let hybrid_pdf = HybridPDF::new(&scatter_event.pdf, importance_ref);
-
-                    // 3. Strategy A: Explicit Light Sampling (NEE)
-                    if let Some(light_geom) = &scene.light_source {
-                        let light_dir_vec = light_geom.pdf_random(hit_event.point, rng);
-                        let light_dist = light_dir_vec.length();
-                        let light_dir = light_dir_vec.normalize();
-                        
-                        let shadow_ray = Ray::new(
-                            find_offset_point(hit_event.point, hit_event.geometric_normal), 
-                            light_dir, 
-                            ray.time
-                        );
-
-                        if visibility(scene, &shadow_ray, light_dist) > 0.0 {
-                            if let Some(l_hit) = scene.accelerator.hit(&shadow_ray, 0.001, light_dist + 0.01) {
-                                let l_mat = &scene.materials[l_hit.material_id.index()];
-                                let emission = l_mat.emitted(&shadow_ray, &l_hit);
-                                
-                                if emission.length_squared() > 0.0 {
-                                    let s_pdf = material.scattering_pdf(&ray, &hit_event, &shadow_ray);
-                                    let mis_weight = hybrid_pdf.value(light_dir);
-                                    
-                                    // Balance Heuristic Weighting
-                                    if mis_weight > 0.0 {
-                                        color += (throughput * emission * scatter_event.attenuation * s_pdf) / mis_weight;
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // 4. Strategy B: BSDF/Hybrid Sampling
-                    let scattered_dir = hybrid_pdf.generate(rng);
-                    let pdf_val = hybrid_pdf.value(scattered_dir);
-                    
-                    if pdf_val <= 0.0 { break; }
-
-                    let next_origin = find_offset_point(
-                        hit_event.point, 
-                        if scattered_dir.dot(hit_event.geometric_normal) > 0.0 { hit_event.geometric_normal } else { -hit_event.geometric_normal }
-                    );
-                    
-                    let next_ray = Ray::new(next_origin, scattered_dir, ray.time);
-                    let s_pdf = material.scattering_pdf(&ray, &hit_event, &next_ray);
-                    
-                    throughput *= (s_pdf * scatter_event.attenuation) / pdf_val;
-                    ray = next_ray;
                 }
             } else { break; }
         } else {
