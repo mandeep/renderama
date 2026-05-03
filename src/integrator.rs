@@ -107,3 +107,127 @@ pub fn render_normals(ray: Ray, scene: &Scene) -> Vec3 {
         (1.0 - point) * Vec3::new(1.0, 1.0, 1.0) + point * Vec3::new(0.5, 0.7, 1.0)
     }
 }
+
+
+pub fn render_nee_integrator(mut ray: Ray, scene: &Scene, bounces: u32, rng: &mut ThreadRng) -> Vec3 {
+    let mut color = Vec3::ZERO;
+    let mut throughput = Vec3::ONE;
+    let mut last_specular = true; // Track if the previous bounce was specular
+
+    for bounce in 0..=bounces {
+        if let Some(hit_event) = scene.accelerator.hit(&ray, 1e-4, f32::MAX) {
+            let material = &scene.materials[hit_event.material_id.index()];
+            
+            // 1. Emissive contribution (Highlights/Direct View)
+            // Physically correct: Only add emission if the ray came from a specular bounce 
+            // or is the primary camera ray. Otherwise, NEE handles this light.
+            if last_specular {
+                color += throughput * material.emitted(&ray, &hit_event);
+            }
+
+            if let Some(scatter_event) = material.scatter(&ray, &hit_event, rng) {
+                if scatter_event.specular {
+                    // Update state for the next hit to know we came from a specular surface
+                    throughput *= scatter_event.attenuation;
+                    ray = scatter_event.specular_ray;
+                    last_specular = true; 
+                } else {
+                    last_specular = false; // Next hit is a diffuse/isotropic surface
+
+                    // 2. Direct Lighting (The NEE Block)
+                    if let Some(light_source) = &scene.light_source {
+                        let light_geom = Geometry::Plane(light_source.clone());
+                        let light_pdf = MaterialPDF::Importance { 
+                            origin: hit_event.point, 
+                            geometry: light_geom.clone() 
+                        };
+
+                        let light_dir = light_pdf.generate(rng);
+                        let light_ray_dir = light_dir.normalize();
+                        
+                        // Use the scattering PDF value to differentiate volume vs surface
+                        let s_pdf_val = material.scattering_pdf(&ray, &hit_event, &Ray::new(hit_event.point, light_ray_dir, 0.0));
+                        let is_vol_behavior = (s_pdf_val - (1.0 / (4.0 * std::f32::consts::PI))).abs() < 1e-6;
+
+                        let shadow_origin = if is_vol_behavior {
+                            hit_event.point
+                        } else {
+                            find_offset_point(hit_event.point, hit_event.geometric_normal)
+                        };
+
+                        let mut shadow_ray = Ray::new(shadow_origin, light_ray_dir, ray.time);
+
+                        // NEE Visibility Loop (Bypassing glass for SSS glow)
+                        loop {
+                            if let Some(sh_hit) = scene.accelerator.hit(&shadow_ray, 1e-4, f32::MAX) {
+                                let sh_mat = &scene.materials[sh_hit.material_id.index()];
+                                let emission = sh_mat.emitted(&shadow_ray, &sh_hit);
+
+                                if emission.length_squared() > 0.0 {
+                                    let p_val = light_pdf.value(light_ray_dir);
+                                    if p_val > 0.0 {
+                                        let s_pdf = material.scattering_pdf(&ray, &hit_event, &shadow_ray);
+                                        // Standard NEE weighting
+                                        color += throughput * (emission * scatter_event.attenuation * s_pdf) / p_val;
+                                    }
+                                    break;
+                                }
+
+                                // If shadow ray hits a specular surface, continue through it
+                                if let Some(sh_scatter) = sh_mat.scatter(&shadow_ray, &sh_hit, rng) {
+                                    if sh_scatter.specular {
+                                        shadow_ray = Ray::new(sh_hit.point + light_ray_dir * 1e-4, light_ray_dir, ray.time);
+                                        continue;
+                                    }
+                                }
+                                break; 
+                            } else {
+                                break; 
+                            }
+                        }
+                    }
+
+                    // 3. Indirect Lighting
+                    let scattered_direction = scatter_event.pdf.generate(rng);
+                    let pdf_value = scatter_event.pdf.value(scattered_direction);
+                    
+                    if pdf_value <= 0.0 { break; }
+
+                    let s_pdf_val_indirect = material.scattering_pdf(&ray, &hit_event, &Ray::new(hit_event.point, scattered_direction, 0.0));
+                    let is_vol_indirect = (s_pdf_val_indirect - (1.0 / (4.0 * std::f32::consts::PI))).abs() < 1e-6;
+
+                    let next_origin = if is_vol_indirect {
+                        hit_event.point
+                    } else {
+                        let offset_n = if scattered_direction.dot(hit_event.geometric_normal) > 0.0 { 
+                            hit_event.geometric_normal 
+                        } else { 
+                            -hit_event.geometric_normal 
+                        };
+                        find_offset_point(hit_event.point, offset_n)
+                    };
+
+                    let next_ray = Ray::new(next_origin, scattered_direction, ray.time);
+                    let scattering_pdf = material.scattering_pdf(&ray, &hit_event, &next_ray);
+                    
+                    throughput *= (scattering_pdf * scatter_event.attenuation) / pdf_value;
+                    ray = next_ray;
+                }
+            } else {
+                break;
+            }
+        } else {
+            if let Some(env) = &scene.environment {
+                color += throughput * env.value(0.0, 0.0, &ray.direction);
+            }
+            break;
+        }
+
+        if bounce > 3 {
+            let q = (1.0 - throughput.max_element()).max(0.05);
+            if rng.gen::<f32>() < q { break; }
+            throughput /= 1.0 - q;
+        }
+    }
+    color
+}

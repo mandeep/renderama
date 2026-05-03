@@ -6,11 +6,13 @@ use rand::Rng;
 
 use basis::OrthonormalBasis;
 use geometry::Geometry;
+use integrator::pick_sphere_point;
 use sampling::cosine_sample_hemisphere;
 
 pub enum MaterialPDF {
     Cosine { uvw: OrthonormalBasis },
     Importance { origin: Vec3, geometry: Geometry },
+    Uniform,
 }
 
 impl MaterialPDF {
@@ -23,6 +25,7 @@ impl MaterialPDF {
             MaterialPDF::Importance { origin, geometry } => {
                 geometry.pdf_value(*origin, direction)
             }
+            MaterialPDF::Uniform => 1.0 / (4.0 * PI)
         }
     }
 
@@ -33,7 +36,8 @@ impl MaterialPDF {
             }
             MaterialPDF::Importance { origin, geometry } => {
                 geometry.pdf_random(*origin, rng)
-            }
+            },
+            MaterialPDF::Uniform => pick_sphere_point(rng)
         }
     }
 }
