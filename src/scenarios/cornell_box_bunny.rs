@@ -5,10 +5,10 @@ use glam::Vec3;
 use bvh::BVH;
 use camera::Camera;
 use geometry::{Geometry};
-use materials::{Diffuse, Light, Refractive, Material};
+use materials::{Diffuse, Light, Plastic, Reflective, Refractive, Material};
 use plane::{Axis, Bounds2D, Plane};
 use scene::Scene;
-use texture::SolidColor;
+use texture::{ImageTexture, SolidColor};
 use transformations::TransformedMesh;
 use triangle::TriangleMesh;
 use world::World;
@@ -51,9 +51,9 @@ pub fn cornell_box_bunny_scene(width: usize, height: usize) -> Scene {
     let bunny_mesh = Geometry::TriangleMesh(Box::new(TriangleMesh::from("docs/models/bunny.obj", bunny_material)));
     world.add(Geometry::TransformedMesh(Box::new(TransformedMesh::new(Vec3::new(224.0, -66.0, 278.0), Vec3::new(0.0, 180.0, 0.0), 2000.0, bunny_mesh))));
 
-    let lucy_material = mat!(materials, Diffuse::new(SolidColor::new(0.45, 0.55, 0.70).into(), 0.05));
-    let lucy = TriangleMesh::from("docs/models/lucy.obj", lucy_material).into();
-    world.add(TransformedMesh::new(Vec3::new(-50.0, 180.0, 364.0), Vec3::new(0.0, 0.0, 0.0), 0.30, lucy).into());
+    let buddha_material = mat!(materials, Reflective::new(Vec3::new(0.95, 0.64, 0.54), 0.05));
+    let buddha = TriangleMesh::from("docs/models/happy_buddha.obj", buddha_material).into();
+    world.add(TransformedMesh::new(Vec3::new(150.0, -175.0, 450.0), Vec3::new(0.0, 180.0, 0.0), 2600.0, buddha).into());
 
     let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
 
