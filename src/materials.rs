@@ -472,6 +472,6 @@ impl Plastic {
 
     fn scattering_pdf(&self, _wo: &Ray, event: &HitEvent, wi: &Ray) -> f32 {
         let cosine = event.shading_normal.dot(wi.direction.normalize()).max(0.0);
-        cosine / std::f32::consts::PI
+        cosine / PI
     }
 }
