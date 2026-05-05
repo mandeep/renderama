@@ -410,8 +410,7 @@ impl Isotropic {
     }
 
     fn scatter(&self, ray: &Ray, event: &HitEvent, rng: &mut ThreadRng) -> Option<ScatterEvent> {
-        let scattered_direction = pick_sphere_point(rng);
-        let scattered = Ray::new(event.point, scattered_direction, ray.time);
+        let scattered = Ray::new(event.point, pick_sphere_point(rng), ray.time);
         let attenuation = self.albedo.value(event.u, event.v, &event.point);
         let pdf = MaterialPDF::Uniform;
         Some(ScatterEvent::new(scattered, attenuation, pdf, false))
