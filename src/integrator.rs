@@ -6,7 +6,7 @@ use rand::Rng;
 use rand_distr::StandardNormal;
 
 use geometry::Geometry;
-use pdf::{HybridPDF, MaterialPDF};
+use pdf::{HybridPDF, MaterialPDF, balance_heuristic};
 use ray::{find_offset_point, Ray};
 use scene::Scene;
 
@@ -130,7 +130,8 @@ pub fn render_nee_integrator(mut ray: Ray, scene: &Scene, bounces: u32, rng: &mu
                 } else {
                     last_specular = false;
 
-                    // send off some shadow rays for next even estimation
+                    let mut direct_light = Vec3::ZERO;
+
                     if let Some(light_source) = &scene.light_source {
                         // sample direction toward light using Geometry::pdf_random instead of using
                         // the material pdf for now so we don't have clone() the light source
@@ -140,42 +141,52 @@ pub fn render_nee_integrator(mut ray: Ray, scene: &Scene, bounces: u32, rng: &mu
 
                         // using a manual offset instead of the find_offset_point for now as it
                         // gives better results on shadow rays
-                        let shadow_origin = hit_event.point + hit_event.geometric_normal * 0.001;
+                        let shadow_origin = hit_event.point + hit_event.geometric_normal * 1e-3;
                         let shadow_ray = Ray::new(shadow_origin, light_direction, ray.time);
 
-                        if scene.accelerator.hit(&shadow_ray, 1e-4, light_distance - 0.01).is_none() {
-                            let pdf_value = light_source.pdf_value(hit_event.point, light_direction);
-
-                            if pdf_value > 1e-7 {
+                        if scene.accelerator.hit(&shadow_ray, 1e-3, light_distance - 1e-2).is_none() {
+                            let light_pdf = light_source.pdf_value(hit_event.point, light_direction);
+                            if light_pdf > 1e-7 {
                                 let scattering_pdf = material.scattering_pdf(&ray, &hit_event, &shadow_ray);
 
-                                // Get actual emission by hitting the light source
-                                if let Some(shadow_hit) = scene.accelerator.hit(&shadow_ray, 1e-4, light_distance + 0.01) {
+                                // calculate MIS weight for the light sample
+                                let material_pdf = scatter_event.pdf.value(light_direction);
+                                let weight = balance_heuristic(light_pdf, material_pdf);
+
+                                if let Some(shadow_hit) = scene.accelerator.hit(&shadow_ray, 1e-3, light_distance + 1e-2) {
                                     let shadow_material = &scene.materials[shadow_hit.material_id.index()];
                                     let emission = shadow_material.emitted(&shadow_ray, &shadow_hit);
-
-                                    color += (throughput * emission * scatter_event.attenuation * scattering_pdf) / pdf_value;
+                                    direct_light += (weight * throughput * emission * scatter_event.attenuation * scattering_pdf) / light_pdf;
                                 }
                             }
                         }
                     }
 
-                    // now handle indirect lighting as usual
+                    color += direct_light;
+
                     let scattered_direction = scatter_event.pdf.generate(rng);
-                    let pdf_value = scatter_event.pdf.value(scattered_direction);
-                    if pdf_value <= 0.0 { break; }
+                    let material_pdf = scatter_event.pdf.value(scattered_direction);
+                    if material_pdf <= 0.0 { break; }
 
-                    let offset_normal = if scattered_direction.dot(hit_event.geometric_normal) > 0.0 {
-                        hit_event.geometric_normal
-                    } else {
-                        -hit_event.geometric_normal
-                    };
+                    let offset_point = find_offset_point(hit_event.point, hit_event.geometric_normal);
+                    let scattered_ray = Ray::new(offset_point, scattered_direction, ray.time);
+                    let scattering_pdf = material.scattering_pdf(&ray, &hit_event, &scattered_ray);
 
-                    let offset_point = find_offset_point(hit_event.point, offset_normal);
-                    ray = Ray::new(offset_point, scattered_direction, ray.time);
-                    let scattering_pdf = material.scattering_pdf(&ray, &hit_event, &ray);
+                    // update throughput for the next bounce
+                    throughput *= (scattering_pdf * scatter_event.attenuation) / material_pdf;
 
-                    throughput *= (scattering_pdf * scatter_event.attenuation) / pdf_value;
+                    ray = scattered_ray;
+
+                    // we need to check the next hit to get the best estimate of
+                    // the contribution of the light source
+                    if let Some(next_hit) = scene.accelerator.hit(&ray, 1e-4, f32::MAX) {
+                        let next_material = &scene.materials[next_hit.material_id.index()];
+                        let light_pdf = scene.light_source.as_ref()
+                            .map_or(0.0, |l| l.pdf_value(hit_event.point, ray.direction));
+
+                        let weight = balance_heuristic(material_pdf, light_pdf);
+                        color += weight * throughput * next_material.emitted(&ray, &next_hit);
+                    }
                 }
             } else { break; }
         } else {
