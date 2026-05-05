@@ -2,7 +2,7 @@ use std::f32;
 
 use glam::Vec3;
 use rand::rngs::ThreadRng;
-use rand::Rng;
+use rand::RngExt;
 use rand_distr::StandardNormal;
 
 use geometry::Geometry;
@@ -89,7 +89,7 @@ pub fn render_path_integrator(mut ray: Ray, scene: &Scene, bounces: u32, rng: &m
         }
         if bounce > 3 {
             let roulette_factor = (1.0 - throughput.max_element()).max(0.05);
-            if rng.gen::<f32>() < roulette_factor {
+            if rng.random::<f32>() < roulette_factor {
                 break;
             }
             throughput /= 1.0 - roulette_factor;

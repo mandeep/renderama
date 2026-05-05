@@ -38,7 +38,7 @@ mod world;
 
 use std::env;
 use std::f32;
-use rand::Rng;
+use rand::RngExt;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use std::thread;
@@ -48,7 +48,7 @@ use chrono::{DateTime, Local};
 use glam::Vec3;
 use image::{ImageBuffer, Rgb};
 use pbr::ProgressBar;
-use rand::thread_rng;
+use rand::rng;
 use rayon::prelude::*;
 
 #[cfg(feature = "denoise")]
@@ -93,11 +93,11 @@ fn main() {
         let x = i % width;
         let y = height - (i / width) - 1;
 
-        let mut rng = thread_rng();
+        let mut rng = rng();
 
         (0..samples).for_each(|_| {
-            let u = (x as f32 + rng.gen::<f32>()) / width as f32;
-            let v = (y as f32 + rng.gen::<f32>()) / height as f32;
+            let u = (x as f32 + rng.random::<f32>()) / width as f32;
+            let v = (y as f32 + rng.random::<f32>()) / height as f32;
             let ray = scene.camera.get_ray(u, v, &mut rng);
 
             // render_normals is used for debugging
