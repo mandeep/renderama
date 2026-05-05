@@ -188,7 +188,8 @@ impl Plane {
     }
 
     pub fn pdf_value(&self, origin: Vec3, direction: Vec3) -> f32 {
-        if let Some(hit) = self.hit(&Ray::new(origin, direction, 0.0), 0.001, f32::MAX) {
+        // originally epsilon was 1e-2 but updated here to match value elsewhere
+        if let Some(hit) = self.hit(&Ray::new(origin, direction, 0.0), 1e-4, f32::MAX) {
             let area = (self.bounds.u_max - self.bounds.u_min) * (self.bounds.v_max - self.bounds.v_min);
             let distance_squared = hit.parameter * hit.parameter * direction.length_squared();
             let cosine = direction.dot(hit.shading_normal).abs() / direction.length();
@@ -199,9 +200,15 @@ impl Plane {
     }
 
     pub fn pdf_random(&self, origin: Vec3, rng: &mut ThreadRng) -> Vec3 {
-        let random_point = Vec3::new(self.bounds.u_min + rng.gen::<f32>() * (self.bounds.u_max - self.bounds.u_min),
-                                     self.offset,
-                                     self.bounds.v_min + rng.gen::<f32>() * (self.bounds.v_max - self.bounds.v_min));
+        let u = self.bounds.u_min + rng.gen::<f32>() * (self.bounds.u_max - self.bounds.u_min);
+        let v = self.bounds.v_min + rng.gen::<f32>() * (self.bounds.v_max - self.bounds.v_min);
+
+        let random_point = match self.axis {
+            Axis::XY => Vec3::new(u, v, self.offset),
+            Axis::YZ => Vec3::new(self.offset, u, v),
+            Axis::XZ => Vec3::new(u, self.offset, v),
+        };
+
         random_point - origin
     }
 }
