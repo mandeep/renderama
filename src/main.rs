@@ -62,7 +62,7 @@ fn main() {
     let bounces: u32 = 10;
     let (width, height): (usize, usize) = (2048, 2048);
 
-    let scene = scenarios::spheres_in_box_scene(width, height);
+    let scene = scenarios::cornell_box_object_scene(width, height);
 
     let render_start_time: DateTime<Local> = Local::now();
     println!("[{}] Rendering '{}' scene with {} samples at {} x {} dimensions...",
