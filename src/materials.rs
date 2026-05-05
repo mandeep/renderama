@@ -2,7 +2,7 @@ use std::f32::consts::PI;
 use std::sync::Arc;
 
 use glam::Vec3;
-use rand::Rng;
+use rand::RngExt;
 use rand::rngs::ThreadRng;
 
 use basis::OrthonormalBasis;
@@ -361,7 +361,7 @@ impl Refractive {
 
         let pdf = MaterialPDF::Cosine { uvw: OrthonormalBasis::new(&event.shading_normal) };
 
-        if rng.gen::<f32>() < reflect_probability {
+        if rng.random::<f32>() < reflect_probability {
             let reflected: Vec3 = reflect(ray.direction, shading_normal);
             let offset_point = find_offset_point(event.point, forward_geometric_normal);
             let specular_ray = Ray::new(offset_point, reflected, ray.time);
@@ -435,7 +435,7 @@ impl Plastic {
         let fresnel = fresnel_coefficient(cos_theta_i, 1.0, self.ior);
 
         // Probabilistically pick specular or diffuse based on Fresnel
-        if rng.gen::<f32>() < fresnel {
+        if rng.random::<f32>() < fresnel {
             // Specular path
             let reflected = reflect(ray.direction, event.shading_normal);
             let perturbed = reflected + self.roughness * pick_sphere_point(rng);

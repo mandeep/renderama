@@ -1,12 +1,12 @@
 use rand::rngs::ThreadRng;
-use rand::Rng;
+use rand::RngExt;
 use std::f32::consts::PI;
 
 use glam::Vec3;
 
 pub fn cosine_sample_hemisphere(rng: &mut ThreadRng) -> Vec3 {
-    let r1 = rng.gen::<f32>();
-    let r2 = rng.gen::<f32>();
+    let r1 = rng.random::<f32>();
+    let r2 = rng.random::<f32>();
 
     let phi = 2.0 * PI * r1;
 
@@ -24,8 +24,8 @@ pub fn cosine_sample_hemisphere(rng: &mut ThreadRng) -> Vec3 {
 }
 
 pub fn uniform_sample_hemisphere(rng: &mut ThreadRng) -> Vec3 {
-    let u = rng.gen::<f32>();
-    let v = rng.gen::<f32>();
+    let u = rng.random::<f32>();
+    let v = rng.random::<f32>();
 
     let z = u;
     let r = (1.0 - z * z).sqrt();
@@ -38,8 +38,8 @@ pub fn uniform_sample_hemisphere(rng: &mut ThreadRng) -> Vec3 {
 }
 
 pub fn uniform_sample_sphere(rng: &mut ThreadRng) -> Vec3 {
-    let u = rng.gen::<f32>();
-    let v = rng.gen::<f32>();
+    let u = rng.random::<f32>();
+    let v = rng.random::<f32>();
 
     let z = 1.0 - (2.0 * u);
     let r = (1.0 - z * z).sqrt();

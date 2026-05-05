@@ -2,7 +2,7 @@ use std::f32;
 
 use glam::Vec3;
 use rand::rngs::ThreadRng;
-use rand::Rng;
+use rand::RngExt;
 
 use aabb::AABB;
 use events::HitEvent;
@@ -200,8 +200,8 @@ impl Plane {
     }
 
     pub fn pdf_random(&self, origin: Vec3, rng: &mut ThreadRng) -> Vec3 {
-        let u = self.bounds.u_min + rng.gen::<f32>() * (self.bounds.u_max - self.bounds.u_min);
-        let v = self.bounds.v_min + rng.gen::<f32>() * (self.bounds.v_max - self.bounds.v_min);
+        let u = self.bounds.u_min + rng.random::<f32>() * (self.bounds.u_max - self.bounds.u_min);
+        let v = self.bounds.v_min + rng.random::<f32>() * (self.bounds.v_max - self.bounds.v_min);
 
         let random_point = match self.axis {
             Axis::XY => Vec3::new(u, v, self.offset),

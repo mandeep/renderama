@@ -2,7 +2,7 @@ use std::f32::consts::PI;
 
 use glam::Vec3;
 use rand::rngs::ThreadRng;
-use rand::Rng;
+use rand::RngExt;
 
 use integrator::pick_sphere_point;
 use ray::Ray;
@@ -74,7 +74,7 @@ impl Camera {
     pub fn get_ray(&self, s: f32, t: f32, rng: &mut ThreadRng) -> Ray {
         let radius: Vec3 = self.lens_radius * pick_sphere_point(rng);
         let offset: Vec3 = self.u * radius.x + self.v * radius.y;
-        let time = self.start_time + rng.gen::<f32>() * (self.end_time - self.start_time);
+        let time = self.start_time + rng.random::<f32>() * (self.end_time - self.start_time);
         Ray::new(self.origin + offset,
                  self.lower_left_corner + s * self.horizontal + t * self.vertical
                  - self.origin

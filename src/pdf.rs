@@ -2,7 +2,7 @@ use std::f32::consts::PI;
 
 use glam::Vec3;
 use rand::rngs::ThreadRng;
-use rand::Rng;
+use rand::RngExt;
 
 use basis::OrthonormalBasis;
 use geometry::Geometry;
@@ -76,7 +76,7 @@ impl<'a> HybridPDF<'a> {
     }
 
     pub fn generate(&self, rng: &mut ThreadRng) -> Vec3 {
-        if rng.gen::<f32>() < 0.5 {
+        if rng.random::<f32>() < 0.5 {
             self.material_pdf.generate(rng)
         } else {
             self.importance_pdf.generate(rng)
