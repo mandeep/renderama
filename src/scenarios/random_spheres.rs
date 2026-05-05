@@ -35,7 +35,7 @@ pub fn random_spheres_scene(width: usize, height: usize) -> Scene {
     let mut world = World::new();
     let mut materials: Vec<Material> = Vec::new();
 
-    let environment = EnvironmentMap::new("models/pure_sky_qwantani.exr").into();
+    let environment = EnvironmentMap::new("docs/textures/pure_sky_qwantani.exr").into();
 
     let floor_idx = mat!(materials, Diffuse::new(SolidColor::new(0.5, 0.5, 0.5).into(), 0.0));
 

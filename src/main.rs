@@ -103,7 +103,7 @@ fn main() {
             // render_normals is used for debugging
             // color += utils::de_nan(&integrator::render_normals(ray, &scene));
 
-            color += utils::de_nan(&integrator::render_path_integrator(ray, &scene, bounces, &mut rng));
+            color += utils::de_nan(&integrator::render_nee_integrator(ray, &scene, bounces, &mut rng));
         });
 
         color /= samples as f32;

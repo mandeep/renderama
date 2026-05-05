@@ -108,7 +108,7 @@ pub fn spheres_in_box_scene(width: usize, height: usize) -> Scene {
     // Image provided by NASA; details can be found here:
     // https://science.nasa.gov/earth/earth-observatory/blue-marble-next-generation/
     // The map used for this render is a Base Map with Topography and Bathymetry
-    let topo_idx = mat!(materials, Diffuse::new(ImageTexture::new("models/world_topo_nasa.jpg", 1.0).into(), 0.0));
+    let topo_idx = mat!(materials, Diffuse::new(ImageTexture::new("docs/textures/world_topo_nasa.jpg", 1.0).into(), 0.0));
     world.add(Sphere::new(Vec3::new(400.0, 200.0, 400.0),
                           Vec3::new(400.0, 200.0, 400.0),
                           100.0,
@@ -116,7 +116,7 @@ pub fn spheres_in_box_scene(width: usize, height: usize) -> Scene {
                           0.0,
                           1.0).into());
 
-    let marble = mat!(materials, Diffuse::new(ImageTexture::new("models/marble.jpg", 2.0).into(), 0.0));
+    let marble = mat!(materials, Diffuse::new(ImageTexture::new("docs/textures/marble.jpg", 2.0).into(), 0.0));
     world.add(Sphere::new(Vec3::new(220.0, 280.0, 300.0),
                           Vec3::new(220.0, 280.0, 300.0),
                           80.0,
@@ -137,7 +137,7 @@ pub fn spheres_in_box_scene(width: usize, height: usize) -> Scene {
 
     let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
     let light = mat!(materials, Light::new(SolidColor::new(0.0, 0.0, 0.0).into()));
-    let light_shape = Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 554.0, light);
+    let light_shape = Plane::new(Axis::XZ, Bounds2D::new(123.0..423.0, 147.0..412.0), 554.0, light);
 
     Scene::new(String::from("Spheres in Box"), bvh, materials, camera, Some(light_shape), None, false)
 }

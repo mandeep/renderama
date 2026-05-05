@@ -92,7 +92,7 @@ impl Material {
         match self {
             Material::Diffuse(m) => m.scattering_pdf(ray, hit, scattered),
             Material::Plastic(m) => m.scattering_pdf(ray, hit, scattered),
-            Material::Isotropic(_) => 1.0,
+            Material::Isotropic(_) => 1.0 / (4.0 * PI),
             Material::Reflective(_) => 0.0,
             Material::Refractive(_) => 0.0,
             Material::Light(_) => 0.0,
@@ -412,8 +412,8 @@ impl Isotropic {
     fn scatter(&self, ray: &Ray, event: &HitEvent, rng: &mut ThreadRng) -> Option<ScatterEvent> {
         let scattered = Ray::new(event.point, pick_sphere_point(rng), ray.time);
         let attenuation = self.albedo.value(event.u, event.v, &event.point);
-        let pdf = MaterialPDF::Cosine { uvw: OrthonormalBasis::new(&event.shading_normal) };
-        Some(ScatterEvent::new(scattered, attenuation, pdf, true))
+        let pdf = MaterialPDF::Uniform;
+        Some(ScatterEvent::new(scattered, attenuation, pdf, false))
     }
 }
 
@@ -453,6 +453,6 @@ impl Plastic {
 
     fn scattering_pdf(&self, _wo: &Ray, event: &HitEvent, wi: &Ray) -> f32 {
         let cosine = event.shading_normal.dot(wi.direction.normalize()).max(0.0);
-        cosine / std::f32::consts::PI
+        cosine / PI
     }
 }

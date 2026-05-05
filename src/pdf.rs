@@ -6,11 +6,32 @@ use rand::Rng;
 
 use basis::OrthonormalBasis;
 use geometry::Geometry;
+use integrator::pick_sphere_point;
 use sampling::cosine_sample_hemisphere;
+
+
+/// The balance heuristic weighs samples by their relative PDF contribution.
+///
+/// Reference: https://pbr-book.org/3ed-2018/Monte_Carlo_Integration/Importance_Sampling
+pub fn balance_heuristic(f_pdf: f32, g_pdf: f32) -> f32 {
+    let sum = f_pdf + g_pdf;
+    if sum > 0.0 { f_pdf / sum } else { 0.0 }
+}
+
+/// The power heuristic weighs samples to reduce variance
+///
+/// See https://pbr-book.org/3ed-2018/Monte_Carlo_Integration/Importance_Sampling
+/// for more information
+pub fn power_heuristic(f_pdf: f32, g_pdf: f32) -> f32 {
+    let f2 = f_pdf * f_pdf;
+    let g2 = g_pdf * g_pdf;
+    f2 / (f2 + g2)
+}
 
 pub enum MaterialPDF {
     Cosine { uvw: OrthonormalBasis },
     Importance { origin: Vec3, geometry: Geometry },
+    Uniform,
 }
 
 impl MaterialPDF {
@@ -23,6 +44,7 @@ impl MaterialPDF {
             MaterialPDF::Importance { origin, geometry } => {
                 geometry.pdf_value(*origin, direction)
             }
+            MaterialPDF::Uniform => 1.0 / (4.0 * PI)
         }
     }
 
@@ -33,7 +55,8 @@ impl MaterialPDF {
             }
             MaterialPDF::Importance { origin, geometry } => {
                 geometry.pdf_random(*origin, rng)
-            }
+            },
+            MaterialPDF::Uniform => pick_sphere_point(rng)
         }
     }
 }
