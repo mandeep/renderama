@@ -9,15 +9,15 @@ build = "build.rs"
 denoise = ["oidn"]
 
 [dependencies]
-chrono = "0.4.10"
+chrono = "0.4.44"
 glam = "0.32.1"
-image = { version = "0.25", features = ["exr"] }
-nalgebra = "0.19.0"
+image = { version = "0.25.10", features = ["exr"] }
+nalgebra = "0.34.2"
 oidn = { version = "2.3.3", optional = true }
 pbr = "1.0.2"
 rand = "0.7.2"
 rand_distr = "0.2.2"
-rayon = "1.2.1"
+rayon = "1.12.0"
 tobj = "4.0.3"
 
 [profile.dev]
