@@ -98,24 +98,6 @@ impl Material {
             Material::Light(_) => 0.0,
         }
     }
-
-    /// Returns the normal used for shadow ray offsetting.
-    /// Returns None for volumes/isotropic materials to signal no offset.
-    pub fn shadow_offset_normal(&self, hit_event: &HitEvent) -> Option<Vec3> {
-        match self {
-            Material::Isotropic(_) => None, // Volumes have no surface normal
-            _ => Some(hit_event.geometric_normal), // Standard surfaces use the normal
-        }
-    }
-
-    /// Returns true if the material is specular (Refractive/Mirror).
-    /// Used by the visibility loop to "pass through" glass.
-    pub fn is_specular(&self) -> bool {
-        match self {
-            Material::Refractive { .. } => true,
-            _ => false,
-        }
-    }
 }
 
 #[derive(Clone)]
