@@ -190,13 +190,21 @@ impl Plane {
     pub fn pdf_value(&self, origin: Vec3, direction: Vec3) -> f32 {
         // originally epsilon was 1e-2 but updated here to match value elsewhere
         if let Some(hit) = self.hit(&Ray::new(origin, direction, 0.0), 1e-4, f32::MAX) {
-            let area = (self.bounds.u_max - self.bounds.u_min) * (self.bounds.v_max - self.bounds.v_min);
             let distance_squared = hit.parameter * hit.parameter * direction.length_squared();
             let cosine = direction.dot(hit.shading_normal).abs() / direction.length();
-            distance_squared / (cosine * area)
+            distance_squared / (cosine * self.bounds.area())
         } else {
             0.0
         }
+    }
+
+    /// Compute light PDF given data already available from a shadow hit,
+    /// avoiding the redundant ray-plane intersection that `pdf_value` does internally.
+    /// `direction` must be normalized. `parameter` is `shadow_hit.parameter`.
+    pub fn pdf_from_hit(&self, parameter: f32, direction: Vec3, hit_normal: Vec3) -> f32 {
+        let cosine = direction.dot(hit_normal).abs();
+        if cosine < 1e-8 { return 0.0; }
+        (parameter * parameter) / (cosine * self.bounds.area())
     }
 
     pub fn pdf_random(&self, origin: Vec3, rng: &mut ThreadRng) -> Vec3 {
