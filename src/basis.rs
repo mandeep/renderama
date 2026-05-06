@@ -1,7 +1,7 @@
 use glam::Vec3;
 
 pub struct OrthonormalBasis {
-    axis: Vec<Vec3>,
+    axis: [Vec3; 3],
 }
 
 impl OrthonormalBasis {
@@ -22,7 +22,7 @@ impl OrthonormalBasis {
         let u = Vec3::new(1.0 + sign * w.x * w.x * a, sign * b, -sign * w.x);
         let v = Vec3::new(b, sign + w.y * w.y * a, -w.y);
 
-        OrthonormalBasis { axis: vec![u, v, w] }
+        OrthonormalBasis { axis: [u, v, w] }
     }
 
     pub fn u(&self) -> Vec3 {
