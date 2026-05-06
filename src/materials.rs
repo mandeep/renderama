@@ -206,8 +206,8 @@ fn refract(v: Vec3, n: Vec3, refractive_index: f32) -> Option<Vec3> {
 /// Techniques for Computer Graphics by Peter Comininos and
 /// https://en.wikipedia.org/wiki/Schlick's_approximation.
 fn schlick(cosine: f32, reference_index: f32) -> f32 {
-    let r0: f32 = ((1.0 - reference_index) / (1.0 + reference_index)).powf(2.0);
-    r0 + (1.0 - r0) * (1.0 - cosine).powf(5.0)
+    let r0: f32 = ((1.0 - reference_index) / (1.0 + reference_index)).powi(2);
+    r0 + (1.0 - r0) * (1.0 - cosine).powi(5)
 }
 
 /// Fresnel equations are used to compute physically accurate transmission
