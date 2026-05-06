@@ -16,8 +16,9 @@ pub fn cosine_sample_hemisphere(rng: &mut ThreadRng) -> Vec3 {
     // I'm not sure why this was the case since it's incorrect
     // but I do recall there was a reason for it. If I ever figure
     // it out again just know this is where it happened
-    let x = phi.cos() * r;
-    let y = phi.sin() * r;
+    let (sin_phi, cos_phi) = phi.sin_cos();
+    let x = cos_phi * r;
+    let y = sin_phi * r;
     let z = (1.0 - r2).sqrt();
 
     Vec3::new(x, y, z)
