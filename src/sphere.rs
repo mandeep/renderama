@@ -69,24 +69,22 @@ impl Sphere {
 
         // checking the discriminant is a fast way to determine if the root is real
         if discriminant > 0.0 {
-            let first_root: f32 = (-b - discriminant.sqrt()) / a;
-            let second_root: f32 = (-b + discriminant.sqrt()) / a;
-            let roots = vec![first_root, second_root];
+            let sqrt_d = discriminant.sqrt();
+            let first_root: f32 = (-b - sqrt_d) / a;
+            let second_root: f32 = (-b + sqrt_d) / a;
 
-            for root in roots {
-                if root > position_min && root < position_max {
-                    let point = ray.point_at_parameter(root);
-                    let normal = (point - self.center(ray.time)) / self.radius;
-                    let (u, v) = get_sphere_uv(&normal);
-                    return Some(HitEvent::new(root,
-                                               u,
-                                               v,
-                                               point,
-                                               normal,
-                                               normal,
-                                               self.material_id));
-                }
-            }
+            let root = if first_root > position_min && first_root < position_max {
+                first_root
+            } else if second_root > position_min && second_root < position_max {
+                second_root
+            } else {
+                return None;
+            };
+
+            let point = ray.point_at_parameter(root);
+            let normal = (point - self.center(ray.time)) / self.radius;
+            let (u, v) = get_sphere_uv(&normal);
+            return Some(HitEvent::new(root, u, v, point, normal, normal, self.material_id));
         }
         None
     }
