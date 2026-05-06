@@ -103,7 +103,7 @@ pub fn render_normals(ray: Ray, scene: &Scene) -> Vec3 {
         let normal = hit.shading_normal;
         0.5 * Vec3::new(normal.x + 1.0, normal.y + 1.0, normal.z + 1.0)
     } else {
-        let point = 0.5 * (ray.direction.normalize().y + 1.0);
+        let point = 0.5 * (ray.direction.y + 1.0);
         (1.0 - point) * Vec3::new(1.0, 1.0, 1.0) + point * Vec3::new(0.5, 0.7, 1.0)
     }
 }
@@ -158,12 +158,12 @@ pub fn render_nee_integrator(mut ray: Ray, scene: &Scene, bounces: u32, rng: &mu
 
                             // no need to send a second ray since we know there's a hit
                             if shadow_emission.length_squared() > 0.0 {
-                                let light_pdf = light_source.pdf_value(hit_event.point, light_direction);
+                                // pdf_from_hit avoids the redundant ray-plane intersection that pdf_value does internally
+                                let light_pdf = light_source.pdf_from_hit(shadow_hit.parameter, light_direction, shadow_hit.shading_normal);
                                 if light_pdf > 1e-7 {
                                     let scattering_pdf = material.scattering_pdf(&ray, &hit_event, &shadow_ray);
                                     let material_pdf = scatter_event.pdf.value(light_direction);
                                     let weight = balance_heuristic(light_pdf, material_pdf);
-
                                     direct_light += (weight * throughput * shadow_emission * scatter_event.attenuation * scattering_pdf) / light_pdf;
                                 }
                             }
