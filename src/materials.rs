@@ -186,13 +186,12 @@ fn reflect(incident: Vec3, normal: Vec3) -> Vec3 {
 /// For derivation see Section 10.4.3 in Mathematical and Computer Programming
 /// Techniques for Computer Graphics by Peter Comininos.
 fn refract(v: Vec3, n: Vec3, refractive_index: f32) -> Option<Vec3> {
-    let uv: Vec3 = v.normalize();
-    let direction: f32 = uv.dot(n);
+    let direction: f32 = v.dot(n);
     let discriminant: f32 =
         1.0 - refractive_index * refractive_index * (1.0 - direction * direction);
 
     if discriminant > 0.0 {
-        Some(refractive_index * (uv - n * direction) - n * discriminant.sqrt())
+        Some(refractive_index * (v - n * direction) - n * discriminant.sqrt())
     } else {
         None
     }
@@ -452,7 +451,7 @@ impl Plastic {
     }
 
     fn scattering_pdf(&self, _wo: &Ray, event: &HitEvent, wi: &Ray) -> f32 {
-        let cosine = event.shading_normal.dot(wi.direction.normalize()).max(0.0);
+        let cosine = event.shading_normal.dot(wi.direction).max(0.0);
         cosine / PI
     }
 }
