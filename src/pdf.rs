@@ -38,7 +38,7 @@ impl MaterialPDF {
     pub fn value(&self, direction: Vec3) -> f32 {
         match self {
             MaterialPDF::Cosine { uvw } => {
-                let cosine = direction.normalize().dot(uvw.w());
+                let cosine = direction.dot(uvw.w());
                 if cosine > 0.0 { cosine / PI } else { 0.0 }
             }
             MaterialPDF::Importance { origin, geometry } => {
