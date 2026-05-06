@@ -9,6 +9,7 @@ extern crate rand;
 extern crate rand_distr;
 extern crate rayon;
 extern crate tobj;
+extern crate wide;
 
 mod aabb;
 mod basis;
@@ -86,9 +87,13 @@ fn main() {
         }
     });
 
-    let mut pixels = vec![0.0f32; 3 * width * height];
-    pixels.par_chunks_mut(3).enumerate().for_each(|(i, pixel)| {
+    // compute a vec for albedo and normal buffers so that we can pass them to OIDN
+    // 9 floats per pixel: [color RGB | albedo RGB | normal RGB]
+    let mut combined = vec![0.0f32; 9 * width * height];
+    combined.par_chunks_mut(9).enumerate().for_each(|(i, chunk)| {
         let mut color = Vec3::ZERO;
+        let mut albedo = Vec3::ZERO;
+        let mut normal = Vec3::ZERO;
 
         let x = i % width;
         let y = height - (i / width) - 1;
@@ -103,17 +108,31 @@ fn main() {
             // render_normals is used for debugging
             // color += utils::de_nan(&integrator::render_normals(ray, &scene));
 
-            color += utils::de_nan(&integrator::render_nee_integrator(ray, &scene, bounces, &mut rng));
+            let (c, a, n) = integrator::render_nee_integrator(ray, &scene, bounces, &mut rng);
+            color += utils::de_nan(&c);
+            albedo += a;
+            normal += n;
         });
 
         color /= samples as f32;
+        albedo /= samples as f32;
+        normal /= samples as f32;
 
-        pixel[0] = color.x;
-        pixel[1] = color.y;
-        pixel[2] = color.z;
+        chunk[0] = color.x;  chunk[1] = color.y;  chunk[2] = color.z;
+        chunk[3] = albedo.x; chunk[4] = albedo.y; chunk[5] = albedo.z;
+        chunk[6] = normal.x; chunk[7] = normal.y; chunk[8] = normal.z;
 
         atomic_counter.fetch_add(1, Ordering::SeqCst);
     });
+
+    let mut pixels = vec![0.0f32; 3 * width * height];
+    let mut albedo_pixels = vec![0.0f32; 3 * width * height];
+    let mut normal_pixels = vec![0.0f32; 3 * width * height];
+    for (i, chunk) in combined.chunks(9).enumerate() {
+        pixels[3*i..3*i+3].copy_from_slice(&chunk[0..3]);
+        albedo_pixels[3*i..3*i+3].copy_from_slice(&chunk[3..6]);
+        normal_pixels[3*i..3*i+3].copy_from_slice(&chunk[6..9]);
+    }
 
     let render_end_time: DateTime<Local> = Local::now();
     println!("[{}] Finished rendering in {}. Render saved to render.exr.",
@@ -131,7 +150,7 @@ fn main() {
         println!("[{}] Denoising image...",
                  denoise_start_time.format("%H:%M:%S"));
 
-        let denoised_output = denoise(&pixels, width, height);
+        let denoised_output = denoise(&pixels, &albedo_pixels, &normal_pixels, width, height);
 
         let denoise_end_time: DateTime<Local> = Local::now();
         println!("[{}] Finished denoising in {}. Render saved to denoised_render.exr.",

@@ -108,11 +108,13 @@ pub fn render_normals(ray: Ray, scene: &Scene) -> Vec3 {
     }
 }
 
-pub fn render_nee_integrator(mut ray: Ray, scene: &Scene, bounces: u32, rng: &mut ThreadRng) -> Vec3 {
+pub fn render_nee_integrator(mut ray: Ray, scene: &Scene, bounces: u32, rng: &mut ThreadRng) -> (Vec3, Vec3, Vec3) {
     let mut color = Vec3::ZERO;
     let mut throughput = Vec3::ONE;
     let mut last_specular = true;
     let mut last_material_pdf = 0.0;
+    let mut first_albedo = Vec3::ZERO;
+    let mut first_normal = Vec3::ZERO;
 
     for bounce in 0..=bounces {
         if let Some(hit_event) = scene.accelerator.hit(&ray, 1e-4, f32::MAX) {
@@ -131,6 +133,10 @@ pub fn render_nee_integrator(mut ray: Ray, scene: &Scene, bounces: u32, rng: &mu
             }
 
             if let Some(scatter_event) = material.scatter(&ray, &hit_event, rng) {
+                if bounce == 0 {
+                    first_albedo = scatter_event.attenuation;
+                    first_normal = hit_event.shading_normal;
+                }
                 if scatter_event.specular {
                     throughput *= scatter_event.attenuation;
                     ray = scatter_event.specular_ray;
@@ -186,8 +192,22 @@ pub fn render_nee_integrator(mut ray: Ray, scene: &Scene, bounces: u32, rng: &mu
                      // hit which would cost another traversal
                     last_material_pdf = material_pdf;
                 }
-            } else { break; }
+            } else {
+                if bounce == 0 {
+                    first_albedo = emission;
+                    first_normal = hit_event.shading_normal;
+                }
+                break;
+            }
         } else {
+            if bounce == 0 {
+                if let Some(env) = &scene.environment {
+                    first_albedo = env.value(0.0, 0.0, &ray.direction).clamp(Vec3::ZERO, Vec3::ONE);
+                } else if scene.atmosphere {
+                    let point: f32 = 0.5 * (ray.direction.y + 1.0);
+                    first_albedo = (1.0 - point) * Vec3::splat(1.0) + point * Vec3::new(0.5, 0.7, 1.0);
+                }
+            }
             if let Some(env) = &scene.environment {
                 color += throughput * env.value(0.0, 0.0, &ray.direction);
             } else if scene.atmosphere {
@@ -207,5 +227,5 @@ pub fn render_nee_integrator(mut ray: Ray, scene: &Scene, bounces: u32, rng: &mu
         }
     }
 
-    color
+    (color, first_albedo, first_normal)
 }
