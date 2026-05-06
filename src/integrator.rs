@@ -176,6 +176,26 @@ pub fn render_nee_integrator(mut ray: Ray, scene: &Scene, bounces: u32, rng: &mu
                         }
                     }
 
+                    // environment map NEE samples toward bright regions via luminance CDF
+                    // this prevents the high number of fireflies we saw in high contrast
+                    // environment maps with luminance values as high as 100,000
+                    if let Some(env) = &scene.environment {
+                        if let Some(env_dir) = env.env_pdf_random(rng) {
+                            let env_pdf = env.env_pdf_value(&env_dir).unwrap_or(0.0);
+                            if env_pdf > 1e-7 {
+                                let shadow_origin = hit_event.point + hit_event.geometric_normal * 1e-3;
+                                let env_shadow_ray = Ray::new(shadow_origin, env_dir, ray.time);
+                                if scene.accelerator.hit(&env_shadow_ray, 1e-3, f32::MAX).is_none() {
+                                    let env_value = env.value(0.0, 0.0, &env_dir);
+                                    let material_pdf = scatter_event.pdf.value(env_dir);
+                                    let scattering_pdf = material.scattering_pdf(&ray, &hit_event, &env_shadow_ray);
+                                    let weight = balance_heuristic(env_pdf, material_pdf);
+                                    direct_light += (weight * throughput * env_value * scatter_event.attenuation * scattering_pdf) / env_pdf;
+                                }
+                            }
+                        }
+                    }
+
                     color += direct_light;
 
                     let scattered_direction = scatter_event.pdf.generate(rng);
@@ -209,7 +229,17 @@ pub fn render_nee_integrator(mut ray: Ray, scene: &Scene, bounces: u32, rng: &mu
                 }
             }
             if let Some(env) = &scene.environment {
-                color += throughput * env.value(0.0, 0.0, &ray.direction);
+                let env_value = env.value(0.0, 0.0, &ray.direction);
+                // apply MIS if this is an importance-sampled environment map and
+                // the ray arrived via a material-sampled direction (not specular).
+                let contribution = match env.env_pdf_value(&ray.direction) {
+                    Some(env_pdf) if !last_specular && env_pdf > 0.0 => {
+                        let weight = balance_heuristic(last_material_pdf, env_pdf);
+                        throughput * weight * env_value
+                    }
+                    _ => throughput * env_value,
+                };
+                color += contribution;
             } else if scene.atmosphere {
                 let point: f32 = 0.5 * (ray.direction.y + 1.0);
                 let lerp = (1.0 - point) * Vec3::splat(1.0) + point * Vec3::new(0.5, 0.7, 1.0);
