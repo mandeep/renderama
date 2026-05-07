@@ -5,7 +5,6 @@ use rand::rngs::ThreadRng;
 use rand::RngExt;
 use rand_distr::StandardNormal;
 
-use geometry::Geometry;
 use pdf::{HybridPDF, MaterialPDF, balance_heuristic};
 use ray::{find_offset_point, Ray};
 use scene::Scene;
@@ -52,7 +51,7 @@ pub fn render_path_integrator(mut ray: Ray, scene: &Scene, bounces: u32, rng: &m
                     ray = scatter_event.specular_ray;
                 } else {
                     let importance_pdf = scene.light_source.as_ref().map(|light| {
-                        MaterialPDF::Importance { origin: hit_event.point, geometry: Geometry::Plane(light.clone())}
+                        MaterialPDF::Importance { origin: hit_event.point, geometry: light.to_geometry() }
                     });
                     let importance_ref = importance_pdf.as_ref().unwrap_or(&scatter_event.pdf);
                     let hybrid_pdf = HybridPDF::new(&scatter_event.pdf, importance_ref);
