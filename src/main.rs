@@ -100,23 +100,27 @@ fn main() {
         let y = height - (i / width) - 1;
 
         let mut rng = rng();
+        let samples_sqrt = samples.isqrt();
+        let step = 1.0 / samples_sqrt as f32;
 
-        (0..samples).for_each(|_| {
-            let u = (x as f32 + rng.random::<f32>()) / width as f32;
-            let v = (y as f32 + rng.random::<f32>()) / height as f32;
-            let ray = scene.camera.get_ray(u, v, &mut rng);
+        (0..samples_sqrt).for_each(|i| {
+            (0..samples_sqrt).for_each(|j| {
+                let u = (x as f32 + (i as f32 + rng.random::<f32>()) * step) / width as f32;
+                let v = (y as f32 + (j as f32 + rng.random::<f32>()) * step) / height as f32;
 
-            // render_normals is used for debugging
-            // color += utils::de_nan(&integrator::render_normals(ray, &scene));
+                let ray = scene.camera.get_ray(u, v, &mut rng);
 
-            // old pure path tracer with hybrid pdf
-            // color += utils::de_nan(&integrator::render_path_integrator(ray, &scene, bounces, &mut rng));
+                // render_normals is used for debugging
+                // color += utils::de_nan(&integrator::render_normals(ray, &scene));
 
-            let (c, a, n) = integrator::render_nee_integrator(ray, &scene, bounces, &mut rng);
-            color += utils::de_nan(&c);
-            albedo += a;
-            normal += n;
-        });
+                // old pure path tracer with hybrid pdf
+                // color += utils::de_nan(&integrator::render_path_integrator(ray, &scene, bounces, &mut rng));
+
+                let (c, a, n) = integrator::render_nee_integrator(ray, &scene, bounces, &mut rng);
+                color += utils::de_nan(&c);
+                albedo += a;
+                normal += n;
+        })});
 
         color /= samples as f32;
         albedo /= samples as f32;
