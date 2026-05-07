@@ -5,7 +5,8 @@ use glam::Vec3;
 use bvh::BVH;
 use camera::Camera;
 use geometry::{Geometry};
-use materials::{Diffuse, Isotropic, Light, Reflective, Refractive, Material};
+use lights::Light;
+use materials::{Diffuse, Emissive, Isotropic, Reflective, Refractive, Material};
 use plane::{Axis, Bounds2D, Plane};
 use rectangle::Rectangle;
 use scene::Scene;
@@ -43,7 +44,7 @@ pub fn spheres_in_box_scene(width: usize, height: usize) -> Scene {
 
     let white = mat!(materials, Diffuse::new(SolidColor::new(0.73, 0.73, 0.73).into(), 0.0));
     let red = mat!(materials, Diffuse::new(SolidColor::new(1.0, 0.10, 0.20).into(), 0.0));
-    let big_light = mat!(materials, Light::new(SolidColor::new(7.0, 7.0, 7.0).into()));
+    let big_light = mat!(materials, Emissive::new(SolidColor::new(7.0, 7.0, 7.0).into()));
     let snow = mat!(materials, Diffuse::new(SolidColor::new(0.48, 0.83, 0.53).into(), 0.0));
 
     let number_of_boxes = 20;
@@ -136,8 +137,7 @@ pub fn spheres_in_box_scene(width: usize, height: usize) -> Scene {
     }
 
     let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
-    let light = mat!(materials, Light::new(SolidColor::new(0.0, 0.0, 0.0).into()));
-    let light_shape = Plane::new(Axis::XZ, Bounds2D::new(123.0..423.0, 147.0..412.0), 554.0, light);
+    let light_shape = Plane::new(Axis::XZ, Bounds2D::new(123.0..423.0, 147.0..412.0), 554.0, white);
 
-    Scene::new(String::from("Spheres in Box"), bvh, materials, camera, Some(light_shape), None, false)
+    Scene::new(String::from("Spheres in Box"), bvh, materials, camera, vec![Light::new(light_shape.into(), Vec3::splat(7.0))], None, false)
 }

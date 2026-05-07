@@ -1,11 +1,13 @@
 use std::f32::consts::PI;
 
 use glam::Vec3;
+use rand::rngs::ThreadRng;
 
 use aabb::AABB;
 use events::HitEvent;
 use materials::MaterialId;
 use ray::Ray;
+use sampling::{uniform_sample_cone, uniform_sample_sphere};
 
 
 fn get_sphere_uv(p: &Vec3) -> (f32, f32) {
@@ -100,5 +102,65 @@ impl Sphere {
         let big = AABB::from(min1, max1);
 
         Some(small.surrounding_box(&big))
+    }
+
+    pub fn pdf_value(&self, origin: Vec3, direction: Vec3) -> f32 {
+        let center = self.center(0.0);
+        let to_center = center - origin;
+        let distance_squared = to_center.length_squared();
+
+        // Origin inside the sphere — fall back to uniform sphere sampling
+        // (cone subtends the full 4π steradians).
+        if distance_squared <= self.radius * self.radius {
+            return 1.0 / (4.0 * PI);
+        }
+
+        // Half-angle of the cone subtending the sphere from `origin`.
+        //   sin²θ_max = r² / d²    →    cos θ_max = sqrt(1 - r²/d²)
+        let cos_theta_max = (1.0 - self.radius * self.radius / distance_squared).sqrt();
+
+        // Solid angle of the cone: Ω = 2π(1 − cos θ_max).
+        // Uniform sampling over the cone gives p(ω) = 1 / Ω.
+        let solid_angle = 2.0 * PI * (1.0 - cos_theta_max);
+
+        // Use the same discriminant test as sphere::hit so that pdf_value returns
+        // a positive PDF for exactly the same directions that hit() accepts.  The
+        // earlier dot-product cone check and hit()'s discriminant can disagree near
+        // the tangent due to floating-point rounding, which made power_heuristic
+        // assign weight=1 to near-tangent samples and created a bright ring artifact.
+        let oc = origin - center;
+        let a = direction.dot(direction);
+        let b = oc.dot(direction);
+        let c = oc.dot(oc) - self.radius * self.radius;
+        if b * b - a * c <= 0.0 {
+            return 0.0;
+        }
+
+        1.0 / solid_angle
+    }
+
+    pub fn pdf_random(&self, origin: Vec3, rng: &mut ThreadRng) -> Vec3 {
+        let center = self.center(0.0);
+        let to_center = center - origin;
+        let distance_squared = to_center.length_squared();
+
+        // Inside the sphere: just return a random direction on the unit sphere.
+        if distance_squared <= self.radius * self.radius {
+            return uniform_sample_sphere(rng);
+        }
+
+        let cos_theta_max = (1.0 - self.radius * self.radius / distance_squared).sqrt();
+
+        // Sample (cos θ, φ) uniformly in the cone.
+        let [cos_theta, sin_theta, phi] = uniform_sample_cone(cos_theta_max, rng).to_array();
+
+        // Local frame around the axis from origin → center.
+        let w = to_center.normalize();
+        let a = if w.x.abs() > 0.9 { Vec3::new(0.0, 1.0, 0.0) } else { Vec3::new(1.0, 0.0, 0.0) };
+        let v = w.cross(a).normalize();
+        let u = w.cross(v);
+
+        let dist = distance_squared.sqrt();
+        dist * (phi.cos() * sin_theta * u + phi.sin() * sin_theta * v + cos_theta * w)
     }
 }

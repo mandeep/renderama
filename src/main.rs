@@ -18,7 +18,9 @@ mod camera;
 mod denoise;
 mod events;
 mod geometry;
+mod ggx;
 mod integrator;
+mod lights;
 mod materials;
 mod pdf;
 mod plane;
@@ -61,9 +63,9 @@ fn main() {
     let args: Vec<String> = env::args().collect();
     let samples: u32 = args.get(1).and_then(|s| s.parse().ok()).unwrap_or(128);
     let bounces: u32 = 10;
-    let (width, height): (usize, usize) = (2048, 2048);
+    let (width, height): (usize, usize) = (1920, 1080);
 
-    let scene = scenarios::cornell_box_object_scene(width, height);
+    let scene = scenarios::veach_mis_scene(width, height);
 
     let render_start_time: DateTime<Local> = Local::now();
     println!("[{}] Rendering '{}' scene with {} samples at {} x {} dimensions...",
@@ -99,20 +101,27 @@ fn main() {
         let y = height - (i / width) - 1;
 
         let mut rng = rng();
+        let samples_sqrt = samples.isqrt();
+        let step = 1.0 / samples_sqrt as f32;
 
-        (0..samples).for_each(|_| {
-            let u = (x as f32 + rng.random::<f32>()) / width as f32;
-            let v = (y as f32 + rng.random::<f32>()) / height as f32;
-            let ray = scene.camera.get_ray(u, v, &mut rng);
+        (0..samples_sqrt).for_each(|i| {
+            (0..samples_sqrt).for_each(|j| {
+                let u = (x as f32 + (i as f32 + rng.random::<f32>()) * step) / width as f32;
+                let v = (y as f32 + (j as f32 + rng.random::<f32>()) * step) / height as f32;
 
-            // render_normals is used for debugging
-            // color += utils::de_nan(&integrator::render_normals(ray, &scene));
+                let ray = scene.camera.get_ray(u, v, &mut rng);
 
-            let (c, a, n) = integrator::render_nee_integrator(ray, &scene, bounces, &mut rng);
-            color += utils::de_nan(&c);
-            albedo += a;
-            normal += n;
-        });
+                // render_normals is used for debugging
+                // color += utils::de_nan(&integrator::render_normals(ray, &scene));
+
+                // old pure path tracer with hybrid pdf
+                // color += utils::de_nan(&integrator::render_path_integrator(ray, &scene, bounces, &mut rng));
+
+                let (c, a, n) = integrator::render_nee_integrator(ray, &scene, bounces, &mut rng);
+                color += utils::de_nan(&c);
+                albedo += a;
+                normal += n;
+        })});
 
         color /= samples as f32;
         albedo /= samples as f32;

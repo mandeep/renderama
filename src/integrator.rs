@@ -5,8 +5,7 @@ use rand::rngs::ThreadRng;
 use rand::RngExt;
 use rand_distr::StandardNormal;
 
-use geometry::Geometry;
-use pdf::{HybridPDF, MaterialPDF, balance_heuristic};
+use pdf::{HybridPDF, MaterialPDF, power_heuristic};
 use ray::{find_offset_point, Ray};
 use scene::Scene;
 
@@ -51,9 +50,14 @@ pub fn render_path_integrator(mut ray: Ray, scene: &Scene, bounces: u32, rng: &m
                     throughput *= scatter_event.attenuation;
                     ray = scatter_event.specular_ray;
                 } else {
-                    let importance_pdf = scene.light_source.as_ref().map(|light| {
-                        MaterialPDF::Importance { origin: hit_event.point, geometry: Geometry::Plane(light.clone())}
-                    });
+                    let number_of_lights = scene.lights.len();
+                    let importance_pdf = if number_of_lights > 0 {
+                        // sampling towards a random light source is good enough for this integrator
+                        let i = (rng.random::<f32>() * number_of_lights as f32) as usize % number_of_lights;
+                        Some(MaterialPDF::Importance { origin: hit_event.point, geometry: scene.lights[i].to_geometry() })
+                    } else {
+                        None
+                    };
                     let importance_ref = importance_pdf.as_ref().unwrap_or(&scatter_event.pdf);
                     let hybrid_pdf = HybridPDF::new(&scatter_event.pdf, importance_ref);
 
@@ -125,9 +129,10 @@ pub fn render_nee_integrator(mut ray: Ray, scene: &Scene, bounces: u32, rng: &mu
                 if last_specular {
                     color += throughput * emission;
                 } else {
-                    let light_pdf = scene.light_source.as_ref()
-                        .map_or(0.0, |l| l.pdf_value(ray.origin, ray.direction));
-                    let weight = balance_heuristic(last_material_pdf, light_pdf);
+                    let light_pdf: f32 = scene.lights.iter()
+                        .map(|light| light.pdf_value(ray.origin, ray.direction))
+                        .sum();
+                    let weight = power_heuristic(last_material_pdf, light_pdf);
                     color += throughput * weight * emission;
                 }
             }
@@ -146,32 +151,25 @@ pub fn render_nee_integrator(mut ray: Ray, scene: &Scene, bounces: u32, rng: &mu
 
                     let mut direct_light = Vec3::ZERO;
 
-                    if let Some(light_source) = &scene.light_source {
-                        // sample direction toward light using Geometry::pdf_random instead of using
-                        // the material pdf for now so we don't have clone() the light source
-                        let light_direction_vector = light_source.pdf_random(hit_event.point, rng);
+                    // using a manual offset instead of the find_offset_point for now as it
+                    // gives better results on shadow rays
+                    let shadow_origin = hit_event.point + hit_event.geometric_normal * 1e-3;
+
+                    for light_source in &scene.lights {
+                        let light_direction_vector = light_source.pdf_random(shadow_origin, rng);
                         let light_distance = light_direction_vector.length();
                         let light_direction = light_direction_vector.normalize();
 
-                        // using a manual offset instead of the find_offset_point for now as it
-                        // gives better results on shadow rays
-                        let shadow_origin = hit_event.point + hit_event.geometric_normal * 1e-3;
                         let shadow_ray = Ray::new(shadow_origin, light_direction, ray.time);
+                        let t_max = light_source.occlusion_t_max(light_distance);
 
-                        if let Some(shadow_hit) = scene.accelerator.hit(&shadow_ray, 1e-3, light_distance + 1e-2) {
-                            let shadow_material = &scene.materials[shadow_hit.material_id.index()];
-                            let shadow_emission = shadow_material.emitted(&shadow_ray, &shadow_hit);
-
-                            // no need to send a second ray since we know there's a hit
-                            if shadow_emission.length_squared() > 0.0 {
-                                // pdf_from_hit avoids the redundant ray-plane intersection that pdf_value does internally
-                                let light_pdf = light_source.pdf_from_hit(shadow_hit.parameter, light_direction, shadow_hit.shading_normal);
-                                if light_pdf > 1e-7 {
-                                    let scattering_pdf = material.scattering_pdf(&ray, &hit_event, &shadow_ray);
-                                    let material_pdf = scatter_event.pdf.value(light_direction);
-                                    let weight = balance_heuristic(light_pdf, material_pdf);
-                                    direct_light += (weight * throughput * shadow_emission * scatter_event.attenuation * scattering_pdf) / light_pdf;
-                                }
+                        if !scene.accelerator.any_hit(&shadow_ray, 1e-3, t_max) {
+                            let light_pdf = light_source.pdf_value(shadow_origin, light_direction);
+                            if light_pdf > 1e-7 {
+                                let scattering_pdf = material.scattering_pdf(&ray, &hit_event, &shadow_ray);
+                                let material_pdf = scatter_event.pdf.value(light_direction);
+                                let weight = power_heuristic(light_pdf, material_pdf);
+                                direct_light += (weight * throughput * light_source.emission * scatter_event.attenuation * scattering_pdf) / light_pdf;
                             }
                         }
                     }
@@ -189,7 +187,7 @@ pub fn render_nee_integrator(mut ray: Ray, scene: &Scene, bounces: u32, rng: &mu
                                     let env_value = env.value(0.0, 0.0, &env_dir);
                                     let material_pdf = scatter_event.pdf.value(env_dir);
                                     let scattering_pdf = material.scattering_pdf(&ray, &hit_event, &env_shadow_ray);
-                                    let weight = balance_heuristic(env_pdf, material_pdf);
+                                    let weight = power_heuristic(env_pdf, material_pdf);
                                     direct_light += (weight * throughput * env_value * scatter_event.attenuation * scattering_pdf) / env_pdf;
                                 }
                             }
@@ -234,7 +232,7 @@ pub fn render_nee_integrator(mut ray: Ray, scene: &Scene, bounces: u32, rng: &mu
                 // the ray arrived via a material-sampled direction (not specular).
                 let contribution = match env.env_pdf_value(&ray.direction) {
                     Some(env_pdf) if !last_specular && env_pdf > 0.0 => {
-                        let weight = balance_heuristic(last_material_pdf, env_pdf);
+                        let weight = power_heuristic(last_material_pdf, env_pdf);
                         throughput * weight * env_value
                     }
                     _ => throughput * env_value,

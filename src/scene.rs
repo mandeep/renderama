@@ -1,7 +1,7 @@
 use bvh::BVH;
 use camera::Camera;
+use lights::Light;
 use materials::Material;
-use plane::Plane;
 use texture::Texture;
 
 pub struct Scene {
@@ -9,7 +9,7 @@ pub struct Scene {
     pub accelerator: BVH,
     pub materials: Vec<Material>,
     pub camera: Camera,
-    pub light_source: Option<Plane>,
+    pub lights: Vec<Light>,
     pub environment: Option<Texture>,
     pub atmosphere: bool,
 }
@@ -19,9 +19,9 @@ impl Scene {
                accelerator: BVH,
                materials: Vec<Material>,
                camera: Camera,
-               light_source: Option<Plane>,
+               lights: Vec<Light>,
                environment: Option<Texture>,
                atmosphere: bool) -> Scene {
-        Scene { name, materials, accelerator, camera, light_source, environment, atmosphere }
+        Scene { name, materials, accelerator, camera, lights, environment, atmosphere }
     }
 }
