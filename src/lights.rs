@@ -34,6 +34,20 @@ impl_from_geometry!(
     Sphere => Sphere
 );
 
+impl From<Geometry> for LightGeometry {
+    fn from(geom: Geometry) -> Self {
+        match geom {
+            Geometry::Plane(p) => LightGeometry::Plane(p),
+            Geometry::Sphere(s) => LightGeometry::Sphere(s),
+            Geometry::ReverseOrientation(inner) => {
+                // convert a ReverseOrientation Geometry type back into a Plane
+                Self::from(*inner)
+            },
+            _ => panic!("This geometry type cannot be used as a light source!"),
+        }
+    }
+}
+
 impl Light {
     pub fn new(geometry: LightGeometry, emission: Vec3) -> Light {
         Light { geometry, emission }
