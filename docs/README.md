@@ -1,5 +1,6 @@
 [![Random Spheres on Ground](renders/random_spheres.png)](renders/random_spheres.png)
 [![Spheres in a Box with Fog](renders/spheres_in_box.png)](renders/spheres_in_box.png)
+[![Veach MIS Scene](renders/veach_mis.png)](renders/veach_mis.png)
 [![Cornell Box](renders/cornell_box_denoised.png)](renders/cornell_box_denoised.png)
 [![Cornell Box with Dragon model](renders/cornell_box_dragon.png)](renders/cornell_box_dragon.png)
 [![Cornell Box with Bunny model](renders/cornell_box_bunny.png)](renders/cornell_box_bunny.png)
