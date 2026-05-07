@@ -1,13 +1,13 @@
 use std::f32::consts::PI;
 
 use glam::Vec3;
-use rand::RngExt;
 use rand::rngs::ThreadRng;
 
 use aabb::AABB;
 use events::HitEvent;
 use materials::MaterialId;
 use ray::Ray;
+use sampling::{uniform_sample_cone, uniform_sample_sphere};
 
 
 fn get_sphere_uv(p: &Vec3) -> (f32, f32) {
@@ -104,28 +104,10 @@ impl Sphere {
         Some(small.surrounding_box(&big))
     }
 
-    fn random_unit_vector(rng: &mut ThreadRng) -> Vec3 {
-        loop {
-            let x = rng.random::<f32>() * 2.0 - 1.0;
-            let y = rng.random::<f32>() * 2.0 - 1.0;
-            let z = rng.random::<f32>() * 2.0 - 1.0;
-            let v = Vec3::new(x, y, z);
-            let len_sq = v.length_squared();
-            if len_sq > 1e-8 && len_sq <= 1.0 {
-                return v / len_sq.sqrt();
-            }
-        }
-    }
-
     pub fn pdf_value(&self, origin: Vec3, direction: Vec3) -> f32 {
-        // Only valid if the ray actually hits the sphere; otherwise the
-        // sampler could not have produced this direction.
-        if self.hit(&Ray::new(origin, direction, 0.0), 1e-4, f32::MAX).is_none() {
-            return 0.0;
-        }
-
         let center = self.center(0.0);
-        let distance_squared = (center - origin).length_squared();
+        let to_center = center - origin;
+        let distance_squared = to_center.length_squared();
 
         // Origin inside the sphere — fall back to uniform sphere sampling
         // (cone subtends the full 4π steradians).
@@ -140,14 +122,21 @@ impl Sphere {
         // Solid angle of the cone: Ω = 2π(1 − cos θ_max).
         // Uniform sampling over the cone gives p(ω) = 1 / Ω.
         let solid_angle = 2.0 * PI * (1.0 - cos_theta_max);
-        1.0 / solid_angle
-    }
 
-    pub fn pdf_from_hit(&self, parameter: f32, direction: Vec3, hit_normal: Vec3) -> f32 {
-        let cosine = direction.dot(hit_normal).abs();
-        if cosine < 1e-8 { return 0.0; }
-        let area = 4.0 * PI * self.radius * self.radius;
-        (parameter * parameter) / (cosine * area)
+        // Use the same discriminant test as sphere::hit so that pdf_value returns
+        // a positive PDF for exactly the same directions that hit() accepts.  The
+        // earlier dot-product cone check and hit()'s discriminant can disagree near
+        // the tangent due to floating-point rounding, which made power_heuristic
+        // assign weight=1 to near-tangent samples and created a bright ring artifact.
+        let oc = origin - center;
+        let a = direction.dot(direction);
+        let b = oc.dot(direction);
+        let c = oc.dot(oc) - self.radius * self.radius;
+        if b * b - a * c <= 0.0 {
+            return 0.0;
+        }
+
+        1.0 / solid_angle
     }
 
     pub fn pdf_random(&self, origin: Vec3, rng: &mut ThreadRng) -> Vec3 {
@@ -157,17 +146,13 @@ impl Sphere {
 
         // Inside the sphere: just return a random direction on the unit sphere.
         if distance_squared <= self.radius * self.radius {
-            return Self::random_unit_vector(rng);
+            return uniform_sample_sphere(rng);
         }
 
         let cos_theta_max = (1.0 - self.radius * self.radius / distance_squared).sqrt();
 
         // Sample (cos θ, φ) uniformly in the cone.
-        let r1: f32 = rng.random();
-        let r2: f32 = rng.random();
-        let cos_theta = 1.0 + r1 * (cos_theta_max - 1.0); // r1=0 → 1, r1=1 → cos_θ_max
-        let sin_theta = (1.0 - cos_theta * cos_theta).max(0.0).sqrt();
-        let phi = 2.0 * PI * r2;
+        let [cos_theta, sin_theta, phi] = uniform_sample_cone(cos_theta_max, rng).to_array();
 
         // Local frame around the axis from origin → center.
         let w = to_center.normalize();
