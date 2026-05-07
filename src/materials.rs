@@ -7,6 +7,7 @@ use rand::rngs::ThreadRng;
 
 use basis::OrthonormalBasis;
 use events::{HitEvent, ScatterEvent};
+use ggx::{ggx_distribution, ggx_geometry};
 use integrator::pick_sphere_point;
 use pdf::MaterialPDF;
 use ray::{find_offset_point, Ray};
@@ -28,8 +29,8 @@ impl MaterialId {
 #[derive(Clone)]
 pub enum Material {
     Diffuse(Diffuse),
+    Emissive(Emissive),
     Isotropic(Isotropic),
-    Light(Light),
     Plastic(Plastic),
     Reflective(Reflective),
     Refractive(Refractive),
@@ -49,8 +50,8 @@ macro_rules! impl_from_material {
 
 impl_from_material!(
     Diffuse => Diffuse,
+    Emissive => Emissive,
     Isotropic => Isotropic,
-    Light => Light,
     Plastic => Plastic,
     Reflective => Reflective,
     Refractive => Refractive
@@ -69,8 +70,8 @@ impl Material {
     pub fn scatter(&self, ray: &Ray, hit: &HitEvent, rng: &mut ThreadRng) -> Option<ScatterEvent> {
         match self {
             Material::Diffuse(m) => m.scatter(ray, hit, rng),
+            Material::Emissive(m) => m.scatter(ray, hit, rng),
             Material::Isotropic(m) => m.scatter(ray, hit, rng),
-            Material::Light(m) => m.scatter(ray, hit, rng),
             Material::Plastic(m) => m.scatter(ray, hit, rng),
             Material::Reflective(m) => m.scatter(ray, hit, rng),
             Material::Refractive(m) => m.scatter(ray, hit, rng),
@@ -79,7 +80,7 @@ impl Material {
 
     pub fn emitted(&self, ray: &Ray, hit: &HitEvent) -> Vec3 {
         match self {
-            Material::Light(m) => m.emitted(ray, hit),
+            Material::Emissive(m) => m.emitted(ray, hit),
             Material::Diffuse(_)
             | Material::Isotropic(_)
             | Material::Plastic(_)
@@ -91,11 +92,11 @@ impl Material {
     pub fn scattering_pdf(&self, ray: &Ray, hit: &HitEvent, scattered: &Ray) -> f32 {
         match self {
             Material::Diffuse(m) => m.scattering_pdf(ray, hit, scattered),
+            Material::Emissive(_) => 0.0,
             Material::Plastic(m) => m.scattering_pdf(ray, hit, scattered),
             Material::Isotropic(_) => 1.0 / (4.0 * PI),
-            Material::Reflective(_) => 0.0,
+            Material::Reflective(m) => m.scattering_pdf(ray, hit, scattered),
             Material::Refractive(_) => 0.0,
-            Material::Light(_) => 0.0,
         }
     }
 }
@@ -265,26 +266,44 @@ impl Reflective {
     /// factor is also added in to account for the reflection fuzz due to
     /// the size of the sphere. The target minus the event.point is used
     /// to determine the ray that is being reflected from the surface of the material.
-    fn scatter(&self, ray: &Ray, event: &HitEvent, rng: &mut ThreadRng) -> Option<ScatterEvent> {
+    fn scatter(&self, ray: &Ray, event: &HitEvent, _rng: &mut ThreadRng) -> Option<ScatterEvent> {
         let forward_geometric_normal = if ray.direction.dot(event.geometric_normal) < 0.0 {
             event.geometric_normal
         } else {
             -event.geometric_normal
         };
-
         let shading_normal = if event.shading_normal.dot(forward_geometric_normal) < 0.0 {
             -event.shading_normal
         } else {
             event.shading_normal
         };
-
-        let reflected: Vec3 = reflect(ray.direction, shading_normal);
-        let scattered = reflected + self.fuzz * pick_sphere_point(rng);
         let offset_point = find_offset_point(event.point, forward_geometric_normal);
-        let specular_ray = Ray::new(offset_point, scattered, ray.time);
+        if self.fuzz == 0.0 {
+            let reflected = reflect(ray.direction, shading_normal);
+            let specular_ray = Ray::new(offset_point, reflected, ray.time);
+            let pdf = MaterialPDF::Cosine { uvw: OrthonormalBasis::new(&shading_normal) };
+            Some(ScatterEvent::new(specular_ray, self.albedo, pdf, true))
+        } else {
+            let wi = -ray.direction;
+            let pdf = MaterialPDF::GGX { wi, normal: shading_normal, alpha: self.fuzz };
+            let dummy_ray = Ray::new(offset_point, ray.direction, ray.time);
+            Some(ScatterEvent::new(dummy_ray, self.albedo, pdf, false))
+        }
+    }
 
-        let pdf = MaterialPDF::Cosine { uvw: OrthonormalBasis::new(&event.shading_normal) };
-        Some(ScatterEvent::new(specular_ray, self.albedo, pdf, true))
+    fn scattering_pdf(&self, ray: &Ray, event: &HitEvent, scattered: &Ray) -> f32 {
+        if self.fuzz == 0.0 { return 0.0; }
+        let wi = -ray.direction;
+        let wo = scattered.direction;
+        let n = event.shading_normal;
+        let cos_i = n.dot(wi).max(0.0);
+        let cos_o = n.dot(wo).max(0.0);
+        if cos_i <= 0.0 || cos_o <= 0.0 { return 0.0; }
+        let h = (wi + wo).normalize();
+        let cos_h = n.dot(h).max(0.0);
+        // f·cos_o = D·G/(4·cos_i·cos_o)·cos_o = D·G/(4·cos_i)
+        // This makes the VNDF throughput weight G/G1(wi) = G1(wo) ≤ 1, preventing fireflies.
+        ggx_distribution(cos_h, self.fuzz) * ggx_geometry(cos_i, cos_o, self.fuzz) / (4.0 * cos_i)
     }
 }
 
@@ -374,14 +393,14 @@ impl Refractive {
 }
 
 #[derive(Clone)]
-pub struct Light {
+pub struct Emissive {
     pub emit: Arc<Texture>,
 }
 
-impl Light {
-    pub fn new(emit: Texture) -> Light {
+impl Emissive {
+    pub fn new(emit: Texture) -> Emissive {
         let emit = Arc::new(emit);
-        Light { emit }
+        Emissive { emit }
     }
 
     fn scatter(&self, _ray: &Ray, _event: &HitEvent, _rng: &mut ThreadRng) -> Option<ScatterEvent> {
