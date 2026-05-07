@@ -37,7 +37,7 @@ pub fn veach_mis_scene(width: usize, height: usize) -> Scene {
     let mut world = World::new();
     let mut materials: Vec<Material> = Vec::new();
 
-    let grey = mat!(materials, Diffuse::new(SolidColor::new(0.9, 0.9, 0.9).into(), 0.0));
+    let grey = mat!(materials, Diffuse::new(SolidColor::new(0.99, 0.99, 0.99).into(), 0.0));
 
     // floor
     world.add(Plane::new(Axis::XZ, Bounds2D::new(-20.0..20.0, -5.0..25.0), 0.0, grey).into_geometry());
@@ -57,9 +57,9 @@ pub fn veach_mis_scene(width: usize, height: usize) -> Scene {
 
     let plate_configs: [(f32, f32); 5] = [
         (-14.0, 0.16),
-        (-23.0, 0.08),
-        (-32.0, 0.04),
-        (-42.0, 0.02),
+        (-23.0, 0.12),
+        (-32.0, 0.08),
+        (-42.0, 0.04),
         (-52.0, 0.01),
     ];
 
@@ -108,14 +108,39 @@ pub fn veach_mis_scene(width: usize, height: usize) -> Scene {
         ).into());
     }
 
+    let fill_intensity = 0.005; 
+    let fill_mat = mat!(materials, Emissive::new(SolidColor::new(fill_intensity, fill_intensity, fill_intensity).into()));
+    let fill_color = Vec3::splat(fill_intensity);
+
+    // Left Fill Light (facing right toward the center)
+    let left_light_geometry = Plane::new(
+        Axis::YZ, 
+        Bounds2D::new(0.0..10.0, -5.0..20.0), 
+        -19.5, // Just inside the left wall
+        fill_mat
+    ).into_geometry();
+    world.add(left_light_geometry.clone());
+
+    // Right Fill Light (facing left toward the center)
+    let right_light_geometry = Plane::new(
+        Axis::YZ, 
+        Bounds2D::new(0.0..10.0, -5.0..20.0), 
+        19.5, // Just inside the right wall
+        fill_mat
+    ).into_reversed(); // Reverse normal to face inward
+    world.add(right_light_geometry.clone());
+
     let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
 
-    let light_sources: Vec<Light> = sphere_lights.iter().map(|&(x, r, intensity)| {
+    let mut light_sources: Vec<Light> = sphere_lights.iter().map(|&(x, r, intensity)| {
         Light::new(
             Sphere::new(Vec3::new(x, light_y, light_z), Vec3::new(x, light_y, light_z), r, grey, 0.0, 1.0).into(),
             Vec3::splat(intensity),
         )
     }).collect();
+
+    light_sources.push(Light::new(left_light_geometry.into(), fill_color));
+    light_sources.push(Light::new(right_light_geometry.into(), fill_color));
 
     Scene::new(
         String::from("Veach MIS"),
