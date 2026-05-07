@@ -50,11 +50,11 @@ pub fn render_path_integrator(mut ray: Ray, scene: &Scene, bounces: u32, rng: &m
                     throughput *= scatter_event.attenuation;
                     ray = scatter_event.specular_ray;
                 } else {
-                    let number_of_lights = scene.light_sources.len();
+                    let number_of_lights = scene.lights.len();
                     let importance_pdf = if number_of_lights > 0 {
                         // sampling towards a random light source is good enough for this integrator
                         let i = (rng.random::<f32>() * number_of_lights as f32) as usize % number_of_lights;
-                        Some(MaterialPDF::Importance { origin: hit_event.point, geometry: scene.light_sources[i].to_geometry() })
+                        Some(MaterialPDF::Importance { origin: hit_event.point, geometry: scene.lights[i].to_geometry() })
                     } else {
                         None
                     };
@@ -129,7 +129,7 @@ pub fn render_nee_integrator(mut ray: Ray, scene: &Scene, bounces: u32, rng: &mu
                 if last_specular {
                     color += throughput * emission;
                 } else {
-                    let light_pdf: f32 = scene.light_sources.iter()
+                    let light_pdf: f32 = scene.lights.iter()
                         .map(|light| light.pdf_value(ray.origin, ray.direction))
                         .sum();
                     let weight = power_heuristic(last_material_pdf, light_pdf);
@@ -155,7 +155,7 @@ pub fn render_nee_integrator(mut ray: Ray, scene: &Scene, bounces: u32, rng: &mu
                     // gives better results on shadow rays
                     let shadow_origin = hit_event.point + hit_event.geometric_normal * 1e-3;
 
-                    for light_source in &scene.light_sources {
+                    for light_source in &scene.lights {
                         let light_direction_vector = light_source.pdf_random(shadow_origin, rng);
                         let light_distance = light_direction_vector.length();
                         let light_direction = light_direction_vector.normalize();
