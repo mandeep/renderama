@@ -2,8 +2,8 @@ use glam::Vec3;
 
 use bvh::BVH;
 use camera::Camera;
-use light_source::LightSource;
-use materials::{Diffuse, Light, Material, Reflective};
+use lights::Light;
+use materials::{Diffuse, Emissive, Material, Reflective};
 use plane::{Axis, Bounds2D, Plane};
 use scene::Scene;
 use sphere::Sphere;
@@ -21,10 +21,10 @@ use mat;
 ///   - Smooth/shallow plates: BSDF sampling is best (narrow specular lobe)
 ///   - Rough/steep plates: NEE / light sampling is best (wide lobe)
 pub fn veach_mis_scene(width: usize, height: usize) -> Scene {
-    let origin = Vec3::new(0.0, 1.5, -2.5);
-    let lookat = Vec3::new(0.0, 0.8,  3.5);
+    let origin = Vec3::new(0.0, 1.2, -3.0);
+    let lookat = Vec3::new(0.0, 1.2,  5.0);
     let view = Vec3::new(0.0, 1.0,  0.0);
-    let fov = 45.0;
+    let fov = 35.0;
     let aspect_ratio = width as f32 / height as f32;
     let aperture = 0.0;
     let focus_distance = 10.0;
@@ -39,20 +39,37 @@ pub fn veach_mis_scene(width: usize, height: usize) -> Scene {
 
     // ── Room ────────────────────────────────────────────────────────────────
     let grey = mat!(materials, Diffuse::new(SolidColor::new(0.9, 0.9, 0.9).into(), 0.0));
-    world.add(Plane::new(Axis::XZ, Bounds2D::new(-4.0..4.0, -0.5..8.0), 0.0, grey).into_geometry());
-    world.add(Plane::new(Axis::XZ, Bounds2D::new(-4.0..4.0, -0.5..8.0), 4.0, grey).into_reversed());
-    world.add(Plane::new(Axis::XY, Bounds2D::new(-4.0..4.0,  0.0..4.0), 8.0, grey).into_reversed());
-    world.add(Plane::new(Axis::YZ, Bounds2D::new( 0.0..4.0, -0.5..8.0),-4.0, grey).into_geometry());
-    world.add(Plane::new(Axis::YZ, Bounds2D::new( 0.0..4.0, -0.5..8.0), 4.0, grey).into_reversed());
+    // ── Bright, Oversized Room ──────────────────────────────────────────────
+    // let grey = mat!(materials, Diffuse::new(SolidColor::new(0.8, 0.8, 0.8).into(), 0.0));
+
+    // Floor: Extend it wide to hide the side seams
+    world.add(Plane::new(Axis::XZ, Bounds2D::new(-20.0..20.0, -5.0..25.0), 0.0, grey).into_geometry());
+
+    // Back Wall: Close enough to be bright, but far enough to not feel like a closet
+    world.add(Plane::new(Axis::XY, Bounds2D::new(-20.0..20.0, 0.0..15.0), 12.0, grey).into_reversed());
+
+    // Side Walls: Pushed to X = +/- 20.0. They still bounce light/reflections but aren't visible.
+    world.add(Plane::new(Axis::YZ, Bounds2D::new( 0.0..15.0, -5.0..25.0),-20.0, grey).into_geometry());
+    world.add(Plane::new(Axis::YZ, Bounds2D::new( 0.0..15.0, -5.0..25.0), 20.0, grey).into_reversed());
+
+    // IMPORTANT: Do NOT add YZ planes (side walls) or the top XZ plane (ceiling).
+    // The "Reflection" you need comes from the massive floor and back wall.
+
+    // world.add(Plane::new(Axis::XZ, Bounds2D::new(-4.0..4.0, -0.5..8.0), 0.0, grey).into_geometry()); // floor
+    // world.add(Plane::new(Axis::XZ, Bounds2D::new(-4.0..4.0, -0.5..8.0), 4.0, grey).into_reversed()); // ceiling
+    // world.add(Plane::new(Axis::XY, Bounds2D::new(-4.0..4.0,  0.0..4.0), 8.0, grey).into_reversed()); // back wall
+    // world.add(Plane::new(Axis::YZ, Bounds2D::new( 0.0..4.0, -0.5..8.0),-4.0, grey).into_geometry()); // left wall
+    // world.add(Plane::new(Axis::YZ, Bounds2D::new( 0.0..4.0, -0.5..8.0), 4.0, grey).into_reversed()); // right wall
 
     // ── Reflective plates ───────────────────────────────────────────────────
     
-    let silver = Vec3::new(1.0, 0.85, 0.57);
+    let silver = Vec3::new(0.75, 0.75, 0.75);
     let plates = [
-        (2.0f32, 0.2f32, -10.0f32, 0.16f32),
-        (3.0f32, 0.6f32, -20.0f32, 0.08f32),
-        (4.0f32, 1.2f32, -30.0f32, 0.04f32),
-        (5.0f32, 2.0f32, -55.0f32, 0.00f32),
+        (2.0, 0.15, -14.0, 0.16),
+        (2.8, 0.4, -23.0, 0.08),
+        (3.6, 0.75, -32.0, 0.04),
+        (4.4, 1.2, -42.0, 0.02),
+        (5.2, 1.9, -52.0, 0.01),
     ];
     for (z, y, tilt, fuzz) in plates {
         let mat_id = mat!(materials, Reflective::new(silver, fuzz));
@@ -66,16 +83,16 @@ pub fn veach_mis_scene(width: usize, height: usize) -> Scene {
     // Tiny (x=3): highest radiance, smallest solid angle — BSDF sampling works poorly
     // Large (x=-3): lowest radiance, largest solid angle — NEE sampling works well
     let light_y = 3.0_f32;
-    let light_z = 5.0_f32;
+    let light_z = 4.75_f32;
 
-    let sphere_lights: [(f32, f32, f32); 4] = [
-        ( 2.0, 0.025, 100.0),
-        ( 0.75, 0.05,  25.0),
-        (-0.75, 0.20,   6.25),
+    let sphere_lights: [(f32, f32, f32); 3] = [
+        ( 2.0, 0.01, 100.0),
+        // ( 0.75, 0.05,  25.0),
+        (0.0, 0.20,   6.5),
         (-2.0, 0.50, 4.0)
     ];
     for (x, r, intensity) in sphere_lights {
-        let mat = mat!(materials, Light::new(SolidColor::new(intensity, intensity, intensity).into()));
+        let mat = mat!(materials, Emissive::new(SolidColor::new(intensity, intensity, intensity).into()));
         world.add(Sphere::new(
             Vec3::new(x, light_y, light_z),
             Vec3::new(x, light_y, light_z),
@@ -85,18 +102,19 @@ pub fn veach_mis_scene(width: usize, height: usize) -> Scene {
 
     let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
 
-    // The large sphere is the NEE target: clone it before moving into the world.
-    let light_mat = mat!(materials, Light::new(SolidColor::new(0.0, 0.0, 0.0).into()));
-    let light_shape = Sphere::new(Vec3::new(2.0, 3.0, 5.0), Vec3::new(2.0, 3.0, 5.0), 4.0, light_mat, 0.0, 1.0);
-
-
+    let light_sources: Vec<Light> = sphere_lights.iter().map(|&(x, r, intensity)| {
+        Light::new(
+            Sphere::new(Vec3::new(x, light_y, light_z), Vec3::new(x, light_y, light_z), r, grey, 0.0, 1.0).into(),
+            Vec3::splat(intensity),
+        )
+    }).collect();
 
     Scene::new(
         String::from("Veach MIS"),
         bvh,
         materials,
         camera,
-        Some(LightSource::Sphere(light_shape)),
+        light_sources,
         None,
         false,
     )
