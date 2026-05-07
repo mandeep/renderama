@@ -447,6 +447,61 @@ impl BVH {
         best_hit
     }
 
+    pub fn any_hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> bool {
+        let mut stack: [u32; 64] = [0; 64];
+        let mut stack_ptr: usize = 0;
+
+        stack[stack_ptr] = self.root;
+        stack_ptr += 1;
+
+        let ox = f32x4::splat(ray.origin.x);
+        let oy = f32x4::splat(ray.origin.y);
+        let oz = f32x4::splat(ray.origin.z);
+        let idx = f32x4::splat(ray.inverse_direction.x);
+        let idy = f32x4::splat(ray.inverse_direction.y);
+        let idz = f32x4::splat(ray.inverse_direction.z);
+        let tmin_floor = f32x4::splat(t_min);
+        let tmax_ceil  = f32x4::splat(t_max);
+
+        while stack_ptr > 0 {
+            stack_ptr -= 1;
+            let node_ref = stack[stack_ptr];
+
+            if is_leaf(node_ref) {
+                let leaf = &self.leaves[leaf_index(node_ref)];
+                if leaf.bbox.hit(ray, t_min, t_max) {
+                    if leaf.geometry.hit(ray, t_min, t_max).is_some() {
+                        return true;
+                    }
+                }
+            } else {
+                let node = &self.internals[node_ref as usize];
+
+                let t0x = (f32x4::from(node.min_x) - ox) * idx;
+                let t1x = (f32x4::from(node.max_x) - ox) * idx;
+                let t0y = (f32x4::from(node.min_y) - oy) * idy;
+                let t1y = (f32x4::from(node.max_y) - oy) * idy;
+                let t0z = (f32x4::from(node.min_z) - oz) * idz;
+                let t1z = (f32x4::from(node.max_z) - oz) * idz;
+
+                let tmin4 = t0x.min(t1x).max(t0y.min(t1y)).max(t0z.min(t1z)).max(tmin_floor);
+                let tmax4 = t0x.max(t1x).min(t0y.max(t1y)).min(t0z.max(t1z)).min(tmax_ceil);
+
+                let tmin_arr: [f32; 4] = tmin4.into();
+                let tmax_arr: [f32; 4] = tmax4.into();
+
+                for i in 0..node.count as usize {
+                    if tmin_arr[i] <= tmax_arr[i] {
+                        stack[stack_ptr] = node.children[i];
+                        stack_ptr += 1;
+                    }
+                }
+            }
+        }
+
+        false
+    }
+
     pub fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
         Some(self.bbox)
     }
