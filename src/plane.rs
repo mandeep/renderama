@@ -198,15 +198,6 @@ impl Plane {
         }
     }
 
-    /// Compute light PDF given data already available from a shadow hit,
-    /// avoiding the redundant ray-plane intersection that `pdf_value` does internally.
-    /// `direction` must be normalized. `parameter` is `shadow_hit.parameter`.
-    pub fn pdf_from_hit(&self, parameter: f32, direction: Vec3, hit_normal: Vec3) -> f32 {
-        let cosine = direction.dot(hit_normal).abs();
-        if cosine < 1e-8 { return 0.0; }
-        (parameter * parameter) / (cosine * self.bounds.area())
-    }
-
     pub fn pdf_random(&self, origin: Vec3, rng: &mut ThreadRng) -> Vec3 {
         let u = self.bounds.u_min + rng.random::<f32>() * (self.bounds.u_max - self.bounds.u_min);
         let v = self.bounds.v_min + rng.random::<f32>() * (self.bounds.v_max - self.bounds.v_min);
