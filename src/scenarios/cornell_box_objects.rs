@@ -4,6 +4,7 @@ use glam::Vec3;
 
 use bvh::BVH;
 use camera::Camera;
+use light_source::LightSource;
 use materials::{Diffuse, Light, Plastic, Refractive, Material};
 use plane::{Axis, Bounds2D, Plane};
 use scene::Scene;
@@ -62,5 +63,5 @@ pub fn cornell_box_object_scene(width: usize, height: usize) -> Scene {
     let light = mat!(materials, Light::new(SolidColor::new(0.0, 0.0, 0.0).into()));
     let light_shape = Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 554.0, light);
 
-    Scene::new(String::from("Cornell Box with Multiple Objects"), bvh, materials, camera, Some(light_shape), None, false)
+    Scene::new(String::from("Cornell Box with Multiple Objects"), bvh, materials, camera, Some(LightSource::Plane(light_shape)), None, false)
 }
