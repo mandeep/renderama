@@ -21,8 +21,8 @@ use mat;
 ///   - Smooth/shallow plates: BSDF sampling is best (narrow specular lobe)
 ///   - Rough/steep plates: NEE / light sampling is best (wide lobe)
 pub fn veach_mis_scene(width: usize, height: usize) -> Scene {
-    let origin = Vec3::new(0.0, 1.2, -3.0);
-    let lookat = Vec3::new(0.0, 1.2,  5.0);
+    let origin = Vec3::new(0.0, 1.2, -3.5);
+    let lookat = Vec3::new(0.0, 1.9, 7.0);
     let view = Vec3::new(0.0, 1.0,  0.0);
     let fov = 35.0;
     let aspect_ratio = width as f32 / height as f32;
@@ -37,56 +37,64 @@ pub fn veach_mis_scene(width: usize, height: usize) -> Scene {
     let mut world = World::new();
     let mut materials: Vec<Material> = Vec::new();
 
-    // ── Room ────────────────────────────────────────────────────────────────
     let grey = mat!(materials, Diffuse::new(SolidColor::new(0.9, 0.9, 0.9).into(), 0.0));
-    // ── Bright, Oversized Room ──────────────────────────────────────────────
-    // let grey = mat!(materials, Diffuse::new(SolidColor::new(0.8, 0.8, 0.8).into(), 0.0));
 
-    // Floor: Extend it wide to hide the side seams
+    // floor
     world.add(Plane::new(Axis::XZ, Bounds2D::new(-20.0..20.0, -5.0..25.0), 0.0, grey).into_geometry());
 
-    // Back Wall: Close enough to be bright, but far enough to not feel like a closet
+    // back wall
     world.add(Plane::new(Axis::XY, Bounds2D::new(-20.0..20.0, 0.0..15.0), 12.0, grey).into_reversed());
 
-    // Side Walls: Pushed to X = +/- 20.0. They still bounce light/reflections but aren't visible.
+    // side walls, not sure if they do anything in this scene
     world.add(Plane::new(Axis::YZ, Bounds2D::new( 0.0..15.0, -5.0..25.0),-20.0, grey).into_geometry());
     world.add(Plane::new(Axis::YZ, Bounds2D::new( 0.0..15.0, -5.0..25.0), 20.0, grey).into_reversed());
 
-    // IMPORTANT: Do NOT add YZ planes (side walls) or the top XZ plane (ceiling).
-    // The "Reflection" you need comes from the massive floor and back wall.
-
-    // world.add(Plane::new(Axis::XZ, Bounds2D::new(-4.0..4.0, -0.5..8.0), 0.0, grey).into_geometry()); // floor
-    // world.add(Plane::new(Axis::XZ, Bounds2D::new(-4.0..4.0, -0.5..8.0), 4.0, grey).into_reversed()); // ceiling
-    // world.add(Plane::new(Axis::XY, Bounds2D::new(-4.0..4.0,  0.0..4.0), 8.0, grey).into_reversed()); // back wall
-    // world.add(Plane::new(Axis::YZ, Bounds2D::new( 0.0..4.0, -0.5..8.0),-4.0, grey).into_geometry()); // left wall
-    // world.add(Plane::new(Axis::YZ, Bounds2D::new( 0.0..4.0, -0.5..8.0), 4.0, grey).into_reversed()); // right wall
-
-    // ── Reflective plates ───────────────────────────────────────────────────
-    
     let silver = Vec3::new(0.75, 0.75, 0.75);
-    let plates = [
-        (2.0, 0.15, -14.0, 0.16),
-        (2.8, 0.4, -23.0, 0.08),
-        (3.6, 0.75, -32.0, 0.04),
-        (4.4, 1.2, -42.0, 0.02),
-        (5.2, 1.9, -52.0, 0.01),
+
+    // use a cursor to place planes edge to edge
+    let mut cursor = Vec3::new(0.0, 0.15, 2.0);
+    let plate_length = 1.0;
+
+    let plate_configs: [(f32, f32); 5] = [
+        (-14.0, 0.16),
+        (-23.0, 0.08),
+        (-32.0, 0.04),
+        (-42.0, 0.02),
+        (-52.0, 0.01),
     ];
-    for (z, y, tilt, fuzz) in plates {
+
+    for (tilt_deg, fuzz) in plate_configs {
+        let tilt_rad = tilt_deg.to_radians();
+
+        // In Right-Handed, a negative X rotation tilts the Z-axis UP.
+        // Direction vector: (0, -sin(theta), cos(theta))
+        let direction = Vec3::new(0.0, -tilt_rad.sin(), tilt_rad.cos());
+
+        // Center is half-way along that direction from the current cursor
+        let center_pos = cursor + (direction * (plate_length * 0.5));
+
         let mat_id = mat!(materials, Reflective::new(silver, fuzz));
-        let rot = Vec3::new(tilt, 0.0, 0.0);
+        let rot = Vec3::new(tilt_deg, 0.0, 0.0);
         let base = Plane::new(Axis::XZ, Bounds2D::new(-2.5..2.5, -0.5..0.5), 0.0, mat_id)
             .into_geometry();
-        world.add(TransformedMesh::new(Vec3::new(0.0, y, z), rot, 1.0, base).into());
+
+        world.add(TransformedMesh::new(center_pos, rot, 1.0, base).into());
+
+        cursor += direction * plate_length;
     }
 
-    // ── Four sphere lights of equal total luminous flux ──────────────────────
-    // Tiny (x=3): highest radiance, smallest solid angle — BSDF sampling works poorly
-    // Large (x=-3): lowest radiance, largest solid angle — NEE sampling works well
-    let light_y = 3.0_f32;
-    let light_z = 4.75_f32;
+    // After the plate loop, use the 'cursor' to find the midpoint so that the sphere
+    // lights appear on all plates
+    let chain_end = cursor; // Where the last plate ended
+    let chain_start = Vec3::new(0.0, 0.15, 2.0);
+    let chain_midpoint = (chain_start + chain_end) * 0.5;
+
+    // Place lights relative to this midpoint
+    let light_y = chain_midpoint.y + 2.5;
+    let light_z = chain_midpoint.z + 1.5; // Offset slightly deeper for reflection math
 
     let sphere_lights: [(f32, f32, f32); 3] = [
-        ( 2.0, 0.01, 100.0),
+        ( 2.0, 0.025, 100.0),
         // ( 0.75, 0.05,  25.0),
         (0.0, 0.20,   6.5),
         (-2.0, 0.50, 4.0)
