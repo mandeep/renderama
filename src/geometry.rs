@@ -63,6 +63,7 @@ impl Geometry {
     pub fn pdf_value(&self, origin: Vec3, direction: Vec3) -> f32 {
         match self {
             Geometry::Plane(p) => p.pdf_value(origin, direction),
+            Geometry::Sphere(s) => s.pdf_value(origin, direction),
             _ => 0.0
         }
     }
@@ -70,6 +71,7 @@ impl Geometry {
     pub fn pdf_random(&self, origin: Vec3, rng: &mut ThreadRng) -> Vec3 {
         match self {
             Geometry::Plane(p) => p.pdf_random(origin, rng),
+            Geometry::Sphere(s) => s.pdf_random(origin, rng),
             _ => Vec3::new(1.0, 0.0, 0.0)
         }
     }

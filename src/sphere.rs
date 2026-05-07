@@ -1,6 +1,8 @@
 use std::f32::consts::PI;
 
 use glam::Vec3;
+use rand::RngExt;
+use rand::rngs::ThreadRng;
 
 use aabb::AABB;
 use events::HitEvent;
@@ -100,5 +102,80 @@ impl Sphere {
         let big = AABB::from(min1, max1);
 
         Some(small.surrounding_box(&big))
+    }
+
+    fn random_unit_vector(rng: &mut ThreadRng) -> Vec3 {
+        loop {
+            let x = rng.random::<f32>() * 2.0 - 1.0;
+            let y = rng.random::<f32>() * 2.0 - 1.0;
+            let z = rng.random::<f32>() * 2.0 - 1.0;
+            let v = Vec3::new(x, y, z);
+            let len_sq = v.length_squared();
+            if len_sq > 1e-8 && len_sq <= 1.0 {
+                return v / len_sq.sqrt();
+            }
+        }
+    }
+
+    pub fn pdf_value(&self, origin: Vec3, direction: Vec3) -> f32 {
+        // Only valid if the ray actually hits the sphere; otherwise the
+        // sampler could not have produced this direction.
+        if self.hit(&Ray::new(origin, direction, 0.0), 1e-4, f32::MAX).is_none() {
+            return 0.0;
+        }
+
+        let center = self.center(0.0);
+        let distance_squared = (center - origin).length_squared();
+
+        // Origin inside the sphere — fall back to uniform sphere sampling
+        // (cone subtends the full 4π steradians).
+        if distance_squared <= self.radius * self.radius {
+            return 1.0 / (4.0 * PI);
+        }
+
+        // Half-angle of the cone subtending the sphere from `origin`.
+        //   sin²θ_max = r² / d²    →    cos θ_max = sqrt(1 - r²/d²)
+        let cos_theta_max = (1.0 - self.radius * self.radius / distance_squared).sqrt();
+
+        // Solid angle of the cone: Ω = 2π(1 − cos θ_max).
+        // Uniform sampling over the cone gives p(ω) = 1 / Ω.
+        let solid_angle = 2.0 * PI * (1.0 - cos_theta_max);
+        1.0 / solid_angle
+    }
+
+    pub fn pdf_from_hit(&self, parameter: f32, direction: Vec3, hit_normal: Vec3) -> f32 {
+        let cosine = direction.dot(hit_normal).abs();
+        if cosine < 1e-8 { return 0.0; }
+        let area = 4.0 * PI * self.radius * self.radius;
+        (parameter * parameter) / (cosine * area)
+    }
+
+    pub fn pdf_random(&self, origin: Vec3, rng: &mut ThreadRng) -> Vec3 {
+        let center = self.center(0.0);
+        let to_center = center - origin;
+        let distance_squared = to_center.length_squared();
+
+        // Inside the sphere: just return a random direction on the unit sphere.
+        if distance_squared <= self.radius * self.radius {
+            return Self::random_unit_vector(rng);
+        }
+
+        let cos_theta_max = (1.0 - self.radius * self.radius / distance_squared).sqrt();
+
+        // Sample (cos θ, φ) uniformly in the cone.
+        let r1: f32 = rng.random();
+        let r2: f32 = rng.random();
+        let cos_theta = 1.0 + r1 * (cos_theta_max - 1.0); // r1=0 → 1, r1=1 → cos_θ_max
+        let sin_theta = (1.0 - cos_theta * cos_theta).max(0.0).sqrt();
+        let phi = 2.0 * PI * r2;
+
+        // Local frame around the axis from origin → center.
+        let w = to_center.normalize();
+        let a = if w.x.abs() > 0.9 { Vec3::new(0.0, 1.0, 0.0) } else { Vec3::new(1.0, 0.0, 0.0) };
+        let v = w.cross(a).normalize();
+        let u = w.cross(v);
+
+        let dist = distance_squared.sqrt();
+        dist * (phi.cos() * sin_theta * u + phi.sin() * sin_theta * v + cos_theta * w)
     }
 }
