@@ -21,7 +21,7 @@ use mat;
 ///   - Smooth/shallow plates: BSDF sampling is best (narrow specular lobe)
 ///   - Rough/steep plates: NEE / light sampling is best (wide lobe)
 pub fn veach_mis_scene(width: usize, height: usize) -> Scene {
-    let origin = Vec3::new(0.0, 1.5, -1.5);
+    let origin = Vec3::new(0.0, 1.5, -2.5);
     let lookat = Vec3::new(0.0, 0.8,  3.5);
     let view = Vec3::new(0.0, 1.0,  0.0);
     let fov = 45.0;
@@ -47,12 +47,12 @@ pub fn veach_mis_scene(width: usize, height: usize) -> Scene {
 
     // ── Reflective plates ───────────────────────────────────────────────────
     
-    let silver = Vec3::new(0.7, 0.7, 0.7);
+    let silver = Vec3::new(1.0, 0.85, 0.57);
     let plates = [
-        (2.0f32, 0.2f32, -10.0f32, 0.00f32),
-        (3.0f32, 0.6f32, -20.0f32, 0.04f32),
-        (4.0f32, 1.2f32, -30.0f32, 0.10f32),
-        (5.0f32, 2.0f32, -55.0f32, 0.25f32),
+        (2.0f32, 0.2f32, -10.0f32, 0.16f32),
+        (3.0f32, 0.6f32, -20.0f32, 0.08f32),
+        (4.0f32, 1.2f32, -30.0f32, 0.04f32),
+        (5.0f32, 2.0f32, -55.0f32, 0.00f32),
     ];
     for (z, y, tilt, fuzz) in plates {
         let mat_id = mat!(materials, Reflective::new(silver, fuzz));
@@ -69,10 +69,10 @@ pub fn veach_mis_scene(width: usize, height: usize) -> Scene {
     let light_z = 5.0_f32;
 
     let sphere_lights: [(f32, f32, f32); 4] = [
-        ( 2.0, 0.05, 100.0),
-        ( 0.75, 0.10,  25.0),
+        ( 2.0, 0.025, 100.0),
+        ( 0.75, 0.05,  25.0),
         (-0.75, 0.20,   6.25),
-        (-2.0, 0.25, 4.0)
+        (-2.0, 0.50, 4.0)
     ];
     for (x, r, intensity) in sphere_lights {
         let mat = mat!(materials, Light::new(SolidColor::new(intensity, intensity, intensity).into()));
