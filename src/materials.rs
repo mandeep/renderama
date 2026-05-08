@@ -7,11 +7,12 @@ use rand::rngs::ThreadRng;
 
 use basis::OrthonormalBasis;
 use events::{HitEvent, ScatterEvent};
-use ggx::{ggx_distribution, ggx_geometry};
+use ggx::{ggx_distribution, ggx_geometry, ggx_sample_vndf};
 use integrator::pick_sphere_point;
 use pdf::MaterialPDF;
 use ray::{find_offset_point, Ray};
 use texture::Texture;
+
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct MaterialId(pub u32);
@@ -450,20 +451,26 @@ impl Plastic {
 
     fn scatter(&self, ray: &Ray, event: &HitEvent, rng: &mut ThreadRng) -> Option<ScatterEvent> {
         let cos_theta_i = (-ray.direction).dot(event.shading_normal).max(0.0);
-        let fresnel = fresnel_coefficient(cos_theta_i, 1.0, self.ior);
+        let fresnel = schlick(cos_theta_i, self.ior);  // using schlick for ggx
 
         // Probabilistically pick specular or diffuse based on Fresnel
         if rng.random::<f32>() < fresnel {
             // Specular path
-            let reflected = reflect(ray.direction, event.shading_normal);
-            let perturbed = reflected + self.roughness * pick_sphere_point(rng);
-            let specular_ray = Ray::new(event.point, perturbed, ray.time);
-            let pdf = MaterialPDF::Cosine { uvw: OrthonormalBasis::new(&event.shading_normal) };
+            let alpha = self.roughness * self.roughness;
+            let microfacet_normal = ggx_sample_vndf(event.shading_normal, -ray.direction, alpha, rng);
+            let reflected = reflect(ray.direction, microfacet_normal);
+
+            if event.shading_normal.dot(reflected) <= 0.0 { return None; }
+
+            let specular_ray = Ray::new(event.point, reflected, ray.time);
+            let pdf = MaterialPDF::GGX { wi: -ray.direction, normal: event.shading_normal, alpha };
+
             Some(ScatterEvent::new(specular_ray, Vec3::ONE, pdf, true))
         } else {
             // Diffuse path
+            // even though ray.direction is given, a new ray with offset is generated in the integrator
             let scattered = Ray::new(event.point, ray.direction, ray.time);
-            let attenuation = self.albedo.value(event.u, event.v, &event.point);
+            let attenuation = self.albedo.value(event.u, event.v, &event.point) * (1.0 - fresnel);
             let pdf = MaterialPDF::Cosine { uvw: OrthonormalBasis::new(&event.shading_normal) };
             Some(ScatterEvent::new(scattered, attenuation, pdf, false))
         }
