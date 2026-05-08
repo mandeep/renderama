@@ -60,7 +60,7 @@ pub fn veach_mis_scene(width: usize, height: usize) -> Scene {
         (-23.0, 0.12),
         (-32.0, 0.08),
         (-42.0, 0.04),
-        (-52.0, 0.01),
+        (-52.0, 0.00),
     ];
 
     for (tilt_deg, fuzz) in plate_configs {
