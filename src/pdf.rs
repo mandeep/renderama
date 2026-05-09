@@ -31,6 +31,7 @@ pub fn power_heuristic(f_pdf: f32, g_pdf: f32) -> f32 {
 
 pub enum MaterialPDF {
     Cosine { uvw: OrthonormalBasis },
+    Delta { direction: Vec3 },
     GGX { wi: Vec3, normal: Vec3, alpha: f32 },
     Importance { origin: Vec3, geometry: Geometry },
     Uniform,
@@ -58,6 +59,7 @@ impl MaterialPDF {
                 ggx_distribution(cos_h, *alpha) * ggx_g1_masking(cos_i, *alpha) / (4.0 * cos_i)
             }
             MaterialPDF::Uniform => 1.0 / (4.0 * PI),
+            MaterialPDF::Delta { direction: _ }=> 0.0,
         }
     }
 
@@ -76,6 +78,7 @@ impl MaterialPDF {
                 2.0 * wi_dot_h * h - *wi
             }
             MaterialPDF::Uniform => pick_sphere_point(rng),
+            MaterialPDF::Delta { direction } => *direction,
         }
     }
 }
