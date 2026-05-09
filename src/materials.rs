@@ -273,12 +273,15 @@ impl Reflective {
         } else {
             -event.geometric_normal
         };
+
         let shading_normal = if event.shading_normal.dot(forward_geometric_normal) < 0.0 {
             -event.shading_normal
         } else {
             event.shading_normal
         };
+
         let offset_point = find_offset_point(event.point, forward_geometric_normal);
+
         if self.fuzz == 0.0 {
             let reflected = reflect(ray.direction, shading_normal);
             let specular_ray = Ray::new(offset_point, reflected, ray.time);
@@ -457,23 +460,39 @@ impl Plastic {
         let cos_theta_i = (-ray.direction).dot(event.shading_normal).max(0.0);
         let fresnel = schlick(cos_theta_i, self.ior);  // using schlick for ggx
 
+        let forward_geometric_normal = if ray.direction.dot(event.geometric_normal) < 0.0 {
+            event.geometric_normal
+        } else {
+            -event.geometric_normal
+        };
+
+        let shading_normal = if event.shading_normal.dot(forward_geometric_normal) < 0.0 {
+            -event.shading_normal
+        } else {
+            event.shading_normal
+        };
+
+        let offset_point = find_offset_point(event.point, forward_geometric_normal);
+
         // Probabilistically pick specular or diffuse based on Fresnel
         if rng.random::<f32>() < fresnel {
             // Specular path
-            let alpha = self.roughness * self.roughness;
-            let microfacet_normal = ggx_sample_vndf(event.shading_normal, -ray.direction, alpha, rng);
+            let alpha = self.roughness;
+            let microfacet_normal = ggx_sample_vndf(shading_normal, -ray.direction, alpha, rng);
             let reflected = reflect(ray.direction, microfacet_normal);
 
-            if event.shading_normal.dot(reflected) <= 0.0 { return None; }
+            if shading_normal.dot(reflected) <= 0.0 {
+                return None;
+            }
 
-            let specular_ray = Ray::new(event.point, reflected, ray.time);
-            let pdf = MaterialPDF::GGX { wi: -ray.direction, normal: event.shading_normal, alpha };
+            let specular_ray = Ray::new(offset_point, reflected, ray.time);
+            let pdf = MaterialPDF::GGX { wi: -ray.direction, normal: shading_normal, alpha };
 
             Some(ScatterEvent::new(specular_ray, Vec3::ONE, pdf, true))
         } else {
             // Diffuse path
             // even though ray.direction is given, a new ray with offset is generated in the integrator
-            let scattered = Ray::new(event.point, ray.direction, ray.time);
+            let scattered = Ray::new(offset_point, ray.direction, ray.time);
             let attenuation = self.albedo.value(event.u, event.v, &event.point) * (1.0 - fresnel);
             let pdf = MaterialPDF::Cosine { uvw: OrthonormalBasis::new(&event.shading_normal) };
             Some(ScatterEvent::new(scattered, attenuation, pdf, false))
