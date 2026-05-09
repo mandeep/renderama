@@ -5,6 +5,7 @@ use camera::Camera;
 use lights::Light;
 use materials::{Diffuse, Emissive, Material, Reflective};
 use plane::{Axis, Bounds2D, Plane};
+use rectangle::Rectangle;
 use scene::Scene;
 use sphere::Sphere;
 use texture::SolidColor;
@@ -54,6 +55,8 @@ pub fn veach_mis_scene(width: usize, height: usize) -> Scene {
     // use a cursor to place planes edge to edge
     let mut cursor = Vec3::new(0.0, 0.15, 2.0);
     let plate_length = 1.0;
+    let plate_gap = 0.10;
+    let visual_length = plate_length - plate_gap;
 
     let plate_configs: [(f32, f32); 5] = [
         (-14.0, 0.08),
@@ -75,8 +78,9 @@ pub fn veach_mis_scene(width: usize, height: usize) -> Scene {
 
         let mat_id = mat!(materials, Reflective::new(silver, fuzz));
         let rot = Vec3::new(tilt_deg, 0.0, 0.0);
-        let base = Plane::new(Axis::XZ, Bounds2D::new(-2.5..2.5, -0.5..0.5), 0.0, mat_id)
-            .into_geometry();
+        let base = Rectangle::new(Vec3::new(-2.0, 0.1, -visual_length / 2.0),
+            Vec3::new(2.0, 0.125, visual_length / 2.0), mat_id)
+            .into();
 
         world.add(TransformedMesh::new(center_pos, rot, 1.0, base).into());
 
@@ -108,7 +112,7 @@ pub fn veach_mis_scene(width: usize, height: usize) -> Scene {
         ).into());
     }
 
-    let fill_intensity = 0.005; 
+    let fill_intensity = 0.005;
     let fill_mat = mat!(materials, Emissive::new(SolidColor::new(fill_intensity, fill_intensity, fill_intensity).into()));
     let fill_color = Vec3::splat(fill_intensity);
 
