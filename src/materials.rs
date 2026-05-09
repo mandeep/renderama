@@ -212,6 +212,11 @@ fn schlick(cosine: f32, reference_index: f32) -> f32 {
     r0 + (1.0 - r0) * (1.0 - cosine).powi(5)
 }
 
+// Implementation of Schlick for vec3
+fn schlick_vector(cosine: f32, f0: Vec3) -> Vec3 {
+    f0 + (Vec3::ONE - f0) * (1.0 - cosine).powf(5.0)
+}
+
 /// Fresnel equations are used to compute physically accurate transmission
 /// For more information see the following resources:
 /// https://www.scratchapixel.com/lessons/3d-basic-rendering/introduction-to-shading/reflection-refraction-fresnel.html
@@ -284,9 +289,11 @@ impl Reflective {
 
         if self.fuzz == 0.0 {
             let reflected = reflect(ray.direction, shading_normal);
+            let pdf = MaterialPDF::Delta { direction: reflected };
+            let cos_theta = (-ray.direction).dot(shading_normal).max(0.0);
+            let fresnel_color = schlick_vector(cos_theta, self.albedo);
             let specular_ray = Ray::new(offset_point, reflected, ray.time);
-            let pdf = MaterialPDF::Cosine { uvw: OrthonormalBasis::new(&shading_normal) };
-            Some(ScatterEvent::new(specular_ray, self.albedo, pdf, true))
+            Some(ScatterEvent::new(specular_ray, fresnel_color, pdf, true))
         } else {
             let wi = -ray.direction;
             let pdf = MaterialPDF::GGX { wi, normal: shading_normal, alpha: self.fuzz };
@@ -305,7 +312,9 @@ impl Reflective {
         let cos_i = n.dot(wi).max(0.0);
         let cos_o = n.dot(wo).max(0.0);
 
-        if cos_i <= 0.0 || cos_o <= 0.0 { return 0.0; }
+        if cos_i <= 0.0 || cos_o <= 0.0 {
+            return 0.0;
+        }
 
         let h = (wi + wo).normalize();
         let cos_h = n.dot(h).max(0.0);
