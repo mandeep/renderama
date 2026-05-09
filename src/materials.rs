@@ -294,12 +294,16 @@ impl Reflective {
 
     fn scattering_pdf(&self, ray: &Ray, event: &HitEvent, scattered: &Ray) -> f32 {
         if self.fuzz == 0.0 { return 0.0; }
+
         let wi = -ray.direction;
         let wo = scattered.direction;
         let n = event.shading_normal;
+
         let cos_i = n.dot(wi).max(0.0);
         let cos_o = n.dot(wo).max(0.0);
+
         if cos_i <= 0.0 || cos_o <= 0.0 { return 0.0; }
+
         let h = (wi + wo).normalize();
         let cos_h = n.dot(h).max(0.0);
         // f·cos_o = D·G/(4·cos_i·cos_o)·cos_o = D·G/(4·cos_i)
@@ -476,8 +480,34 @@ impl Plastic {
         }
     }
 
-    fn scattering_pdf(&self, _wo: &Ray, event: &HitEvent, wi: &Ray) -> f32 {
-        let cosine = event.shading_normal.dot(wi.direction).max(0.0);
-        cosine / PI
+    fn scattering_pdf(&self, wo: &Ray, event: &HitEvent, wi: &Ray) -> f32 {
+        let n = event.shading_normal;
+
+        let cos_o = n.dot(wi.direction).max(0.0);
+        if cos_o <= 0.0 {
+            return 0.0;
+        }
+
+        let cos_theta_i = (-wo.direction).dot(n).max(0.0);
+        let fresnel = schlick(cos_theta_i, self.ior);
+
+        let diffuse_pdf = cos_o / PI;
+
+        let alpha = self.roughness * self.roughness;
+
+        let specular_pdf = {
+            let wi_local = -wo.direction;
+            let wo_local = wi.direction;
+
+            let h = (wi_local + wo_local).normalize();
+            let cos_h = n.dot(h).max(0.0);
+            let cos_i = n.dot(wi_local).max(0.0);
+            let cos_ol = n.dot(wo_local).max(0.0);
+
+            ggx_distribution(cos_h, alpha) * ggx_geometry(cos_i, cos_ol, alpha) / (4.0 * cos_ol)
+        };
+
+        // mixture pdf
+        fresnel * specular_pdf + (1.0 - fresnel) * diffuse_pdf
     }
 }
