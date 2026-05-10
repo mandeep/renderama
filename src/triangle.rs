@@ -112,7 +112,7 @@ impl Triangle {
     ///
     /// The bounding box is created using the minimum
     /// and maximum points of all of the vertices
-    pub fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
+    pub fn bounding_box(&self) -> Option<AABB> {
         Some(AABB::from(self.minimum(), self.maximum()))
     }
 }
@@ -208,7 +208,7 @@ impl TriangleMesh {
         self.accelerator.hit(ray, position_min, position_max)
     }
 
-    pub fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
+    pub fn bounding_box(&self) -> Option<AABB> {
         let mut minimum = Vec3::splat(f32::MAX);
         let mut maximum = Vec3::splat(f32::MIN);
 

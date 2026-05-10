@@ -41,7 +41,7 @@ impl Rectangle {
         .min_by(|a, b| a.parameter.partial_cmp(&b.parameter).unwrap())
     }
 
-    pub fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
+    pub fn bounding_box(&self) -> Option<AABB> {
         Some(AABB::from(self.p0, self.p1))
     }
 }

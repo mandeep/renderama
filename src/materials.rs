@@ -137,7 +137,7 @@ impl Diffuse {
     fn scatter(&self, ray: &Ray, event: &HitEvent, _rng: &mut ThreadRng) -> Option<ScatterEvent> {
         // ray.direction is passed here because the integrator generates
         // an offset point itself for diffuse materials
-        let scattered = Ray::new(event.point, ray.direction, ray.time);
+        let scattered = Ray::new(event.point, ray.direction);
         let attenuation = self.albedo.value(event.u, event.v, &event.point);
         let pdf = MaterialPDF::Cosine { uvw: OrthonormalBasis::new(&event.shading_normal) };
         Some(ScatterEvent::new(scattered, attenuation, pdf, false))
@@ -284,13 +284,13 @@ impl Reflective {
 
         if self.fuzz == 0.0 {
             let reflected = reflect(ray.direction, shading_normal);
-            let specular_ray = Ray::new(offset_point, reflected, ray.time);
+            let specular_ray = Ray::new(offset_point, reflected);
             let pdf = MaterialPDF::Cosine { uvw: OrthonormalBasis::new(&shading_normal) };
             Some(ScatterEvent::new(specular_ray, self.albedo, pdf, true))
         } else {
             let wi = -ray.direction;
             let pdf = MaterialPDF::GGX { wi, normal: shading_normal, alpha: self.fuzz };
-            let dummy_ray = Ray::new(offset_point, ray.direction, ray.time);
+            let dummy_ray = Ray::new(offset_point, ray.direction);
             Some(ScatterEvent::new(dummy_ray, self.albedo, pdf, false))
         }
     }
@@ -390,11 +390,11 @@ impl Refractive {
         if rng.random::<f32>() < reflect_probability {
             let reflected: Vec3 = reflect(ray.direction, shading_normal);
             let offset_point = find_offset_point(event.point, forward_geometric_normal);
-            let specular_ray = Ray::new(offset_point, reflected, ray.time);
+            let specular_ray = Ray::new(offset_point, reflected);
             Some(ScatterEvent::new(specular_ray, attenuation, pdf, true))
         } else {
             let offset_point = find_offset_point(event.point, -forward_geometric_normal);
-            let specular_ray = Ray::new(offset_point, refracted.unwrap(), ray.time);
+            let specular_ray = Ray::new(offset_point, refracted.unwrap());
             Some(ScatterEvent::new(specular_ray, attenuation, pdf, true))
         }
     }
@@ -435,8 +435,8 @@ impl Isotropic {
         Isotropic { albedo }
     }
 
-    fn scatter(&self, ray: &Ray, event: &HitEvent, rng: &mut ThreadRng) -> Option<ScatterEvent> {
-        let scattered = Ray::new(event.point, pick_sphere_point(rng), ray.time);
+    fn scatter(&self, _ray: &Ray, event: &HitEvent, rng: &mut ThreadRng) -> Option<ScatterEvent> {
+        let scattered = Ray::new(event.point, pick_sphere_point(rng));
         let attenuation = self.albedo.value(event.u, event.v, &event.point);
         let pdf = MaterialPDF::Uniform;
         Some(ScatterEvent::new(scattered, attenuation, pdf, false))
@@ -485,14 +485,14 @@ impl Plastic {
                 return None;
             }
 
-            let specular_ray = Ray::new(offset_point, reflected, ray.time);
+            let specular_ray = Ray::new(offset_point, reflected);
             let pdf = MaterialPDF::GGX { wi: -ray.direction, normal: shading_normal, alpha };
 
             Some(ScatterEvent::new(specular_ray, Vec3::ONE, pdf, true))
         } else {
             // Diffuse path
             // even though ray.direction is given, a new ray with offset is generated in the integrator
-            let scattered = Ray::new(offset_point, ray.direction, ray.time);
+            let scattered = Ray::new(offset_point, ray.direction);
             let attenuation = self.albedo.value(event.u, event.v, &event.point) * (1.0 - fresnel);
             let pdf = MaterialPDF::Cosine { uvw: OrthonormalBasis::new(&event.shading_normal) };
             Some(ScatterEvent::new(scattered, attenuation, pdf, false))

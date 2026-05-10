@@ -47,16 +47,16 @@ impl Geometry {
         }
     }
 
-    pub fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB> {
+    pub fn bounding_box(&self) -> Option<AABB> {
         match self {
-            Geometry::Plane(p) => p.bounding_box(t0, t1),
-            Geometry::Rectangle(p) => p.bounding_box(t0, t1),
-            Geometry::Sphere(s) => s.bounding_box(t0, t1),
-            Geometry::Triangle(t) => t.bounding_box(t0, t1),
-            Geometry::TriangleMesh(m) => m.bounding_box(t0, t1),
-            Geometry::ReverseOrientation(g) => g.bounding_box(t0, t1),
-            Geometry::TransformedMesh(g) => g.bounding_box(t0, t1),
-            Geometry::Volume(v) => v.bounding_box(t0, t1),
+            Geometry::Plane(p) => p.bounding_box(),
+            Geometry::Rectangle(p) => p.bounding_box(),
+            Geometry::Sphere(s) => s.bounding_box(),
+            Geometry::Triangle(t) => t.bounding_box(),
+            Geometry::TriangleMesh(m) => m.bounding_box(),
+            Geometry::ReverseOrientation(g) => g.bounding_box(),
+            Geometry::TransformedMesh(g) => g.bounding_box(),
+            Geometry::Volume(v) => v.bounding_box(),
         }
     }
 

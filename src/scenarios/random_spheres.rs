@@ -19,8 +19,6 @@ pub fn random_spheres_scene(width: usize, height: usize) -> Scene {
     let aspect_ratio = (width / height) as f32;
     let aperture = 0.1;
     let focus_distance = 10.0;
-    let time0 = 0.0;
-    let time1 = 1.0;
 
     let camera = Camera::new(origin,
                              lookat,
@@ -28,9 +26,7 @@ pub fn random_spheres_scene(width: usize, height: usize) -> Scene {
                              fov,
                              aspect_ratio,
                              aperture,
-                             focus_distance,
-                             time0,
-                             time1);
+                             focus_distance);
 
     let mut world = World::new();
     let mut materials: Vec<Material> = Vec::new();
@@ -40,11 +36,8 @@ pub fn random_spheres_scene(width: usize, height: usize) -> Scene {
     let floor_idx = mat!(materials, Diffuse::new(SolidColor::new(0.5, 0.5, 0.5).into(), 0.0));
 
     world.add(Sphere::new(Vec3::new(0.0, -1000.0, 0.0),
-                          Vec3::new(0.0, -1000.0, 0.0),
                           1000.0,
-                          floor_idx,
-                          0.0,
-                          1.0).into());
+                          floor_idx).into());
 
     let red_center = Vec3::new(-2.0, 1.0, 0.0);
     let glass_center = Vec3::new(0.0, 1.0, 0.0);
@@ -77,7 +70,7 @@ pub fn random_spheres_scene(width: usize, height: usize) -> Scene {
                     rand::random::<f32>() * rand::random::<f32>());
                     // let roughness = rand::distributions::Uniform::new(0.0, 1.0);
                     let random_idx = mat!(materials, Diffuse::new(material.into(), 0.0));
-                    world.add(Sphere::new(center, center, 0.2, random_idx, 0.0, 1.0).into());
+                    world.add(Sphere::new(center, 0.2, random_idx).into());
             } else if material < 0.95 {
                 let material = Reflective::new(Vec3::new(
                     0.5 * (1.0 * rand::random::<f32>()),
@@ -86,46 +79,34 @@ pub fn random_spheres_scene(width: usize, height: usize) -> Scene {
                     0.5 * rand::random::<f32>());
                     let random_idx = mat!(materials, material);
                     world.add(
-                        Sphere::new(center, center, 0.2, random_idx, 0.0, 1.0).into());
+                        Sphere::new(center, 0.2, random_idx).into());
             } else {
                     let refl_idx = mat!(materials, Refractive::new(1.5, Vec3::ONE));
-                    world.add(Sphere::new(center, center, 0.2, refl_idx, 0.0, 1.0).into());
+                    world.add(Sphere::new(center, 0.2, refl_idx).into());
                     let refr_idx = mat!(materials, Refractive::new(1.5, Vec3::ONE));
-                    world.add(Sphere::new(center, center, -0.19,refr_idx, 0.0, 1.0).into());
+                    world.add(Sphere::new(center, -0.19,refr_idx).into());
             }
         }
     }
 
     let red_idx = mat!(materials, Diffuse::new(SolidColor::new(0.75, 0.25, 0.25).into(), 0.0));
     world.add(Sphere::new(Vec3::new(-2.0, 1.0, 0.0),
-                          Vec3::new(-2.0, 1.0, 0.0),
                           1.0,
-                          red_idx,
-                          0.0,
-                          1.0).into());
+                          red_idx).into());
 
     let refr_idx1 = mat!(materials, Refractive::new(1.5, Vec3::ONE));
     world.add(Sphere::new(Vec3::new(0.0, 1.0, 0.0),
-                          Vec3::new(0.0, 1.0, 0.0),
                           1.0,
-                          refr_idx1,
-                          0.0,
-                          1.0).into());
+                          refr_idx1).into());
 
     world.add(Sphere::new(Vec3::new(0.0, 1.0, 0.0),
-                          Vec3::new(0.0, 1.0, 0.0),
                           -0.99,
-                          refr_idx1,
-                          0.0,
-                          1.0).into());
+                          refr_idx1).into());
 
     let refl_idx = mat!(materials, Reflective::new(Vec3::new(0.5, 0.5, 0.5), 0.05));
     world.add(Sphere::new(Vec3::new(2.0, 1.0, 0.0),
-                          Vec3::new(2.0, 1.0, 0.0),
                           1.0,
-                          refl_idx,
-                          0.0,
-                          1.0).into());
+                          refl_idx).into());
 
     let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
 

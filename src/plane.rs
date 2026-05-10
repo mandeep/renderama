@@ -167,7 +167,7 @@ impl Plane {
         }
     }
 
-    pub fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
+    pub fn bounding_box(&self) -> Option<AABB> {
         match self.axis {
             Axis::XY => {
                 let minimum = Vec3::new(self.bounds.u_min, self.bounds.v_min, self.offset - 0.0001);
@@ -189,7 +189,7 @@ impl Plane {
 
     pub fn pdf_value(&self, origin: Vec3, direction: Vec3) -> f32 {
         // originally epsilon was 1e-2 but updated here to match value elsewhere
-        if let Some(hit) = self.hit(&Ray::new(origin, direction, 0.0), 1e-4, f32::MAX) {
+        if let Some(hit) = self.hit(&Ray::new(origin, direction), 1e-4, f32::MAX) {
             let distance_squared = hit.parameter * hit.parameter * direction.length_squared();
             let cosine = direction.dot(hit.shading_normal).abs() / direction.length();
             distance_squared / (cosine * self.bounds.area())
