@@ -1,6 +1,6 @@
 use std::f32;
 
-use glam::Vec3;
+use glam::Vec3A;
 
 use bvh::BVH;
 use camera::Camera;
@@ -17,9 +17,9 @@ use mat;
 
 pub fn cornell_box_bunny_scene(width: usize, height: usize) -> Scene {
     // Same camera as the classic Cornell box so the framing looks identical.
-    let origin = Vec3::new(278.0, 278.0, -800.0);
-    let lookat = Vec3::new(278.0, 278.0, 0.0);
-    let view = Vec3::new(0.0, 1.0, 0.0);
+    let origin = Vec3A::new(278.0, 278.0, -800.0);
+    let lookat = Vec3A::new(278.0, 278.0, 0.0);
+    let view = Vec3A::new(0.0, 1.0, 0.0);
     let fov = 40.0;
     let aspect_ratio = (width / height) as f32;
     let aperture = 0.0;
@@ -45,17 +45,17 @@ pub fn cornell_box_bunny_scene(width: usize, height: usize) -> Scene {
     world.add(Plane::new(Axis::XZ, Bounds2D::new(0.0..555.0, 0.0..555.0), 0.0, white_id).into_geometry());
     world.add(Plane::new(Axis::XY, Bounds2D::new(0.0..555.0, 0.0..555.0), 555.0, white_id).into_reversed());
 
-    let bunny_material = mat!(materials, Refractive::new(1.5, Vec3::ONE));
+    let bunny_material = mat!(materials, Refractive::new(1.5, Vec3A::ONE));
     let bunny_mesh = Geometry::TriangleMesh(Box::new(TriangleMesh::from("docs/models/bunny.obj", bunny_material)));
-    world.add(Geometry::TransformedMesh(Box::new(TransformedMesh::new(Vec3::new(224.0, -66.0, 278.0), Vec3::new(0.0, 180.0, 0.0), 2000.0, bunny_mesh))));
+    world.add(Geometry::TransformedMesh(Box::new(TransformedMesh::new(Vec3A::new(224.0, -66.0, 278.0), Vec3A::new(0.0, 180.0, 0.0), 2000.0, bunny_mesh))));
 
-    let buddha_material = mat!(materials, Reflective::new(Vec3::new(0.95, 0.64, 0.54), 0.05));
+    let buddha_material = mat!(materials, Reflective::new(Vec3A::new(0.95, 0.64, 0.54), 0.05));
     let buddha = TriangleMesh::from("docs/models/happy_buddha.obj", buddha_material).into();
-    world.add(TransformedMesh::new(Vec3::new(150.0, -175.0, 450.0), Vec3::new(0.0, 180.0, 0.0), 2600.0, buddha).into());
+    world.add(TransformedMesh::new(Vec3A::new(150.0, -175.0, 450.0), Vec3A::new(0.0, 180.0, 0.0), 2600.0, buddha).into());
 
     let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
 
     let light_shape = Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 554.0, white_id);
 
-    Scene::new(String::from("Cornell Box with Stanford Bunny"), bvh, materials, camera, vec![Light::new(light_shape.into(), Vec3::new(25.0, 18.0, 10.0))], None, false)
+    Scene::new(String::from("Cornell Box with Stanford Bunny"), bvh, materials, camera, vec![Light::new(light_shape.into(), Vec3A::new(25.0, 18.0, 10.0))], None, false)
 }

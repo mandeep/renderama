@@ -1,6 +1,6 @@
 use std::f32;
 
-use glam::Vec3;
+use glam::Vec3A;
 
 use bvh::BVH;
 use camera::Camera;
@@ -19,9 +19,9 @@ use mat;
 
 
 pub fn spheres_in_box_scene(width: usize, height: usize) -> Scene {
-    let origin = Vec3::new(478.0, 278.0, -600.0);
-    let lookat = Vec3::new(278.0, 278.0, 0.0);
-    let view = Vec3::new(0.0, 1.0, 0.0);
+    let origin = Vec3A::new(478.0, 278.0, -600.0);
+    let lookat = Vec3A::new(278.0, 278.0, 0.0);
+    let view = Vec3A::new(0.0, 1.0, 0.0);
     let fov = 40.0;
     let aspect_ratio = (width / height) as f32;
     let aperture = 0.0;
@@ -48,29 +48,29 @@ pub fn spheres_in_box_scene(width: usize, height: usize) -> Scene {
     for i in 0..number_of_boxes {
         for j in 0..number_of_boxes {
             let w = 100.0;
-            let p0 = Vec3::new(-1000.0 + i as f32 * w, 0.0, -1000.0 + j as f32 * w);
-            let p1 = p0 + Vec3::new(w, 100.0 * (rand::random::<f32>() + 0.01), w);
+            let p0 = Vec3A::new(-1000.0 + i as f32 * w, 0.0, -1000.0 + j as f32 * w);
+            let p1 = p0 + Vec3A::new(w, 100.0 * (rand::random::<f32>() + 0.01), w);
             world.add(Rectangle::new(p0, p1, snow).into());
         }
     }
 
     world.add(Geometry::ReverseOrientation(Box::new(Plane::new(Axis::XZ, Bounds2D::new(123.0..423.0, 147.0..412.0), 554.0, big_light).into())));
 
-    world.add(Sphere::new(Vec3::new(400.0, 400.0, 200.0),
+    world.add(Sphere::new(Vec3A::new(400.0, 400.0, 200.0),
                           50.0,
                           red).into());
 
-    let refr_idx = mat!(materials, Refractive::new(1.5, Vec3::ONE));
-    world.add(Sphere::new(Vec3::new(260.0, 150.0, 45.0),
+    let refr_idx = mat!(materials, Refractive::new(1.5, Vec3A::ONE));
+    world.add(Sphere::new(Vec3A::new(260.0, 150.0, 45.0),
                           50.0,
                           refr_idx).into());
 
-    let refl_idx = mat!(materials, Reflective::new(Vec3::new(0.8, 0.8, 0.9), 0.0));
-    world.add(Sphere::new(Vec3::new(0.0, 150.0, 145.0),
+    let refl_idx = mat!(materials, Reflective::new(Vec3A::new(0.8, 0.8, 0.9), 0.0));
+    world.add(Sphere::new(Vec3A::new(0.0, 150.0, 145.0),
                           50.0,
                           refl_idx).into());
 
-    let boundary: Geometry = Sphere::new(Vec3::new(360.0, 150.0, 145.0),
+    let boundary: Geometry = Sphere::new(Vec3A::new(360.0, 150.0, 145.0),
                                70.0,
                                refr_idx).into();
 
@@ -80,7 +80,7 @@ pub fn spheres_in_box_scene(width: usize, height: usize) -> Scene {
     let vol_idx = mat!(materials, Isotropic::new(SolidColor::new(0.2, 0.4, 0.9).into()));
     world.add(Volume::new(0.2, cloned_boundary, vol_idx).into());
 
-    let fog = Sphere::new(Vec3::new(0.0, 0.0, 0.0),
+    let fog = Sphere::new(Vec3A::new(0.0, 0.0, 0.0),
                           5000.0,
                           refr_idx).into();
 
@@ -91,28 +91,28 @@ pub fn spheres_in_box_scene(width: usize, height: usize) -> Scene {
     // https://science.nasa.gov/earth/earth-observatory/blue-marble-next-generation/
     // The map used for this render is a Base Map with Topography and Bathymetry
     let topo_idx = mat!(materials, Diffuse::new(ImageTexture::new("docs/textures/world_topo_nasa.jpg", 1.0).into(), 0.0));
-    world.add(Sphere::new(Vec3::new(400.0, 200.0, 400.0),
+    world.add(Sphere::new(Vec3A::new(400.0, 200.0, 400.0),
                           100.0,
                           topo_idx).into());
 
     let marble = mat!(materials, Diffuse::new(ImageTexture::new("docs/textures/marble.jpg", 2.0).into(), 0.0));
-    world.add(Sphere::new(Vec3::new(220.0, 280.0, 300.0),
+    world.add(Sphere::new(Vec3A::new(220.0, 280.0, 300.0),
                           80.0,
                           marble).into());
 
     let number_of_spheres = 1000;
     for _ in 0..number_of_spheres {
-        let center = Vec3::new(165.0 * rand::random::<f32>(),
+        let center = Vec3A::new(165.0 * rand::random::<f32>(),
                                165.0 * rand::random::<f32>(),
                                165.0 * rand::random::<f32>());
 
         let sphere = Sphere::new(center, 10.0, white);
-        let transformed_sphere = TransformedMesh::new(Vec3::new(-100.0, 270.0, 395.0), Vec3::new(0.0, 15.0, 0.0), 1.0, sphere.into());
+        let transformed_sphere = TransformedMesh::new(Vec3A::new(-100.0, 270.0, 395.0), Vec3A::new(0.0, 15.0, 0.0), 1.0, sphere.into());
         world.add(transformed_sphere.into());
     }
 
     let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
     let light_shape = Plane::new(Axis::XZ, Bounds2D::new(123.0..423.0, 147.0..412.0), 554.0, white);
 
-    Scene::new(String::from("Spheres in Box"), bvh, materials, camera, vec![Light::new(light_shape.into(), Vec3::splat(7.0))], None, false)
+    Scene::new(String::from("Spheres in Box"), bvh, materials, camera, vec![Light::new(light_shape.into(), Vec3A::splat(7.0))], None, false)
 }

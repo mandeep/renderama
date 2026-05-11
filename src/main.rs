@@ -3,7 +3,6 @@
 extern crate chrono;
 extern crate glam;
 extern crate image;
-extern crate nalgebra;
 extern crate pbr;
 extern crate rand;
 extern crate rand_distr;
@@ -48,7 +47,7 @@ use std::thread;
 use std::time::{Duration, Instant};
 
 use chrono::{DateTime, Local};
-use glam::Vec3;
+use glam::Vec3A;
 use image::{ImageBuffer, Rgb};
 use pbr::ProgressBar;
 use rand::rng;
@@ -63,9 +62,9 @@ fn main() {
     let args: Vec<String> = env::args().collect();
     let samples: u32 = args.get(1).and_then(|s| s.parse().ok()).unwrap_or(128);
     let bounces: u32 = 10;
-    let (width, height): (usize, usize) = (1920, 1080);
+    let (width, height): (usize, usize) = (2048, 2048);
 
-    let scene = scenarios::veach_mis_scene(width, height);
+    let scene = scenarios::cornell_box_object_scene(width, height);
 
     let render_start_time: DateTime<Local> = Local::now();
     println!("[{}] Rendering '{}' scene with {} samples at {} x {} dimensions...",
@@ -93,9 +92,9 @@ fn main() {
     // 9 floats per pixel: [color RGB | albedo RGB | normal RGB]
     let mut combined = vec![0.0f32; 9 * width * height];
     combined.par_chunks_mut(9).enumerate().for_each(|(i, chunk)| {
-        let mut color = Vec3::ZERO;
-        let mut albedo = Vec3::ZERO;
-        let mut normal = Vec3::ZERO;
+        let mut color = Vec3A::ZERO;
+        let mut albedo = Vec3A::ZERO;
+        let mut normal = Vec3A::ZERO;
 
         let x = i % width;
         let y = height - (i / width) - 1;

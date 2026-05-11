@@ -2,9 +2,9 @@ use rand::rngs::ThreadRng;
 use rand::RngExt;
 use std::f32::consts::PI;
 
-use glam::Vec3;
+use glam::Vec3A;
 
-pub fn cosine_sample_hemisphere(rng: &mut ThreadRng) -> Vec3 {
+pub fn cosine_sample_hemisphere(rng: &mut ThreadRng) -> Vec3A {
     let r1 = rng.random::<f32>();
     let r2 = rng.random::<f32>();
 
@@ -21,10 +21,10 @@ pub fn cosine_sample_hemisphere(rng: &mut ThreadRng) -> Vec3 {
     let y = sin_phi * r;
     let z = (1.0 - r2).sqrt();
 
-    Vec3::new(x, y, z)
+    Vec3A::new(x, y, z)
 }
 
-pub fn uniform_sample_hemisphere(rng: &mut ThreadRng) -> Vec3 {
+pub fn uniform_sample_hemisphere(rng: &mut ThreadRng) -> Vec3A {
     let u = rng.random::<f32>();
     let v = rng.random::<f32>();
 
@@ -35,10 +35,10 @@ pub fn uniform_sample_hemisphere(rng: &mut ThreadRng) -> Vec3 {
     let x = r * phi.cos();
     let y = r * phi.sin();
 
-    Vec3::new(x, y, z)
+    Vec3A::new(x, y, z)
 }
 
-pub fn uniform_sample_sphere(rng: &mut ThreadRng) -> Vec3 {
+pub fn uniform_sample_sphere(rng: &mut ThreadRng) -> Vec3A {
     let u = rng.random::<f32>();
     let v = rng.random::<f32>();
 
@@ -49,15 +49,15 @@ pub fn uniform_sample_sphere(rng: &mut ThreadRng) -> Vec3 {
     let x = r * phi.cos();
     let y = r * phi.sin();
 
-    Vec3::new(x, y, z)
+    Vec3A::new(x, y, z)
 }
 
-pub fn uniform_sample_cone(cos_theta_max: f32, rng: &mut ThreadRng) -> Vec3 {
+pub fn uniform_sample_cone(cos_theta_max: f32, rng: &mut ThreadRng) -> Vec3A {
     let r1 = rng.random::<f32>();
     let r2 = rng.random::<f32>();
     let cos_theta = 1.0 + r1 * (cos_theta_max - 1.0); // r1=0 → 1, r1=1 → cos_θ_max
     let sin_theta = (1.0 - cos_theta * cos_theta).max(0.0).sqrt();
     let phi = 2.0 * PI * r2;
 
-    Vec3::new(cos_theta, sin_theta, phi)
+    Vec3A::new(cos_theta, sin_theta, phi)
 }

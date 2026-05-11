@@ -1,6 +1,6 @@
 use std::f32;
 
-use glam::Vec3;
+use glam::Vec3A;
 
 use aabb::AABB;
 use events::HitEvent;
@@ -44,7 +44,7 @@ impl Volume {
                     if hit_distance < distance_inside_boundary {
                         let t = hit1.parameter + hit_distance / ray.direction.length();
                         let point = ray.point_at_parameter(t);
-                        let normal = Vec3::new(1.0, 0.0, 0.0);
+                        let normal = Vec3A::new(1.0, 0.0, 0.0);
                         return Some(HitEvent::new(t,
                                                    0.0,
                                                    0.0,

@@ -1,6 +1,6 @@
 use std::f32;
 
-use glam::Vec3;
+use glam::Vec3A;
 use rand::rngs::ThreadRng;
 use rand::RngExt;
 use rand_distr::StandardNormal;
@@ -19,12 +19,12 @@ use scene::Scene;
 ///
 /// Reference: http://mathworld.wolfram.com/SpherePointPicking.html
 ///
-pub fn pick_sphere_point(rng: &mut ThreadRng) -> Vec3 {
+pub fn pick_sphere_point(rng: &mut ThreadRng) -> Vec3A {
     let x: f32 = rng.sample(StandardNormal);
     let y: f32 = rng.sample(StandardNormal);
     let z: f32 = rng.sample(StandardNormal);
 
-    Vec3::new(x, y, z).normalize()
+    Vec3A::new(x, y, z).normalize()
 }
 
 /// Compute the color of the surface that the ray has collided with
@@ -35,9 +35,9 @@ pub fn pick_sphere_point(rng: &mut ThreadRng) -> Vec3 {
 /// the color at the ray's hit point. The depth has been set to an arbitrary
 /// limit of 50 which can lead to bias rendering.
 ///
-pub fn render_path_integrator(mut ray: Ray, scene: &Scene, bounces: u32, rng: &mut ThreadRng) -> Vec3 {
-    let mut color = Vec3::ZERO;
-    let mut throughput = Vec3::ONE;
+pub fn render_path_integrator(mut ray: Ray, scene: &Scene, bounces: u32, rng: &mut ThreadRng) -> Vec3A {
+    let mut color = Vec3A::ZERO;
+    let mut throughput = Vec3A::ONE;
 
     for bounce in 0..=bounces {
         if let Some(hit_event) = scene.accelerator.hit(&ray, 1e-4, f32::MAX) {
@@ -86,7 +86,7 @@ pub fn render_path_integrator(mut ray: Ray, scene: &Scene, bounces: u32, rng: &m
                 break;
             } else if scene.atmosphere {
                 let point: f32 = 0.5 * (ray.direction.y + 1.0);
-                let lerp = (1.0 - point) * Vec3::splat(1.0) + point * Vec3::new(0.5, 0.7, 1.0);
+                let lerp = (1.0 - point) * Vec3A::splat(1.0) + point * Vec3A::new(0.5, 0.7, 1.0);
                 color += throughput * lerp;
                 break;
             }
@@ -102,23 +102,23 @@ pub fn render_path_integrator(mut ray: Ray, scene: &Scene, bounces: u32, rng: &m
     color
 }
 
-pub fn render_normals(ray: Ray, scene: &Scene) -> Vec3 {
+pub fn render_normals(ray: Ray, scene: &Scene) -> Vec3A {
     if let Some(hit) = scene.accelerator.hit(&ray, 1e-4, f32::MAX) {
         let normal = hit.shading_normal;
-        0.5 * Vec3::new(normal.x + 1.0, normal.y + 1.0, normal.z + 1.0)
+        0.5 * Vec3A::new(normal.x + 1.0, normal.y + 1.0, normal.z + 1.0)
     } else {
         let point = 0.5 * (ray.direction.y + 1.0);
-        (1.0 - point) * Vec3::new(1.0, 1.0, 1.0) + point * Vec3::new(0.5, 0.7, 1.0)
+        (1.0 - point) * Vec3A::new(1.0, 1.0, 1.0) + point * Vec3A::new(0.5, 0.7, 1.0)
     }
 }
 
-pub fn render_nee_integrator(mut ray: Ray, scene: &Scene, bounces: u32, rng: &mut ThreadRng) -> (Vec3, Vec3, Vec3) {
-    let mut color = Vec3::ZERO;
-    let mut throughput = Vec3::ONE;
+pub fn render_nee_integrator(mut ray: Ray, scene: &Scene, bounces: u32, rng: &mut ThreadRng) -> (Vec3A, Vec3A, Vec3A) {
+    let mut color = Vec3A::ZERO;
+    let mut throughput = Vec3A::ONE;
     let mut last_specular = true;
     let mut last_material_pdf = 0.0;
-    let mut first_albedo = Vec3::ZERO;
-    let mut first_normal = Vec3::ZERO;
+    let mut first_albedo = Vec3A::ZERO;
+    let mut first_normal = Vec3A::ZERO;
 
     for bounce in 0..=bounces {
         if let Some(hit_event) = scene.accelerator.hit(&ray, 1e-4, f32::MAX) {
@@ -149,7 +149,7 @@ pub fn render_nee_integrator(mut ray: Ray, scene: &Scene, bounces: u32, rng: &mu
                 } else {
                     last_specular = false;
 
-                    let mut direct_light = Vec3::ZERO;
+                    let mut direct_light = Vec3A::ZERO;
 
                     // using a manual offset instead of the find_offset_point for now as it
                     // gives better results on shadow rays
@@ -220,10 +220,10 @@ pub fn render_nee_integrator(mut ray: Ray, scene: &Scene, bounces: u32, rng: &mu
         } else {
             if bounce == 0 {
                 if let Some(env) = &scene.environment {
-                    first_albedo = env.value(0.0, 0.0, &ray.direction).clamp(Vec3::ZERO, Vec3::ONE);
+                    first_albedo = env.value(0.0, 0.0, &ray.direction).clamp(Vec3A::ZERO, Vec3A::ONE);
                 } else if scene.atmosphere {
                     let point: f32 = 0.5 * (ray.direction.y + 1.0);
-                    first_albedo = (1.0 - point) * Vec3::splat(1.0) + point * Vec3::new(0.5, 0.7, 1.0);
+                    first_albedo = (1.0 - point) * Vec3A::splat(1.0) + point * Vec3A::new(0.5, 0.7, 1.0);
                 }
             }
             if let Some(env) = &scene.environment {
@@ -240,7 +240,7 @@ pub fn render_nee_integrator(mut ray: Ray, scene: &Scene, bounces: u32, rng: &mu
                 color += contribution;
             } else if scene.atmosphere {
                 let point: f32 = 0.5 * (ray.direction.y + 1.0);
-                let lerp = (1.0 - point) * Vec3::splat(1.0) + point * Vec3::new(0.5, 0.7, 1.0);
+                let lerp = (1.0 - point) * Vec3A::splat(1.0) + point * Vec3A::new(0.5, 0.7, 1.0);
                 color += throughput * lerp;
             }
             break;

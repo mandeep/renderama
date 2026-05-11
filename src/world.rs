@@ -1,4 +1,4 @@
-use glam::Vec3;
+use glam::Vec3A;
 
 use aabb::AABB;
 use events::HitEvent;
@@ -33,9 +33,9 @@ impl World {
             HitEvent::new(0.0,
                            0.0,
                            0.0,
-                           Vec3::ZERO,
-                           Vec3::ZERO,
-                           Vec3::ZERO,
+                           Vec3A::ZERO,
+                           Vec3A::ZERO,
+                           Vec3A::ZERO,
                            MaterialId(0));
         let mut hit_anything: bool = false;
         let mut closest_so_far: f32 = position_max;

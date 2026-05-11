@@ -1,24 +1,24 @@
 use std::f32;
 
-use glam::Vec3;
+use glam::Vec3A;
 
 use ray::Ray;
 
 #[derive(Clone, Copy)]
 pub struct AABB {
-    pub minimum: Vec3,
-    pub maximum: Vec3,
+    pub minimum: Vec3A,
+    pub maximum: Vec3A,
 }
 
 impl AABB {
     /// Create an empty AABB from a zero vector and one vector
     pub fn new() -> AABB {
-        AABB { minimum: Vec3::splat(f32::MAX),
-               maximum: Vec3::splat(f32::MIN) }
+        AABB { minimum: Vec3A::splat(f32::MAX),
+               maximum: Vec3A::splat(f32::MIN) }
     }
 
     /// Create a new AABB from the minimum and maximum slab vectors
-    pub fn from(minimum: Vec3, maximum: Vec3) -> AABB {
+    pub fn from(minimum: Vec3A, maximum: Vec3A) -> AABB {
         AABB { minimum, maximum }
     }
 

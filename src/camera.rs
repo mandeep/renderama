@@ -1,19 +1,19 @@
 use std::f32::consts::PI;
 
-use glam::Vec3;
+use glam::Vec3A;
 use rand::rngs::ThreadRng;
 
 use integrator::pick_sphere_point;
 use ray::Ray;
 
 pub struct Camera {
-    pub lower_left_corner: Vec3,
-    pub horizontal: Vec3,
-    pub vertical: Vec3,
-    pub origin: Vec3,
-    u: Vec3,
-    v: Vec3,
-    w: Vec3,
+    pub lower_left_corner: Vec3A,
+    pub horizontal: Vec3A,
+    pub vertical: Vec3A,
+    pub origin: Vec3A,
+    u: Vec3A,
+    v: Vec3A,
+    w: Vec3A,
     pub lens_radius: f32,
 }
 
@@ -27,9 +27,9 @@ impl Camera {
     /// The aspect ratio is the proportial difference between the width and height.
     /// aperture controls how big the lens of the camera is and focus distance
     /// controls the shortest distance that the camera can focus.
-    pub fn new(origin: Vec3,
-               lookat: Vec3,
-               view: Vec3,
+    pub fn new(origin: Vec3A,
+               lookat: Vec3A,
+               view: Vec3A,
                fov: f32,
                aspect: f32,
                aperture: f32,
@@ -41,17 +41,17 @@ impl Camera {
         let half_height: f32 = (theta / 2.0).tan();
         let half_width: f32 = aspect * half_height;
 
-        let w: Vec3 = (origin - lookat).normalize();
-        let u: Vec3 = view.cross(w).normalize();
-        let v: Vec3 = w.cross(u);
+        let w: Vec3A = (origin - lookat).normalize();
+        let u: Vec3A = view.cross(w).normalize();
+        let v: Vec3A = w.cross(u);
 
-        let lower_left_corner: Vec3 = origin
+        let lower_left_corner: Vec3A = origin
                                       - half_width * focus_distance * u
                                       - half_height * focus_distance * v
                                       - focus_distance * w;
 
-        let horizontal: Vec3 = 2.0 * half_width * focus_distance * u;
-        let vertical: Vec3 = 2.0 * half_height * focus_distance * v;
+        let horizontal: Vec3A = 2.0 * half_width * focus_distance * u;
+        let vertical: Vec3A = 2.0 * half_height * focus_distance * v;
 
         Camera { lower_left_corner,
                  horizontal,
@@ -66,8 +66,8 @@ impl Camera {
 
     /// Get the ray that is coming from the camera into the world
     pub fn get_ray(&self, s: f32, t: f32, rng: &mut ThreadRng) -> Ray {
-        let radius: Vec3 = self.lens_radius * pick_sphere_point(rng);
-        let offset: Vec3 = self.u * radius.x + self.v * radius.y;
+        let radius: Vec3A = self.lens_radius * pick_sphere_point(rng);
+        let offset: Vec3A = self.u * radius.x + self.v * radius.y;
         Ray::new(self.origin + offset,
                  self.lower_left_corner + s * self.horizontal + t * self.vertical - self.origin - offset,
                  )

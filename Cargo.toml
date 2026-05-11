@@ -12,7 +12,6 @@ denoise = ["oidn"]
 chrono = "0.4.44"
 glam = "0.32.1"
 image = { version = "0.25.10", features = ["exr"] }
-nalgebra = "0.34.2"
 oidn = { version = "2.3.3", optional = true }
 pbr = "1.0.2"
 rand = "0.10.1"

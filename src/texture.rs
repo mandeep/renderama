@@ -1,6 +1,6 @@
 use f32::consts::PI;
 
-use glam::Vec3;
+use glam::Vec3A;
 use image;
 use rand::rngs::ThreadRng;
 use rand::RngExt;
@@ -13,7 +13,7 @@ pub enum Texture {
 }
 
 impl Texture {
-    pub fn value(&self, u: f32, v: f32, w: &Vec3) -> Vec3 {
+    pub fn value(&self, u: f32, v: f32, w: &Vec3A) -> Vec3A {
         match self {
             Texture::SolidColor(texture) => texture.value(u, v, w),
             Texture::ImageTexture(texture) => texture.value(u, v, w),
@@ -23,7 +23,7 @@ impl Texture {
 
     /// Returns the solid-angle PDF for sampling the given direction, only if
     /// this texture is an importance-sampled EnvironmentMap.
-    pub fn env_pdf_value(&self, direction: &Vec3) -> Option<f32> {
+    pub fn env_pdf_value(&self, direction: &Vec3A) -> Option<f32> {
         match self {
             Texture::EnvironmentMap(env) => Some(env.pdf_value(direction)),
             _ => None
@@ -32,7 +32,7 @@ impl Texture {
 
     /// Samples a direction importance-weighted by luminance, only if this
     /// texture is an EnvironmentMap.
-    pub fn env_pdf_random(&self, rng: &mut ThreadRng) -> Option<Vec3> {
+    pub fn env_pdf_random(&self, rng: &mut ThreadRng) -> Option<Vec3A> {
         match self {
             Texture::EnvironmentMap(env) => Some(env.pdf_random(rng)),
             _ => None
@@ -59,19 +59,19 @@ impl_from_texture!(
 );
 
 #[derive(Clone)]
-/// SolidColor is just a wrapping for a Vec3 of RGB values
+/// SolidColor is just a wrapping for a Vec3A of RGB values
 pub struct SolidColor {
-    color: Vec3,
+    color: Vec3A,
 }
 
 /// Create a new SolidColor which is used for pure albedo materials
 impl SolidColor {
     pub fn new(r: f32, g: f32, b: f32) -> SolidColor {
-        SolidColor { color: Vec3::new(r, g, b) }
+        SolidColor { color: Vec3A::new(r, g, b) }
     }
 
     /// Returning the albedo instead of sampling with u and v
-    pub fn value(&self, _u: f32, _v: f32, _p: &Vec3) -> Vec3 {
+    pub fn value(&self, _u: f32, _v: f32, _p: &Vec3A) -> Vec3A {
         self.color
     }
 }
@@ -91,7 +91,7 @@ impl ImageTexture {
 
     /// Determine which pixel to retrieve from the image by
     /// converting pixel coordinates to UV coordinates
-    pub fn value(&self, u: f32, v: f32, _p: &Vec3) -> Vec3 {
+    pub fn value(&self, u: f32, v: f32, _p: &Vec3A) -> Vec3A {
         let u_scaled = (u * self.scale) % 1.0;
         let v_scaled = (v * self.scale) % 1.0;
 
@@ -100,7 +100,7 @@ impl ImageTexture {
 
         let image::Rgb([r, g, b]) = *self.im.get_pixel(i as u32, j as u32);
 
-        Vec3::new(r as f32 / 255.0, g as f32 / 255.0, b as f32 / 255.0)
+        Vec3A::new(r as f32 / 255.0, g as f32 / 255.0, b as f32 / 255.0)
     }
 }
 
@@ -185,7 +185,7 @@ impl EnvironmentMap {
 
     /// Determine which pixel to retrieve from the image by
     /// converting pixel coordinates to UV coordinates
-    pub fn value(&self, _u: f32, _v: f32, direction: &Vec3) -> Vec3 {
+    pub fn value(&self, _u: f32, _v: f32, direction: &Vec3A) -> Vec3A {
         let u = 0.5 + direction.z.atan2(direction.x) / (2.0 * PI);
         let v = 0.5 - direction.y.asin() / PI;
 
@@ -194,7 +194,7 @@ impl EnvironmentMap {
 
         let image::Rgb([r, g, b]) = *self.im.get_pixel(i as u32, j as u32);
 
-        Vec3::new(r, g, b)
+        Vec3A::new(r, g, b)
     }
 
     /// Solid-angle PDF for the given direction.
@@ -202,7 +202,7 @@ impl EnvironmentMap {
     /// Derivation: p(ω) = L * W * H / (total_weight * 2π²).
     /// The sin_theta factor from the area element cancels with the sin_theta
     /// in the CDF weight, leaving only the raw luminance scaled by resolution.
-    pub fn pdf_value(&self, direction: &Vec3) -> f32 {
+    pub fn pdf_value(&self, direction: &Vec3A) -> f32 {
         if self.total_weight <= 0.0 { return 0.0; }
 
         let u = 0.5 + direction.z.atan2(direction.x) / (2.0 * PI);
@@ -218,7 +218,7 @@ impl EnvironmentMap {
     }
 
     /// Sample a direction from the environment map proportional to luminance.
-    pub fn pdf_random(&self, rng: &mut ThreadRng) -> Vec3 {
+    pub fn pdf_random(&self, rng: &mut ThreadRng) -> Vec3A {
         let u1 = rng.random::<f32>();
         let u2 = rng.random::<f32>();
 
@@ -234,6 +234,6 @@ impl EnvironmentMap {
         let elevation = (0.5 - v) * PI;         // elevation: asin(y)
         let (sin_el, cos_el) = elevation.sin_cos();
         let (sin_phi, cos_phi) = phi.sin_cos();
-        Vec3::new(cos_el * cos_phi, sin_el, cos_el * sin_phi)
+        Vec3A::new(cos_el * cos_phi, sin_el, cos_el * sin_phi)
     }
 }

@@ -1,6 +1,6 @@
 use std::f32;
 
-use glam::Vec3;
+use glam::Vec3A;
 use rand::rngs::ThreadRng;
 use rand::RngExt;
 
@@ -100,7 +100,7 @@ impl Plane {
                     return None;
                 }
 
-                let normal = Vec3::new(0.0, 0.0, 1.0);
+                let normal = Vec3A::new(0.0, 0.0, 1.0);
 
                 let event = HitEvent::new(t,
                                             (x - self.bounds.u_min) / (self.bounds.u_max - self.bounds.u_min),
@@ -126,7 +126,7 @@ impl Plane {
                     return None;
                 }
 
-                let normal = Vec3::new(1.0, 0.0, 0.0);
+                let normal = Vec3A::new(1.0, 0.0, 0.0);
 
                 let event = HitEvent::new(t,
                                             (y - self.bounds.u_min) / (self.bounds.u_max - self.bounds.u_min),
@@ -152,7 +152,7 @@ impl Plane {
                     return None;
                 }
 
-                let normal = Vec3::new(0.0, 1.0, 0.0);
+                let normal = Vec3A::new(0.0, 1.0, 0.0);
 
                 let event = HitEvent::new(t,
                                             (x - self.bounds.u_min) / (self.bounds.u_max - self.bounds.u_min),
@@ -170,24 +170,24 @@ impl Plane {
     pub fn bounding_box(&self) -> Option<AABB> {
         match self.axis {
             Axis::XY => {
-                let minimum = Vec3::new(self.bounds.u_min, self.bounds.v_min, self.offset - 0.0001);
-                let maximum = Vec3::new(self.bounds.u_max, self.bounds.v_max, self.offset + 0.0001);
+                let minimum = Vec3A::new(self.bounds.u_min, self.bounds.v_min, self.offset - 0.0001);
+                let maximum = Vec3A::new(self.bounds.u_max, self.bounds.v_max, self.offset + 0.0001);
                 Some(AABB::from(minimum, maximum))
             }
             Axis::YZ => {
-                let minimum = Vec3::new(self.offset - 0.0001, self.bounds.u_min, self.bounds.v_min);
-                let maximum = Vec3::new(self.offset + 0.0001, self.bounds.u_max, self.bounds.v_max);
+                let minimum = Vec3A::new(self.offset - 0.0001, self.bounds.u_min, self.bounds.v_min);
+                let maximum = Vec3A::new(self.offset + 0.0001, self.bounds.u_max, self.bounds.v_max);
                 Some(AABB::from(minimum, maximum))
             }
             Axis::XZ => {
-                let minimum = Vec3::new(self.bounds.u_min, self.offset - 0.0001, self.bounds.v_min);
-                let maximum = Vec3::new(self.bounds.u_max, self.offset + 0.0001, self.bounds.v_max);
+                let minimum = Vec3A::new(self.bounds.u_min, self.offset - 0.0001, self.bounds.v_min);
+                let maximum = Vec3A::new(self.bounds.u_max, self.offset + 0.0001, self.bounds.v_max);
                 Some(AABB::from(minimum, maximum))
             }
         }
     }
 
-    pub fn pdf_value(&self, origin: Vec3, direction: Vec3) -> f32 {
+    pub fn pdf_value(&self, origin: Vec3A, direction: Vec3A) -> f32 {
         // originally epsilon was 1e-2 but updated here to match value elsewhere
         if let Some(hit) = self.hit(&Ray::new(origin, direction), 1e-4, f32::MAX) {
             let distance_squared = hit.parameter * hit.parameter * direction.length_squared();
@@ -198,14 +198,14 @@ impl Plane {
         }
     }
 
-    pub fn pdf_random(&self, origin: Vec3, rng: &mut ThreadRng) -> Vec3 {
+    pub fn pdf_random(&self, origin: Vec3A, rng: &mut ThreadRng) -> Vec3A {
         let u = self.bounds.u_min + rng.random::<f32>() * (self.bounds.u_max - self.bounds.u_min);
         let v = self.bounds.v_min + rng.random::<f32>() * (self.bounds.v_max - self.bounds.v_min);
 
         let random_point = match self.axis {
-            Axis::XY => Vec3::new(u, v, self.offset),
-            Axis::YZ => Vec3::new(self.offset, u, v),
-            Axis::XZ => Vec3::new(u, self.offset, v),
+            Axis::XY => Vec3A::new(u, v, self.offset),
+            Axis::YZ => Vec3A::new(self.offset, u, v),
+            Axis::XZ => Vec3A::new(u, self.offset, v),
         };
 
         random_point - origin

@@ -1,4 +1,4 @@
-use glam::Vec3;
+use glam::Vec3A;
 
 use bvh::BVH;
 use camera::Camera;
@@ -22,9 +22,9 @@ use mat;
 ///   - Smooth/shallow plates: BSDF sampling is best (narrow specular lobe)
 ///   - Rough/steep plates: NEE / light sampling is best (wide lobe)
 pub fn veach_mis_scene(width: usize, height: usize) -> Scene {
-    let origin = Vec3::new(0.0, 1.2, -3.5);
-    let lookat = Vec3::new(0.0, 1.9, 7.0);
-    let view = Vec3::new(0.0, 1.0,  0.0);
+    let origin = Vec3A::new(0.0, 1.2, -3.5);
+    let lookat = Vec3A::new(0.0, 1.9, 7.0);
+    let view = Vec3A::new(0.0, 1.0,  0.0);
     let fov = 35.0;
     let aspect_ratio = width as f32 / height as f32;
     let aperture = 0.0;
@@ -48,10 +48,10 @@ pub fn veach_mis_scene(width: usize, height: usize) -> Scene {
     world.add(Plane::new(Axis::YZ, Bounds2D::new( 0.0..15.0, -5.0..25.0),-20.0, grey).into_geometry());
     world.add(Plane::new(Axis::YZ, Bounds2D::new( 0.0..15.0, -5.0..25.0), 20.0, grey).into_reversed());
 
-    let silver = Vec3::new(0.75, 0.75, 0.75);
+    let silver = Vec3A::new(0.75, 0.75, 0.75);
 
     // use a cursor to place planes edge to edge
-    let mut cursor = Vec3::new(0.0, 0.15, 2.0);
+    let mut cursor = Vec3A::new(0.0, 0.15, 2.0);
     let plate_length = 1.0;
     let plate_gap = 0.10;
     let visual_length = plate_length - plate_gap;
@@ -69,15 +69,15 @@ pub fn veach_mis_scene(width: usize, height: usize) -> Scene {
 
         // In Right-Handed, a negative X rotation tilts the Z-axis UP.
         // Direction vector: (0, -sin(theta), cos(theta))
-        let direction = Vec3::new(0.0, -tilt_rad.sin(), tilt_rad.cos());
+        let direction = Vec3A::new(0.0, -tilt_rad.sin(), tilt_rad.cos());
 
         // Center is half-way along that direction from the current cursor
         let center_pos = cursor + (direction * (plate_length * 0.5));
 
         let mat_id = mat!(materials, Reflective::new(silver, fuzz));
-        let rot = Vec3::new(tilt_deg, 0.0, 0.0);
-        let base = Rectangle::new(Vec3::new(-2.0, 0.1, -visual_length / 2.0),
-            Vec3::new(2.0, 0.125, visual_length / 2.0), mat_id)
+        let rot = Vec3A::new(tilt_deg, 0.0, 0.0);
+        let base = Rectangle::new(Vec3A::new(-2.0, 0.1, -visual_length / 2.0),
+            Vec3A::new(2.0, 0.125, visual_length / 2.0), mat_id)
             .into();
 
         world.add(TransformedMesh::new(center_pos, rot, 1.0, base).into());
@@ -88,7 +88,7 @@ pub fn veach_mis_scene(width: usize, height: usize) -> Scene {
     // After the plate loop, use the 'cursor' to find the midpoint so that the sphere
     // lights appear on all plates
     let chain_end = cursor; // Where the last plate ended
-    let chain_start = Vec3::new(0.0, 0.15, 2.0);
+    let chain_start = Vec3A::new(0.0, 0.15, 2.0);
     let chain_midpoint = (chain_start + chain_end) * 0.5;
 
     // Place lights relative to this midpoint
@@ -104,14 +104,14 @@ pub fn veach_mis_scene(width: usize, height: usize) -> Scene {
     for (x, r, intensity) in sphere_lights {
         let mat = mat!(materials, Emissive::new(SolidColor::new(intensity, intensity, intensity).into()));
         world.add(Sphere::new(
-            Vec3::new(x, light_y, light_z),
+            Vec3A::new(x, light_y, light_z),
             r, mat,
         ).into());
     }
 
     let fill_intensity = 0.005;
     let fill_mat = mat!(materials, Emissive::new(SolidColor::new(fill_intensity, fill_intensity, fill_intensity).into()));
-    let fill_color = Vec3::splat(fill_intensity);
+    let fill_color = Vec3A::splat(fill_intensity);
 
     // Left Fill Light (facing right toward the center)
     let left_light_geometry = Plane::new(
@@ -135,8 +135,8 @@ pub fn veach_mis_scene(width: usize, height: usize) -> Scene {
 
     let mut light_sources: Vec<Light> = sphere_lights.iter().map(|&(x, r, intensity)| {
         Light::new(
-            Sphere::new(Vec3::new(x, light_y, light_z), r, grey).into(),
-            Vec3::splat(intensity),
+            Sphere::new(Vec3A::new(x, light_y, light_z), r, grey).into(),
+            Vec3A::splat(intensity),
         )
     }).collect();
 

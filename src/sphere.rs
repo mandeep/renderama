@@ -1,6 +1,6 @@
 use std::f32::consts::PI;
 
-use glam::Vec3;
+use glam::Vec3A;
 use rand::rngs::ThreadRng;
 
 use aabb::AABB;
@@ -10,7 +10,7 @@ use ray::Ray;
 use sampling::{uniform_sample_cone, uniform_sample_sphere};
 
 
-fn get_sphere_uv(p: &Vec3) -> (f32, f32) {
+fn get_sphere_uv(p: &Vec3A) -> (f32, f32) {
     let phi = p.z.atan2(p.x);
     let theta = p.y.asin();
     let u = 1.0 - (phi + PI) / (2.0 * PI);
@@ -20,7 +20,7 @@ fn get_sphere_uv(p: &Vec3) -> (f32, f32) {
 
 #[derive(Clone)]
 pub struct Sphere {
-    pub center: Vec3,
+    pub center: Vec3A,
     pub radius: f32,
     pub material_id: MaterialId,
 }
@@ -31,7 +31,7 @@ impl Sphere {
     /// We use the 'static lifetime so that we can create a Arc material
     /// within the function rather than having to pass a Arc material
     /// as an input parameter.
-    pub fn new(center: Vec3, radius: f32, material_id: MaterialId) -> Sphere {
+    pub fn new(center: Vec3A, radius: f32, material_id: MaterialId) -> Sphere {
 
         Sphere { center, radius, material_id }
     }
@@ -43,7 +43,7 @@ impl Sphere {
     /// a hit at the boundary of the sphere, and two real roots signify a
     /// ray hitting one point on the sphere and leaving through another point.
     pub fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitEvent> {
-        let sphere_center: Vec3 = ray.origin - self.center;
+        let sphere_center: Vec3A = ray.origin - self.center;
         let a: f32 = ray.direction.dot(ray.direction);
         let b: f32 = sphere_center.dot(ray.direction);
         let c: f32 = sphere_center.dot(sphere_center) - (self.radius * self.radius);
@@ -72,7 +72,7 @@ impl Sphere {
     }
 
     pub fn bounding_box(&self) -> Option<AABB> {
-        let radius = Vec3::new(self.radius, self.radius, self.radius);
+        let radius = Vec3A::new(self.radius, self.radius, self.radius);
         let min0 = self.center - radius;
         let max0 = self.center + radius;
         let min1 = self.center - radius;
@@ -84,7 +84,7 @@ impl Sphere {
         Some(small.surrounding_box(&big))
     }
 
-    pub fn pdf_value(&self, origin: Vec3, direction: Vec3) -> f32 {
+    pub fn pdf_value(&self, origin: Vec3A, direction: Vec3A) -> f32 {
         let center = self.center;
         let to_center = center - origin;
         let distance_squared = to_center.length_squared();
@@ -119,7 +119,7 @@ impl Sphere {
         1.0 / solid_angle
     }
 
-    pub fn pdf_random(&self, origin: Vec3, rng: &mut ThreadRng) -> Vec3 {
+    pub fn pdf_random(&self, origin: Vec3A, rng: &mut ThreadRng) -> Vec3A {
         let center = self.center;
         let to_center = center - origin;
         let distance_squared = to_center.length_squared();
@@ -136,7 +136,7 @@ impl Sphere {
 
         // Local frame around the axis from origin → center.
         let w = to_center.normalize();
-        let a = if w.x.abs() > 0.9 { Vec3::new(0.0, 1.0, 0.0) } else { Vec3::new(1.0, 0.0, 0.0) };
+        let a = if w.x.abs() > 0.9 { Vec3A::new(0.0, 1.0, 0.0) } else { Vec3A::new(1.0, 0.0, 0.0) };
         let v = w.cross(a).normalize();
         let u = w.cross(v);
 

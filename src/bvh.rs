@@ -1,4 +1,4 @@
-use glam::Vec3;
+use glam::Vec3A;
 use wide::f32x4;
 
 use aabb::AABB;
@@ -124,7 +124,7 @@ fn build_tree(world: &mut Vec<Geometry>, start_time: f32, end_time: f32) -> Tree
 
     // SAH binned split begins here
     // Compute the centroid of each bounding box
-    let centroids: Vec<Vec3> = world.iter().map(|hit| {
+    let centroids: Vec<Vec3A> = world.iter().map(|hit| {
         let bbox = hit.bounding_box().unwrap();
         (bbox.minimum + bbox.maximum) * 0.5
     }).collect();
@@ -332,7 +332,7 @@ fn flatten4(tree: &TreeNode, internals: &mut Vec<InternalNode4>, leaves: &mut Ve
 
 
 /// Index into a vector with the given axis
-fn axis_value(vector: Vec3, axis: usize) -> f32 {
+fn axis_value(vector: Vec3A, axis: usize) -> f32 {
     match axis {
         0 => vector.x,
         1 => vector.y,

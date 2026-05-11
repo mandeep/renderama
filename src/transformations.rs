@@ -1,6 +1,6 @@
 use std::f32;
 
-use glam::{Mat4, Vec3};
+use glam::{Mat4, Vec3A, Vec3};
 
 use aabb::AABB;
 use events::HitEvent;
@@ -51,13 +51,13 @@ fn transform_aabb(bbox: &AABB, transform: &Mat4) -> AABB {
         new_max = new_max.max(p);
     }
     
-    AABB::from(new_min, new_max)
+    AABB::from(new_min.into(), new_max.into())
 }
 
 impl TransformedMesh {
     pub fn new(
-        translate: Vec3,
-        rotate_xyz_degrees: Vec3,
+        translate: Vec3A,
+        rotate_xyz_degrees: Vec3A,
         scale: f32,
         geometry: Geometry,
     ) -> TransformedMesh {
@@ -76,7 +76,7 @@ impl TransformedMesh {
         let rot_y = Mat4::from_rotation_y(ry);
         let rot_z = Mat4::from_rotation_z(rz);
         
-        let translate_mat = Mat4::from_translation(translate);
+        let translate_mat = Mat4::from_translation(translate.into());
         
         let forward = translate_mat * rot_z * rot_y * rot_x * scale_mat;
         let inv = forward.inverse();
@@ -99,8 +99,8 @@ impl TransformedMesh {
 
     pub fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitEvent> {
         // Transform ray into local space using the inverse matrix.
-        let local_origin = self.inv_transform.transform_point3(ray.origin);
-        let local_direction = self.inv_transform.transform_vector3(ray.direction);
+        let local_origin = self.inv_transform.transform_point3(ray.origin.into());
+        let local_direction = self.inv_transform.transform_vector3(ray.direction.into());
         
         // The local direction may not be unit-length if there's scaling.
         // We need to handle the t-parameter rescaling carefully.
@@ -112,15 +112,15 @@ impl TransformedMesh {
         let local_t_min = t_min * local_dir_length;
         let local_t_max = t_max * local_dir_length;
         
-        let local_ray = Ray::new(local_origin, local_direction_normalized);
+        let local_ray = Ray::new(local_origin.into(), local_direction_normalized.into());
         
         if let Some(mut hit) = self.geometry.hit(&local_ray, local_t_min, local_t_max) {
             // Transform hit point back to world space.
-            hit.point = self.forward_transform.transform_point3(hit.point);
+            hit.point = self.forward_transform.transform_point3(hit.point.into()).into();
             
             // Transform normals using the inverse-transpose, then renormalize.
-            hit.shading_normal = self.normal_transform.transform_vector3(hit.shading_normal).normalize();
-            hit.geometric_normal = self.normal_transform.transform_vector3(hit.geometric_normal).normalize();
+            hit.shading_normal = self.normal_transform.transform_vector3(hit.shading_normal.into()).normalize().into();
+            hit.geometric_normal = self.normal_transform.transform_vector3(hit.geometric_normal.into()).normalize().into();
             
             // Convert local-space t to world-space t.
             hit.parameter /= local_dir_length;

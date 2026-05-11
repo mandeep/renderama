@@ -1,4 +1,4 @@
-use glam::Vec3;
+use glam::Vec3A;
 use rand::rngs::ThreadRng;
 
 use geometry::Geometry;
@@ -14,7 +14,7 @@ pub enum LightGeometry {
 #[derive(Clone)]
 pub struct Light {
     pub geometry: LightGeometry,
-    pub emission: Vec3,
+    pub emission: Vec3A,
 }
 
 macro_rules! impl_from_geometry {
@@ -49,17 +49,17 @@ impl From<Geometry> for LightGeometry {
 }
 
 impl Light {
-    pub fn new(geometry: LightGeometry, emission: Vec3) -> Light {
+    pub fn new(geometry: LightGeometry, emission: Vec3A) -> Light {
         Light { geometry, emission }
     }
-    pub fn pdf_value(&self, origin: Vec3, direction: Vec3) -> f32 {
+    pub fn pdf_value(&self, origin: Vec3A, direction: Vec3A) -> f32 {
         match &self.geometry {
             LightGeometry::Plane(p) => p.pdf_value(origin, direction),
             LightGeometry::Sphere(s) => s.pdf_value(origin, direction),
         }
     }
 
-    pub fn pdf_random(&self, origin: Vec3, rng: &mut ThreadRng) -> Vec3 {
+    pub fn pdf_random(&self, origin: Vec3A, rng: &mut ThreadRng) -> Vec3A {
         match &self.geometry {
             LightGeometry::Plane(p) => p.pdf_random(origin, rng),
             LightGeometry::Sphere(s) => s.pdf_random(origin, rng),

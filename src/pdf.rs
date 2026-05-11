@@ -1,6 +1,6 @@
 use std::f32::consts::PI;
 
-use glam::Vec3;
+use glam::Vec3A;
 use rand::rngs::ThreadRng;
 use rand::RngExt;
 
@@ -31,13 +31,13 @@ pub fn power_heuristic(f_pdf: f32, g_pdf: f32) -> f32 {
 
 pub enum MaterialPDF {
     Cosine { uvw: OrthonormalBasis },
-    GGX { wi: Vec3, normal: Vec3, alpha: f32 },
-    Importance { origin: Vec3, geometry: Geometry },
+    GGX { wi: Vec3A, normal: Vec3A, alpha: f32 },
+    Importance { origin: Vec3A, geometry: Geometry },
     Uniform,
 }
 
 impl MaterialPDF {
-    pub fn value(&self, direction: Vec3) -> f32 {
+    pub fn value(&self, direction: Vec3A) -> f32 {
         match self {
             MaterialPDF::Cosine { uvw } => {
                 let cosine = direction.dot(uvw.w());
@@ -61,7 +61,7 @@ impl MaterialPDF {
         }
     }
 
-    pub fn generate(&self, rng: &mut ThreadRng) -> Vec3 {
+    pub fn generate(&self, rng: &mut ThreadRng) -> Vec3A {
         match self {
             MaterialPDF::Cosine { uvw } => {
                 uvw.local(&cosine_sample_hemisphere(rng))
@@ -90,11 +90,11 @@ impl<'a> HybridPDF<'a> {
         HybridPDF { material_pdf, importance_pdf }
     }
 
-    pub fn value(&self, direction: Vec3) -> f32 {
+    pub fn value(&self, direction: Vec3A) -> f32 {
         0.5 * self.material_pdf.value(direction) + 0.5 * self.importance_pdf.value(direction)
     }
 
-    pub fn generate(&self, rng: &mut ThreadRng) -> Vec3 {
+    pub fn generate(&self, rng: &mut ThreadRng) -> Vec3A {
         if rng.random::<f32>() < 0.5 {
             self.material_pdf.generate(rng)
         } else {

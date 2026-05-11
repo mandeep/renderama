@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use glam::Vec3;
+use glam::Vec3A;
 
 /// Convert a Duration to a String formatted as HH:MM:SS
 pub fn format_time(instant: Duration) -> String {
@@ -36,8 +36,8 @@ pub fn gamma_correct(luminance: f32, gamma: f32) -> f32 {
 }
 
 /// Check if a computed color contains any NaNs
-pub fn de_nan(color: &Vec3) -> Vec3 {
-    let mut correction = Vec3::new(color.x, color.y, color.z);
+pub fn de_nan(color: &Vec3A) -> Vec3A {
+    let mut correction = Vec3A::new(color.x, color.y, color.z);
     if correction.x.is_nan() {
         correction.x= 0.0;
     }

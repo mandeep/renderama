@@ -1,6 +1,6 @@
 use rand::rngs::ThreadRng;
 
-use glam::Vec3;
+use glam::Vec3A;
 
 use aabb::AABB;
 use events::HitEvent;
@@ -60,7 +60,7 @@ impl Geometry {
         }
     }
 
-    pub fn pdf_value(&self, origin: Vec3, direction: Vec3) -> f32 {
+    pub fn pdf_value(&self, origin: Vec3A, direction: Vec3A) -> f32 {
         match self {
             Geometry::Plane(p) => p.pdf_value(origin, direction),
             Geometry::Sphere(s) => s.pdf_value(origin, direction),
@@ -68,11 +68,11 @@ impl Geometry {
         }
     }
 
-    pub fn pdf_random(&self, origin: Vec3, rng: &mut ThreadRng) -> Vec3 {
+    pub fn pdf_random(&self, origin: Vec3A, rng: &mut ThreadRng) -> Vec3A {
         match self {
             Geometry::Plane(p) => p.pdf_random(origin, rng),
             Geometry::Sphere(s) => s.pdf_random(origin, rng),
-            _ => Vec3::new(1.0, 0.0, 0.0)
+            _ => Vec3A::new(1.0, 0.0, 0.0)
         }
     }
 

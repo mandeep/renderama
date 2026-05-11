@@ -1,7 +1,7 @@
 use std::f32::consts::PI;
 use std::sync::Arc;
 
-use glam::Vec3;
+use glam::Vec3A;
 use rand::RngExt;
 use rand::rngs::ThreadRng;
 
@@ -79,14 +79,14 @@ impl Material {
         }
     }
 
-    pub fn emitted(&self, ray: &Ray, hit: &HitEvent) -> Vec3 {
+    pub fn emitted(&self, ray: &Ray, hit: &HitEvent) -> Vec3A {
         match self {
             Material::Emissive(m) => m.emitted(ray, hit),
             Material::Diffuse(_)
             | Material::Isotropic(_)
             | Material::Plastic(_)
             | Material::Reflective(_)
-            | Material::Refractive(_) => Vec3::ZERO,
+            | Material::Refractive(_) => Vec3A::ZERO,
         }
     }
 
@@ -121,7 +121,7 @@ pub struct Diffuse {
 impl Diffuse {
     /// Create a new Diffuse material with the given albedo and sigma (roughness)
     ///
-    /// albedo is a Vec3 of the RGB values assigned to the material
+    /// albedo is a Vec3A of the RGB values assigned to the material
     /// where each value is a float between 0.0 and 1.0.
     pub fn new(albedo: Texture, sigma: f32) -> Diffuse {
         let albedo = Arc::new(albedo);
@@ -176,7 +176,7 @@ impl Diffuse {
 ///
 /// For derivation see Section 10.4.2 in Mathematical and Computer Programming
 /// Techniques for Computer Graphics by Peter Comininos.
-fn reflect(incident: Vec3, normal: Vec3) -> Vec3 {
+fn reflect(incident: Vec3A, normal: Vec3A) -> Vec3A {
     incident - 2.0 * incident.dot(normal) * normal
 }
 
@@ -187,7 +187,7 @@ fn reflect(incident: Vec3, normal: Vec3) -> Vec3 {
 ///
 /// For derivation see Section 10.4.3 in Mathematical and Computer Programming
 /// Techniques for Computer Graphics by Peter Comininos.
-fn refract(v: Vec3, n: Vec3, refractive_index: f32) -> Option<Vec3> {
+fn refract(v: Vec3A, n: Vec3A, refractive_index: f32) -> Option<Vec3A> {
     let direction: f32 = v.dot(n);
     let discriminant: f32 =
         1.0 - refractive_index * refractive_index * (1.0 - direction * direction);
@@ -242,18 +242,18 @@ fn fresnel_coefficient(cos_theta_i: f32, eta_i: f32, eta_t: f32) -> f32 {
 
 #[derive(Clone)]
 pub struct Reflective {
-    pub albedo: Vec3,
+    pub albedo: Vec3A,
     pub fuzz: f32,
 }
 
 impl Reflective {
     /// Create a new Reflective material for objects that reflect light only
     ///
-    /// albedo is a Vec3 of the RGB values assigned to the material
+    /// albedo is a Vec3A of the RGB values assigned to the material
     /// where each value is a float between 0.0 and 1.0. fuzz accounts
     /// for the fuzziness of the reflections due to the size of the sphere.
     /// Generally, the larger the sphere, the fuzzier the reflections will be.
-    pub fn new(albedo: Vec3, fuzz: f32) -> Reflective {
+    pub fn new(albedo: Vec3A, fuzz: f32) -> Reflective {
         Reflective { albedo, fuzz }
     }
 }
@@ -318,18 +318,18 @@ impl Reflective {
 #[derive(Clone)]
 pub struct Refractive {
     pub refractive_index: f32,
-    pub absorption: Vec3,
+    pub absorption: Vec3A,
 }
 
 impl Refractive {
     /// Create a new Refractive material for objects that both reflect and transmit light
     ///
-    /// albedo is a Vec3 of the RGB values assigned to the material
+    /// albedo is a Vec3A of the RGB values assigned to the material
     /// where each value is a float between 0.0 and 1.0. index determines
     /// how much of the light is refracted when entering the material.
     /// fuzz accounts for the fuzziness of the reflections due to the size of the sphere.
     /// Generally, the larger the sphere, the fuzzier the reflections will be.
-    pub fn new(index: f32, albedo: Vec3) -> Refractive {
+    pub fn new(index: f32, albedo: Vec3A) -> Refractive {
         Refractive { refractive_index: index, absorption: albedo }
     }
 
@@ -380,7 +380,7 @@ impl Refractive {
         };
 
         let attenuation = if entering {
-            Vec3::ONE
+            Vec3A::ONE
         } else {
             self.absorption
         };
@@ -388,7 +388,7 @@ impl Refractive {
         let pdf = MaterialPDF::Cosine { uvw: OrthonormalBasis::new(&event.shading_normal) };
 
         if rng.random::<f32>() < reflect_probability {
-            let reflected: Vec3 = reflect(ray.direction, shading_normal);
+            let reflected: Vec3A = reflect(ray.direction, shading_normal);
             let offset_point = find_offset_point(event.point, forward_geometric_normal);
             let specular_ray = Ray::new(offset_point, reflected);
             Some(ScatterEvent::new(specular_ray, attenuation, pdf, true))
@@ -415,11 +415,11 @@ impl Emissive {
         None
     }
 
-    fn emitted(&self, ray: &Ray, hit: &HitEvent) -> Vec3 {
+    fn emitted(&self, ray: &Ray, hit: &HitEvent) -> Vec3A {
         if hit.shading_normal.dot(ray.direction) < 0.0 {
             self.emit.value(hit.u, hit.v, &hit.point)
         } else {
-            Vec3::ZERO
+            Vec3A::ZERO
         }
     }
 }
@@ -488,7 +488,7 @@ impl Plastic {
             let specular_ray = Ray::new(offset_point, reflected);
             let pdf = MaterialPDF::GGX { wi: -ray.direction, normal: shading_normal, alpha };
 
-            Some(ScatterEvent::new(specular_ray, Vec3::ONE, pdf, true))
+            Some(ScatterEvent::new(specular_ray, Vec3A::ONE, pdf, true))
         } else {
             // Diffuse path
             // even though ray.direction is given, a new ray with offset is generated in the integrator
