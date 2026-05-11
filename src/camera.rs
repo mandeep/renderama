@@ -2,7 +2,6 @@ use std::f32::consts::PI;
 
 use glam::Vec3;
 use rand::rngs::ThreadRng;
-use rand::RngExt;
 
 use integrator::pick_sphere_point;
 use ray::Ray;
@@ -16,8 +15,6 @@ pub struct Camera {
     v: Vec3,
     w: Vec3,
     pub lens_radius: f32,
-    pub start_time: f32,
-    pub end_time: f32,
 }
 
 impl Camera {
@@ -37,8 +34,6 @@ impl Camera {
                aspect: f32,
                aperture: f32,
                focus_distance: f32,
-               start_time: f32,
-               end_time: f32
               )
                -> Camera {
         let lens_radius: f32 = aperture / 2.0;
@@ -65,20 +60,16 @@ impl Camera {
                  u,
                  v,
                  w,
-                 lens_radius,
-                 start_time,
-                 end_time }
+                 lens_radius
+                }
     }
 
     /// Get the ray that is coming from the camera into the world
     pub fn get_ray(&self, s: f32, t: f32, rng: &mut ThreadRng) -> Ray {
         let radius: Vec3 = self.lens_radius * pick_sphere_point(rng);
         let offset: Vec3 = self.u * radius.x + self.v * radius.y;
-        let time = self.start_time + rng.random::<f32>() * (self.end_time - self.start_time);
         Ray::new(self.origin + offset,
-                 self.lower_left_corner + s * self.horizontal + t * self.vertical
-                 - self.origin
-                 - offset,
-                 time)
+                 self.lower_left_corner + s * self.horizontal + t * self.vertical - self.origin - offset,
+                 )
     }
 }

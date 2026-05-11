@@ -76,9 +76,9 @@ fn build_tree(world: &mut Vec<Geometry>, start_time: f32, end_time: f32) -> Tree
     let n = world.len();
 
     // compute the bounding box that contains all of the objects in the world and their bounding boxes
-    let mut main_box = world[0].bounding_box(start_time, end_time).unwrap();
+    let mut main_box = world[0].bounding_box().unwrap();
     for i in 1..n {
-        let new_box = world[i].bounding_box(start_time, end_time).unwrap();
+        let new_box = world[i].bounding_box().unwrap();
         main_box = main_box.surrounding_box(&new_box);
     }
 
@@ -90,8 +90,8 @@ fn build_tree(world: &mut Vec<Geometry>, start_time: f32, end_time: f32) -> Tree
     }
 
     if n == 2 {
-        let left_box = world[0].bounding_box(start_time, end_time).unwrap();
-        let right_box = world[1].bounding_box(start_time, end_time).unwrap();
+        let left_box = world[0].bounding_box().unwrap();
+        let right_box = world[1].bounding_box().unwrap();
         return TreeNode::Internal {
             bbox: main_box,
             left: Box::new(TreeNode::Leaf { bbox: left_box, geometry: world[0].clone() }),
@@ -104,8 +104,8 @@ fn build_tree(world: &mut Vec<Geometry>, start_time: f32, end_time: f32) -> Tree
     if n <= 4 {
         let axis = main_box.longest_axis();
         world.sort_by(|a, b| {
-            let centroid_a = centroid(a, axis, start_time, end_time);
-            let centroid_b = centroid(b, axis, start_time, end_time);
+            let centroid_a = centroid(a, axis);
+            let centroid_b = centroid(b, axis);
             centroid_a.partial_cmp(&centroid_b).unwrap()
         });
 
@@ -125,7 +125,7 @@ fn build_tree(world: &mut Vec<Geometry>, start_time: f32, end_time: f32) -> Tree
     // SAH binned split begins here
     // Compute the centroid of each bounding box
     let centroids: Vec<Vec3> = world.iter().map(|hit| {
-        let bbox = hit.bounding_box(start_time, end_time).unwrap();
+        let bbox = hit.bounding_box().unwrap();
         (bbox.minimum + bbox.maximum) * 0.5
     }).collect();
 
@@ -165,7 +165,7 @@ fn build_tree(world: &mut Vec<Geometry>, start_time: f32, end_time: f32) -> Tree
             // Update the bucket count for the bin and expand the bucket's bounding box
             // to include this object
             bucket_counts[bucket] += 1;
-            let obj_box = world[i].bounding_box(start_time, end_time).unwrap();
+            let obj_box = world[i].bounding_box().unwrap();
             bucket_boxes[bucket] = Some(match &bucket_boxes[bucket] {
                 Some(existing) => existing.surrounding_box(&obj_box),
                 None => obj_box,
@@ -239,8 +239,8 @@ fn build_tree(world: &mut Vec<Geometry>, start_time: f32, end_time: f32) -> Tree
 
     if left_items.is_empty() || right_items.is_empty() {
         world.sort_by(|a, b| {
-            let centroid_a = centroid(a, best_axis, start_time, end_time);
-            let centroid_b = centroid(b, best_axis, start_time, end_time);
+            let centroid_a = centroid(a, best_axis);
+            let centroid_b = centroid(b, best_axis);
             centroid_a.partial_cmp(&centroid_b).unwrap()
         });
         let mut right_objects = world.split_off(n / 2);
@@ -342,8 +342,8 @@ fn axis_value(vector: Vec3, axis: usize) -> f32 {
 
 /// Compute the centroid of an object's bounding box along the given axis
 /// Used for sorting in small lists
-fn centroid(hit: &Geometry, axis: usize, t0: f32, t1: f32) -> f32 {
-    let bbox = hit.bounding_box(t0, t1).unwrap();
+fn centroid(hit: &Geometry, axis: usize) -> f32 {
+    let bbox = hit.bounding_box().unwrap();
     axis_value((bbox.minimum + bbox.maximum) * 0.5, axis)
 }
 

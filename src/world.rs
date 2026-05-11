@@ -54,14 +54,14 @@ impl World {
         if hit_anything { Some(event) } else { None }
     }
 
-    fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB> {
+    fn bounding_box(&self) -> Option<AABB> {
         if self.objects.is_empty() {
             return None;
         }
 
-        let mut accumulated_box = self.objects.first().unwrap().bounding_box(t0, t1)?;
+        let mut accumulated_box = self.objects.first().unwrap().bounding_box()?;
         for object in self.objects.iter().skip(1) {
-            let new_box = object.bounding_box(t0, t1)?;
+            let new_box = object.bounding_box()?;
             accumulated_box = accumulated_box.surrounding_box(&new_box);
         }
         Some(accumulated_box)

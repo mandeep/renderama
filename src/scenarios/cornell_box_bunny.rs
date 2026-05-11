@@ -24,12 +24,9 @@ pub fn cornell_box_bunny_scene(width: usize, height: usize) -> Scene {
     let aspect_ratio = (width / height) as f32;
     let aperture = 0.0;
     let focus_distance = 10.0;
-    let time0 = 0.0;
-    let time1 = 1.0;
 
     let camera = Camera::new(origin, lookat, view, fov, aspect_ratio,
-                             aperture, focus_distance,
-                             time0, time1);
+                             aperture, focus_distance);
 
     let mut world = World::new();
     let mut materials: Vec<Material> = Vec::new();

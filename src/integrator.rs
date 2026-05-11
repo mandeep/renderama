@@ -68,7 +68,7 @@ pub fn render_path_integrator(mut ray: Ray, scene: &Scene, bounces: u32, rng: &m
                         -hit_event.geometric_normal
                     };
                     let offset_point = find_offset_point(hit_event.point, offset_normal);
-                    let scattered = Ray::new(offset_point, scattered_direction, ray.time);
+                    let scattered = Ray::new(offset_point, scattered_direction);
                     let pdf_value = hybrid_pdf.value(scattered.direction);
                     let scattering_pdf = material.scattering_pdf(&ray, &hit_event, &scattered);
 
@@ -160,7 +160,7 @@ pub fn render_nee_integrator(mut ray: Ray, scene: &Scene, bounces: u32, rng: &mu
                         let light_distance = light_direction_vector.length();
                         let light_direction = light_direction_vector.normalize();
 
-                        let shadow_ray = Ray::new(shadow_origin, light_direction, ray.time);
+                        let shadow_ray = Ray::new(shadow_origin, light_direction);
                         let t_max = light_source.occlusion_t_max(light_distance);
 
                         if !scene.accelerator.any_hit(&shadow_ray, 1e-3, t_max) {
@@ -182,7 +182,7 @@ pub fn render_nee_integrator(mut ray: Ray, scene: &Scene, bounces: u32, rng: &mu
                             let env_pdf = env.env_pdf_value(&env_dir).unwrap_or(0.0);
                             if env_pdf > 1e-7 {
                                 let shadow_origin = hit_event.point + hit_event.geometric_normal * 1e-3;
-                                let env_shadow_ray = Ray::new(shadow_origin, env_dir, ray.time);
+                                let env_shadow_ray = Ray::new(shadow_origin, env_dir);
                                 if scene.accelerator.hit(&env_shadow_ray, 1e-3, f32::MAX).is_none() {
                                     let env_value = env.value(0.0, 0.0, &env_dir);
                                     let material_pdf = scatter_event.pdf.value(env_dir);
@@ -201,7 +201,7 @@ pub fn render_nee_integrator(mut ray: Ray, scene: &Scene, bounces: u32, rng: &mu
                     if material_pdf <= 0.0 { break; }
 
                     let offset_point = find_offset_point(hit_event.point, hit_event.geometric_normal);
-                    let scattered_ray = Ray::new(offset_point, scattered_direction, ray.time);
+                    let scattered_ray = Ray::new(offset_point, scattered_direction);
                     let scattering_pdf = material.scattering_pdf(&ray, &hit_event, &scattered_ray);
 
                     throughput *= (scattering_pdf * scatter_event.attenuation) / material_pdf;

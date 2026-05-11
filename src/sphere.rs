@@ -20,12 +20,9 @@ fn get_sphere_uv(p: &Vec3) -> (f32, f32) {
 
 #[derive(Clone)]
 pub struct Sphere {
-    pub start_center: Vec3,
-    pub end_center: Vec3,
+    pub center: Vec3,
     pub radius: f32,
     pub material_id: MaterialId,
-    pub start_time: f32,
-    pub end_time: f32,
 }
 
 impl Sphere {
@@ -34,26 +31,9 @@ impl Sphere {
     /// We use the 'static lifetime so that we can create a Arc material
     /// within the function rather than having to pass a Arc material
     /// as an input parameter.
-    pub fn new(start_center: Vec3,
-                                      end_center: Vec3,
-                                      radius: f32,
-                                      material_id: MaterialId,
-                                      start_time: f32,
-                                      end_time: f32)
-                                      -> Sphere {
+    pub fn new(center: Vec3, radius: f32, material_id: MaterialId) -> Sphere {
 
-        Sphere { start_center,
-                 end_center,
-                 radius,
-                 material_id,
-                 start_time,
-                 end_time }
-    }
-
-    pub fn center(&self, time: f32) -> Vec3 {
-        self.start_center
-        + ((time - self.start_time) / (self.end_time - self.start_time))
-          * (self.end_center - self.start_center)
+        Sphere { center, radius, material_id }
     }
 
     /// Determine if the given ray intersects with a point on the sphere
@@ -63,7 +43,7 @@ impl Sphere {
     /// a hit at the boundary of the sphere, and two real roots signify a
     /// ray hitting one point on the sphere and leaving through another point.
     pub fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitEvent> {
-        let sphere_center: Vec3 = ray.origin - self.center(ray.time);
+        let sphere_center: Vec3 = ray.origin - self.center;
         let a: f32 = ray.direction.dot(ray.direction);
         let b: f32 = sphere_center.dot(ray.direction);
         let c: f32 = sphere_center.dot(sphere_center) - (self.radius * self.radius);
@@ -84,19 +64,19 @@ impl Sphere {
             };
 
             let point = ray.point_at_parameter(root);
-            let normal = (point - self.center(ray.time)) / self.radius;
+            let normal = (point - self.center) / self.radius;
             let (u, v) = get_sphere_uv(&normal);
             return Some(HitEvent::new(root, u, v, point, normal, normal, self.material_id));
         }
         None
     }
 
-    pub fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB> {
+    pub fn bounding_box(&self) -> Option<AABB> {
         let radius = Vec3::new(self.radius, self.radius, self.radius);
-        let min0 = self.center(t0) - radius;
-        let max0 = self.center(t0) + radius;
-        let min1 = self.center(t1) - radius;
-        let max1 = self.center(t1) + radius;
+        let min0 = self.center - radius;
+        let max0 = self.center + radius;
+        let min1 = self.center - radius;
+        let max1 = self.center + radius;
 
         let small = AABB::from(min0, max0);
         let big = AABB::from(min1, max1);
@@ -105,7 +85,7 @@ impl Sphere {
     }
 
     pub fn pdf_value(&self, origin: Vec3, direction: Vec3) -> f32 {
-        let center = self.center(0.0);
+        let center = self.center;
         let to_center = center - origin;
         let distance_squared = to_center.length_squared();
 
@@ -140,7 +120,7 @@ impl Sphere {
     }
 
     pub fn pdf_random(&self, origin: Vec3, rng: &mut ThreadRng) -> Vec3 {
-        let center = self.center(0.0);
+        let center = self.center;
         let to_center = center - origin;
         let distance_squared = to_center.length_squared();
 

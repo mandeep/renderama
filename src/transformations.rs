@@ -82,7 +82,7 @@ impl TransformedMesh {
         let inv = forward.inverse();
         
         // Compute world-space bounding box by transforming local bbox corners.
-        let local_bbox = geometry.bounding_box(0.0, 1.0).unwrap();
+        let local_bbox = geometry.bounding_box().unwrap();
         let bbox = transform_aabb(&local_bbox, &forward);
 
         let geometry = Box::new(geometry);
@@ -112,7 +112,7 @@ impl TransformedMesh {
         let local_t_min = t_min * local_dir_length;
         let local_t_max = t_max * local_dir_length;
         
-        let local_ray = Ray::new(local_origin, local_direction_normalized, ray.time);
+        let local_ray = Ray::new(local_origin, local_direction_normalized);
         
         if let Some(mut hit) = self.geometry.hit(&local_ray, local_t_min, local_t_max) {
             // Transform hit point back to world space.
@@ -131,7 +131,7 @@ impl TransformedMesh {
         }
     }
     
-    pub fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
+    pub fn bounding_box(&self) -> Option<AABB> {
         Some(self.bbox)
     }
 }

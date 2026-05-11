@@ -6,14 +6,13 @@ use nalgebra::Vector3;
 pub struct Ray {
     pub origin: Vec3,
     pub direction: Vec3,
-    pub time: f32,
     pub inverse_direction: Vec3,
 }
 
 impl Ray {
     /// Create a new Ray with origin at `a` and direction towards `b`
-    pub fn new(origin: Vec3, direction: Vec3, time: f32) -> Ray {
-        Ray { origin, direction: direction.normalize(), time, inverse_direction: direction.recip() }
+    pub fn new(origin: Vec3, direction: Vec3) -> Ray {
+        Ray { origin, direction: direction.normalize(), inverse_direction: direction.recip() }
     }
 
     /// Find the point on the ray given the parameter of the direction vector
@@ -23,6 +22,9 @@ impl Ray {
 }
 
 /// Find the offset ray given the ray origin and geometric normal of the shape
+/// 
+/// This particular function discovers the closest point to the hit point that
+/// will result in no self-intersection.
 ///
 /// Reference:
 /// Carsten Wächter, Nikolaus Binder

@@ -29,11 +29,9 @@ pub fn veach_mis_scene(width: usize, height: usize) -> Scene {
     let aspect_ratio = width as f32 / height as f32;
     let aperture = 0.0;
     let focus_distance = 10.0;
-    let start_time = 0.0;
-    let end_time = 1.0;
 
     let camera = Camera::new(origin, lookat, view, fov, aspect_ratio,
-        aperture, focus_distance, start_time, end_time);
+        aperture, focus_distance);
 
     let mut world = World::new();
     let mut materials: Vec<Material> = Vec::new();
@@ -107,8 +105,7 @@ pub fn veach_mis_scene(width: usize, height: usize) -> Scene {
         let mat = mat!(materials, Emissive::new(SolidColor::new(intensity, intensity, intensity).into()));
         world.add(Sphere::new(
             Vec3::new(x, light_y, light_z),
-            Vec3::new(x, light_y, light_z),
-            r, mat, 0.0, 1.0,
+            r, mat,
         ).into());
     }
 
@@ -138,7 +135,7 @@ pub fn veach_mis_scene(width: usize, height: usize) -> Scene {
 
     let mut light_sources: Vec<Light> = sphere_lights.iter().map(|&(x, r, intensity)| {
         Light::new(
-            Sphere::new(Vec3::new(x, light_y, light_z), Vec3::new(x, light_y, light_z), r, grey, 0.0, 1.0).into(),
+            Sphere::new(Vec3::new(x, light_y, light_z), r, grey).into(),
             Vec3::splat(intensity),
         )
     }).collect();

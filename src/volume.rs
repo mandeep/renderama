@@ -59,7 +59,7 @@ impl Volume {
         None
     }
 
-    pub fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB> {
-        self.boundary.bounding_box(t0, t1)
+    pub fn bounding_box(&self) -> Option<AABB> {
+        self.boundary.bounding_box()
     }
 }
