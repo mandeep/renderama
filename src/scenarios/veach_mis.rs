@@ -69,8 +69,8 @@ pub fn veach_mis_scene(width: Option<usize>, height: Option<usize>) -> Scene {
 
         let mat_id = mat!(materials, Reflective::new(silver, fuzz));
         let rot = Vec3A::new(tilt_deg, 0.0, 0.0);
-        let base = Rectangle::new(Vec3A::new(-2.0, 0.1, -visual_length / 2.0),
-            Vec3A::new(2.0, 0.125, visual_length / 2.0), mat_id)
+        let base = Rectangle::new(Vec3A::new(-2.25, 0.1, -visual_length / 2.0),
+            Vec3A::new(2.25, 0.125, visual_length / 2.0), mat_id)
             .into();
 
         world.add(TransformedMesh::new(center_pos, rot, 1.0, base).into());
