@@ -8,5 +8,7 @@
 # Omit OptiPNG backup files
 *.bak
 
+# ignore render artifacts and clean up scripts
 denoised_render_*.exr
 render_*.exr
+*.sh
