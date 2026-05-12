@@ -5,8 +5,8 @@ use pdf::MaterialPDF;
 use ray::Ray;
 
 
-/// HitEvent contains the elements necessary to render geometry
-/// once a ray has hit that geometry.
+/// HitEvent contains the elements necessary to render primitives
+/// once a ray has hit that primitive.
 pub struct HitEvent {
     pub parameter: f32,
     pub u: f32,
@@ -18,7 +18,7 @@ pub struct HitEvent {
 }
 
 impl HitEvent {
-    /// Create a new HitEvent for a given ray-geometry intersection.
+    /// Create a new HitEvent for a given ray-primitive intersection.
     pub fn new(parameter: f32,
                u: f32,
                v: f32,

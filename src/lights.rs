@@ -1,84 +1,84 @@
 use glam::Vec3A;
 use rand::rngs::ThreadRng;
 
-use geometry::Geometry;
+use primitive::Primitive;
 use plane::Plane;
 use sphere::Sphere;
 
 #[derive(Clone)]
-pub enum LightGeometry {
+pub enum LightPrimitive {
     Plane(Plane),
     Sphere(Sphere),
 }
 
 #[derive(Clone)]
 pub struct Light {
-    pub geometry: LightGeometry,
+    pub primitive: LightPrimitive,
     pub emission: Vec3A,
 }
 
-macro_rules! impl_from_geometry {
+macro_rules! impl_from_primitive {
     ($($t:ty => $v:ident),*) => {
         $(
-            impl From<$t> for LightGeometry {
+            impl From<$t> for LightPrimitive {
                 fn from(m: $t) -> Self {
-                    LightGeometry::$v(m)
+                    LightPrimitive::$v(m)
                 }
             }
         )*
     };
 }
 
-impl_from_geometry!(
+impl_from_primitive!(
     Plane => Plane,
     Sphere => Sphere
 );
 
-impl From<Geometry> for LightGeometry {
-    fn from(geom: Geometry) -> Self {
+impl From<Primitive> for LightPrimitive {
+    fn from(geom: Primitive) -> Self {
         match geom {
-            Geometry::Plane(p) => LightGeometry::Plane(p),
-            Geometry::Sphere(s) => LightGeometry::Sphere(s),
-            Geometry::ReverseOrientation(inner) => {
-                // convert a ReverseOrientation Geometry type back into a Plane
+            Primitive::Plane(p) => LightPrimitive::Plane(p),
+            Primitive::Sphere(s) => LightPrimitive::Sphere(s),
+            Primitive::ReverseOrientation(inner) => {
+                // convert a ReverseOrientation Primitive type back into a Plane
                 Self::from(*inner)
             },
-            _ => panic!("This geometry type cannot be used as a light source!"),
+            _ => panic!("This primitive type cannot be used as a light source!"),
         }
     }
 }
 
 impl Light {
-    pub fn new(geometry: LightGeometry, emission: Vec3A) -> Light {
-        Light { geometry, emission }
+    pub fn new(primitive: LightPrimitive, emission: Vec3A) -> Light {
+        Light { primitive, emission }
     }
     pub fn evaluate_sampling_weight(&self, origin: Vec3A, direction: Vec3A) -> f32 {
-        match &self.geometry {
-            LightGeometry::Plane(p) => p.evaluate_sampling_weight(origin, direction),
-            LightGeometry::Sphere(s) => s.evaluate_sampling_weight(origin, direction),
+        match &self.primitive {
+            LightPrimitive::Plane(p) => p.evaluate_sampling_weight(origin, direction),
+            LightPrimitive::Sphere(s) => s.evaluate_sampling_weight(origin, direction),
         }
     }
 
     pub fn sample_direction_to_light(&self, origin: Vec3A, rng: &mut ThreadRng) -> Vec3A {
-        match &self.geometry {
-            LightGeometry::Plane(p) => p.sample_direction_to_light(origin, rng),
-            LightGeometry::Sphere(s) => s.sample_direction_to_light(origin, rng),
+        match &self.primitive {
+            LightPrimitive::Plane(p) => p.sample_direction_to_light(origin, rng),
+            LightPrimitive::Sphere(s) => s.sample_direction_to_light(origin, rng),
         }
     }
 
     /// Upper bound on `t` for a shadow ray occlusion test that excludes the light surface itself.
     /// `light_distance` must be measured from the same origin as the shadow ray.
     pub fn calculate_distance_from(&self, light_distance: f32) -> f32 {
-        match &self.geometry {
-            LightGeometry::Plane(_) => light_distance - 1e-3,
-            LightGeometry::Sphere(s) => light_distance - s.radius.abs() - 1e-3,
+        match &self.primitive {
+            LightPrimitive::Plane(_) => light_distance - 1e-3,
+            LightPrimitive::Sphere(s) => light_distance - s.radius.abs() - 1e-3,
         }
     }
 
-    pub fn to_geometry(&self) -> Geometry {
-        match &self.geometry {
-            LightGeometry::Plane(p) => Geometry::Plane(p.clone()),
-            LightGeometry::Sphere(s) => Geometry::Sphere(s.clone()),
+    pub fn to_primitive(&self) -> Primitive {
+        match &self.primitive {
+            LightPrimitive::Plane(p) => Primitive::Plane(p.clone()),
+            LightPrimitive::Sphere(s) => Primitive::Sphere(s.clone()),
         }
     }
 }

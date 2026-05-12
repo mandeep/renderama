@@ -6,7 +6,7 @@ use rand::RngExt;
 
 use aabb::AABB;
 use events::HitEvent;
-use geometry::Geometry;
+use primitive::Primitive;
 use materials::MaterialId;
 use ray::Ray;
 
@@ -73,15 +73,15 @@ impl Plane {
         Plane { axis, bounds, offset, material_id }
     }
 
-    /// Convert the Plane into a Geometry for when adding to accelerators
-    pub fn into_geometry(self) -> Geometry {
-        Geometry::Plane(self)
+    /// Convert the Plane into a Primitive for when adding to accelerators
+    pub fn into_primitive(self) -> Primitive {
+        Primitive::Plane(self)
     }
 
     /// Convert the Plane into a Plane with its normal flipped so that
     /// the plane can be used in the opposite orientation
-    pub fn into_reversed(self) -> Geometry {
-        Geometry::ReverseOrientation(Box::new(Geometry::Plane(self)))
+    pub fn into_reversed(self) -> Primitive {
+        Primitive::ReverseOrientation(Box::new(Primitive::Plane(self)))
     }
 
     pub fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitEvent> {

@@ -5,7 +5,7 @@ use rand::rngs::ThreadRng;
 use rand::RngExt;
 
 use basis::OrthonormalBasis;
-use geometry::Geometry;
+use primitive::Primitive;
 use ggx::{ggx_distribution, ggx_g1_masking, ggx_sample_vndf};
 use integrator::pick_sphere_point;
 use sampling::cosine_sample_hemisphere;
@@ -32,7 +32,7 @@ pub fn power_heuristic(f_pdf: f32, g_pdf: f32) -> f32 {
 pub enum MaterialPDF {
     Cosine { uvw: OrthonormalBasis },
     GGX { wi: Vec3A, normal: Vec3A, alpha: f32 },
-    Importance { origin: Vec3A, geometry: Geometry },
+    Importance { origin: Vec3A, primitive: Primitive },
     Uniform,
 }
 
@@ -43,8 +43,8 @@ impl MaterialPDF {
                 let cosine = direction.dot(uvw.w());
                 if cosine > 0.0 { cosine / PI } else { 0.0 }
             }
-            MaterialPDF::Importance { origin, geometry } => {
-                geometry.evaluate_sampling_weight(*origin, direction)
+            MaterialPDF::Importance { origin, primitive } => {
+                primitive.evaluate_sampling_weight(*origin, direction)
             }
             MaterialPDF::GGX { wi, normal, alpha } => {
                 let cos_i = normal.dot(*wi);
@@ -66,8 +66,8 @@ impl MaterialPDF {
             MaterialPDF::Cosine { uvw } => {
                 uvw.local(&cosine_sample_hemisphere(rng))
             }
-            MaterialPDF::Importance { origin, geometry } => {
-                geometry.sample_direction_to_light(*origin, rng)
+            MaterialPDF::Importance { origin, primitive } => {
+                primitive.sample_direction_to_light(*origin, rng)
             },
             MaterialPDF::GGX { wi, normal, alpha } => {
                 let h = ggx_sample_vndf(*normal, *wi, *alpha, rng);

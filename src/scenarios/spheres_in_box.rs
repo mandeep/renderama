@@ -4,7 +4,7 @@ use glam::Vec3A;
 
 use bvh::BVH;
 use camera::Camera;
-use geometry::{Geometry};
+use primitive::{Primitive};
 use lights::Light;
 use materials::{Diffuse, Emissive, Isotropic, Reflective, Refractive, Material};
 use plane::{Axis, Bounds2D, Plane};
@@ -54,7 +54,7 @@ pub fn spheres_in_box_scene(width: Option<usize>, height: Option<usize>) -> Scen
         }
     }
 
-    world.add(Geometry::ReverseOrientation(Box::new(Plane::new(Axis::XZ, Bounds2D::new(123.0..423.0, 147.0..412.0), 554.0, big_light).into())));
+    world.add(Primitive::ReverseOrientation(Box::new(Plane::new(Axis::XZ, Bounds2D::new(123.0..423.0, 147.0..412.0), 554.0, big_light).into())));
 
     world.add(Sphere::new(Vec3A::new(400.0, 400.0, 200.0),
                           50.0,
@@ -70,7 +70,7 @@ pub fn spheres_in_box_scene(width: Option<usize>, height: Option<usize>) -> Scen
                           50.0,
                           refl_idx).into());
 
-    let boundary: Geometry = Sphere::new(Vec3A::new(360.0, 150.0, 145.0),
+    let boundary: Primitive = Sphere::new(Vec3A::new(360.0, 150.0, 145.0),
                                70.0,
                                refr_idx).into();
 

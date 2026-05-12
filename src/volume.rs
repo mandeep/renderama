@@ -4,19 +4,19 @@ use glam::Vec3A;
 
 use aabb::AABB;
 use events::HitEvent;
-use geometry::Geometry;
+use primitive::Primitive;
 use materials::MaterialId;
 use ray::Ray;
 
 #[derive(Clone)]
 pub struct Volume {
     density: f32,
-    boundary: Box<Geometry>,
+    boundary: Box<Primitive>,
     material_id: MaterialId,
 }
 
 impl Volume {
-    pub fn new(density: f32, boundary: Geometry, material_id: MaterialId) -> Volume {
+    pub fn new(density: f32, boundary: Primitive, material_id: MaterialId) -> Volume {
         let boundary = Box::new(boundary);
         Volume { density, boundary, material_id }
     }

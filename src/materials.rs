@@ -510,7 +510,7 @@ impl Plastic {
 
         let diffuse_pdf = cos_o / PI;
 
-        let alpha = self.roughness * self.roughness;
+        let alpha = self.roughness;
 
         let specular_pdf = {
             let wi_local = -wo.direction;

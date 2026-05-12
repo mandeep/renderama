@@ -32,13 +32,13 @@ pub fn veach_mis_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let grey = mat!(materials, Diffuse::new(SolidColor::new(0.99, 0.99, 0.99).into(), 0.0));
 
     // floor
-    world.add(Plane::new(Axis::XZ, Bounds2D::new(-20.0..20.0, -5.0..25.0), 0.0, grey).into_geometry());
+    world.add(Plane::new(Axis::XZ, Bounds2D::new(-20.0..20.0, -5.0..25.0), 0.0, grey).into_primitive());
 
     // back wall
     world.add(Plane::new(Axis::XY, Bounds2D::new(-20.0..20.0, 0.0..15.0), 12.0, grey).into_reversed());
 
     // side walls, not sure if they do anything in this scene
-    world.add(Plane::new(Axis::YZ, Bounds2D::new( 0.0..15.0, -5.0..25.0),-20.0, grey).into_geometry());
+    world.add(Plane::new(Axis::YZ, Bounds2D::new( 0.0..15.0, -5.0..25.0),-20.0, grey).into_primitive());
     world.add(Plane::new(Axis::YZ, Bounds2D::new( 0.0..15.0, -5.0..25.0), 20.0, grey).into_reversed());
 
     let silver = Vec3A::new(0.75, 0.75, 0.75);
@@ -107,22 +107,22 @@ pub fn veach_mis_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let fill_color = Vec3A::splat(fill_intensity);
 
     // Left Fill Light (facing right toward the center)
-    let left_light_geometry = Plane::new(
+    let left_light_primitive = Plane::new(
         Axis::YZ, 
         Bounds2D::new(0.0..10.0, -5.0..20.0), 
         -19.5, // Just inside the left wall
         fill_mat
-    ).into_geometry();
-    world.add(left_light_geometry.clone());
+    ).into_primitive();
+    world.add(left_light_primitive.clone());
 
     // Right Fill Light (facing left toward the center)
-    let right_light_geometry = Plane::new(
+    let right_light_primitive = Plane::new(
         Axis::YZ, 
         Bounds2D::new(0.0..10.0, -5.0..20.0), 
         19.5, // Just inside the right wall
         fill_mat
     ).into_reversed(); // Reverse normal to face inward
-    world.add(right_light_geometry.clone());
+    world.add(right_light_primitive.clone());
 
     let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
 
@@ -133,8 +133,8 @@ pub fn veach_mis_scene(width: Option<usize>, height: Option<usize>) -> Scene {
         )
     }).collect();
 
-    light_sources.push(Light::new(left_light_geometry.into(), fill_color));
-    light_sources.push(Light::new(right_light_geometry.into(), fill_color));
+    light_sources.push(Light::new(left_light_primitive.into(), fill_color));
+    light_sources.push(Light::new(right_light_primitive.into(), fill_color));
 
     Scene::new(
         String::from("Veach MIS"),

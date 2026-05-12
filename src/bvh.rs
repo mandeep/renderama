@@ -3,7 +3,7 @@ use wide::f32x4;
 
 use aabb::AABB;
 use events::HitEvent;
-use geometry::Geometry;
+use primitive::Primitive;
 use ray::Ray;
 
 
@@ -32,7 +32,7 @@ struct InternalNode4 {
 #[derive(Clone)]
 struct LeafNode {
     bbox: AABB,
-    geometry: Geometry,  // unboxed is fine here, leaves are rarely touched
+    primitive: Primitive,  // unboxed is fine here, leaves are rarely touched
 }
 
 /// Flattened BVH stored as a Vec, traversed iteratively.
@@ -58,7 +58,7 @@ enum TreeNode {
     },
     Leaf {
         bbox: AABB,
-        geometry: Geometry,
+        primitive: Primitive,
     },
 }
 
@@ -72,7 +72,7 @@ impl TreeNode {
 }
 
 /// Recursively builds a TreeNode using binned SAH.
-fn build_tree(world: &mut Vec<Geometry>, start_time: f32, end_time: f32) -> TreeNode {
+fn build_tree(world: &mut Vec<Primitive>, start_time: f32, end_time: f32) -> TreeNode {
     let n = world.len();
 
     // compute the bounding box that contains all of the objects in the world and their bounding boxes
@@ -85,7 +85,7 @@ fn build_tree(world: &mut Vec<Geometry>, start_time: f32, end_time: f32) -> Tree
     if n == 1 {
         return TreeNode::Leaf {
             bbox: main_box,
-            geometry: world[0].clone(),
+            primitive: world[0].clone(),
         };
     }
 
@@ -94,8 +94,8 @@ fn build_tree(world: &mut Vec<Geometry>, start_time: f32, end_time: f32) -> Tree
         let right_box = world[1].bounding_box().unwrap();
         return TreeNode::Internal {
             bbox: main_box,
-            left: Box::new(TreeNode::Leaf { bbox: left_box, geometry: world[0].clone() }),
-            right: Box::new(TreeNode::Leaf { bbox: right_box, geometry: world[1].clone() }),
+            left: Box::new(TreeNode::Leaf { bbox: left_box, primitive: world[0].clone() }),
+            right: Box::new(TreeNode::Leaf { bbox: right_box, primitive: world[1].clone() }),
         };
     }
 
@@ -298,9 +298,9 @@ fn collect_children(tree: &TreeNode) -> Vec<&TreeNode> {
 /// Flatten the binary tree into InternalNode4 / LeafNode vecs. Returns the index of the root.
 fn flatten4(tree: &TreeNode, internals: &mut Vec<InternalNode4>, leaves: &mut Vec<LeafNode>) -> u32 {
     match tree {
-        TreeNode::Leaf { bbox, geometry } => {
+        TreeNode::Leaf { bbox, primitive } => {
             let index = leaves.len();
-            leaves.push(LeafNode { bbox: *bbox, geometry: geometry.clone() });
+            leaves.push(LeafNode { bbox: *bbox, primitive: primitive.clone() });
             make_leaf_ref(index)
         }
         TreeNode::Internal { .. } => {
@@ -342,13 +342,13 @@ fn axis_value(vector: Vec3A, axis: usize) -> f32 {
 
 /// Compute the centroid of an object's bounding box along the given axis
 /// Used for sorting in small lists
-fn centroid(hit: &Geometry, axis: usize) -> f32 {
+fn centroid(hit: &Primitive, axis: usize) -> f32 {
     let bbox = hit.bounding_box().unwrap();
     axis_value((bbox.minimum + bbox.maximum) * 0.5, axis)
 }
 
 impl BVH {
-    pub fn new(world: &mut Vec<Geometry>, start_time: f32, end_time: f32) -> BVH {
+    pub fn new(world: &mut Vec<Primitive>, start_time: f32, end_time: f32) -> BVH {
         // Build the tree using SAH, then flatten it.
         let tree = build_tree(world, start_time, end_time);
         let bbox = *tree.bbox();
@@ -388,7 +388,7 @@ impl BVH {
             if is_leaf(node_ref) {
                 let leaf = &self.leaves[leaf_index(node_ref)];
                 if leaf.bbox.hit(ray, start_distance, closest_distance) {
-                    if let Some(hit) = leaf.geometry.hit(ray, start_distance, closest_distance) {
+                    if let Some(hit) = leaf.primitive.hit(ray, start_distance, closest_distance) {
                         if hit.parameter < closest_distance {
                             closest_distance = hit.parameter;
                             best_hit = Some(hit);
@@ -470,7 +470,7 @@ impl BVH {
             if is_leaf(node_ref) {
                 let leaf = &self.leaves[leaf_index(node_ref)];
                 if leaf.bbox.hit(ray, start_distance, end_distance) {
-                    if leaf.geometry.hit(ray, start_distance, end_distance).is_some() {
+                    if leaf.primitive.hit(ray, start_distance, end_distance).is_some() {
                         return true;
                     }
                 }

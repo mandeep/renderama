@@ -56,7 +56,7 @@ pub fn render_path_integrator(mut ray: Ray, scene: &Scene, rng: &mut ThreadRng) 
                     let importance_pdf = if number_of_lights > 0 {
                         // sampling towards a random light source is good enough for this integrator
                         let i = (rng.random::<f32>() * number_of_lights as f32) as usize % number_of_lights;
-                        Some(MaterialPDF::Importance { origin: hit_event.point, geometry: scene.lights[i].to_geometry() })
+                        Some(MaterialPDF::Importance { origin: hit_event.point, primitive: scene.lights[i].to_primitive() })
                     } else {
                         None
                     };

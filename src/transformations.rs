@@ -4,7 +4,7 @@ use glam::{Mat4, Vec3A, Vec3};
 
 use aabb::AABB;
 use events::HitEvent;
-use geometry::Geometry;
+use primitive::Primitive;
 use ray::Ray;
 
 /// A mesh with combined translation, rotation (XYZ Euler), and uniform scale,
@@ -22,7 +22,7 @@ pub struct TransformedMesh {
     bbox: AABB,
     /// Uniform scale factor — needed to convert ray parameter t back to world space.
     scale: f32,
-    geometry: Box<Geometry>,
+    primitive: Box<Primitive>,
 }
 
 fn transform_aabb(bbox: &AABB, transform: &Mat4) -> AABB {
@@ -59,7 +59,7 @@ impl TransformedMesh {
         translate: Vec3A,
         rotate_xyz_degrees: Vec3A,
         scale: f32,
-        geometry: Geometry,
+        primitive: Primitive,
     ) -> TransformedMesh {
         // Build the forward transform: local → world.
         // Order: Scale, then Rotate (X then Y then Z), then Translate.
@@ -82,10 +82,10 @@ impl TransformedMesh {
         let inv = forward.inverse();
         
         // Compute world-space bounding box by transforming local bbox corners.
-        let local_bbox = geometry.bounding_box().unwrap();
+        let local_bbox = primitive.bounding_box().unwrap();
         let bbox = transform_aabb(&local_bbox, &forward);
 
-        let geometry = Box::new(geometry);
+        let primitive = Box::new(primitive);
         
         TransformedMesh {
             inv_transform: inv,
@@ -93,7 +93,7 @@ impl TransformedMesh {
             normal_transform: inv.transpose(),
             bbox,
             scale,
-            geometry,
+            primitive,
         }
     }
 
@@ -114,7 +114,7 @@ impl TransformedMesh {
         
         let local_ray = Ray::new(local_origin.into(), local_direction_normalized.into());
         
-        if let Some(mut hit) = self.geometry.hit(&local_ray, local_start_distance, local_end_distance) {
+        if let Some(mut hit) = self.primitive.hit(&local_ray, local_start_distance, local_end_distance) {
             // Transform hit point back to world space.
             hit.point = self.forward_transform.transform_point3(hit.point.into()).into();
             

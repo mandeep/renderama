@@ -14,26 +14,26 @@ use volume::Volume;
 
 
 #[derive(Clone)]
-pub enum Geometry {
+pub enum Primitive {
     Plane(Plane),
     Rectangle(Rectangle),
     Sphere(Sphere),
     Triangle(Triangle),
     TriangleMesh(Box<TriangleMesh>),
-    ReverseOrientation(Box<Geometry>),
+    ReverseOrientation(Box<Primitive>),
     TransformedMesh(Box<TransformedMesh>),
     Volume(Box<Volume>)
 }
 
-impl Geometry {
+impl Primitive {
     pub fn hit(&self, ray: &Ray, start_distance: f32, end_distance: f32) -> Option<HitEvent> {
         match self {
-            Geometry::Plane(p) => p.hit(ray, start_distance, end_distance),
-            Geometry::Rectangle(r) => r.hit(ray, start_distance, end_distance),
-            Geometry::Sphere(s) => s.hit(ray, start_distance, end_distance),
-            Geometry::Triangle(t) => t.hit(ray, start_distance, end_distance),
-            Geometry::TriangleMesh(m) => m.hit(ray, start_distance, end_distance),
-            Geometry::ReverseOrientation(g) => {
+            Primitive::Plane(p) => p.hit(ray, start_distance, end_distance),
+            Primitive::Rectangle(r) => r.hit(ray, start_distance, end_distance),
+            Primitive::Sphere(s) => s.hit(ray, start_distance, end_distance),
+            Primitive::Triangle(t) => t.hit(ray, start_distance, end_distance),
+            Primitive::TriangleMesh(m) => m.hit(ray, start_distance, end_distance),
+            Primitive::ReverseOrientation(g) => {
                 if let Some(mut h) = g.hit(ray, start_distance, end_distance) {
                     h.geometric_normal = -h.geometric_normal;
                     h.shading_normal = -h.shading_normal;
@@ -42,79 +42,79 @@ impl Geometry {
                     None
                 }
             },
-            Geometry::TransformedMesh(m) => m.hit(ray, start_distance, end_distance),
-            Geometry::Volume(v) => v.hit(ray, start_distance, end_distance)
+            Primitive::TransformedMesh(m) => m.hit(ray, start_distance, end_distance),
+            Primitive::Volume(v) => v.hit(ray, start_distance, end_distance)
         }
     }
 
     pub fn bounding_box(&self) -> Option<AABB> {
         match self {
-            Geometry::Plane(p) => p.bounding_box(),
-            Geometry::Rectangle(p) => p.bounding_box(),
-            Geometry::Sphere(s) => s.bounding_box(),
-            Geometry::Triangle(t) => t.bounding_box(),
-            Geometry::TriangleMesh(m) => m.bounding_box(),
-            Geometry::ReverseOrientation(g) => g.bounding_box(),
-            Geometry::TransformedMesh(g) => g.bounding_box(),
-            Geometry::Volume(v) => v.bounding_box(),
+            Primitive::Plane(p) => p.bounding_box(),
+            Primitive::Rectangle(p) => p.bounding_box(),
+            Primitive::Sphere(s) => s.bounding_box(),
+            Primitive::Triangle(t) => t.bounding_box(),
+            Primitive::TriangleMesh(m) => m.bounding_box(),
+            Primitive::ReverseOrientation(g) => g.bounding_box(),
+            Primitive::TransformedMesh(g) => g.bounding_box(),
+            Primitive::Volume(v) => v.bounding_box(),
         }
     }
 
     pub fn evaluate_sampling_weight(&self, origin: Vec3A, direction: Vec3A) -> f32 {
         match self {
-            Geometry::Plane(p) => p.evaluate_sampling_weight(origin, direction),
-            Geometry::Sphere(s) => s.evaluate_sampling_weight(origin, direction),
+            Primitive::Plane(p) => p.evaluate_sampling_weight(origin, direction),
+            Primitive::Sphere(s) => s.evaluate_sampling_weight(origin, direction),
             _ => 0.0
         }
     }
 
     pub fn sample_direction_to_light(&self, origin: Vec3A, rng: &mut ThreadRng) -> Vec3A {
         match self {
-            Geometry::Plane(p) => p.sample_direction_to_light(origin, rng),
-            Geometry::Sphere(s) => s.sample_direction_to_light(origin, rng),
+            Primitive::Plane(p) => p.sample_direction_to_light(origin, rng),
+            Primitive::Sphere(s) => s.sample_direction_to_light(origin, rng),
             _ => Vec3A::new(1.0, 0.0, 0.0)
         }
     }
 
     pub fn reversed(self) -> Self {
-        Geometry::ReverseOrientation(Box::new(self))
+        Primitive::ReverseOrientation(Box::new(self))
     }
 }
 
-macro_rules! impl_from_for_geometry {
+macro_rules! impl_from_for_primitive {
     // Direct variants: From<T> wraps as Variant(t)
     ($($variant:ident => $type:ty),* $(,)?) => {
         $(
-            impl From<$type> for Geometry {
+            impl From<$type> for Primitive {
                 fn from(value: $type) -> Self {
-                    Geometry::$variant(value)
+                    Primitive::$variant(value)
                 }
             }
         )*
     };
 }
 
-macro_rules! impl_from_boxed_for_geometry {
+macro_rules! impl_from_boxed_for_primitive {
     // Boxed variants: From<T> wraps as Variant(Box::new(t))
     ($($variant:ident => $type:ty),* $(,)?) => {
         $(
-            impl From<$type> for Geometry {
+            impl From<$type> for Primitive {
                 fn from(value: $type) -> Self {
-                    Geometry::$variant(Box::new(value))
+                    Primitive::$variant(Box::new(value))
                 }
             }
         )*
     };
 }
 
-impl_from_for_geometry! {
+impl_from_for_primitive! {
     Plane => Plane,
     Rectangle => Rectangle,
     Sphere => Sphere,
     Triangle => Triangle,
 }
 
-impl_from_boxed_for_geometry! {
+impl_from_boxed_for_primitive! {
     TriangleMesh => TriangleMesh,
     TransformedMesh => TransformedMesh,
     Volume => Volume,
