@@ -149,10 +149,12 @@ fn main() {
                 // old pure path tracer with hybrid pdf
                 // color += utils::de_nan(&integrator::render_path_integrator(ray, &scene, bounces, &mut rng));
 
-                let (c, a, n) = integrator::render_nee_integrator(ray, &scene, &mut rng);
-                color += utils::de_nan(&c);
-                albedo += a;
-                normal += n;
+                let (color_sample, albedo_sample, normal_sample) =
+                    integrator::render_nee_integrator(ray, &scene, &mut rng);
+
+                color += utils::de_nan(&color_sample);
+                albedo += albedo_sample;
+                normal += normal_sample;
         })});
 
         color /= samples as f32;
