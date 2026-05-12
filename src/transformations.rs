@@ -4,7 +4,7 @@ use glam::{Mat4, Vec3A, Vec3};
 
 use aabb::AABB;
 use events::HitEvent;
-use geometry::Geometry;
+use primitive::Primitive;
 use ray::Ray;
 
 /// A mesh with combined translation, rotation (XYZ Euler), and uniform scale,
@@ -22,7 +22,7 @@ pub struct TransformedMesh {
     bbox: AABB,
     /// Uniform scale factor — needed to convert ray parameter t back to world space.
     scale: f32,
-    geometry: Box<Geometry>,
+    primitive: Box<Primitive>,
 }
 
 fn transform_aabb(bbox: &AABB, transform: &Mat4) -> AABB {
@@ -59,7 +59,7 @@ impl TransformedMesh {
         translate: Vec3A,
         rotate_xyz_degrees: Vec3A,
         scale: f32,
-        geometry: Geometry,
+        primitive: Primitive,
     ) -> TransformedMesh {
         // Build the forward transform: local → world.
         // Order: Scale, then Rotate (X then Y then Z), then Translate.
@@ -82,10 +82,10 @@ impl TransformedMesh {
         let inv = forward.inverse();
         
         // Compute world-space bounding box by transforming local bbox corners.
-        let local_bbox = geometry.bounding_box().unwrap();
+        let local_bbox = primitive.bounding_box().unwrap();
         let bbox = transform_aabb(&local_bbox, &forward);
 
-        let geometry = Box::new(geometry);
+        let primitive = Box::new(primitive);
         
         TransformedMesh {
             inv_transform: inv,
@@ -93,11 +93,11 @@ impl TransformedMesh {
             normal_transform: inv.transpose(),
             bbox,
             scale,
-            geometry,
+            primitive,
         }
     }
 
-    pub fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitEvent> {
+    pub fn hit(&self, ray: &Ray, start_distance: f32, end_distance: f32) -> Option<HitEvent> {
         // Transform ray into local space using the inverse matrix.
         let local_origin = self.inv_transform.transform_point3(ray.origin.into());
         let local_direction = self.inv_transform.transform_vector3(ray.direction.into());
@@ -109,12 +109,12 @@ impl TransformedMesh {
         
         // The t-parameter in local space differs from world space by 1/local_dir_length
         // (since we normalized). Convert t bounds:
-        let local_t_min = t_min * local_dir_length;
-        let local_t_max = t_max * local_dir_length;
+        let local_start_distance = start_distance * local_dir_length;
+        let local_end_distance = end_distance * local_dir_length;
         
         let local_ray = Ray::new(local_origin.into(), local_direction_normalized.into());
         
-        if let Some(mut hit) = self.geometry.hit(&local_ray, local_t_min, local_t_max) {
+        if let Some(mut hit) = self.primitive.hit(&local_ray, local_start_distance, local_end_distance) {
             // Transform hit point back to world space.
             hit.point = self.forward_transform.transform_point3(hit.point.into()).into();
             

@@ -2,14 +2,14 @@ use glam::Vec3A;
 
 use aabb::AABB;
 use events::HitEvent;
-use geometry::Geometry;
+use primitive::Primitive;
 use materials::MaterialId;
 use ray::Ray;
 
 #[derive(Clone)]
 /// The World struct holds all of the objects in the scene
 pub struct World {
-    pub objects: Vec<Geometry>,
+    pub objects: Vec<Primitive>,
 }
 
 impl World {
@@ -23,7 +23,7 @@ impl World {
     /// We use a 'static lifetime so that we can Arc
     /// object inside the function rather than having to
     /// pass object as an Arced object as an input parameter.
-    pub fn add(&mut self, object: Geometry) {
+    pub fn add(&mut self, object: Primitive) {
         self.objects.push(object);
     }
 

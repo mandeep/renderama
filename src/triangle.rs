@@ -7,7 +7,7 @@ use aabb::AABB;
 use bvh::BVH;
 use events::HitEvent;
 use materials::MaterialId;
-use geometry::Geometry;
+use primitive::Primitive;
 use ray::Ray;
 
 #[derive(Clone)]
@@ -119,10 +119,10 @@ impl Triangle {
 
 impl TriangleMesh {
     pub fn new(triangles: Vec<Triangle>) -> TriangleMesh {
-        let mut geometries: Vec<Geometry> = triangles
+        let mut geometries: Vec<Primitive> = triangles
             .iter()
             .cloned()
-            .map(Geometry::Triangle)
+            .map(Primitive::Triangle)
             .collect();
         let accelerator = BVH::new(&mut geometries, 0.0, 1.0);
 

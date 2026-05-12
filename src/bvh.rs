@@ -3,7 +3,7 @@ use wide::f32x4;
 
 use aabb::AABB;
 use events::HitEvent;
-use geometry::Geometry;
+use primitive::Primitive;
 use ray::Ray;
 
 
@@ -32,7 +32,7 @@ struct InternalNode4 {
 #[derive(Clone)]
 struct LeafNode {
     bbox: AABB,
-    geometry: Geometry,  // unboxed is fine here, leaves are rarely touched
+    primitive: Primitive,  // unboxed is fine here, leaves are rarely touched
 }
 
 /// Flattened BVH stored as a Vec, traversed iteratively.
@@ -58,7 +58,7 @@ enum TreeNode {
     },
     Leaf {
         bbox: AABB,
-        geometry: Geometry,
+        primitive: Primitive,
     },
 }
 
@@ -72,7 +72,7 @@ impl TreeNode {
 }
 
 /// Recursively builds a TreeNode using binned SAH.
-fn build_tree(world: &mut Vec<Geometry>, start_time: f32, end_time: f32) -> TreeNode {
+fn build_tree(world: &mut Vec<Primitive>, start_time: f32, end_time: f32) -> TreeNode {
     let n = world.len();
 
     // compute the bounding box that contains all of the objects in the world and their bounding boxes
@@ -85,7 +85,7 @@ fn build_tree(world: &mut Vec<Geometry>, start_time: f32, end_time: f32) -> Tree
     if n == 1 {
         return TreeNode::Leaf {
             bbox: main_box,
-            geometry: world[0].clone(),
+            primitive: world[0].clone(),
         };
     }
 
@@ -94,8 +94,8 @@ fn build_tree(world: &mut Vec<Geometry>, start_time: f32, end_time: f32) -> Tree
         let right_box = world[1].bounding_box().unwrap();
         return TreeNode::Internal {
             bbox: main_box,
-            left: Box::new(TreeNode::Leaf { bbox: left_box, geometry: world[0].clone() }),
-            right: Box::new(TreeNode::Leaf { bbox: right_box, geometry: world[1].clone() }),
+            left: Box::new(TreeNode::Leaf { bbox: left_box, primitive: world[0].clone() }),
+            right: Box::new(TreeNode::Leaf { bbox: right_box, primitive: world[1].clone() }),
         };
     }
 
@@ -298,9 +298,9 @@ fn collect_children(tree: &TreeNode) -> Vec<&TreeNode> {
 /// Flatten the binary tree into InternalNode4 / LeafNode vecs. Returns the index of the root.
 fn flatten4(tree: &TreeNode, internals: &mut Vec<InternalNode4>, leaves: &mut Vec<LeafNode>) -> u32 {
     match tree {
-        TreeNode::Leaf { bbox, geometry } => {
+        TreeNode::Leaf { bbox, primitive } => {
             let index = leaves.len();
-            leaves.push(LeafNode { bbox: *bbox, geometry: geometry.clone() });
+            leaves.push(LeafNode { bbox: *bbox, primitive: primitive.clone() });
             make_leaf_ref(index)
         }
         TreeNode::Internal { .. } => {
@@ -342,13 +342,13 @@ fn axis_value(vector: Vec3A, axis: usize) -> f32 {
 
 /// Compute the centroid of an object's bounding box along the given axis
 /// Used for sorting in small lists
-fn centroid(hit: &Geometry, axis: usize) -> f32 {
+fn centroid(hit: &Primitive, axis: usize) -> f32 {
     let bbox = hit.bounding_box().unwrap();
     axis_value((bbox.minimum + bbox.maximum) * 0.5, axis)
 }
 
 impl BVH {
-    pub fn new(world: &mut Vec<Geometry>, start_time: f32, end_time: f32) -> BVH {
+    pub fn new(world: &mut Vec<Primitive>, start_time: f32, end_time: f32) -> BVH {
         // Build the tree using SAH, then flatten it.
         let tree = build_tree(world, start_time, end_time);
         let bbox = *tree.bbox();
@@ -360,13 +360,13 @@ impl BVH {
         BVH { internals, leaves, root, bbox }
     }
 
-    pub fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitEvent> {
+    pub fn hit(&self, ray: &Ray, start_distance: f32, end_distance: f32) -> Option<HitEvent> {
         // we iterate the traversal with a depth of 64 which should be okay for
         // millions of objects
         let mut stack: [u32; 64] = [0; 64];
         let mut stack_ptr: usize = 0;
 
-        let mut closest_t = t_max;
+        let mut closest_distance = end_distance;
         let mut best_hit: Option<HitEvent> = None;
 
         stack[stack_ptr] = self.root;
@@ -379,7 +379,7 @@ impl BVH {
         let idx = f32x4::splat(ray.inverse_direction.x);
         let idy = f32x4::splat(ray.inverse_direction.y);
         let idz = f32x4::splat(ray.inverse_direction.z);
-        let tmin_floor = f32x4::splat(t_min);
+        let start_distance_floor = f32x4::splat(start_distance);
 
         while stack_ptr > 0 {
             stack_ptr -= 1;
@@ -387,10 +387,10 @@ impl BVH {
 
             if is_leaf(node_ref) {
                 let leaf = &self.leaves[leaf_index(node_ref)];
-                if leaf.bbox.hit(ray, t_min, closest_t) {
-                    if let Some(hit) = leaf.geometry.hit(ray, t_min, closest_t) {
-                        if hit.parameter < closest_t {
-                            closest_t = hit.parameter;
+                if leaf.bbox.hit(ray, start_distance, closest_distance) {
+                    if let Some(hit) = leaf.primitive.hit(ray, start_distance, closest_distance) {
+                        if hit.parameter < closest_distance {
+                            closest_distance = hit.parameter;
                             best_hit = Some(hit);
                         }
                     }
@@ -406,26 +406,26 @@ impl BVH {
                 let t0z = (f32x4::from(node.min_z) - oz) * idz;
                 let t1z = (f32x4::from(node.max_z) - oz) * idz;
 
-                let tmin4 = t0x.min(t1x).max(t0y.min(t1y)).max(t0z.min(t1z)).max(tmin_floor);
-                // Clamp tmax by closest_t so we skip nodes entirely behind a known hit.
-                let tmax4 = t0x.max(t1x).min(t0y.max(t1y)).min(t0z.max(t1z))
-                    .min(f32x4::splat(closest_t));
+                let start_distance4 = t0x.min(t1x).max(t0y.min(t1y)).max(t0z.min(t1z)).max(start_distance_floor);
+                // Clamp end_distance by closest_distance so we skip nodes entirely behind a known hit.
+                let end_distance4 = t0x.max(t1x).min(t0y.max(t1y)).min(t0z.max(t1z))
+                    .min(f32x4::splat(closest_distance));
 
-                let tmin_arr: [f32; 4] = tmin4.into();
-                let tmax_arr: [f32; 4] = tmax4.into();
+                let start_distance_arr: [f32; 4] = start_distance4.into();
+                let end_distance_arr: [f32; 4] = end_distance4.into();
 
                 // Collect hit children and sort so the nearest is visited first.
                 let mut hits: [(f32, u32); 4] = [(f32::MAX, 0); 4];
                 let mut hit_count = 0usize;
 
                 for i in 0..node.count as usize {
-                    if tmin_arr[i] <= tmax_arr[i] {
-                        hits[hit_count] = (tmin_arr[i], node.children[i]);
+                    if start_distance_arr[i] <= end_distance_arr[i] {
+                        hits[hit_count] = (start_distance_arr[i], node.children[i]);
                         hit_count += 1;
                     }
                 }
 
-                // Insertion sort descending by tmin — farthest pushed first so
+                // Insertion sort descending by start_distance — farthest pushed first so
                 // nearest is on top of the stack.
                 for i in 1..hit_count {
                     let key = hits[i];
@@ -447,7 +447,7 @@ impl BVH {
         best_hit
     }
 
-    pub fn any_hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> bool {
+    pub fn hits_anything(&self, ray: &Ray, start_distance: f32, end_distance: f32) -> bool {
         let mut stack: [u32; 64] = [0; 64];
         let mut stack_ptr: usize = 0;
 
@@ -460,8 +460,8 @@ impl BVH {
         let idx = f32x4::splat(ray.inverse_direction.x);
         let idy = f32x4::splat(ray.inverse_direction.y);
         let idz = f32x4::splat(ray.inverse_direction.z);
-        let tmin_floor = f32x4::splat(t_min);
-        let tmax_ceil  = f32x4::splat(t_max);
+        let start_distance_floor = f32x4::splat(start_distance);
+        let end_distance_ceil  = f32x4::splat(end_distance);
 
         while stack_ptr > 0 {
             stack_ptr -= 1;
@@ -469,8 +469,8 @@ impl BVH {
 
             if is_leaf(node_ref) {
                 let leaf = &self.leaves[leaf_index(node_ref)];
-                if leaf.bbox.hit(ray, t_min, t_max) {
-                    if leaf.geometry.hit(ray, t_min, t_max).is_some() {
+                if leaf.bbox.hit(ray, start_distance, end_distance) {
+                    if leaf.primitive.hit(ray, start_distance, end_distance).is_some() {
                         return true;
                     }
                 }
@@ -484,14 +484,14 @@ impl BVH {
                 let t0z = (f32x4::from(node.min_z) - oz) * idz;
                 let t1z = (f32x4::from(node.max_z) - oz) * idz;
 
-                let tmin4 = t0x.min(t1x).max(t0y.min(t1y)).max(t0z.min(t1z)).max(tmin_floor);
-                let tmax4 = t0x.max(t1x).min(t0y.max(t1y)).min(t0z.max(t1z)).min(tmax_ceil);
+                let start_distance4 = t0x.min(t1x).max(t0y.min(t1y)).max(t0z.min(t1z)).max(start_distance_floor);
+                let end_distance4 = t0x.max(t1x).min(t0y.max(t1y)).min(t0z.max(t1z)).min(end_distance_ceil);
 
-                let tmin_arr: [f32; 4] = tmin4.into();
-                let tmax_arr: [f32; 4] = tmax4.into();
+                let start_distance_arr: [f32; 4] = start_distance4.into();
+                let end_distance_arr: [f32; 4] = end_distance4.into();
 
                 for i in 0..node.count as usize {
-                    if tmin_arr[i] <= tmax_arr[i] {
+                    if start_distance_arr[i] <= end_distance_arr[i] {
                         stack[stack_ptr] = node.children[i];
                         stack_ptr += 1;
                     }

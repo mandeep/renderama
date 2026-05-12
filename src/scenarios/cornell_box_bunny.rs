@@ -4,7 +4,7 @@ use glam::Vec3A;
 
 use bvh::BVH;
 use camera::Camera;
-use geometry::{Geometry};
+use primitive::{Primitive};
 use lights::Light;
 use materials::{Diffuse, Emissive, Plastic, Reflective, Refractive, Material};
 use plane::{Axis, Bounds2D, Plane};
@@ -39,15 +39,15 @@ pub fn cornell_box_bunny_scene(width: Option<usize>, height: Option<usize>) -> S
 
     // add the walls of the cornell box to the world
     world.add(Plane::new(Axis::YZ, Bounds2D::new(0.0..555.0, 0.0..555.0), 555.0, red_id).into_reversed());
-    world.add(Plane::new(Axis::YZ, Bounds2D::new(0.0..555.0, 0.0..555.0), 0.0, green_id).into_geometry());
+    world.add(Plane::new(Axis::YZ, Bounds2D::new(0.0..555.0, 0.0..555.0), 0.0, green_id).into_primitive());
     world.add(Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 554.0, light_material).into_reversed());
     world.add(Plane::new(Axis::XZ, Bounds2D::new(0.0..555.0, 0.0..555.0), 555.0, white_id).into_reversed());
-    world.add(Plane::new(Axis::XZ, Bounds2D::new(0.0..555.0, 0.0..555.0), 0.0, white_id).into_geometry());
+    world.add(Plane::new(Axis::XZ, Bounds2D::new(0.0..555.0, 0.0..555.0), 0.0, white_id).into_primitive());
     world.add(Plane::new(Axis::XY, Bounds2D::new(0.0..555.0, 0.0..555.0), 555.0, white_id).into_reversed());
 
     let bunny_material = mat!(materials, Refractive::new(1.5, Vec3A::ONE));
-    let bunny_mesh = Geometry::TriangleMesh(Box::new(TriangleMesh::from("docs/models/bunny.obj", bunny_material)));
-    world.add(Geometry::TransformedMesh(Box::new(TransformedMesh::new(Vec3A::new(224.0, -66.0, 278.0), Vec3A::new(0.0, 180.0, 0.0), 2000.0, bunny_mesh))));
+    let bunny_mesh = Primitive::TriangleMesh(Box::new(TriangleMesh::from("docs/models/bunny.obj", bunny_material)));
+    world.add(Primitive::TransformedMesh(Box::new(TransformedMesh::new(Vec3A::new(224.0, -66.0, 278.0), Vec3A::new(0.0, 180.0, 0.0), 2000.0, bunny_mesh))));
 
     let buddha_material = mat!(materials, Reflective::new(Vec3A::new(0.95, 0.64, 0.54), 0.05));
     let buddha = TriangleMesh::from("docs/models/happy_buddha.obj", buddha_material).into();

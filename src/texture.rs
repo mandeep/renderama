@@ -13,28 +13,28 @@ pub enum Texture {
 }
 
 impl Texture {
-    pub fn value(&self, u: f32, v: f32, w: &Vec3A) -> Vec3A {
+    pub fn generate_response(&self, u: f32, v: f32, w: &Vec3A) -> Vec3A {
         match self {
-            Texture::SolidColor(texture) => texture.value(u, v, w),
-            Texture::ImageTexture(texture) => texture.value(u, v, w),
-            Texture::EnvironmentMap(texture) => texture.value(u, v, w),
+            Texture::SolidColor(texture) => texture.generate_response(u, v, w),
+            Texture::ImageTexture(texture) => texture.generate_response(u, v, w),
+            Texture::EnvironmentMap(texture) => texture.generate_response(u, v, w),
         }
     }
 
     /// Returns the solid-angle PDF for sampling the given direction, only if
     /// this texture is an importance-sampled EnvironmentMap.
-    pub fn env_pdf_value(&self, direction: &Vec3A) -> Option<f32> {
+    pub fn evaluate_sampling_weight(&self, direction: &Vec3A) -> Option<f32> {
         match self {
-            Texture::EnvironmentMap(env) => Some(env.pdf_value(direction)),
+            Texture::EnvironmentMap(env) => Some(env.evaluate_sampling_weight(direction)),
             _ => None
         }
     }
 
     /// Samples a direction importance-weighted by luminance, only if this
     /// texture is an EnvironmentMap.
-    pub fn env_pdf_random(&self, rng: &mut ThreadRng) -> Option<Vec3A> {
+    pub fn sample_direction_to_light(&self, rng: &mut ThreadRng) -> Option<Vec3A> {
         match self {
-            Texture::EnvironmentMap(env) => Some(env.pdf_random(rng)),
+            Texture::EnvironmentMap(env) => Some(env.sample_direction_to_light(rng)),
             _ => None
         }
     }
@@ -71,7 +71,7 @@ impl SolidColor {
     }
 
     /// Returning the albedo instead of sampling with u and v
-    pub fn value(&self, _u: f32, _v: f32, _p: &Vec3A) -> Vec3A {
+    pub fn generate_response(&self, _u: f32, _v: f32, _p: &Vec3A) -> Vec3A {
         self.color
     }
 }
@@ -91,7 +91,7 @@ impl ImageTexture {
 
     /// Determine which pixel to retrieve from the image by
     /// converting pixel coordinates to UV coordinates
-    pub fn value(&self, u: f32, v: f32, _p: &Vec3A) -> Vec3A {
+    pub fn generate_response(&self, u: f32, v: f32, _p: &Vec3A) -> Vec3A {
         let u_scaled = (u * self.scale) % 1.0;
         let v_scaled = (v * self.scale) % 1.0;
 
@@ -110,13 +110,20 @@ fn luminance(r: f32, g: f32, b: f32) -> f32 {
 
 /// Binary search a normalized CDF (cdf[0] = 0, cdf[n] = 1) for uniform sample u.
 /// Returns the bin index k such that cdf[k] <= u < cdf[k+1].
-fn sample_cdf(cdf: &[f32], u: f32) -> usize {
+fn sample_brightest_pixels(cdf: &[f32], u: f32) -> usize {
     let mut lo = 0usize;
     let mut hi = cdf.len();
+
     while lo < hi {
         let mid = lo + (hi - lo) / 2;
-        if cdf[mid] <= u { lo = mid + 1; } else { hi = mid; }
+
+        if cdf[mid] <= u {
+            lo = mid + 1;
+        } else {
+            hi = mid;
+        }
     }
+
     lo.saturating_sub(1).min(cdf.len().saturating_sub(2))
 }
 
@@ -185,7 +192,7 @@ impl EnvironmentMap {
 
     /// Determine which pixel to retrieve from the image by
     /// converting pixel coordinates to UV coordinates
-    pub fn value(&self, _u: f32, _v: f32, direction: &Vec3A) -> Vec3A {
+    pub fn generate_response(&self, _u: f32, _v: f32, direction: &Vec3A) -> Vec3A {
         let u = 0.5 + direction.z.atan2(direction.x) / (2.0 * PI);
         let v = 0.5 - direction.y.asin() / PI;
 
@@ -202,7 +209,7 @@ impl EnvironmentMap {
     /// Derivation: p(ω) = L * W * H / (total_weight * 2π²).
     /// The sin_theta factor from the area element cancels with the sin_theta
     /// in the CDF weight, leaving only the raw luminance scaled by resolution.
-    pub fn pdf_value(&self, direction: &Vec3A) -> f32 {
+    pub fn evaluate_sampling_weight(&self, direction: &Vec3A) -> f32 {
         if self.total_weight <= 0.0 { return 0.0; }
 
         let u = 0.5 + direction.z.atan2(direction.x) / (2.0 * PI);
@@ -218,13 +225,13 @@ impl EnvironmentMap {
     }
 
     /// Sample a direction from the environment map proportional to luminance.
-    pub fn pdf_random(&self, rng: &mut ThreadRng) -> Vec3A {
+    pub fn sample_direction_to_light(&self, rng: &mut ThreadRng) -> Vec3A {
         let u1 = rng.random::<f32>();
         let u2 = rng.random::<f32>();
 
-        let j = sample_cdf(&self.marginal_cdf, u1);
+        let j = sample_brightest_pixels(&self.marginal_cdf, u1);
         let row = j * (self.width + 1);
-        let i = sample_cdf(&self.conditional_cdf[row..row + self.width + 1], u2);
+        let i = sample_brightest_pixels(&self.conditional_cdf[row..row + self.width + 1], u2);
 
         // Convert pixel center to spherical direction (inverse of value() mapping)
         let u = (i as f32 + 0.5) / self.width as f32;

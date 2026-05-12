@@ -84,7 +84,7 @@ impl Sphere {
         Some(small.surrounding_box(&big))
     }
 
-    pub fn pdf_value(&self, origin: Vec3A, direction: Vec3A) -> f32 {
+    pub fn evaluate_sampling_weight(&self, origin: Vec3A, direction: Vec3A) -> f32 {
         let center = self.center;
         let to_center = center - origin;
         let distance_squared = to_center.length_squared();
@@ -119,7 +119,7 @@ impl Sphere {
         1.0 / solid_angle
     }
 
-    pub fn pdf_random(&self, origin: Vec3A, rng: &mut ThreadRng) -> Vec3A {
+    pub fn sample_direction_to_light(&self, origin: Vec3A, rng: &mut ThreadRng) -> Vec3A {
         let center = self.center;
         let to_center = center - origin;
         let distance_squared = to_center.length_squared();
