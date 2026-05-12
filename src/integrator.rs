@@ -35,9 +35,11 @@ pub fn pick_sphere_point(rng: &mut ThreadRng) -> Vec3A {
 /// the color at the ray's hit point. The depth has been set to an arbitrary
 /// limit of 50 which can lead to bias rendering.
 ///
-pub fn render_path_integrator(mut ray: Ray, scene: &Scene, bounces: u32, rng: &mut ThreadRng) -> Vec3A {
+pub fn render_path_integrator(mut ray: Ray, scene: &Scene, rng: &mut ThreadRng) -> Vec3A {
     let mut color = Vec3A::ZERO;
     let mut throughput = Vec3A::ONE;
+
+    let bounces = 10;
 
     for bounce in 0..=bounces {
         if let Some(hit_event) = scene.accelerator.hit(&ray, 1e-4, f32::MAX) {
@@ -112,13 +114,15 @@ pub fn render_normals(ray: Ray, scene: &Scene) -> Vec3A {
     }
 }
 
-pub fn render_nee_integrator(mut ray: Ray, scene: &Scene, bounces: u32, rng: &mut ThreadRng) -> (Vec3A, Vec3A, Vec3A) {
+pub fn render_nee_integrator(mut ray: Ray, scene: &Scene, rng: &mut ThreadRng) -> (Vec3A, Vec3A, Vec3A) {
     let mut color = Vec3A::ZERO;
     let mut throughput = Vec3A::ONE;
     let mut last_specular = true;
     let mut last_material_pdf = 0.0;
     let mut first_albedo = Vec3A::ZERO;
     let mut first_normal = Vec3A::ZERO;
+
+    let bounces = 10;
 
     for bounce in 0..=bounces {
         if let Some(hit_event) = scene.accelerator.hit(&ray, 1e-4, f32::MAX) {
