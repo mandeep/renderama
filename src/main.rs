@@ -88,10 +88,14 @@ fn main() {
                     std::process::exit(1);
                 }
             }
-            value => {
-                if let Ok(integer) = value.parse() {
+            "--samples" => {
+                if let Some(integer) = args.next().and_then(|integer| integer.parse::<u32>().ok()) {
                     samples = integer;
                 }
+            },
+            unknown_argument => {
+                eprintln!("Error: Found an unrecognized argument: '{}'.", unknown_argument);
+                std::process::exit(1);
             }
         }
     }
