@@ -62,9 +62,20 @@ fn main() {
     let args: Vec<String> = env::args().collect();
     let samples: u32 = args.get(1).and_then(|s| s.parse().ok()).unwrap_or(128);
     let bounces: u32 = 10;
-    let (width, height): (usize, usize) = (2048, 2048);
+    let (mut default_width, mut default_height) = (None, None);
 
-    let scene = scenarios::cornell_box_object_scene(width, height);
+    if let Some(position) = args.iter().position(|arg| arg == "--resolution") {
+        let arg_width = args.get(position + 1).and_then(|w| w.parse::<usize>().ok());
+        let arg_height = args.get(position + 2).and_then(|h| h.parse::<usize>().ok());
+
+        (default_width, default_height) = (arg_width, arg_height);
+    }
+
+    // plug the resolution from the command line into our scene otherwise just use
+    // the default resolution from the scene
+    let scene = scenarios::cornell_box_object_scene(default_width, default_height);
+    let (width, height) = (scene.camera.resolution.0 as usize, scene.camera.resolution.1 as usize);
+
 
     let render_start_time: DateTime<Local> = Local::now();
     println!("[{}] Rendering '{}' scene with {} samples at {} x {} dimensions...",

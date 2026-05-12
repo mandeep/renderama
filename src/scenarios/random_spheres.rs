@@ -11,12 +11,12 @@ use texture::{EnvironmentMap, SolidColor, Texture};
 use world::World;
 use mat;
 
-pub fn random_spheres_scene(width: usize, height: usize) -> Scene {
+pub fn random_spheres_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let origin = Vec3A::new(13.0, 2.0, 3.0);
     let lookat = Vec3A::new(0.0, 0.0, 0.0);
     let view = Vec3A::new(0.0, 1.0, 0.0);
     let fov = 20.0;
-    let aspect_ratio = (width / height) as f32;
+    let aspect_ratio = (width.unwrap_or(2048) as f32, height.unwrap_or(1024) as f32);
     let aperture = 0.1;
     let focus_distance = 10.0;
 

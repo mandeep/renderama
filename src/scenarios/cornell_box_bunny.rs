@@ -15,13 +15,13 @@ use triangle::TriangleMesh;
 use world::World;
 use mat;
 
-pub fn cornell_box_bunny_scene(width: usize, height: usize) -> Scene {
+pub fn cornell_box_bunny_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     // Same camera as the classic Cornell box so the framing looks identical.
     let origin = Vec3A::new(278.0, 278.0, -800.0);
     let lookat = Vec3A::new(278.0, 278.0, 0.0);
     let view = Vec3A::new(0.0, 1.0, 0.0);
     let fov = 40.0;
-    let aspect_ratio = (width / height) as f32;
+    let aspect_ratio = (width.unwrap_or(2048) as f32, height.unwrap_or(2048) as f32);
     let aperture = 0.0;
     let focus_distance = 10.0;
 

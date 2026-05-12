@@ -13,20 +13,13 @@ use transformations::TransformedMesh;
 use world::World;
 use mat;
 
-/// Veach Multiple Importance Sampling test scene.
-///
-/// Four sphere lights of equal total power (4πr²×I = const) hang at Y=3.0.
-/// Four reflective plates rise progressively in height and tilt — the front
-/// plate is nearly horizontal (gentle tilt, low roughness) and each successive
-/// plate is higher and more tilted (higher roughness). This demonstrates:
-///   - Smooth/shallow plates: BSDF sampling is best (narrow specular lobe)
-///   - Rough/steep plates: NEE / light sampling is best (wide lobe)
-pub fn veach_mis_scene(width: usize, height: usize) -> Scene {
+
+pub fn veach_mis_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let origin = Vec3A::new(0.0, 1.2, -3.5);
     let lookat = Vec3A::new(0.0, 1.9, 7.0);
     let view = Vec3A::new(0.0, 1.0,  0.0);
     let fov = 35.0;
-    let aspect_ratio = width as f32 / height as f32;
+    let aspect_ratio = (width.unwrap_or(1920) as f32, height.unwrap_or(1080) as f32);
     let aperture = 0.0;
     let focus_distance = 10.0;
 

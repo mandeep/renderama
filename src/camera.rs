@@ -15,6 +15,7 @@ pub struct Camera {
     v: Vec3A,
     w: Vec3A,
     pub lens_radius: f32,
+    pub resolution: (f32, f32),
 }
 
 impl Camera {
@@ -31,7 +32,7 @@ impl Camera {
                lookat: Vec3A,
                view: Vec3A,
                fov: f32,
-               aspect: f32,
+               aspect: (f32, f32),
                aperture: f32,
                focus_distance: f32,
               )
@@ -39,7 +40,7 @@ impl Camera {
         let lens_radius: f32 = aperture / 2.0;
         let theta: f32 = fov * PI / 180.0;
         let half_height: f32 = (theta / 2.0).tan();
-        let half_width: f32 = aspect * half_height;
+        let half_width: f32 = (aspect.0 / aspect.1) * half_height;
 
         let w: Vec3A = (origin - lookat).normalize();
         let u: Vec3A = view.cross(w).normalize();
@@ -60,7 +61,8 @@ impl Camera {
                  u,
                  v,
                  w,
-                 lens_radius
+                 lens_radius,
+                 resolution: aspect
                 }
     }
 
