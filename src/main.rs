@@ -76,8 +76,8 @@ fn main() {
             }
             "--scene" => {
                 if let Some(scene_str) = args.next() {
-                    if let Some(s) = Scenario::from_str(&scene_str) {
-                        scenario = s;
+                    if let Some(selected_scenario) = Scenario::from_str(&scene_str) {
+                        scenario = selected_scenario;
                     } else {
                         eprintln!("Error: The scene '{}' does not exist.", scene_str);
                         std::process::exit(1);
@@ -88,9 +88,9 @@ fn main() {
                     std::process::exit(1);
                 }
             }
-            val => {
-                if let Ok(num) = val.parse() {
-                    samples = num;
+            value => {
+                if let Ok(integer) = value.parse() {
+                    samples = integer;
                 }
             }
         }
