@@ -33,12 +33,12 @@ impl HitEvent {
 pub struct ScatterEvent {
     pub specular_ray: Ray,
     pub attenuation: Vec3A,
-    pub pdf: MaterialPDF,
+    pub sampling_strategy: MaterialPDF,
     pub specular: bool,
 }
 
 impl ScatterEvent {
-    pub fn new(specular_ray: Ray, attenuation: Vec3A, pdf: MaterialPDF, specular: bool) -> ScatterEvent {
-        ScatterEvent { specular_ray, attenuation, pdf, specular }
+    pub fn new(specular_ray: Ray, attenuation: Vec3A, sampling_strategy: MaterialPDF, specular: bool) -> ScatterEvent {
+        ScatterEvent { specular_ray, attenuation, sampling_strategy, specular }
     }
 }

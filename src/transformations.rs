@@ -97,7 +97,7 @@ impl TransformedMesh {
         }
     }
 
-    pub fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitEvent> {
+    pub fn hit(&self, ray: &Ray, start_distance: f32, end_distance: f32) -> Option<HitEvent> {
         // Transform ray into local space using the inverse matrix.
         let local_origin = self.inv_transform.transform_point3(ray.origin.into());
         let local_direction = self.inv_transform.transform_vector3(ray.direction.into());
@@ -109,12 +109,12 @@ impl TransformedMesh {
         
         // The t-parameter in local space differs from world space by 1/local_dir_length
         // (since we normalized). Convert t bounds:
-        let local_t_min = t_min * local_dir_length;
-        let local_t_max = t_max * local_dir_length;
+        let local_start_distance = start_distance * local_dir_length;
+        let local_end_distance = end_distance * local_dir_length;
         
         let local_ray = Ray::new(local_origin.into(), local_direction_normalized.into());
         
-        if let Some(mut hit) = self.geometry.hit(&local_ray, local_t_min, local_t_max) {
+        if let Some(mut hit) = self.geometry.hit(&local_ray, local_start_distance, local_end_distance) {
             // Transform hit point back to world space.
             hit.point = self.forward_transform.transform_point3(hit.point.into()).into();
             

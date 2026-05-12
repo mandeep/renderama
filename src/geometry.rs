@@ -26,15 +26,15 @@ pub enum Geometry {
 }
 
 impl Geometry {
-    pub fn hit(&self, ray: &Ray, tmin: f32, tmax: f32) -> Option<HitEvent> {
+    pub fn hit(&self, ray: &Ray, start_distance: f32, end_distance: f32) -> Option<HitEvent> {
         match self {
-            Geometry::Plane(p) => p.hit(ray, tmin, tmax),
-            Geometry::Rectangle(r) => r.hit(ray, tmin, tmax),
-            Geometry::Sphere(s) => s.hit(ray, tmin, tmax),
-            Geometry::Triangle(t) => t.hit(ray, tmin, tmax),
-            Geometry::TriangleMesh(m) => m.hit(ray, tmin, tmax),
+            Geometry::Plane(p) => p.hit(ray, start_distance, end_distance),
+            Geometry::Rectangle(r) => r.hit(ray, start_distance, end_distance),
+            Geometry::Sphere(s) => s.hit(ray, start_distance, end_distance),
+            Geometry::Triangle(t) => t.hit(ray, start_distance, end_distance),
+            Geometry::TriangleMesh(m) => m.hit(ray, start_distance, end_distance),
             Geometry::ReverseOrientation(g) => {
-                if let Some(mut h) = g.hit(ray, tmin, tmax) {
+                if let Some(mut h) = g.hit(ray, start_distance, end_distance) {
                     h.geometric_normal = -h.geometric_normal;
                     h.shading_normal = -h.shading_normal;
                     Some(h)
@@ -42,8 +42,8 @@ impl Geometry {
                     None
                 }
             },
-            Geometry::TransformedMesh(m) => m.hit(ray, tmin, tmax),
-            Geometry::Volume(v) => v.hit(ray, tmin, tmax)
+            Geometry::TransformedMesh(m) => m.hit(ray, start_distance, end_distance),
+            Geometry::Volume(v) => v.hit(ray, start_distance, end_distance)
         }
     }
 
@@ -60,18 +60,18 @@ impl Geometry {
         }
     }
 
-    pub fn pdf_value(&self, origin: Vec3A, direction: Vec3A) -> f32 {
+    pub fn evaluate_sampling_weight(&self, origin: Vec3A, direction: Vec3A) -> f32 {
         match self {
-            Geometry::Plane(p) => p.pdf_value(origin, direction),
-            Geometry::Sphere(s) => s.pdf_value(origin, direction),
+            Geometry::Plane(p) => p.evaluate_sampling_weight(origin, direction),
+            Geometry::Sphere(s) => s.evaluate_sampling_weight(origin, direction),
             _ => 0.0
         }
     }
 
-    pub fn pdf_random(&self, origin: Vec3A, rng: &mut ThreadRng) -> Vec3A {
+    pub fn sample_direction_to_light(&self, origin: Vec3A, rng: &mut ThreadRng) -> Vec3A {
         match self {
-            Geometry::Plane(p) => p.pdf_random(origin, rng),
-            Geometry::Sphere(s) => s.pdf_random(origin, rng),
+            Geometry::Plane(p) => p.sample_direction_to_light(origin, rng),
+            Geometry::Sphere(s) => s.sample_direction_to_light(origin, rng),
             _ => Vec3A::new(1.0, 0.0, 0.0)
         }
     }

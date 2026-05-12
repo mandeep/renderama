@@ -21,20 +21,20 @@ impl Volume {
         Volume { density, boundary, material_id }
     }
 
-    pub fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitEvent> {
+    pub fn hit(&self, ray: &Ray, start_distance: f32, end_distance: f32) -> Option<HitEvent> {
         // Find both intersections of the ray with the volume's boundary.
-        // We search the entire ray range (not just [t_min, t_max]) because
+        // We search the entire ray range (not just [start_distance, end_distance]) because
         // a ray origin inside the volume would miss the near boundary otherwise.
-        // We then clamp against [t_min, t_max] below.
+        // We then clamp against [start_distance, end_distance] below.
         if let Some(mut hit1) = self.boundary.hit(ray, f32::NEG_INFINITY, f32::INFINITY) {
             if let Some(mut hit2) =
                 self.boundary.hit(ray, hit1.parameter + 0.0001, f32::INFINITY)
             {
-                if hit1.parameter < t_min {
-                    hit1.parameter = t_min
+                if hit1.parameter < start_distance {
+                    hit1.parameter = start_distance
                 };
-                if hit2.parameter > t_max {
-                    hit2.parameter = t_max
+                if hit2.parameter > end_distance {
+                    hit2.parameter = end_distance
                 };
                 if hit1.parameter < hit2.parameter {
                     let distance_inside_boundary =

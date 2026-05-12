@@ -52,23 +52,23 @@ impl Light {
     pub fn new(geometry: LightGeometry, emission: Vec3A) -> Light {
         Light { geometry, emission }
     }
-    pub fn pdf_value(&self, origin: Vec3A, direction: Vec3A) -> f32 {
+    pub fn evaluate_sampling_weight(&self, origin: Vec3A, direction: Vec3A) -> f32 {
         match &self.geometry {
-            LightGeometry::Plane(p) => p.pdf_value(origin, direction),
-            LightGeometry::Sphere(s) => s.pdf_value(origin, direction),
+            LightGeometry::Plane(p) => p.evaluate_sampling_weight(origin, direction),
+            LightGeometry::Sphere(s) => s.evaluate_sampling_weight(origin, direction),
         }
     }
 
-    pub fn pdf_random(&self, origin: Vec3A, rng: &mut ThreadRng) -> Vec3A {
+    pub fn sample_direction_to_light(&self, origin: Vec3A, rng: &mut ThreadRng) -> Vec3A {
         match &self.geometry {
-            LightGeometry::Plane(p) => p.pdf_random(origin, rng),
-            LightGeometry::Sphere(s) => s.pdf_random(origin, rng),
+            LightGeometry::Plane(p) => p.sample_direction_to_light(origin, rng),
+            LightGeometry::Sphere(s) => s.sample_direction_to_light(origin, rng),
         }
     }
 
     /// Upper bound on `t` for a shadow ray occlusion test that excludes the light surface itself.
     /// `light_distance` must be measured from the same origin as the shadow ray.
-    pub fn occlusion_t_max(&self, light_distance: f32) -> f32 {
+    pub fn calculate_distance_from(&self, light_distance: f32) -> f32 {
         match &self.geometry {
             LightGeometry::Plane(_) => light_distance - 1e-3,
             LightGeometry::Sphere(s) => light_distance - s.radius.abs() - 1e-3,

@@ -140,7 +140,7 @@ fn main() {
                 let u = (x as f32 + (i as f32 + rng.random::<f32>()) * step) / width as f32;
                 let v = (y as f32 + (j as f32 + rng.random::<f32>()) * step) / height as f32;
 
-                let ray = scene.camera.get_ray(u, v, &mut rng);
+                let ray = scene.camera.generate_ray(u, v, &mut rng);
 
                 // render_normals is used for debugging
                 // color += utils::de_nan(&integrator::render_normals(ray, &scene));

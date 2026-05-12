@@ -187,7 +187,7 @@ impl Plane {
         }
     }
 
-    pub fn pdf_value(&self, origin: Vec3A, direction: Vec3A) -> f32 {
+    pub fn evaluate_sampling_weight(&self, origin: Vec3A, direction: Vec3A) -> f32 {
         // originally epsilon was 1e-2 but updated here to match value elsewhere
         if let Some(hit) = self.hit(&Ray::new(origin, direction), 1e-4, f32::MAX) {
             let distance_squared = hit.parameter * hit.parameter * direction.length_squared();
@@ -198,7 +198,7 @@ impl Plane {
         }
     }
 
-    pub fn pdf_random(&self, origin: Vec3A, rng: &mut ThreadRng) -> Vec3A {
+    pub fn sample_direction_to_light(&self, origin: Vec3A, rng: &mut ThreadRng) -> Vec3A {
         let u = self.bounds.u_min + rng.random::<f32>() * (self.bounds.u_max - self.bounds.u_min);
         let v = self.bounds.v_min + rng.random::<f32>() * (self.bounds.v_max - self.bounds.v_min);
 
