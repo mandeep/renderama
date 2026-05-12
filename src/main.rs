@@ -177,14 +177,18 @@ fn main() {
         normal_pixels[3*i..3*i+3].copy_from_slice(&chunk[6..9]);
     }
 
-    let render_end_time: DateTime<Local> = Local::now();
-    println!("[{}] Finished rendering in {}. Render saved to render.exr.",
-             render_end_time.format("%H:%M:%S"),
-             utils::format_time(rendering_time.elapsed()));
-
     let buffer: ImageBuffer<Rgb<f32>, Vec<f32>> = ImageBuffer::from_raw(width as u32, height as u32, pixels.clone()).unwrap();
 
-    buffer.save("render.exr").unwrap();
+    let timestamp = Local::now().format("%Y%m%d-%H%M%S").to_string();
+    let filepath = format!("render_{}.exr", timestamp);
+
+    buffer.save(&filepath).unwrap();
+
+    println!("[{}] Finished rendering in {}. Render saved to {}.",
+            Local::now().format("%H:%M:%S"),
+            utils::format_time(rendering_time.elapsed()),
+            &filepath,
+            );
 
     #[cfg(feature = "denoise")]
     {
@@ -194,14 +198,17 @@ fn main() {
                  denoise_start_time.format("%H:%M:%S"));
 
         let denoised_output = denoise(&pixels, &albedo_pixels, &normal_pixels, width, height);
-
-        let denoise_end_time: DateTime<Local> = Local::now();
-        println!("[{}] Finished denoising in {}. Render saved to denoised_render.exr.",
-                 denoise_end_time.format("%H:%M:%S"),
-                 utils::format_time(denoising_time.elapsed()));
-
         let denoised_buffer: ImageBuffer<Rgb<f32>, Vec<f32>> = ImageBuffer::from_raw(width as u32, height as u32, denoised_output).unwrap();
 
-        denoised_buffer.save("denoised_render.exr").unwrap();
+        let timestamp = Local::now().format("%Y%m%d-%H%M%S").to_string();
+        let filepath = format!("denoised_render_{}.exr", timestamp);
+
+        denoised_buffer.save(&filepath).unwrap();
+
+        println!("[{}] Finished denoising in {}. Render saved to {}.",
+                 Local::now().format("%H:%M:%S"),
+                 utils::format_time(denoising_time.elapsed()),
+                 &filepath,
+                );
     }
 }

@@ -8,5 +8,5 @@
 # Omit OptiPNG backup files
 *.bak
 
-denoised_render.*
-render.*
+denoised_render_*.exr
+render_*.exr
