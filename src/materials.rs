@@ -281,17 +281,15 @@ impl Reflective {
         };
 
         let offset_point = find_offset_point(event.point, forward_geometric_normal);
+        let reflected = reflect(ray.direction, shading_normal);
+        let specular_ray = Ray::new(offset_point, reflected);
 
         if self.fuzz == 0.0 {
-            let reflected = reflect(ray.direction, shading_normal);
-            let specular_ray = Ray::new(offset_point, reflected);
             let pdf = MaterialPDF::Cosine { uvw: OrthonormalBasis::new(&shading_normal) };
             Some(ScatterEvent::new(specular_ray, self.albedo, pdf, true))
         } else {
-            let wi = -ray.direction;
-            let pdf = MaterialPDF::GGX { wi, normal: shading_normal, alpha: self.fuzz };
-            let dummy_ray = Ray::new(offset_point, ray.direction);
-            Some(ScatterEvent::new(dummy_ray, self.albedo, pdf, false))
+            let pdf = MaterialPDF::GGX { wi: -ray.direction, normal: shading_normal, alpha: self.fuzz };
+            Some(ScatterEvent::new(specular_ray, self.albedo, pdf, false))
         }
     }
 
