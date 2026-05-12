@@ -62,7 +62,7 @@ fn main() {
     let rendering_time = Instant::now();
 
     let mut args = env::args().skip(1);
-    let mut samples: u32 = 128;
+    let mut samples: u32 = 64;
     let mut scenario = Scenario::CornellBoxObjects;
     let mut default_width = None;
     let mut default_height = None;
