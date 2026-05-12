@@ -46,7 +46,7 @@ use std::sync::Arc;
 use std::thread;
 use std::time::{Duration, Instant};
 
-use chrono::{DateTime, Local};
+use chrono::Local;
 use glam::Vec3A;
 use image::{ImageBuffer, Rgb};
 use pbr::ProgressBar;
@@ -99,9 +99,8 @@ fn main() {
     let scene = scenario.load(default_width, default_height);
     let (width, height) = (scene.camera.resolution.0 as usize, scene.camera.resolution.1 as usize);
 
-    let render_start_time: DateTime<Local> = Local::now();
     println!("[{}] Rendering '{}' scene with {} samples at {} x {} dimensions...",
-             render_start_time.format("%H:%M:%S"),
+             Local::now().format("%H:%M:%S"),
              &scene.name,
              samples,
              width,
@@ -193,9 +192,9 @@ fn main() {
     #[cfg(feature = "denoise")]
     {
         let denoising_time = Instant::now();
-        let denoise_start_time: DateTime<Local> = Local::now();
+
         println!("[{}] Denoising image...",
-                 denoise_start_time.format("%H:%M:%S"));
+                 Local::now().format("%H:%M:%S"));
 
         let denoised_output = denoise(&pixels, &albedo_pixels, &normal_pixels, width, height);
         let denoised_buffer: ImageBuffer<Rgb<f32>, Vec<f32>> = ImageBuffer::from_raw(width as u32, height as u32, denoised_output).unwrap();
