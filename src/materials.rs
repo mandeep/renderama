@@ -300,15 +300,20 @@ impl Reflective {
         let wo = scattered.direction;
         let n = event.shading_normal;
 
-        let cos_i = n.dot(wi).max(0.0);
-        let cos_o = n.dot(wo).max(0.0);
+        let cos_i = n.dot(wi);
+        let cos_o = n.dot(wo);
 
-        if cos_i <= 0.0 || cos_o <= 0.0 { return 0.0; }
+        if cos_i <= 0.0 || cos_o <= 0.0 {
+            return 0.0;
+        }
 
         let h = (wi + wo).normalize();
-        let cos_h = n.dot(h).max(0.0);
-        // f·cos_o = D·G/(4·cos_i·cos_o)·cos_o = D·G/(4·cos_i)
-        // This makes the VNDF throughput weight G/G1(wi) = G1(wo) ≤ 1, preventing fireflies.
+        let cos_h = n.dot(h);
+
+        if cos_h <= 0.0 {
+            return 0.0;
+        }
+
         ggx_distribution(cos_h, self.fuzz) * ggx_geometry(cos_i, cos_o, self.fuzz) / (4.0 * cos_i)
     }
 }
@@ -500,12 +505,13 @@ impl Plastic {
     fn compute_reflectance(&self, wo: &Ray, event: &HitEvent, wi: &Ray) -> f32 {
         let n = event.shading_normal;
 
-        let cos_o = n.dot(wi.direction).max(0.0);
-        if cos_o <= 0.0 {
+        let cos_o = n.dot(wi.direction);
+        let cos_theta_i = (-wo.direction).dot(n);
+
+        if cos_o <= 0.0 || cos_theta_i < 0.0 {
             return 0.0;
         }
 
-        let cos_theta_i = (-wo.direction).dot(n).max(0.0);
         let fresnel = schlick(cos_theta_i, self.ior);
 
         let diffuse_pdf = cos_o / PI;
@@ -517,11 +523,15 @@ impl Plastic {
             let wo_local = wi.direction;
 
             let h = (wi_local + wo_local).normalize();
-            let cos_h = n.dot(h).max(0.0);
-            let cos_i = n.dot(wi_local).max(0.0);
-            let cos_ol = n.dot(wo_local).max(0.0);
+            let cos_h = n.dot(h);
+            let cos_i = n.dot(wi_local);
+            let cos_ol = n.dot(wo_local);
 
-            ggx_distribution(cos_h, alpha) * ggx_geometry(cos_i, cos_ol, alpha) / (4.0 * cos_ol)
+            if cos_h <= 0.0 || cos_i <= 0.0 || cos_ol <= 0.0 {
+                return 0.0;
+            }
+
+            ggx_distribution(cos_h, alpha) * ggx_geometry(cos_i, cos_ol, alpha) / (4.0 * cos_i)
         };
 
         // mixture pdf
