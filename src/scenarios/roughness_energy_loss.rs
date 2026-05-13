@@ -1,0 +1,64 @@
+use std::f32;
+
+use glam::Vec3A;
+
+use bvh::BVH;
+use camera::Camera;
+use lights::Light;
+use materials::{Emissive, Material, Reflective};
+use plane::{Axis, Bounds2D, Plane};
+use scene::Scene;
+use sphere::Sphere;
+use texture::SolidColor;
+use world::World;
+use mat;
+
+pub fn albedo_one_sphere_scene(width: Option<usize>, height: Option<usize>) -> Scene {
+    let origin = Vec3A::new(278.0, 278.0, -500.0);
+    let lookat = Vec3A::new(278.0, 278.0, 300.0);
+    let view = Vec3A::new(0.0, 1.0, 0.0);
+    let fov = 40.0;
+    let aspect_ratio = (width.unwrap_or(2048) as f32, height.unwrap_or(2048) as f32);
+
+    let camera = Camera::new(origin, lookat, view, fov, aspect_ratio, 0.0, 10.0);
+
+    let mut world = World::new();
+    let mut materials: Vec<Material> = Vec::new();
+
+    let count = 10;
+    let radius = 20.0;
+    let spacing = 55.0;
+    let start_x = 278.0 - ((count as f32 - 1.0) * spacing / 2.0);
+
+    // Row of spheres with albedo=1 and increasing roughness.
+    // Under a directional light, any energy loss from single-scattering GGX
+    // will show up as darkening at high roughness even with albedo=1.
+    for i in 0..count {
+        let roughness = i as f32 * 0.10;
+        let x_pos = start_x + (i as f32 * spacing);
+
+        let mat_id = mat!(materials, Reflective::new(Vec3A::ONE, roughness));
+        world.add(Sphere::new(Vec3A::new(x_pos, 278.0, 278.0), radius, mat_id).into());
+    }
+
+    let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
+
+    // Small, bright directional light placed above and to the side so it
+    // illuminates all spheres at a consistent angle. The key difference from
+    // white_furnace is that radiance is non-uniform — energy lost to
+    // inter-microfacet shadowing is NOT compensated by the environment,
+    // so darkening at high roughness becomes visible.
+    let light_mat = mat!(materials, Emissive::new(SolidColor::new(50.0, 50.0, 50.0).into()));
+    let light_plane = Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 600.0, light_mat);
+    world.add(light_plane.clone().into_reversed());
+
+    Scene::new(
+        String::from("Albedo-1 Energy Conservation Test"),
+        bvh,
+        materials,
+        camera,
+        vec![Light::new(light_plane.into(), Vec3A::new(50.0, 50.0, 50.0))],
+        None,
+        false, // no environment — dark background so energy loss is unambiguous
+    )
+}
