@@ -8,18 +8,46 @@ use basis::OrthonormalBasis;
 
 
 /// G1 term of the Smith masking function used in GGX
-/// Calculate's how much a surface's microfacets mask and shadow each other
-/// Reference: Understanding the Masking-Shadowing Function in Microfacet-based BRDFs
+/// Calculate's how much a surface's microfacets are masked/shadowed
+/// from the view direction
+/// References:
+/// Understanding the Masking-Shadowing Function in Microfacet-based BRDFs
 /// https://inria.hal.science/hal-01024289/
-pub fn ggx_g1_masking(cos_v: f32, alpha: f32) -> f32 {
+///
+/// Physically Based Rendering in Filament
+/// https://google.github.io/filament/Filament.md.html#materialsystem/specularbrdf/geometricshadowingspecularg
+pub fn ggx_g1_masking(cosine_view: f32, alpha: f32) -> f32 {
     let a2 = alpha * alpha;
-    2.0 * cos_v / (cos_v + (a2 + (1.0 - a2) * cos_v * cos_v).sqrt())
+
+    // the tangent form of the G1 function has been algebraically formed into a cosine
+    // oriented form as seen in the references
+    let numerator = 2.0 * cosine_view;
+    let denominator = cosine_view + (a2 + (1.0 - a2) * cosine_view * cosine_view).sqrt();
+    numerator / denominator
 }
 
-pub fn ggx_distribution(cos_h: f32, alpha: f32) -> f32 {
+/// The visibility method is more physically correct than the separable ggx.
+///
+/// References:
+/// https://google.github.io/filament/Filament.md.html#materialsystem/specularbrdf/geometricshadowingspecularg
+pub fn ggx_visibility_correlated(cosine_view: f32, cosine_light: f32, alpha: f32) -> f32 {
     let a2 = alpha * alpha;
-    let denom = cos_h * cos_h * (a2 - 1.0) + 1.0;
-    a2 / (PI * denom * denom)
+    let ggxv = cosine_light * (cosine_view * cosine_view * (1.0 - a2) + a2).sqrt();
+    let ggxl = cosine_view * (cosine_light * cosine_light * (1.0 - a2) + a2).sqrt();
+
+    let denominator = ggxv + ggxl;
+
+    if denominator > 0.0 {
+        0.5 / denominator
+    } else {
+        0.0
+    }
+}
+
+pub fn ggx_distribution(cosine_half_vector: f32, alpha: f32) -> f32 {
+    let a2 = alpha * alpha;
+    let denominator = cosine_half_vector * cosine_half_vector * (a2 - 1.0) + 1.0;
+    a2 / (PI * denominator * denominator)
 }
 
 pub fn ggx_geometry(cos_i: f32, cos_o: f32, alpha: f32) -> f32 {
