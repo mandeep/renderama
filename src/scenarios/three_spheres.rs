@@ -14,7 +14,7 @@ use mat;
 
 
 pub fn three_spheres_scene(width: Option<usize>, height: Option<usize>) -> Scene {
-    let origin = Vec3A::new(0.0, 3.0, 6.0);
+    let origin = Vec3A::new(0.0, 3.0, 5.0);
     let lookat = Vec3A::new(0.0, 0.0, -1.5);
     let view = Vec3A::new(0.0, 1.0, 0.0);
     let fov = 20.0;
@@ -51,6 +51,11 @@ pub fn three_spheres_scene(width: Option<usize>, height: Option<usize>) -> Scene
     world.add(Primitive::Sphere(Sphere::new(Vec3A::new(0.0, 0.1, -2.0),
                           0.5,
                           metal_idx2)));
+
+    let floor_idx = mat!(materials, Diffuse::new(SolidColor::new(0.5, 0.5, 0.5).into(), 0.0));
+    world.add(Primitive::Sphere(Sphere::new(Vec3A::new(0.0, -100.5, -1.0),
+                          100.0,
+                          floor_idx)));
 
     let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
 
