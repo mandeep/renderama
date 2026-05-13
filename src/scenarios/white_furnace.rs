@@ -16,10 +16,10 @@ use world::World;
 use mat;
 
 pub fn white_furnace_scene(width: Option<usize>, height: Option<usize>) -> Scene {
-    let origin = Vec3A::new(278.0, 278.0, -100.0); 
-    let lookat = Vec3A::new(278.0, 278.0, 300.0); 
+    let origin = Vec3A::new(278.0, 278.0, -500.0); 
+    let lookat = Vec3A::new(278.0, 278.0, 300.0);
     let view = Vec3A::new(0.0, 1.0, 0.0);
-    let fov = 70.0;
+    let fov = 40.0;
     let aspect_ratio = (width.unwrap_or(2048) as f32, height.unwrap_or(2048) as f32);
 
     let camera = Camera::new(origin, lookat, view, fov, aspect_ratio, 0.0, 10.0);
@@ -38,7 +38,7 @@ pub fn white_furnace_scene(width: Option<usize>, height: Option<usize>) -> Scene
         
         let mat_id = mat!(materials, Reflective::new(Vec3A::ONE, roughness));
         
-        world.add(Sphere::new(Vec3A::new(x_pos, 278.0, 300.0), radius, mat_id).into());
+        world.add(Sphere::new(Vec3A::new(x_pos, 278.0, 278.0), radius, mat_id).into());
     }
 
     let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
