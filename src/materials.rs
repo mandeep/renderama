@@ -140,7 +140,7 @@ impl Diffuse {
         let scattered = Ray::new(event.point, ray.direction);
         let attenuation = self.albedo.generate_response(event.u, event.v, &event.point);
         let pdf = MaterialPDF::Cosine { uvw: OrthonormalBasis::new(&event.shading_normal) };
-        Some(ScatterEvent::new(scattered, attenuation, pdf, false))
+        Some(ScatterEvent::new(scattered, attenuation, pdf, false, false))
     }
 
     /// Reflect light according to the Oren-Nayar model
@@ -254,7 +254,7 @@ impl Reflective {
     /// for the fuzziness of the reflections due to the size of the sphere.
     /// Generally, the larger the sphere, the fuzzier the reflections will be.
     pub fn new(albedo: Vec3A, fuzz: f32) -> Reflective {
-        Reflective { albedo, fuzz }
+        Reflective { albedo, fuzz: fuzz * fuzz }
     }
 }
 
@@ -286,10 +286,10 @@ impl Reflective {
 
         if self.fuzz == 0.0 {
             let pdf = MaterialPDF::Cosine { uvw: OrthonormalBasis::new(&shading_normal) };
-            Some(ScatterEvent::new(specular_ray, self.albedo, pdf, true))
+            Some(ScatterEvent::new(specular_ray, self.albedo, pdf, true, true))
         } else {
             let pdf = MaterialPDF::GGX { wi: -ray.direction, normal: shading_normal, alpha: self.fuzz };
-            Some(ScatterEvent::new(specular_ray, self.albedo, pdf, false))
+            Some(ScatterEvent::new(specular_ray, self.albedo, pdf, false, true))
         }
     }
 
@@ -394,11 +394,11 @@ impl Refractive {
             let reflected: Vec3A = reflect(ray.direction, shading_normal);
             let offset_point = find_offset_point(event.point, forward_geometric_normal);
             let specular_ray = Ray::new(offset_point, reflected);
-            Some(ScatterEvent::new(specular_ray, attenuation, pdf, true))
+            Some(ScatterEvent::new(specular_ray, attenuation, pdf, true, true))
         } else {
             let offset_point = find_offset_point(event.point, -forward_geometric_normal);
             let specular_ray = Ray::new(offset_point, refracted.unwrap());
-            Some(ScatterEvent::new(specular_ray, attenuation, pdf, true))
+            Some(ScatterEvent::new(specular_ray, attenuation, pdf, true, true))
         }
     }
 }
@@ -442,21 +442,21 @@ impl Isotropic {
         let scattered = Ray::new(event.point, pick_sphere_point(rng));
         let attenuation = self.albedo.generate_response(event.u, event.v, &event.point);
         let pdf = MaterialPDF::Uniform;
-        Some(ScatterEvent::new(scattered, attenuation, pdf, false))
+        Some(ScatterEvent::new(scattered, attenuation, pdf, false, false))
     }
 }
 
 #[derive(Clone)]
 pub struct Plastic {
     pub albedo: Arc<Texture>,
-    pub roughness: f32,  // 0 = mirror smooth, 1 = very rough
-    pub ior: f32,        // typically 1.5 for plastic/ceramic
+    pub roughness: f32,
+    pub ior: f32,
 }
 
 impl Plastic {
     pub fn new(albedo: Texture, roughness: f32, ior: f32) -> Plastic {
         let albedo = Arc::new(albedo);
-        Plastic { albedo, roughness: roughness.max(0.0), ior }
+        Plastic { albedo, roughness: roughness * roughness, ior }
     }
 
     fn generate_response(&self, ray: &Ray, event: &HitEvent, rng: &mut ThreadRng) -> Option<ScatterEvent> {
@@ -491,14 +491,14 @@ impl Plastic {
             let specular_ray = Ray::new(offset_point, reflected);
             let pdf = MaterialPDF::GGX { wi: -ray.direction, normal: shading_normal, alpha };
 
-            Some(ScatterEvent::new(specular_ray, Vec3A::ONE, pdf, true))
+            Some(ScatterEvent::new(specular_ray, Vec3A::ONE, pdf, false, true))
         } else {
             // Diffuse path
             // even though ray.direction is given, a new ray with offset is generated in the integrator
             let scattered = Ray::new(offset_point, ray.direction);
             let attenuation = self.albedo.generate_response(event.u, event.v, &event.point) * (1.0 - fresnel);
             let pdf = MaterialPDF::Cosine { uvw: OrthonormalBasis::new(&event.shading_normal) };
-            Some(ScatterEvent::new(scattered, attenuation, pdf, false))
+            Some(ScatterEvent::new(scattered, attenuation, pdf, false, false))
         }
     }
 
