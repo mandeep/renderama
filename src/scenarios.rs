@@ -9,6 +9,7 @@ mod random_spheres;
 mod spheres_in_box;
 mod three_spheres;
 mod veach_mis;
+mod white_furnace;
 
 pub use self::cornell_box_boxes::*;
 pub use self::cornell_box_bunny::*;
@@ -18,6 +19,7 @@ pub use self::random_spheres::*;
 pub use self::spheres_in_box::*;
 pub use self::three_spheres::*;
 pub use self::veach_mis::*;
+pub use self::white_furnace::*;
 
 
 #[derive(Debug, Clone)]
@@ -30,6 +32,7 @@ pub enum Scenario {
     SpheresInBox,
     ThreeSpheres,
     VeachMis,
+    WhiteFurnace,
 }
 
 impl Scenario {
@@ -43,6 +46,7 @@ impl Scenario {
             "spheres_in_box" => Some(Scenario::SpheresInBox),
             "three_spheres" => Some(Scenario::ThreeSpheres),
             "veach_mis" => Some(Scenario::VeachMis),
+            "white_furnace" => Some(Scenario::WhiteFurnace),
             _ => None,
         }
     }
@@ -57,6 +61,7 @@ impl Scenario {
             Scenario::SpheresInBox => spheres_in_box_scene(width, height),
             Scenario::ThreeSpheres => three_spheres_scene(width, height),
             Scenario::VeachMis => veach_mis_scene(width, height),
+            Scenario::WhiteFurnace => white_furnace_scene(width, height),
         }
     }
 }
