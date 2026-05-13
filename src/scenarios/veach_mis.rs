@@ -50,10 +50,10 @@ pub fn veach_mis_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let visual_length = plate_length - plate_gap;
 
     let plate_configs: [(f32, f32); 5] = [
-        (-14.0, 0.08),
-        (-23.0, 0.04),
-        (-32.0, 0.02),
-        (-42.0, 0.01),
+        (-20.0, 0.28),
+        (-26.0, 0.20),
+        (-32.0, 0.14),
+        (-42.0, 0.10),
         (-52.0, 0.00),
     ];
 
