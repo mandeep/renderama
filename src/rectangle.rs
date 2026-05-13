@@ -9,6 +9,7 @@ use ray::Ray;
 
 
 #[derive(Clone)]
+#[allow(dead_code)]
 pub struct Rectangle {
     p0: Vec3A,
     p1: Vec3A,

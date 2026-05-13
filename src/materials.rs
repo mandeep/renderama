@@ -102,14 +102,6 @@ impl Material {
     }
 }
 
-#[derive(Clone)]
-pub struct Empty {}
-
-impl Empty {
-    pub fn new() -> Empty {
-        Empty {}
-    }
-}
 
 #[derive(Clone)]
 pub struct Diffuse {

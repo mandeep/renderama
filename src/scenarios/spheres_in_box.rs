@@ -14,7 +14,7 @@ use sphere::Sphere;
 use texture::{SolidColor, ImageTexture};
 use transformations::TransformedMesh;
 use volume::Volume;
-use world::World;
+
 use mat;
 
 
@@ -35,7 +35,7 @@ pub fn spheres_in_box_scene(width: Option<usize>, height: Option<usize>) -> Scen
                              aperture,
                              focus_distance);
 
-    let mut world = World::new();
+    let mut objects = Vec::new();
     let mut materials: Vec<Material> = Vec::new();
 
     let white = mat!(materials, Diffuse::new(SolidColor::new(0.73, 0.73, 0.73).into(), 0.0));
@@ -50,23 +50,23 @@ pub fn spheres_in_box_scene(width: Option<usize>, height: Option<usize>) -> Scen
             let w = 100.0;
             let p0 = Vec3A::new(-1000.0 + i as f32 * w, 0.0, -1000.0 + j as f32 * w);
             let p1 = p0 + Vec3A::new(w, 100.0 * (rand::random::<f32>() + 0.01), w);
-            world.add(Rectangle::new(p0, p1, snow).into());
+            objects.push(Rectangle::new(p0, p1, snow).into());
         }
     }
 
-    world.add(Primitive::ReverseOrientation(Box::new(Plane::new(Axis::XZ, Bounds2D::new(123.0..423.0, 147.0..412.0), 554.0, big_light).into())));
+    objects.push(Primitive::ReverseOrientation(Box::new(Plane::new(Axis::XZ, Bounds2D::new(123.0..423.0, 147.0..412.0), 554.0, big_light).into())));
 
-    world.add(Sphere::new(Vec3A::new(400.0, 400.0, 200.0),
+    objects.push(Sphere::new(Vec3A::new(400.0, 400.0, 200.0),
                           50.0,
                           red).into());
 
     let refr_idx = mat!(materials, Refractive::new(1.5, Vec3A::ONE));
-    world.add(Sphere::new(Vec3A::new(260.0, 150.0, 45.0),
+    objects.push(Sphere::new(Vec3A::new(260.0, 150.0, 45.0),
                           50.0,
                           refr_idx).into());
 
     let refl_idx = mat!(materials, Reflective::new(Vec3A::new(0.8, 0.8, 0.9), 0.0));
-    world.add(Sphere::new(Vec3A::new(0.0, 150.0, 145.0),
+    objects.push(Sphere::new(Vec3A::new(0.0, 150.0, 145.0),
                           50.0,
                           refl_idx).into());
 
@@ -75,28 +75,28 @@ pub fn spheres_in_box_scene(width: Option<usize>, height: Option<usize>) -> Scen
                                refr_idx).into();
 
     let cloned_boundary = boundary.clone();
-    world.add(boundary);
+    objects.push(boundary);
 
     let vol_idx = mat!(materials, Isotropic::new(SolidColor::new(0.2, 0.4, 0.9).into()));
-    world.add(Volume::new(0.2, cloned_boundary, vol_idx).into());
+    objects.push(Volume::new(0.2, cloned_boundary, vol_idx).into());
 
     let fog = Sphere::new(Vec3A::new(0.0, 0.0, 0.0),
                           5000.0,
                           refr_idx).into();
 
     let fog_idx = mat!(materials, Isotropic::new(SolidColor::new(1.0, 1.0, 1.0).into()));
-    world.add(Volume::new(0.0001, fog, fog_idx).into());
+    objects.push(Volume::new(0.0001, fog, fog_idx).into());
 
     // Image provided by NASA; details can be found here:
     // https://science.nasa.gov/earth/earth-observatory/blue-marble-next-generation/
     // The map used for this render is a Base Map with Topography and Bathymetry
     let topo_idx = mat!(materials, Diffuse::new(ImageTexture::new("docs/textures/world_topo_nasa.jpg", 1.0).into(), 0.0));
-    world.add(Sphere::new(Vec3A::new(400.0, 200.0, 400.0),
+    objects.push(Sphere::new(Vec3A::new(400.0, 200.0, 400.0),
                           100.0,
                           topo_idx).into());
 
     let marble = mat!(materials, Diffuse::new(ImageTexture::new("docs/textures/marble.jpg", 2.0).into(), 0.0));
-    world.add(Sphere::new(Vec3A::new(220.0, 280.0, 300.0),
+    objects.push(Sphere::new(Vec3A::new(220.0, 280.0, 300.0),
                           80.0,
                           marble).into());
 
@@ -108,10 +108,10 @@ pub fn spheres_in_box_scene(width: Option<usize>, height: Option<usize>) -> Scen
 
         let sphere = Sphere::new(center, 10.0, white);
         let transformed_sphere = TransformedMesh::new(Vec3A::new(-100.0, 270.0, 395.0), Vec3A::new(0.0, 15.0, 0.0), 1.0, sphere.into());
-        world.add(transformed_sphere.into());
+        objects.push(transformed_sphere.into());
     }
 
-    let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
+    let bvh = BVH::new(&mut objects, 0.0, 1.0);
     let light_shape = Plane::new(Axis::XZ, Bounds2D::new(123.0..423.0, 147.0..412.0), 554.0, white);
 
     Scene::new(String::from("Spheres in Box"), bvh, materials, camera, vec![Light::new(light_shape.into(), Vec3A::splat(7.0))], None, false)

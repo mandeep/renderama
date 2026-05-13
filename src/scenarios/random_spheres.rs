@@ -8,7 +8,7 @@ use materials::{Diffuse, Reflective, Refractive, Material};
 use scene::Scene;
 use sphere::Sphere;
 use texture::{EnvironmentMap, SolidColor, Texture};
-use world::World;
+
 use mat;
 
 pub fn random_spheres_scene(width: Option<usize>, height: Option<usize>) -> Scene {
@@ -28,14 +28,14 @@ pub fn random_spheres_scene(width: Option<usize>, height: Option<usize>) -> Scen
                              aperture,
                              focus_distance);
 
-    let mut world = World::new();
+    let mut objects = Vec::new();
     let mut materials: Vec<Material> = Vec::new();
 
     let environment = EnvironmentMap::new("docs/textures/pure_sky_qwantani.exr").into();
 
     let floor_idx = mat!(materials, Diffuse::new(SolidColor::new(0.5, 0.5, 0.5).into(), 0.0));
 
-    world.add(Sphere::new(Vec3A::new(0.0, -1000.0, 0.0),
+    objects.push(Sphere::new(Vec3A::new(0.0, -1000.0, 0.0),
                           1000.0,
                           floor_idx).into());
 
@@ -70,7 +70,7 @@ pub fn random_spheres_scene(width: Option<usize>, height: Option<usize>) -> Scen
                     rand::random::<f32>() * rand::random::<f32>());
                     // let roughness = rand::distributions::Uniform::new(0.0, 1.0);
                     let random_idx = mat!(materials, Diffuse::new(material.into(), 0.0));
-                    world.add(Sphere::new(center, 0.2, random_idx).into());
+                    objects.push(Sphere::new(center, 0.2, random_idx).into());
             } else if material < 0.95 {
                 let material = Reflective::new(Vec3A::new(
                     0.5 * (1.0 * rand::random::<f32>()),
@@ -78,37 +78,37 @@ pub fn random_spheres_scene(width: Option<usize>, height: Option<usize>) -> Scen
                     0.5 * (1.0 * rand::random::<f32>())),
                     0.5 * rand::random::<f32>());
                     let random_idx = mat!(materials, material);
-                    world.add(
+                    objects.push(
                         Sphere::new(center, 0.2, random_idx).into());
             } else {
                     let refl_idx = mat!(materials, Refractive::new(1.5, Vec3A::ONE));
-                    world.add(Sphere::new(center, 0.2, refl_idx).into());
+                    objects.push(Sphere::new(center, 0.2, refl_idx).into());
                     let refr_idx = mat!(materials, Refractive::new(1.5, Vec3A::ONE));
-                    world.add(Sphere::new(center, -0.19,refr_idx).into());
+                    objects.push(Sphere::new(center, -0.19,refr_idx).into());
             }
         }
     }
 
     let red_idx = mat!(materials, Diffuse::new(SolidColor::new(0.75, 0.25, 0.25).into(), 0.0));
-    world.add(Sphere::new(Vec3A::new(-2.0, 1.0, 0.0),
+    objects.push(Sphere::new(Vec3A::new(-2.0, 1.0, 0.0),
                           1.0,
                           red_idx).into());
 
     let refr_idx1 = mat!(materials, Refractive::new(1.5, Vec3A::ONE));
-    world.add(Sphere::new(Vec3A::new(0.0, 1.0, 0.0),
+    objects.push(Sphere::new(Vec3A::new(0.0, 1.0, 0.0),
                           1.0,
                           refr_idx1).into());
 
-    world.add(Sphere::new(Vec3A::new(0.0, 1.0, 0.0),
+    objects.push(Sphere::new(Vec3A::new(0.0, 1.0, 0.0),
                           -0.99,
                           refr_idx1).into());
 
     let refl_idx = mat!(materials, Reflective::new(Vec3A::new(0.5, 0.5, 0.5), 0.05));
-    world.add(Sphere::new(Vec3A::new(2.0, 1.0, 0.0),
+    objects.push(Sphere::new(Vec3A::new(2.0, 1.0, 0.0),
                           1.0,
                           refl_idx).into());
 
-    let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
+    let bvh = BVH::new(&mut objects, 0.0, 1.0);
 
     Scene::new(String::from("Random Spheres"), bvh, materials, camera, vec![], Some(environment), false)
 }

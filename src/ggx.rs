@@ -26,23 +26,6 @@ pub fn ggx_g1_masking(cosine_view: f32, alpha: f32) -> f32 {
     numerator / denominator
 }
 
-/// The visibility method is more physically correct than the separable ggx.
-///
-/// References:
-/// https://google.github.io/filament/Filament.md.html#materialsystem/specularbrdf/geometricshadowingspecularg
-pub fn ggx_visibility_correlated(cosine_view: f32, cosine_light: f32, alpha: f32) -> f32 {
-    let a2 = alpha * alpha;
-    let ggxv = cosine_light * (cosine_view * cosine_view * (1.0 - a2) + a2).sqrt();
-    let ggxl = cosine_view * (cosine_light * cosine_light * (1.0 - a2) + a2).sqrt();
-
-    let denominator = ggxv + ggxl;
-
-    if denominator > 0.0 {
-        0.5 / denominator
-    } else {
-        0.0
-    }
-}
 
 pub fn ggx_distribution(cosine_half_vector: f32, alpha: f32) -> f32 {
     let a2 = alpha * alpha;

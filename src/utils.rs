@@ -12,29 +12,6 @@ pub fn format_time(instant: Duration) -> String {
     format!("{:02}:{:02}:{:02}", hours, minutes, seconds)
 }
 
-/// Clamp a float between 0.0 and 255.0
-///
-/// This function is used due to an LLVM bug
-/// where casting a float to u8 can lead to
-/// undefined behavior:
-/// https://github.com/rust-lang/rust/issues/10184
-pub fn clamp_rgb(n: f32) -> f32 {
-    n.clamp(0.0, 255.0)
-}
-
-/// Clamp a value between the lower bound and upper bound
-pub fn clamp(n: f32, lower_bound: f32, upper_bound: f32) -> f32 {
-    let minimum = n.max(lower_bound);
-    let maximum = n.min(upper_bound);
-
-    minimum.min(maximum)
-}
-
-/// Gamma correct the given luminance
-pub fn gamma_correct(luminance: f32, gamma: f32) -> f32 {
-    luminance.powf(1.0 / gamma)
-}
-
 /// Check if a computed color contains any NaNs
 pub fn de_nan(color: &Vec3A) -> Vec3A {
     let mut correction = Vec3A::new(color.x, color.y, color.z);
@@ -49,24 +26,4 @@ pub fn de_nan(color: &Vec3A) -> Vec3A {
     }
 
     correction
-}
-
-/// Find the maximum value of a Vec<f32>
-pub fn f32_max(vector: &[f32]) -> f32 {
-    vector.iter().cloned().fold(0.0 / 0.0, f32::max)
-}
-
-/// Find the minimum value of a Vec<f32>
-pub fn f32_min(vector: &[f32]) -> f32 {
-    vector.iter().cloned().fold(0.0 / 0.0, f32::min)
-}
-
-
-/// Convert from sgrb to linear color space
-pub fn srgb_to_linear(c: f32) -> f32 {
-    if c <= 0.04045 {
-        c / 12.92
-    } else {
-        ((c + 0.055) / 1.055).powf(2.4)
-    }
 }
