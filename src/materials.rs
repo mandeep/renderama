@@ -503,6 +503,9 @@ impl Plastic {
     }
 
     fn compute_reflectance(&self, wo: &Ray, event: &HitEvent, wi: &Ray) -> f32 {
+        // we only need to compute the reflectance for the diffuse branch since
+        // the specular branch is pre_weighted and this method is only called
+        // for non-pre_weighted branches
         let n = event.shading_normal;
 
         let cos_o = n.dot(wi.direction);
@@ -514,27 +517,6 @@ impl Plastic {
 
         let fresnel = schlick(cos_theta_i, self.ior);
 
-        let diffuse_pdf = cos_o / PI;
-
-        let alpha = self.roughness;
-
-        let specular_pdf = {
-            let wi_local = -wo.direction;
-            let wo_local = wi.direction;
-
-            let h = (wi_local + wo_local).normalize();
-            let cos_h = n.dot(h);
-            let cos_i = n.dot(wi_local);
-            let cos_ol = n.dot(wo_local);
-
-            if cos_h <= 0.0 || cos_i <= 0.0 || cos_ol <= 0.0 {
-                return 0.0;
-            }
-
-            ggx_distribution(cos_h, alpha) * ggx_geometry(cos_i, cos_ol, alpha) / (4.0 * cos_i)
-        };
-
-        // mixture pdf
-        fresnel * specular_pdf + (1.0 - fresnel) * diffuse_pdf
+        (1.0 - fresnel) * cos_o / PI
     }
 }
