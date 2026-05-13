@@ -35,10 +35,11 @@ pub struct ScatterEvent {
     pub attenuation: Vec3A,
     pub sampling_strategy: MaterialPDF,
     pub specular: bool,
+    pub pre_weighted: bool,
 }
 
 impl ScatterEvent {
-    pub fn new(specular_ray: Ray, attenuation: Vec3A, sampling_strategy: MaterialPDF, specular: bool) -> ScatterEvent {
-        ScatterEvent { specular_ray, attenuation, sampling_strategy, specular }
+    pub fn new(specular_ray: Ray, attenuation: Vec3A, sampling_strategy: MaterialPDF, specular: bool, pre_weighted: bool) -> ScatterEvent {
+        ScatterEvent { specular_ray, attenuation, sampling_strategy, specular, pre_weighted }
     }
 }
