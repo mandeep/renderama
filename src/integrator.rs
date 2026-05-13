@@ -5,7 +5,7 @@ use rand::rngs::ThreadRng;
 use rand::RngExt;
 use rand_distr::StandardNormal;
 
-use pdf::{HybridPDF, MaterialPDF, power_heuristic};
+use pdf::power_heuristic;
 use ray::{find_offset_point, Ray};
 use scene::Scene;
 
@@ -25,83 +25,6 @@ pub fn pick_sphere_point(rng: &mut ThreadRng) -> Vec3A {
     let z: f32 = rng.sample(StandardNormal);
 
     Vec3A::new(x, y, z).normalize()
-}
-
-/// Compute the color of the surface that the ray has collided with
-///
-/// If the ray hits an object in the world, the object is colored in relation
-/// to the object's material. If the ray does not record a hit, then we compute
-/// the color of the atmosphere. We recursively call compute_color to sample
-/// the color at the ray's hit point. The depth has been set to an arbitrary
-/// limit of 50 which can lead to bias rendering.
-///
-pub fn render_path_integrator(mut ray: Ray, scene: &Scene, rng: &mut ThreadRng) -> Vec3A {
-    let mut color = Vec3A::ZERO;
-    let mut throughput = Vec3A::ONE;
-
-    let bounces = 10;
-
-    for bounce in 0..=bounces {
-        if let Some(hit_event) = scene.accelerator.hit(&ray, 1e-4, f32::MAX) {
-            let material = &scene.materials[hit_event.material_id.index()];
-            let emitted = material.evaluate_emission(&ray, &hit_event);
-            color += throughput * emitted;
-
-            if let Some(scatter_event) = material.generate_response(&ray, &hit_event, rng) {
-                if scatter_event.specular {
-                    throughput *= scatter_event.attenuation;
-                    ray = scatter_event.specular_ray;
-                } else {
-                    let number_of_lights = scene.lights.len();
-                    let importance_pdf = if number_of_lights > 0 {
-                        // sampling towards a random light source is good enough for this integrator
-                        let i = (rng.random::<f32>() * number_of_lights as f32) as usize % number_of_lights;
-                        Some(MaterialPDF::Importance { origin: hit_event.point, primitive: scene.lights[i].to_primitive() })
-                    } else {
-                        None
-                    };
-                    let importance_ref = importance_pdf.as_ref().unwrap_or(&scatter_event.sampling_strategy);
-                    let hybrid_pdf = HybridPDF::new(&scatter_event.sampling_strategy, importance_ref);
-
-                    let scattered_direction = hybrid_pdf.generate(rng);
-                    let offset_normal = if scattered_direction.dot(hit_event.geometric_normal) > 0.0 {
-                        hit_event.geometric_normal
-                    } else {
-                        -hit_event.geometric_normal
-                    };
-                    let offset_point = find_offset_point(hit_event.point, offset_normal);
-                    let scattered = Ray::new(offset_point, scattered_direction);
-                    let pdf_value = hybrid_pdf.value(scattered.direction);
-                    let reflectance = material.compute_reflectance(&ray, &hit_event, &scattered);
-
-                    throughput *= (reflectance * scatter_event.attenuation) / pdf_value;
-
-                    ray = scattered;
-                }
-            } else {
-                break;
-            }
-        } else {
-            if let Some(environment) = &scene.environment {
-                // u and v not needed for the enviroment map so we just pass dummy arguments
-                color += throughput * environment.generate_response(0.0, 0.0, &ray.direction);
-                break;
-            } else if scene.atmosphere {
-                let point: f32 = 0.5 * (ray.direction.y + 1.0);
-                let lerp = (1.0 - point) * Vec3A::splat(1.0) + point * Vec3A::new(0.5, 0.7, 1.0);
-                color += throughput * lerp;
-                break;
-            }
-        }
-        if bounce > 3 {
-            let roulette_factor = (1.0 - throughput.max_element()).max(0.05);
-            if rng.random::<f32>() < roulette_factor {
-                break;
-            }
-            throughput /= 1.0 - roulette_factor;
-        }
-    }
-    color
 }
 
 pub fn render_normals(ray: Ray, scene: &Scene) -> Vec3A {
