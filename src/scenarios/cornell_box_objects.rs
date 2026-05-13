@@ -45,7 +45,7 @@ pub fn cornell_box_object_scene(width: Option<usize>, height: Option<usize>) -> 
     let lucy = TriangleMesh::from("docs/models/lucy.obj", lucy_material).into();
     world.add(TransformedMesh::new(Vec3A::new(200.0, 180.0, 364.0), Vec3A::new(0.0, 0.0, 0.0), 0.30, lucy).into());
 
-    let dragon_material = mat!(materials, Plastic::new(SolidColor::new(0.7, 0.85, 0.45).into(), 0.0, 1.5));
+    let dragon_material = mat!(materials, Plastic::new(SolidColor::new(0.7, 0.85, 0.45).into(), 0.05, 1.5));
     let dragon = TriangleMesh::from("docs/models/dragon.obj", dragon_material).into();
     world.add(TransformedMesh::new(Vec3A::new(283.0, 96.0, 268.0), Vec3A::new(0.0, -60.0, 0.0), 350.0, dragon).into());
 
