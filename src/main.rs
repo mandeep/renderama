@@ -160,9 +160,9 @@ fn main() {
                 normal += normal_sample;
         })});
 
-        color /= samples as f32;
-        albedo /= samples as f32;
-        normal /= samples as f32;
+        color /= (samples_sqrt * samples_sqrt) as f32;
+        albedo /= (samples_sqrt * samples_sqrt) as f32;
+        normal /= (samples_sqrt * samples_sqrt) as f32;
 
         chunk[0] = color.x;  chunk[1] = color.y;  chunk[2] = color.z;
         chunk[3] = albedo.x; chunk[4] = albedo.y; chunk[5] = albedo.z;
