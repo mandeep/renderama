@@ -53,7 +53,7 @@ pub fn veach_mis_scene(width: Option<usize>, height: Option<usize>) -> Scene {
         (-20.0, 0.28),
         (-26.0, 0.20),
         (-32.0, 0.14),
-        (-42.0, 0.10),
+        (-40.0, 0.10),
         (-52.0, 0.00),
     ];
 
