@@ -131,7 +131,13 @@ pub fn render_nee_integrator(mut ray: Ray, scene: &Scene, rng: &mut ThreadRng) -
                     let scattered_ray = Ray::new(offset_point, scattered_direction);
                     let reflectance = material.compute_reflectance(&ray, &hit_event, &scattered_ray);
 
-                    throughput *= (reflectance * scatter_event.attenuation) / material_weight;
+                    // if we're using a material with pre-weighted ggx vndf
+                    // then no need to compute the reflactance and weight
+                    if scatter_event.pre_weighted {
+                        throughput *= scatter_event.attenuation;
+                    } else {
+                        throughput *= (reflectance * scatter_event.attenuation) / material_weight;
+                    }
                     ray = scattered_ray;
                      // store the material so that we don't need to perform a best estimate
                      // hit which would cost another traversal
