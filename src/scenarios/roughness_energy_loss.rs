@@ -10,7 +10,7 @@ use plane::{Axis, Bounds2D, Plane};
 use scene::Scene;
 use sphere::Sphere;
 use texture::SolidColor;
-use world::World;
+
 use mat;
 
 pub fn albedo_one_sphere_scene(width: Option<usize>, height: Option<usize>) -> Scene {
@@ -22,7 +22,7 @@ pub fn albedo_one_sphere_scene(width: Option<usize>, height: Option<usize>) -> S
 
     let camera = Camera::new(origin, lookat, view, fov, aspect_ratio, 0.0, 10.0);
 
-    let mut world = World::new();
+    let mut objects = Vec::new();
     let mut materials: Vec<Material> = Vec::new();
 
     let count = 10;
@@ -38,10 +38,10 @@ pub fn albedo_one_sphere_scene(width: Option<usize>, height: Option<usize>) -> S
         let x_pos = start_x + (i as f32 * spacing);
 
         let mat_id = mat!(materials, Reflective::new(Vec3A::ONE, roughness));
-        world.add(Sphere::new(Vec3A::new(x_pos, 278.0, 278.0), radius, mat_id).into());
+        objects.push(Sphere::new(Vec3A::new(x_pos, 278.0, 278.0), radius, mat_id).into());
     }
 
-    let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
+    let bvh = BVH::new(&mut objects, 0.0, 1.0);
 
     // Small, bright directional light placed above and to the side so it
     // illuminates all spheres at a consistent angle. The key difference from
@@ -50,7 +50,7 @@ pub fn albedo_one_sphere_scene(width: Option<usize>, height: Option<usize>) -> S
     // so darkening at high roughness becomes visible.
     let light_mat = mat!(materials, Emissive::new(SolidColor::new(50.0, 50.0, 50.0).into()));
     let light_plane = Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 600.0, light_mat);
-    world.add(light_plane.clone().into_reversed());
+    objects.push(light_plane.clone().into_reversed());
 
     Scene::new(
         String::from("Albedo-1 Energy Conservation Test"),

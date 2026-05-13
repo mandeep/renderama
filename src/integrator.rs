@@ -27,6 +27,7 @@ pub fn pick_sphere_point(rng: &mut ThreadRng) -> Vec3A {
     Vec3A::new(x, y, z).normalize()
 }
 
+#[allow(dead_code)]
 pub fn render_normals(ray: Ray, scene: &Scene) -> Vec3A {
     if let Some(hit) = scene.accelerator.hit(&ray, 1e-4, f32::MAX) {
         let normal = hit.shading_normal;

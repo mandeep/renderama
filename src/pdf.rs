@@ -2,15 +2,14 @@ use std::f32::consts::PI;
 
 use glam::Vec3A;
 use rand::rngs::ThreadRng;
-use rand::RngExt;
 
 use basis::OrthonormalBasis;
-use primitive::Primitive;
 use ggx::{ggx_distribution, ggx_g1_masking, ggx_sample_vndf};
 use integrator::pick_sphere_point;
 use sampling::cosine_sample_hemisphere;
 
 
+#[allow(dead_code)]
 /// The balance heuristic weighs samples by their relative PDF contribution.
 ///
 /// Reference: https://pbr-book.org/3ed-2018/Monte_Carlo_Integration/Importance_Sampling
@@ -32,7 +31,6 @@ pub fn power_heuristic(f_pdf: f32, g_pdf: f32) -> f32 {
 pub enum MaterialPDF {
     Cosine { uvw: OrthonormalBasis },
     GGX { wi: Vec3A, normal: Vec3A, alpha: f32 },
-    Importance { origin: Vec3A, primitive: Primitive },
     Uniform,
 }
 
@@ -42,9 +40,6 @@ impl MaterialPDF {
             MaterialPDF::Cosine { uvw } => {
                 let cosine = direction.dot(uvw.w());
                 if cosine > 0.0 { cosine / PI } else { 0.0 }
-            }
-            MaterialPDF::Importance { origin, primitive } => {
-                primitive.evaluate_sampling_weight(*origin, direction)
             }
             MaterialPDF::GGX { wi, normal, alpha } => {
                 let cos_i = normal.dot(*wi);
@@ -66,9 +61,6 @@ impl MaterialPDF {
             MaterialPDF::Cosine { uvw } => {
                 uvw.local(&cosine_sample_hemisphere(rng))
             }
-            MaterialPDF::Importance { origin, primitive } => {
-                primitive.sample_direction_to_light(*origin, rng)
-            },
             MaterialPDF::GGX { wi, normal, alpha } => {
                 let h = ggx_sample_vndf(*normal, *wi, *alpha, rng);
                 let wi_dot_h = wi.dot(h);
@@ -76,29 +68,6 @@ impl MaterialPDF {
                 2.0 * wi_dot_h * h - *wi
             }
             MaterialPDF::Uniform => pick_sphere_point(rng),
-        }
-    }
-}
-
-pub struct HybridPDF<'a> {
-        material_pdf: &'a MaterialPDF,
-        importance_pdf: &'a MaterialPDF,
-}
-
-impl<'a> HybridPDF<'a> {
-    pub fn new(material_pdf: &'a MaterialPDF, importance_pdf: &'a MaterialPDF) -> HybridPDF<'a> {
-        HybridPDF { material_pdf, importance_pdf }
-    }
-
-    pub fn value(&self, direction: Vec3A) -> f32 {
-        0.5 * self.material_pdf.calculate_probability(direction) + 0.5 * self.importance_pdf.calculate_probability(direction)
-    }
-
-    pub fn generate(&self, rng: &mut ThreadRng) -> Vec3A {
-        if rng.random::<f32>() < 0.5 {
-            self.material_pdf.pick_direction(rng)
-        } else {
-            self.importance_pdf.pick_direction(rng)
         }
     }
 }

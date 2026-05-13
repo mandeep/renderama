@@ -45,7 +45,6 @@ pub struct BVH {
     internals: Vec<InternalNode4>,
     leaves: Vec<LeafNode>,
     root: u32,
-    bbox: AABB, // root's bbox
 }
 
 /// Temporary tree structure used during construction.
@@ -351,13 +350,12 @@ impl BVH {
     pub fn new(world: &mut Vec<Primitive>, start_time: f32, end_time: f32) -> BVH {
         // Build the tree using SAH, then flatten it.
         let tree = build_tree(world, start_time, end_time);
-        let bbox = *tree.bbox();
 
         let mut internals = Vec::new();
         let mut leaves = Vec::new();
         let root = flatten4(&tree, &mut internals, &mut leaves);
 
-        BVH { internals, leaves, root, bbox }
+        BVH { internals, leaves, root }
     }
 
     pub fn hit(&self, ray: &Ray, start_distance: f32, end_distance: f32) -> Option<HitEvent> {
@@ -500,9 +498,5 @@ impl BVH {
         }
 
         false
-    }
-
-    pub fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
-        Some(self.bbox)
     }
 }

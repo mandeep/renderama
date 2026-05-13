@@ -13,7 +13,6 @@ pub struct Camera {
     pub origin: Vec3A,
     u: Vec3A,
     v: Vec3A,
-    w: Vec3A,
     pub lens_radius: f32,
     pub resolution: (f32, f32),
 }
@@ -60,7 +59,6 @@ impl Camera {
                  origin,
                  u,
                  v,
-                 w,
                  lens_radius,
                  resolution: aspect
                 }

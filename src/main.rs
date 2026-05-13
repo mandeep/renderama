@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 extern crate chrono;
 extern crate glam;
 extern crate image;
@@ -22,7 +20,6 @@ mod lights;
 mod materials;
 mod pdf;
 mod plane;
-mod post;
 mod primitive;
 mod ray;
 mod rectangle;
@@ -31,12 +28,10 @@ mod scenarios;
 mod scene;
 mod sphere;
 mod texture;
-mod tone;
 mod transformations;
 mod triangle;
 mod utils;
 mod volume;
-mod world;
 
 use std::env;
 use std::f32;

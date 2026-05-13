@@ -9,6 +9,7 @@ use ray::Ray;
 
 /// A mesh with combined translation, rotation (XYZ Euler), and uniform scale,
 /// stored as precomputed forward and inverse matrices for fast ray transforms.
+#[allow(dead_code)]
 #[derive(Clone)]
 pub struct TransformedMesh {
     /// Inverse of the transform: world-to-local. Used to transform rays.

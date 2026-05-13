@@ -1,7 +1,3 @@
-use rand::rngs::ThreadRng;
-
-use glam::Vec3A;
-
 use aabb::AABB;
 use events::HitEvent;
 use plane::Plane;
@@ -60,22 +56,7 @@ impl Primitive {
         }
     }
 
-    pub fn evaluate_sampling_weight(&self, origin: Vec3A, direction: Vec3A) -> f32 {
-        match self {
-            Primitive::Plane(p) => p.evaluate_sampling_weight(origin, direction),
-            Primitive::Sphere(s) => s.evaluate_sampling_weight(origin, direction),
-            _ => 0.0
-        }
-    }
-
-    pub fn sample_direction_to_light(&self, origin: Vec3A, rng: &mut ThreadRng) -> Vec3A {
-        match self {
-            Primitive::Plane(p) => p.sample_direction_to_light(origin, rng),
-            Primitive::Sphere(s) => s.sample_direction_to_light(origin, rng),
-            _ => Vec3A::new(1.0, 0.0, 0.0)
-        }
-    }
-
+    #[allow(dead_code)]
     pub fn reversed(self) -> Self {
         Primitive::ReverseOrientation(Box::new(self))
     }

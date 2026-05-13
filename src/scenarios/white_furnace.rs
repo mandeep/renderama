@@ -12,7 +12,7 @@ use scene::Scene;
 use sphere::Sphere;
 use texture::{SolidColor};
 use transformations::TransformedMesh;
-use world::World;
+
 use mat;
 
 pub fn white_furnace_scene(width: Option<usize>, height: Option<usize>) -> Scene {
@@ -24,7 +24,7 @@ pub fn white_furnace_scene(width: Option<usize>, height: Option<usize>) -> Scene
 
     let camera = Camera::new(origin, lookat, view, fov, aspect_ratio, 0.0, 10.0);
 
-    let mut world = World::new();
+    let mut objects = Vec::new();
     let mut materials: Vec<Material> = Vec::new();
 
     let count = 10;
@@ -38,10 +38,10 @@ pub fn white_furnace_scene(width: Option<usize>, height: Option<usize>) -> Scene
         
         let mat_id = mat!(materials, Reflective::new(Vec3A::ONE, roughness));
         
-        world.add(Sphere::new(Vec3A::new(x_pos, 278.0, 278.0), radius, mat_id).into());
+        objects.push(Sphere::new(Vec3A::new(x_pos, 278.0, 278.0), radius, mat_id).into());
     }
 
-    let bvh = BVH::new(&mut world.objects, 0.0, 1.0);
+    let bvh = BVH::new(&mut objects, 0.0, 1.0);
 
     Scene::new(String::from("White Furnace Test"), bvh, materials, camera, vec![], None, true)
 }

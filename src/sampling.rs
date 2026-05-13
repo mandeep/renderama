@@ -24,6 +24,7 @@ pub fn cosine_sample_hemisphere(rng: &mut ThreadRng) -> Vec3A {
     Vec3A::new(x, y, z)
 }
 
+#[allow(dead_code)]
 pub fn uniform_sample_hemisphere(rng: &mut ThreadRng) -> Vec3A {
     let u = rng.random::<f32>();
     let v = rng.random::<f32>();

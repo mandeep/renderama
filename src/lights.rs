@@ -75,6 +75,7 @@ impl Light {
         }
     }
 
+    #[allow(dead_code)]
     pub fn to_primitive(&self) -> Primitive {
         match &self.primitive {
             LightPrimitive::Plane(p) => Primitive::Plane(p.clone()),

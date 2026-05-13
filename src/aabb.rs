@@ -11,12 +11,6 @@ pub struct AABB {
 }
 
 impl AABB {
-    /// Create an empty AABB from a zero vector and one vector
-    pub fn new() -> AABB {
-        AABB { minimum: Vec3A::splat(f32::MAX),
-               maximum: Vec3A::splat(f32::MIN) }
-    }
-
     /// Create a new AABB from the minimum and maximum slab vectors
     pub fn from(minimum: Vec3A, maximum: Vec3A) -> AABB {
         AABB { minimum, maximum }
