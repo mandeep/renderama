@@ -7,6 +7,7 @@ mod cornell_box_dragon;
 mod cornell_box_objects;
 mod random_spheres;
 mod spheres_in_box;
+mod three_spheres;
 mod veach_mis;
 
 pub use self::cornell_box_boxes::*;
@@ -15,6 +16,7 @@ pub use self::cornell_box_dragon::*;
 pub use self::cornell_box_objects::*;
 pub use self::random_spheres::*;
 pub use self::spheres_in_box::*;
+pub use self::three_spheres::*;
 pub use self::veach_mis::*;
 
 
@@ -26,6 +28,7 @@ pub enum Scenario {
     CornellBoxObjects,
     RandomSpheres,
     SpheresInBox,
+    ThreeSpheres,
     VeachMis,
 }
 
@@ -38,6 +41,7 @@ impl Scenario {
             "cornell_box_objects" => Some(Scenario::CornellBoxObjects),
             "random_spheres" => Some(Scenario::RandomSpheres),
             "spheres_in_box" => Some(Scenario::SpheresInBox),
+            "three_spheres" => Some(Scenario::ThreeSpheres),
             "veach_mis" => Some(Scenario::VeachMis),
             _ => None,
         }
@@ -51,6 +55,7 @@ impl Scenario {
             Scenario::CornellBoxObjects => cornell_box_object_scene(width, height),
             Scenario::RandomSpheres => random_spheres_scene(width, height),
             Scenario::SpheresInBox => spheres_in_box_scene(width, height),
+            Scenario::ThreeSpheres => three_spheres_scene(width, height),
             Scenario::VeachMis => veach_mis_scene(width, height),
         }
     }
