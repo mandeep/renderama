@@ -9,7 +9,7 @@ use materials::{Diffuse, Reflective, Refractive, Material};
 use primitive::Primitive;
 use scene::Scene;
 use sphere::Sphere;
-use texture::SolidColor;
+use texture::Color;
 
 use mat;
 
@@ -43,7 +43,7 @@ pub fn three_spheres_scene(width: Option<usize>, height: Option<usize>) -> Scene
     let metal_idx2 = mat!(materials, Reflective::new(Vec3A::new(0.6, 0.6, 0.6), 0.2));
     objects.push(Sphere::new(Vec3A::new(0.0, 0.1, -2.0), 0.5, metal_idx2).into());
 
-    let floor_idx = mat!(materials, Diffuse::new(SolidColor::new(0.5, 0.5, 0.5).into(), 0.0));
+    let floor_idx = mat!(materials, Diffuse::new(Color::new(0.5, 0.5, 0.5).into(), 0.0));
     objects.push(Sphere::new(Vec3A::new(0.0, -100.5, -1.0), 100.0, floor_idx).into());
 
     let bvh = BVH::new(&mut objects, 0.0, 1.0);

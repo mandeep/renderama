@@ -9,7 +9,7 @@ use materials::{Emissive, Material, Reflective};
 use plane::{Axis, Bounds2D, Plane};
 use scene::Scene;
 use sphere::Sphere;
-use texture::SolidColor;
+use texture::Color;
 
 use mat;
 
@@ -48,7 +48,7 @@ pub fn albedo_one_sphere_scene(width: Option<usize>, height: Option<usize>) -> S
     // white_furnace is that radiance is non-uniform — energy lost to
     // inter-microfacet shadowing is NOT compensated by the environment,
     // so darkening at high roughness becomes visible.
-    let light_mat = mat!(materials, Emissive::new(SolidColor::new(50.0, 50.0, 50.0).into()));
+    let light_mat = mat!(materials, Emissive::new(Color::new(50.0, 50.0, 50.0).into()));
     let light_plane = Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 600.0, light_mat);
     objects.push(light_plane.clone().into_reversed());
 

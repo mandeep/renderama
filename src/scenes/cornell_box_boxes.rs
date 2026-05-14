@@ -9,7 +9,7 @@ use materials::{Diffuse, Emissive, Material};
 use plane::{Axis, Bounds2D, Plane};
 use rectangle::Rectangle;
 use scene::Scene;
-use texture::{SolidColor};
+use texture::{Color};
 use transformations::TransformedMesh;
 
 use mat;
@@ -28,10 +28,10 @@ pub fn cornell_box_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let mut materials: Vec<Material> = Vec::new();
 
     let roughness = 0.0;
-    let red_id = mat!(materials, Diffuse::new(SolidColor::new(0.65, 0.05, 0.05).into(), roughness));
-    let green_id = mat!(materials, Diffuse::new(SolidColor::new(0.12, 0.45, 0.15).into(), roughness));
-    let white_id = mat!(materials, Diffuse::new(SolidColor::new(0.73, 0.73, 0.73).into(), roughness));
-    let light_material = mat!(materials, Emissive::new(SolidColor::new(25.0, 18.0, 10.0).into()));
+    let red_id = mat!(materials, Diffuse::new(Color::new(0.65, 0.05, 0.05).into(), roughness));
+    let green_id = mat!(materials, Diffuse::new(Color::new(0.12, 0.45, 0.15).into(), roughness));
+    let white_id = mat!(materials, Diffuse::new(Color::new(0.73, 0.73, 0.73).into(), roughness));
+    let light_material = mat!(materials, Emissive::new(Color::new(25.0, 18.0, 10.0).into()));
 
     // add the walls of the cornell box to the world
     objects.push(Plane::new(Axis::YZ, Bounds2D::new(0.0..555.0, 0.0..555.0), 555.0, red_id).into_reversed());

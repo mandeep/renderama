@@ -10,7 +10,7 @@ use plane::{Axis, Bounds2D, Plane};
 use rectangle::Rectangle;
 use scene::Scene;
 use sphere::Sphere;
-use texture::{SolidColor};
+use texture::{Color};
 use transformations::TransformedMesh;
 
 use mat;

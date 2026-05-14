@@ -4,14 +4,14 @@ use image;
 
 #[derive(Clone)]
 pub enum Texture {
-    SolidColor(SolidColor),
+    Color(Color),
     ImageTexture(ImageTexture),
 }
 
 impl Texture {
     pub fn sample_texture(&self, u: f32, v: f32, w: &Vec3A) -> Vec3A {
         match self {
-            Texture::SolidColor(texture) => texture.sample_texture(u, v, w),
+            Texture::Color(texture) => texture.sample_texture(u, v, w),
             Texture::ImageTexture(texture) => texture.sample_texture(u, v, w),
         }
     }
@@ -30,20 +30,20 @@ macro_rules! impl_from_texture {
 }
 
 impl_from_texture!(
-    SolidColor => SolidColor,
+    Color => Color,
     ImageTexture => ImageTexture
 );
 
 #[derive(Clone)]
-/// SolidColor is just a wrapping for a Vec3A of RGB values
-pub struct SolidColor {
+/// Color is just a wrapping for a Vec3A of RGB values
+pub struct Color {
     color: Vec3A,
 }
 
-/// Create a new SolidColor which is used for pure albedo materials
-impl SolidColor {
-    pub fn new(r: f32, g: f32, b: f32) -> SolidColor {
-        SolidColor { color: Vec3A::new(r, g, b) }
+/// Create a new Color which is used for pure albedo materials
+impl Color {
+    pub fn new(r: f32, g: f32, b: f32) -> Color {
+        Color { color: Vec3A::new(r, g, b) }
     }
 
     /// Returning the albedo instead of sampling with u and v

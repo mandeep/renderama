@@ -8,7 +8,7 @@ use plane::{Axis, Bounds2D, Plane};
 use rectangle::Rectangle;
 use scene::Scene;
 use sphere::Sphere;
-use texture::SolidColor;
+use texture::Color;
 use transformations::TransformedMesh;
 
 use mat;
@@ -29,7 +29,7 @@ pub fn veach_mis_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let mut objects = Vec::new();
     let mut materials: Vec<Material> = Vec::new();
 
-    let grey = mat!(materials, Diffuse::new(SolidColor::new(0.99, 0.99, 0.99).into(), 0.0));
+    let grey = mat!(materials, Diffuse::new(Color::new(0.99, 0.99, 0.99).into(), 0.0));
 
     // floor
     objects.push(Plane::new(Axis::XZ, Bounds2D::new(-20.0..20.0, -5.0..25.0), 0.0, grey).into_primitive());
@@ -95,7 +95,7 @@ pub fn veach_mis_scene(width: Option<usize>, height: Option<usize>) -> Scene {
         (-2.0, 0.50, 4.0)
     ];
     for (x, r, intensity) in sphere_lights {
-        let mat = mat!(materials, Emissive::new(SolidColor::new(intensity, intensity, intensity).into()));
+        let mat = mat!(materials, Emissive::new(Color::new(intensity, intensity, intensity).into()));
         objects.push(Sphere::new(
             Vec3A::new(x, light_y, light_z),
             r, mat,
@@ -103,7 +103,7 @@ pub fn veach_mis_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     }
 
     let fill_intensity = 0.005;
-    let fill_mat = mat!(materials, Emissive::new(SolidColor::new(fill_intensity, fill_intensity, fill_intensity).into()));
+    let fill_mat = mat!(materials, Emissive::new(Color::new(fill_intensity, fill_intensity, fill_intensity).into()));
     let fill_color = Vec3A::splat(fill_intensity);
 
     // Left Fill Light (facing right toward the center)

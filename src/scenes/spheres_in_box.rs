@@ -11,7 +11,7 @@ use plane::{Axis, Bounds2D, Plane};
 use rectangle::Rectangle;
 use scene::Scene;
 use sphere::Sphere;
-use texture::{SolidColor, ImageTexture};
+use texture::{Color, ImageTexture};
 use transformations::TransformedMesh;
 use volume::Volume;
 
@@ -38,10 +38,10 @@ pub fn spheres_in_box_scene(width: Option<usize>, height: Option<usize>) -> Scen
     let mut objects = Vec::new();
     let mut materials: Vec<Material> = Vec::new();
 
-    let white = mat!(materials, Diffuse::new(SolidColor::new(0.73, 0.73, 0.73).into(), 0.0));
-    let red = mat!(materials, Diffuse::new(SolidColor::new(1.0, 0.10, 0.20).into(), 0.0));
-    let big_light = mat!(materials, Emissive::new(SolidColor::new(7.0, 7.0, 7.0).into()));
-    let snow = mat!(materials, Diffuse::new(SolidColor::new(0.48, 0.83, 0.53).into(), 0.0));
+    let white = mat!(materials, Diffuse::new(Color::new(0.73, 0.73, 0.73).into(), 0.0));
+    let red = mat!(materials, Diffuse::new(Color::new(1.0, 0.10, 0.20).into(), 0.0));
+    let big_light = mat!(materials, Emissive::new(Color::new(7.0, 7.0, 7.0).into()));
+    let snow = mat!(materials, Diffuse::new(Color::new(0.48, 0.83, 0.53).into(), 0.0));
 
     let number_of_boxes = 20;
 
@@ -77,14 +77,14 @@ pub fn spheres_in_box_scene(width: Option<usize>, height: Option<usize>) -> Scen
     let cloned_boundary = boundary.clone();
     objects.push(boundary);
 
-    let vol_idx = mat!(materials, Isotropic::new(SolidColor::new(0.2, 0.4, 0.9).into()));
+    let vol_idx = mat!(materials, Isotropic::new(Color::new(0.2, 0.4, 0.9).into()));
     objects.push(Volume::new(0.2, cloned_boundary, vol_idx).into());
 
     let fog = Sphere::new(Vec3A::new(0.0, 0.0, 0.0),
                           5000.0,
                           refr_idx).into();
 
-    let fog_idx = mat!(materials, Isotropic::new(SolidColor::new(1.0, 1.0, 1.0).into()));
+    let fog_idx = mat!(materials, Isotropic::new(Color::new(1.0, 1.0, 1.0).into()));
     objects.push(Volume::new(0.0001, fog, fog_idx).into());
 
     // Image provided by NASA; details can be found here:

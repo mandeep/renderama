@@ -8,7 +8,7 @@ use environment::EnvironmentMap;
 use materials::{Diffuse, Reflective, Refractive, Material};
 use scene::Scene;
 use sphere::Sphere;
-use texture::{SolidColor, Texture};
+use texture::{Color, Texture};
 
 use mat;
 
@@ -34,7 +34,7 @@ pub fn random_spheres_scene(width: Option<usize>, height: Option<usize>) -> Scen
 
     let environment = EnvironmentMap::new("docs/textures/pure_sky_qwantani.exr").into();
 
-    let floor_idx = mat!(materials, Diffuse::new(SolidColor::new(0.5, 0.5, 0.5).into(), 0.0));
+    let floor_idx = mat!(materials, Diffuse::new(Color::new(0.5, 0.5, 0.5).into(), 0.0));
 
     objects.push(Sphere::new(Vec3A::new(0.0, -1000.0, 0.0),
                           1000.0,
@@ -65,7 +65,7 @@ pub fn random_spheres_scene(width: Option<usize>, height: Option<usize>) -> Scen
             placed.push((center, 0.2));
 
             if material < 0.75 {
-                let material = SolidColor::new(
+                let material = Color::new(
                     rand::random::<f32>() * rand::random::<f32>(),
                     rand::random::<f32>() * rand::random::<f32>(),
                     rand::random::<f32>() * rand::random::<f32>());
@@ -90,7 +90,7 @@ pub fn random_spheres_scene(width: Option<usize>, height: Option<usize>) -> Scen
         }
     }
 
-    let red_idx = mat!(materials, Diffuse::new(SolidColor::new(0.75, 0.25, 0.25).into(), 0.0));
+    let red_idx = mat!(materials, Diffuse::new(Color::new(0.75, 0.25, 0.25).into(), 0.0));
     objects.push(Sphere::new(Vec3A::new(-2.0, 1.0, 0.0),
                           1.0,
                           red_idx).into());

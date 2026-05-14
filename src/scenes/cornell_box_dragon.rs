@@ -8,7 +8,7 @@ use lights::Light;
 use materials::{Diffuse, Emissive, Plastic, Refractive, Material};
 use plane::{Axis, Bounds2D, Plane};
 use scene::Scene;
-use texture::{SolidColor, ImageTexture};
+use texture::{Color, ImageTexture};
 use transformations::TransformedMesh;
 use triangle::TriangleMesh;
 
@@ -28,10 +28,10 @@ pub fn cornell_box_dragon_scene(width: Option<usize>, height: Option<usize>) -> 
     let mut materials: Vec<Material> = Vec::new();
 
     let roughness = 0.0;
-    let red_id = mat!(materials, Diffuse::new(SolidColor::new(0.65, 0.05, 0.05).into(), roughness));
-    let green_id = mat!(materials, Diffuse::new(SolidColor::new(0.12, 0.45, 0.15).into(), roughness));
-    let white_id = mat!(materials, Diffuse::new(SolidColor::new(0.73, 0.73, 0.73).into(), roughness));
-    let light_material = mat!(materials, Emissive::new(SolidColor::new(20.0, 20.0, 20.0).into()));
+    let red_id = mat!(materials, Diffuse::new(Color::new(0.65, 0.05, 0.05).into(), roughness));
+    let green_id = mat!(materials, Diffuse::new(Color::new(0.12, 0.45, 0.15).into(), roughness));
+    let white_id = mat!(materials, Diffuse::new(Color::new(0.73, 0.73, 0.73).into(), roughness));
+    let light_material = mat!(materials, Emissive::new(Color::new(20.0, 20.0, 20.0).into()));
 
     // add the walls of the cornell box to the world
     objects.push(Plane::new(Axis::YZ, Bounds2D::new(0.0..555.0, 0.0..555.0), 555.0, red_id).into_reversed());
@@ -41,7 +41,7 @@ pub fn cornell_box_dragon_scene(width: Option<usize>, height: Option<usize>) -> 
     objects.push(Plane::new(Axis::XZ, Bounds2D::new(0.0..555.0, 0.0..555.0), 0.0, white_id).into_primitive());
     objects.push(Plane::new(Axis::XY, Bounds2D::new(0.0..555.0, 0.0..555.0), 555.0, white_id).into_reversed());
 
-    let dragon_material = mat!(materials, Plastic::new(SolidColor::new(0.0, 0.06, 0.18).into(), 0.15, 1.5));
+    let dragon_material = mat!(materials, Plastic::new(Color::new(0.0, 0.06, 0.18).into(), 0.15, 1.5));
     let dragon = TriangleMesh::from("docs/models/dragon.obj", dragon_material).into();
     objects.push(TransformedMesh::new(Vec3A::new(283.0, 114.0, 268.0), Vec3A::new(0.0, -60.0, 0.0), 425.0, dragon).into());
 
