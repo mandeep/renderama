@@ -4,10 +4,11 @@ use glam::Vec3A;
 
 use bvh::BVH;
 use camera::Camera;
+use environment::EnvironmentMap;
 use materials::{Diffuse, Reflective, Refractive, Material};
 use scene::Scene;
 use sphere::Sphere;
-use texture::{EnvironmentMap, SolidColor, Texture};
+use texture::{SolidColor, Texture};
 
 use mat;
 

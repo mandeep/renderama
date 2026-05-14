@@ -4,11 +4,12 @@ use glam::Vec3A;
 
 use bvh::BVH;
 use camera::Camera;
+use environment::EnvironmentMap;
 use materials::{Diffuse, Reflective, Refractive, Material};
 use primitive::Primitive;
 use scene::Scene;
 use sphere::Sphere;
-use texture::{EnvironmentMap, SolidColor};
+use texture::SolidColor;
 
 use mat;
 
@@ -30,32 +31,20 @@ pub fn three_spheres_scene(width: Option<usize>, height: Option<usize>) -> Scene
                              aperture,
                              focus_distance);
 
-    let mut objects = Vec::new();
+    let mut objects: Vec<Primitive> = Vec::new();
     let mut materials: Vec<Material> = Vec::new();
 
-    let red_idx = mat!(materials, Diffuse::new(SolidColor::new(0.75, 0.25, 0.25).into(), 0.0));
+    let metal_idx3 = mat!(materials, Reflective::new(Vec3A::new(0.75, 0.75, 0.75).into(), 0.3));
+    objects.push(Sphere::new(Vec3A::new(0.6, 0.0, -1.0), 0.5, metal_idx3).into());
 
+    let metal_idx = mat!(materials, Reflective::new(Vec3A::new(0.93, 0.93, 0.93), 0.0));
+    objects.push(Sphere::new(Vec3A::new(-0.6, 0.0, -1.0), 0.5, metal_idx).into());
 
-    objects.push(Primitive::Sphere(Sphere::new(Vec3A::new(0.6, 0.0, -1.0),
-                          0.5,
-                          red_idx)));
-
-    let metal_idx = mat!(materials, Reflective::new(Vec3A::new(0.5, 0.5, 0.5), 0.01));
-
-    objects.push(Primitive::Sphere(Sphere::new(Vec3A::new(-0.6, 0.0, -1.0),
-                          0.5,
-                          metal_idx)));
-
-    let metal_idx2 = mat!(materials, Reflective::new(Vec3A::new(0.5, 0.5, 0.5), 0.2));
-
-    objects.push(Primitive::Sphere(Sphere::new(Vec3A::new(0.0, 0.1, -2.0),
-                          0.5,
-                          metal_idx2)));
+    let metal_idx2 = mat!(materials, Reflective::new(Vec3A::new(0.6, 0.6, 0.6), 0.2));
+    objects.push(Sphere::new(Vec3A::new(0.0, 0.1, -2.0), 0.5, metal_idx2).into());
 
     let floor_idx = mat!(materials, Diffuse::new(SolidColor::new(0.5, 0.5, 0.5).into(), 0.0));
-    objects.push(Primitive::Sphere(Sphere::new(Vec3A::new(0.0, -100.5, -1.0),
-                          100.0,
-                          floor_idx)));
+    objects.push(Sphere::new(Vec3A::new(0.0, -100.5, -1.0), 100.0, floor_idx).into());
 
     let bvh = BVH::new(&mut objects, 0.0, 1.0);
 

@@ -130,7 +130,7 @@ impl Diffuse {
         // ray.direction is passed here because the integrator generates
         // an offset point itself for diffuse materials
         let scattered = Ray::new(event.point, ray.direction);
-        let attenuation = self.albedo.generate_response(event.u, event.v, &event.point);
+        let attenuation = self.albedo.sample_texture(event.u, event.v, &event.point);
         let pdf = MaterialPDF::Cosine { uvw: OrthonormalBasis::new(&event.shading_normal) };
         Some(ScatterEvent::new(scattered, attenuation, pdf, false, false))
     }
@@ -397,13 +397,13 @@ impl Refractive {
 
 #[derive(Clone)]
 pub struct Emissive {
-    pub emit: Arc<Texture>,
+    pub emissive_texture: Arc<Texture>,
 }
 
 impl Emissive {
-    pub fn new(emit: Texture) -> Emissive {
-        let emit = Arc::new(emit);
-        Emissive { emit }
+    pub fn new(emissive_texture: Texture) -> Emissive {
+        let emissive_texture = Arc::new(emissive_texture);
+        Emissive { emissive_texture }
     }
 
     fn generate_response(&self, _ray: &Ray, _event: &HitEvent, _rng: &mut ThreadRng) -> Option<ScatterEvent> {
@@ -412,7 +412,7 @@ impl Emissive {
 
     fn evaluate_emission(&self, ray: &Ray, hit: &HitEvent) -> Vec3A {
         if hit.shading_normal.dot(ray.direction) < 0.0 {
-            self.emit.generate_response(hit.u, hit.v, &hit.point)
+            self.emissive_texture.sample_texture(hit.u, hit.v, &hit.point)
         } else {
             Vec3A::ZERO
         }
@@ -432,7 +432,7 @@ impl Isotropic {
 
     fn generate_response(&self, _ray: &Ray, event: &HitEvent, rng: &mut ThreadRng) -> Option<ScatterEvent> {
         let scattered = Ray::new(event.point, pick_sphere_point(rng));
-        let attenuation = self.albedo.generate_response(event.u, event.v, &event.point);
+        let attenuation = self.albedo.sample_texture(event.u, event.v, &event.point);
         let pdf = MaterialPDF::Uniform;
         Some(ScatterEvent::new(scattered, attenuation, pdf, false, false))
     }
@@ -488,7 +488,7 @@ impl Plastic {
             // Diffuse path
             // even though ray.direction is given, a new ray with offset is generated in the integrator
             let scattered = Ray::new(offset_point, ray.direction);
-            let attenuation = self.albedo.generate_response(event.u, event.v, &event.point) * (1.0 - fresnel);
+            let attenuation = self.albedo.sample_texture(event.u, event.v, &event.point) * (1.0 - fresnel);
             let pdf = MaterialPDF::Cosine { uvw: OrthonormalBasis::new(&event.shading_normal) };
             Some(ScatterEvent::new(scattered, attenuation, pdf, false, false))
         }

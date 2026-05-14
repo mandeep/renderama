@@ -13,6 +13,7 @@ mod basis;
 mod bvh;
 mod camera;
 mod denoise;
+mod environment;
 mod events;
 mod ggx;
 mod integrator;

@@ -1,8 +1,8 @@
 use bvh::BVH;
 use camera::Camera;
+use environment::EnvironmentMap;
 use lights::Light;
 use materials::Material;
-use texture::Texture;
 
 pub struct Scene {
     pub name: String,
@@ -10,7 +10,7 @@ pub struct Scene {
     pub materials: Vec<Material>,
     pub camera: Camera,
     pub lights: Vec<Light>,
-    pub environment: Option<Texture>,
+    pub environment: Option<EnvironmentMap>,
     pub atmosphere: bool,
 }
 
@@ -20,7 +20,7 @@ impl Scene {
                materials: Vec<Material>,
                camera: Camera,
                lights: Vec<Light>,
-               environment: Option<Texture>,
+               environment: Option<EnvironmentMap>,
                atmosphere: bool) -> Scene {
         Scene { name, materials, accelerator, camera, lights, environment, atmosphere }
     }

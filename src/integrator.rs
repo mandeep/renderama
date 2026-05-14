@@ -102,22 +102,22 @@ pub fn render_nee_integrator(mut ray: Ray, scene: &Scene, rng: &mut ThreadRng) -
                         }
                     }
 
-                    // environment map NEE samples toward bright regions via luminance CDF
-                    // this prevents the high number of fireflies we saw in high contrast
-                    // environment maps with luminance values as high as 100,000
                     if let Some(environment) = &scene.environment {
-                        if let Some(environment_direction) = environment.sample_direction_to_light(rng) {
-                            let environment_weight = environment.evaluate_sampling_weight(&environment_direction).unwrap_or(0.0);
-                            if environment_weight > 1e-7 {
-                                let shadow_origin = hit_event.point + hit_event.geometric_normal * 1e-3;
-                                let environment_shadow_ray = Ray::new(shadow_origin, environment_direction);
-                                if scene.accelerator.hit(&environment_shadow_ray, 1e-3, f32::MAX).is_none() {
-                                    let environment_value = environment.generate_response(0.0, 0.0, &environment_direction);
-                                    let material_weight = scatter_event.sampling_strategy.calculate_probability(environment_direction);
-                                    let reflectance = material.compute_reflectance(&ray, &hit_event, &environment_shadow_ray);
-                                    let weight = power_heuristic(environment_weight, material_weight);
-                                    direct_light += (weight * throughput * environment_value * scatter_event.attenuation * reflectance) / environment_weight;
-                                }
+                        let environment_direction = environment.sample_direction_to_light(rng);
+                        let environment_weight = environment.evaluate_sampling_weight(&environment_direction);
+                        if environment_weight > 1e-7 {
+                            let shadow_origin = hit_event.point + hit_event.geometric_normal * 1e-3;
+                            let environment_shadow_ray = Ray::new(shadow_origin, environment_direction);
+                            if scene.accelerator.hit(&environment_shadow_ray, 1e-3, f32::MAX).is_none() {
+                                let environment_value = environment.sample_map(0.0, 0.0, &environment_direction);
+                                let material_weight = scatter_event.sampling_strategy.calculate_probability(environment_direction);
+                                let reflectance = material.compute_reflectance(&ray, &hit_event, &environment_shadow_ray);
+                                let weight = power_heuristic(environment_weight, material_weight);
+                                direct_light += (weight *
+                                    throughput *
+                                    environment_value *
+                                    scatter_event.attenuation *
+                                    reflectance) / environment_weight;
                             }
                         }
                     }
@@ -153,25 +153,25 @@ pub fn render_nee_integrator(mut ray: Ray, scene: &Scene, rng: &mut ThreadRng) -
             }
         } else {
             if bounce == 0 {
-                if let Some(env) = &scene.environment {
-                    first_albedo = env.generate_response(0.0, 0.0, &ray.direction).clamp(Vec3A::ZERO, Vec3A::ONE);
+                if let Some(environment) = &scene.environment {
+                    first_albedo = environment.sample_map(0.0, 0.0, &ray.direction).clamp(Vec3A::ZERO, Vec3A::ONE);
                 } else if scene.atmosphere {
                     let point: f32 = 0.5 * (ray.direction.y + 1.0);
                     first_albedo = (1.0 - point) * Vec3A::splat(1.0) + point * Vec3A::new(0.5, 0.7, 1.0);
                 }
             }
             if let Some(environment) = &scene.environment {
-                let environment_response = environment.generate_response(0.0, 0.0, &ray.direction);
-                // apply MIS if this is an importance-sampled environment map and
-                // the ray arrived via a material-sampled direction (not specular).
-                let contribution = match environment.evaluate_sampling_weight(&ray.direction) {
-                    Some(environment_weight) if should_weight_contribution && environment_weight > 0.0 => {
+                let environment_response = environment.sample_map(0.0, 0.0, &ray.direction);
+                let environment_weight = environment.evaluate_sampling_weight(&ray.direction);
+                let mut contribution = throughput * environment_response;
+
+                if should_weight_contribution && environment_weight > 0.0 {
                         let weight = power_heuristic(previous_material_weight, environment_weight);
-                        throughput * weight * environment_response
-                    }
-                    _ => throughput * environment_response,
+                        contribution *= weight;
                 };
+
                 color += contribution;
+
             } else if scene.atmosphere {
                 let point: f32 = 0.5 * (ray.direction.y + 1.0);
                 let lerp = (1.0 - point) * Vec3A::splat(1.0) + point * Vec3A::new(0.5, 0.7, 1.0);
