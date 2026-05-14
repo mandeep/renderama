@@ -1,7 +1,7 @@
 use std::f32::consts::PI;
 
 use glam::Vec3A;
-use rand::rngs::ThreadRng;
+use rand_pcg::Pcg64;
 
 use aabb::AABB;
 use events::HitEvent;
@@ -119,7 +119,7 @@ impl Sphere {
         1.0 / solid_angle
     }
 
-    pub fn sample_direction_to_light(&self, origin: Vec3A, rng: &mut ThreadRng) -> Vec3A {
+    pub fn sample_direction_to_light(&self, origin: Vec3A, rng: &mut Pcg64) -> Vec3A {
         let center = self.center;
         let to_center = center - origin;
         let distance_squared = to_center.length_squared();

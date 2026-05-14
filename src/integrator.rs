@@ -1,8 +1,8 @@
 use std::f32;
 
 use glam::Vec3A;
-use rand::rngs::ThreadRng;
 use rand::RngExt;
+use rand_pcg::Pcg64;
 use rand_distr::StandardNormal;
 
 use events::{HitEvent, ScatterEvent};
@@ -22,7 +22,7 @@ use scene::Scene;
 ///
 /// Reference: http://mathworld.wolfram.com/SpherePointPicking.html
 ///
-pub fn pick_sphere_point(rng: &mut ThreadRng) -> Vec3A {
+pub fn pick_sphere_point(rng: &mut Pcg64) -> Vec3A {
     let x: f32 = rng.sample(StandardNormal);
     let y: f32 = rng.sample(StandardNormal);
     let z: f32 = rng.sample(StandardNormal);
@@ -41,7 +41,7 @@ pub fn render_normals(ray: Ray, scene: &Scene) -> Vec3A {
     }
 }
 
-pub fn render_nee_integrator(mut ray: Ray, scene: &Scene, rng: &mut ThreadRng) -> (Vec3A, Vec3A, Vec3A) {
+pub fn render_nee_integrator(mut ray: Ray, scene: &Scene, rng: &mut Pcg64) -> (Vec3A, Vec3A, Vec3A) {
     let mut color = Vec3A::ZERO;
     let mut throughput = Vec3A::ONE;
     let mut should_weight_contribution = false; // flag for weighing contributions from specific materials like specular
@@ -262,7 +262,7 @@ fn sample_direct_lighting(
     scatter_event: &ScatterEvent,
     scene: &Scene,
     throughput: Vec3A,
-    rng: &mut ThreadRng,
+    rng: &mut Pcg64,
 ) -> Vec3A {
     let mut direct_light = Vec3A::ZERO;
 
@@ -317,7 +317,7 @@ fn prepare_next_ray(
     hit_event: &HitEvent,
     material: &Material,
     scatter_event: &ScatterEvent,
-    rng: &mut ThreadRng,
+    rng: &mut Pcg64,
 ) -> Option<(Ray, Vec3A, f32)> {
     let scattered_direction = scatter_event.sampling_strategy.pick_direction(rng);
     let material_weight = scatter_event.sampling_strategy.calculate_probability(scattered_direction);
@@ -338,7 +338,7 @@ fn prepare_next_ray(
     Some((scattered_ray, throughput, material_weight))
 }
 
-fn apply_roulette(throughput: Vec3A, rng: &mut ThreadRng) -> Option<Vec3A> {
+fn apply_roulette(throughput: Vec3A, rng: &mut Pcg64) -> Option<Vec3A> {
     let roulette_factor = (1.0 - throughput.max_element()).max(0.05);
 
     if rng.random::<f32>() < roulette_factor {
@@ -350,7 +350,7 @@ fn apply_roulette(throughput: Vec3A, rng: &mut ThreadRng) -> Option<Vec3A> {
     Some(new_throughput)
 }
 
-pub fn render_scene(mut ray: Ray, scene: &Scene, rng: &mut ThreadRng) -> (Vec3A, Vec3A, Vec3A) {
+pub fn render_scene(mut ray: Ray, scene: &Scene, rng: &mut Pcg64) -> (Vec3A, Vec3A, Vec3A) {
     let mut color = Vec3A::ZERO;
     let mut throughput = Vec3A::ONE;
     let mut previous_bounce = PreviousBounce::None;

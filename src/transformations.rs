@@ -1,4 +1,5 @@
 use std::f32;
+use std::sync::Arc;
 
 use glam::{Mat4, Vec3A, Vec3};
 
@@ -23,7 +24,7 @@ pub struct TransformedMesh {
     bbox: AABB,
     /// Uniform scale factor — needed to convert ray parameter t back to world space.
     scale: f32,
-    primitive: Box<Primitive>,
+    primitive: Arc<Primitive>,
 }
 
 fn transform_aabb(bbox: &AABB, transform: &Mat4) -> AABB {
@@ -86,7 +87,7 @@ impl TransformedMesh {
         let local_bbox = primitive.bounding_box().unwrap();
         let bbox = transform_aabb(&local_bbox, &forward);
 
-        let primitive = Box::new(primitive);
+        let primitive = Arc::new(primitive);
         
         TransformedMesh {
             inv_transform: inv,

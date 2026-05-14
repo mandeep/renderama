@@ -1,10 +1,10 @@
-use rand::rngs::ThreadRng;
+use rand_pcg::Pcg64;
 use rand::RngExt;
 use std::f32::consts::PI;
 
 use glam::Vec3A;
 
-pub fn cosine_sample_hemisphere(rng: &mut ThreadRng) -> Vec3A {
+pub fn cosine_sample_hemisphere(rng: &mut Pcg64) -> Vec3A {
     let r1 = rng.random::<f32>();
     let r2 = rng.random::<f32>();
 
@@ -25,7 +25,7 @@ pub fn cosine_sample_hemisphere(rng: &mut ThreadRng) -> Vec3A {
 }
 
 #[allow(dead_code)]
-pub fn uniform_sample_hemisphere(rng: &mut ThreadRng) -> Vec3A {
+pub fn uniform_sample_hemisphere(rng: &mut Pcg64) -> Vec3A {
     let u = rng.random::<f32>();
     let v = rng.random::<f32>();
 
@@ -39,7 +39,7 @@ pub fn uniform_sample_hemisphere(rng: &mut ThreadRng) -> Vec3A {
     Vec3A::new(x, y, z)
 }
 
-pub fn uniform_sample_sphere(rng: &mut ThreadRng) -> Vec3A {
+pub fn uniform_sample_sphere(rng: &mut Pcg64) -> Vec3A {
     let u = rng.random::<f32>();
     let v = rng.random::<f32>();
 
@@ -53,7 +53,7 @@ pub fn uniform_sample_sphere(rng: &mut ThreadRng) -> Vec3A {
     Vec3A::new(x, y, z)
 }
 
-pub fn uniform_sample_cone(cos_theta_max: f32, rng: &mut ThreadRng) -> Vec3A {
+pub fn uniform_sample_cone(cos_theta_max: f32, rng: &mut Pcg64) -> Vec3A {
     let r1 = rng.random::<f32>();
     let r2 = rng.random::<f32>();
     let cos_theta = 1.0 + r1 * (cos_theta_max - 1.0); // r1=0 → 1, r1=1 → cos_θ_max

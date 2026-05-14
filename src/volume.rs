@@ -1,4 +1,5 @@
 use std::f32;
+use std::sync::Arc;
 
 use glam::Vec3A;
 
@@ -11,13 +12,13 @@ use ray::Ray;
 #[derive(Clone)]
 pub struct Volume {
     density: f32,
-    boundary: Box<Primitive>,
+    boundary: Arc<Primitive>,
     material_id: MaterialId,
 }
 
 impl Volume {
     pub fn new(density: f32, boundary: Primitive, material_id: MaterialId) -> Volume {
-        let boundary = Box::new(boundary);
+        let boundary = Arc::new(boundary);
         Volume { density, boundary, material_id }
     }
 

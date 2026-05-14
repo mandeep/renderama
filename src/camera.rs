@@ -1,7 +1,7 @@
 use std::f32::consts::PI;
 
 use glam::Vec3A;
-use rand::rngs::ThreadRng;
+use rand_pcg::Pcg64;
 
 use integrator::pick_sphere_point;
 use ray::Ray;
@@ -65,7 +65,7 @@ impl Camera {
     }
 
     /// Generate the ray that is sent from the camera into the world
-    pub fn generate_ray(&self, s: f32, t: f32, rng: &mut ThreadRng) -> Ray {
+    pub fn generate_ray(&self, s: f32, t: f32, rng: &mut Pcg64) -> Ray {
         let radius: Vec3A = self.lens_radius * pick_sphere_point(rng);
         let offset: Vec3A = self.u * radius.x + self.v * radius.y;
         Ray::new(self.origin + offset,
