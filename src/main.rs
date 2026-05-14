@@ -65,6 +65,7 @@ fn main() {
     let mut default_scene = Scenes::CornellBoxObjects;
     let mut default_width = None;
     let mut default_height = None;
+    let mut custom_output: Option<String> = None;
 
     // probably need to clap-rs at some point
     while let Some(arg) = args.next() {
@@ -92,6 +93,14 @@ fn main() {
                     samples = integer;
                 }
             },
+            "--output" => {
+                if let Some(path) = args.next() {
+                    custom_output = Some(path);
+                } else {
+                    eprintln!("Error: --output requires a valid file path.");
+                    std::process::exit(1);
+                }
+            }
             unknown_argument => {
                 eprintln!("Error: Found an unrecognized argument: '{}'.", unknown_argument);
                 std::process::exit(1);
@@ -136,9 +145,12 @@ fn main() {
 
         // for testing purposes seed the rng from a u64
         // need to seed per pixel otherwise it will create the same RNG for every pixel and ray
-        // let seed = (y * width + x) as u64;
-        // let mut rng = Pcg64Mcg::seed_from_u64(seed);
-        let mut rng = Pcg64Mcg::from_rng(&mut rng());
+        let mut rng = if cfg!(feature = "tests") {
+            let seed = (y * width + x) as u64;
+            Pcg64Mcg::seed_from_u64(seed)
+        } else {
+            Pcg64Mcg::from_rng(&mut rng())
+        };
 
         let samples_sqrt = samples.isqrt();
         let step = 1.0 / samples_sqrt as f32;
@@ -184,7 +196,7 @@ fn main() {
     let buffer: ImageBuffer<Rgb<f32>, Vec<f32>> = ImageBuffer::from_raw(width as u32, height as u32, pixels.clone()).unwrap();
 
     let timestamp = Local::now().format("%Y%m%d-%H%M%S").to_string();
-    let filepath = format!("render_{}.exr", timestamp);
+    let filepath = custom_output.unwrap_or_else(|| format!("render_{}.exr", timestamp));
 
     buffer.save(&filepath).unwrap();
 
