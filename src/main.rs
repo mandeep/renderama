@@ -24,8 +24,8 @@ mod primitive;
 mod ray;
 mod rectangle;
 mod sampling;
-mod scenarios;
 mod scene;
+mod scenes;
 mod sphere;
 mod texture;
 mod transformations;
@@ -48,7 +48,7 @@ use pbr::ProgressBar;
 use rand::rng;
 use rayon::prelude::*;
 
-use scenarios::Scenario;
+use scenes::Scenes;
 
 #[cfg(feature = "denoise")]
 use denoise::denoise;
@@ -58,7 +58,7 @@ fn main() {
 
     let mut args = env::args().skip(1);
     let mut samples: u32 = 64;
-    let mut scenario = Scenario::CornellBoxObjects;
+    let mut default_scene = Scenes::CornellBoxObjects;
     let mut default_width = None;
     let mut default_height = None;
 
@@ -71,8 +71,8 @@ fn main() {
             }
             "--scene" => {
                 if let Some(scene_str) = args.next() {
-                    if let Some(selected_scenario) = Scenario::from_str(&scene_str) {
-                        scenario = selected_scenario;
+                    if let Some(selected_scene) = Scenes::from_str(&scene_str) {
+                        default_scene = selected_scene;
                     } else {
                         eprintln!("Error: The scene '{}' does not exist.", scene_str);
                         std::process::exit(1);
@@ -95,7 +95,7 @@ fn main() {
         }
     }
 
-    let scene = scenario.load(default_width, default_height);
+    let scene = default_scene.load(default_width, default_height);
     let (width, height) = (scene.camera.resolution.0 as usize, scene.camera.resolution.1 as usize);
 
     println!("[{}] Rendering '{}' scene with {} samples at {} x {} dimensions...",
