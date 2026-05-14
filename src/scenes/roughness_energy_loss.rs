@@ -53,7 +53,7 @@ pub fn albedo_one_sphere_scene(width: Option<usize>, height: Option<usize>) -> S
     objects.push(light_plane.clone().into_reversed());
 
     Scene::new(
-        String::from("Albedo-1 Energy Conservation Test"),
+        String::from("Energy Conservation Test"),
         bvh,
         materials,
         camera,
