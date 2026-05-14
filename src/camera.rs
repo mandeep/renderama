@@ -3,8 +3,8 @@ use std::f32::consts::PI;
 use glam::Vec3A;
 use rand_pcg::Pcg64;
 
-use integrator::pick_sphere_point;
 use ray::Ray;
+use sampling::pick_sphere_point;
 
 pub struct Camera {
     pub lower_left_corner: Vec3A,

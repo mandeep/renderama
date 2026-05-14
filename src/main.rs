@@ -134,6 +134,10 @@ fn main() {
         let x = i % width;
         let y = height - (i / width) - 1;
 
+        // for testing purposes seed the rng from a u64
+        // need to seed per pixel otherwise it will create the same RNG for every pixel and ray
+        // let seed = (y * width + x) as u64;
+        // let mut rng = Pcg64::seed_from_u64(seed);
         let mut rng = Pcg64::from_rng(&mut rng());
 
         let samples_sqrt = samples.isqrt();
@@ -149,11 +153,8 @@ fn main() {
                 // render_normals is used for debugging
                 // color += utils::de_nan(&integrator::render_normals(ray, &scene));
 
-                // old pure path tracer with hybrid pdf
-                // color += utils::de_nan(&integrator::render_path_integrator(ray, &scene, bounces, &mut rng));
-
                 let (color_sample, albedo_sample, normal_sample) =
-                    integrator::render_scene(ray, &scene, &mut rng);
+                    integrator::render_beauty(ray, &scene, &mut rng);
 
                 color += utils::de_nan(&color_sample);
                 albedo += albedo_sample;

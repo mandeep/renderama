@@ -1,8 +1,27 @@
-use rand_pcg::Pcg64;
-use rand::RngExt;
 use std::f32::consts::PI;
 
 use glam::Vec3A;
+use rand::RngExt;
+use rand_pcg::Pcg64;
+use rand_distr::StandardNormal;
+
+/// Pick a random point on the unit sphere
+///
+/// We can use a Gaussian distribution to uniformly generate points
+/// on the unit sphere. If a uniform distribution were used instead,
+/// the points would tend to aggregate to the poles of the sphere.
+/// A vector is created from the sample points taken for each coordinate
+/// axis and the unit vector of this newly created vector is returned.
+///
+/// Reference: http://mathworld.wolfram.com/SpherePointPicking.html
+///
+pub fn pick_sphere_point(rng: &mut Pcg64) -> Vec3A {
+    let x: f32 = rng.sample(StandardNormal);
+    let y: f32 = rng.sample(StandardNormal);
+    let z: f32 = rng.sample(StandardNormal);
+
+    Vec3A::new(x, y, z).normalize()
+}
 
 pub fn cosine_sample_hemisphere(rng: &mut Pcg64) -> Vec3A {
     let r1 = rng.random::<f32>();

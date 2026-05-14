@@ -5,8 +5,7 @@ use rand_pcg::Pcg64;
 
 use basis::OrthonormalBasis;
 use ggx::{ggx_distribution, ggx_g1_masking, ggx_sample_vndf};
-use integrator::pick_sphere_point;
-use sampling::cosine_sample_hemisphere;
+use sampling::{cosine_sample_hemisphere, pick_sphere_point};
 
 
 #[allow(dead_code)]

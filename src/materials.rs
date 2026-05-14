@@ -8,9 +8,9 @@ use rand_pcg::Pcg64;
 use basis::OrthonormalBasis;
 use events::{HitEvent, ScatterEvent};
 use ggx::{ggx_distribution, ggx_geometry, ggx_sample_vndf};
-use integrator::pick_sphere_point;
 use pdf::MaterialPDF;
 use ray::{find_offset_point, Ray};
+use sampling::pick_sphere_point;
 use texture::Texture;
 
 
