@@ -1,8 +1,8 @@
 use std::f32;
 
 use glam::Vec3A;
-use rand::rngs::ThreadRng;
 use rand::RngExt;
+use rand_pcg::Pcg64;
 use rand_distr::StandardNormal;
 
 use pdf::power_heuristic;
@@ -19,7 +19,7 @@ use scene::Scene;
 ///
 /// Reference: http://mathworld.wolfram.com/SpherePointPicking.html
 ///
-pub fn pick_sphere_point(rng: &mut ThreadRng) -> Vec3A {
+pub fn pick_sphere_point(rng: &mut Pcg64) -> Vec3A {
     let x: f32 = rng.sample(StandardNormal);
     let y: f32 = rng.sample(StandardNormal);
     let z: f32 = rng.sample(StandardNormal);
@@ -38,7 +38,7 @@ pub fn render_normals(ray: Ray, scene: &Scene) -> Vec3A {
     }
 }
 
-pub fn render_nee_integrator(mut ray: Ray, scene: &Scene, rng: &mut ThreadRng) -> (Vec3A, Vec3A, Vec3A) {
+pub fn render_nee_integrator(mut ray: Ray, scene: &Scene, rng: &mut Pcg64) -> (Vec3A, Vec3A, Vec3A) {
     let mut color = Vec3A::ZERO;
     let mut throughput = Vec3A::ONE;
     let mut should_weight_contribution = false; // flag for weighing contributions from specific materials like specular

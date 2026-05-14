@@ -997,6 +997,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "rand_pcg"
+version = "0.10.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "caa0f4137e1c0a72f4c651489402276c8e8e1cf081f3b0ba156d2cbeef09e86a"
+dependencies = [
+ "rand_core 0.10.1",
+]
+
+[[package]]
 name = "rav1e"
 version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1092,6 +1101,7 @@ dependencies = [
  "pbr",
  "rand 0.10.1",
  "rand_distr",
+ "rand_pcg",
  "rayon",
  "tobj",
  "wide",

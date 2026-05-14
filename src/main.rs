@@ -4,6 +4,7 @@ extern crate image;
 extern crate pbr;
 extern crate rand;
 extern crate rand_distr;
+extern crate rand_pcg;
 extern crate rayon;
 extern crate tobj;
 extern crate wide;
@@ -45,7 +46,8 @@ use chrono::Local;
 use glam::Vec3A;
 use image::{ImageBuffer, Rgb};
 use pbr::ProgressBar;
-use rand::rng;
+use rand::{rng, SeedableRng};
+use rand_pcg::Pcg64;
 use rayon::prelude::*;
 
 use scenes::Scenes;
@@ -130,7 +132,8 @@ fn main() {
         let x = i % width;
         let y = height - (i / width) - 1;
 
-        let mut rng = rng();
+        let mut rng = Pcg64::from_rng(&mut rng());
+
         let samples_sqrt = samples.isqrt();
         let step = 1.0 / samples_sqrt as f32;
 

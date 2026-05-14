@@ -1,9 +1,10 @@
 use f32::consts::PI;
 
+use rand_pcg::Pcg64;
+use rand::RngExt;
+
 use glam::Vec3A;
 use image;
-use rand::rngs::ThreadRng;
-use rand::RngExt;
 
 #[derive(Clone)]
 pub enum Texture {
@@ -32,7 +33,7 @@ impl Texture {
 
     /// Samples a direction importance-weighted by luminance, only if this
     /// texture is an EnvironmentMap.
-    pub fn sample_direction_to_light(&self, rng: &mut ThreadRng) -> Option<Vec3A> {
+    pub fn sample_direction_to_light(&self, rng: &mut Pcg64) -> Option<Vec3A> {
         match self {
             Texture::EnvironmentMap(env) => Some(env.sample_direction_to_light(rng)),
             _ => None
@@ -225,7 +226,7 @@ impl EnvironmentMap {
     }
 
     /// Sample a direction from the environment map proportional to luminance.
-    pub fn sample_direction_to_light(&self, rng: &mut ThreadRng) -> Vec3A {
+    pub fn sample_direction_to_light(&self, rng: &mut Pcg64) -> Vec3A {
         let u1 = rng.random::<f32>();
         let u2 = rng.random::<f32>();
 

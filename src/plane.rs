@@ -2,7 +2,7 @@ use std::f32;
 use std::sync::Arc;
 
 use glam::Vec3A;
-use rand::rngs::ThreadRng;
+use rand_pcg::Pcg64;
 use rand::RngExt;
 
 use aabb::AABB;
@@ -199,7 +199,7 @@ impl Plane {
         }
     }
 
-    pub fn sample_direction_to_light(&self, origin: Vec3A, rng: &mut ThreadRng) -> Vec3A {
+    pub fn sample_direction_to_light(&self, origin: Vec3A, rng: &mut Pcg64) -> Vec3A {
         let u = self.bounds.u_min + rng.random::<f32>() * (self.bounds.u_max - self.bounds.u_min);
         let v = self.bounds.v_min + rng.random::<f32>() * (self.bounds.v_max - self.bounds.v_min);
 
