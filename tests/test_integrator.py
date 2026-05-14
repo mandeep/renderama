@@ -33,7 +33,7 @@ RENDER_SCENES = [
 @pytest.fixture(scope="session", autouse=True)
 def compile_binary():
     """Compiles the Rust binary with test_mode once per session."""
-    print("\n[Cargo] Compiling in test_mode...")
+    print("\n[Cargo] Compiling as `cargo build --features tests`...")
     subprocess.run(["cargo", "build", "--features", "tests"], check=True)
 
 
