@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use aabb::AABB;
 use events::HitEvent;
 use plane::Plane;
@@ -15,10 +17,10 @@ pub enum Primitive {
     Rectangle(Rectangle),
     Sphere(Sphere),
     Triangle(Triangle),
-    TriangleMesh(Box<TriangleMesh>),
-    ReverseOrientation(Box<Primitive>),
-    TransformedMesh(Box<TransformedMesh>),
-    Volume(Box<Volume>)
+    TriangleMesh(Arc<TriangleMesh>),
+    ReverseOrientation(Arc<Primitive>),
+    TransformedMesh(Arc<TransformedMesh>),
+    Volume(Arc<Volume>)
 }
 
 impl Primitive {
@@ -58,7 +60,7 @@ impl Primitive {
 
     #[allow(dead_code)]
     pub fn reversed(self) -> Self {
-        Primitive::ReverseOrientation(Box::new(self))
+        Primitive::ReverseOrientation(Arc::new(self))
     }
 }
 
@@ -76,12 +78,12 @@ macro_rules! impl_from_for_primitive {
 }
 
 macro_rules! impl_from_boxed_for_primitive {
-    // Boxed variants: From<T> wraps as Variant(Box::new(t))
+    // Boxed variants: From<T> wraps as Variant(Arc::new(t))
     ($($variant:ident => $type:ty),* $(,)?) => {
         $(
             impl From<$type> for Primitive {
                 fn from(value: $type) -> Self {
-                    Primitive::$variant(Box::new(value))
+                    Primitive::$variant(Arc::new(value))
                 }
             }
         )*

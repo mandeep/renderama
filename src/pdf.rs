@@ -1,12 +1,11 @@
 use std::f32::consts::PI;
 
 use glam::Vec3A;
-use rand::rngs::ThreadRng;
+use rand_pcg::Pcg64;
 
 use basis::OrthonormalBasis;
 use ggx::{ggx_distribution, ggx_g1_masking, ggx_sample_vndf};
-use integrator::pick_sphere_point;
-use sampling::cosine_sample_hemisphere;
+use sampling::{cosine_sample_hemisphere, pick_sphere_point};
 
 
 #[allow(dead_code)]
@@ -56,7 +55,7 @@ impl MaterialPDF {
         }
     }
 
-    pub fn pick_direction(&self, rng: &mut ThreadRng) -> Vec3A {
+    pub fn pick_direction(&self, rng: &mut Pcg64) -> Vec3A {
         match self {
             MaterialPDF::Cosine { uvw } => {
                 uvw.local(&cosine_sample_hemisphere(rng))
