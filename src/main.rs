@@ -150,7 +150,7 @@ fn main() {
                 // color += utils::de_nan(&integrator::render_path_integrator(ray, &scene, bounces, &mut rng));
 
                 let (color_sample, albedo_sample, normal_sample) =
-                    integrator::render_nee_integrator(ray, &scene, &mut rng);
+                    integrator::render_scene(ray, &scene, &mut rng);
 
                 color += utils::de_nan(&color_sample);
                 albedo += albedo_sample;
