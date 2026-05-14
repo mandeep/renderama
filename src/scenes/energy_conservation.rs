@@ -13,7 +13,7 @@ use texture::Color;
 
 use mat;
 
-pub fn albedo_one_sphere_scene(width: Option<usize>, height: Option<usize>) -> Scene {
+pub fn energy_conservation_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let origin = Vec3A::new(278.0, 278.0, -500.0);
     let lookat = Vec3A::new(278.0, 278.0, 300.0);
     let view = Vec3A::new(0.0, 1.0, 0.0);
