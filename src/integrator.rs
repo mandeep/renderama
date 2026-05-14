@@ -35,14 +35,14 @@ pub fn render_beauty(mut ray: Ray, scene: &Scene, rng: &mut Pcg64) -> (Vec3A, Ve
     for bounce in 0..=bounces {
         let Some(hit_event) = scene.accelerator.hit(&ray, 1e-4, f32::MAX) else {
             color +=
-                evaluate_miss(&ray, &previous_bounce, scene, throughput);
+                evaluate_miss(&ray, &previous_bounce, &scene, &throughput);
             break;
         };
 
         let material = &scene.materials[hit_event.material_id.index()];
 
         color += evaluate_emission(
-            &ray, &hit_event, material, &previous_bounce, &scene.lights, throughput
+            &ray, &hit_event, &material, &previous_bounce, &scene.lights, &throughput
         );
 
         let Some(scatter_event) = material.generate_response(&ray, &hit_event, rng) else { break };
@@ -57,16 +57,16 @@ pub fn render_beauty(mut ray: Ray, scene: &Scene, rng: &mut Pcg64) -> (Vec3A, Ve
             ray = scatter_event.specular_ray;
             previous_bounce = PreviousBounce::Specular;
         } else {
-            color += sample_direct_lighting(&ray, &hit_event, material, &scatter_event, scene, throughput, rng);
+            color += sample_direct_lighting(&ray, &hit_event, &material, &scatter_event, &scene, &throughput, rng);
 
-            let Some((next_ray, throughput_factor, weight)) = prepare_next_ray(&ray, &hit_event, material, &scatter_event, rng) else { break };
+            let Some((next_ray, throughput_factor, weight)) = prepare_next_ray(&ray, &hit_event, &material, &scatter_event, rng) else { break };
             throughput *= throughput_factor;
             ray = next_ray;
             previous_bounce = PreviousBounce::Diffuse(weight);
         }
 
         if bounce > 3 {
-            let Some(new_throughput) = apply_roulette(throughput, rng) else { break };
+            let Some(new_throughput) = apply_roulette(&throughput, rng) else { break };
             throughput = new_throughput;
         }
     }
@@ -82,7 +82,12 @@ enum PreviousBounce {
     Diffuse(f32),
 }
 
-fn evaluate_miss(ray: &Ray,  previous_bounce: &PreviousBounce, scene: &Scene, throughput: Vec3A) -> Vec3A {
+fn evaluate_miss(
+    ray: &Ray,
+    previous_bounce: &PreviousBounce,
+    scene: &Scene,
+    throughput: &Vec3A
+) -> Vec3A {
     if let Some(environment) = &scene.environment {
         let environment_response = environment.sample_map(0.0, 0.0, &ray.direction);
         let environment_weight = environment.evaluate_sampling_weight(&ray.direction);
@@ -114,7 +119,7 @@ fn evaluate_emission(
     material: &Material,
     previous_bounce: &PreviousBounce,
     lights: &[Light],
-    throughput: Vec3A,
+    throughput: &Vec3A,
 ) -> Vec3A {
     let mut color = Vec3A::ZERO;
 
@@ -143,7 +148,7 @@ fn sample_direct_lighting(
     material: &Material,
     scatter_event: &ScatterEvent,
     scene: &Scene,
-    throughput: Vec3A,
+    throughput: &Vec3A,
     rng: &mut Pcg64,
 ) -> Vec3A {
     let mut direct_light = Vec3A::ZERO;
@@ -220,7 +225,7 @@ fn prepare_next_ray(
     Some((scattered_ray, throughput, material_weight))
 }
 
-fn apply_roulette(throughput: Vec3A, rng: &mut Pcg64) -> Option<Vec3A> {
+fn apply_roulette(throughput: &Vec3A, rng: &mut Pcg64) -> Option<Vec3A> {
     let roulette_factor = (1.0 - throughput.max_element()).max(0.05);
 
     if rng.random::<f32>() < roulette_factor {
