@@ -2,7 +2,7 @@ use std::f32;
 
 use glam::Vec3A;
 use rand::RngExt;
-use rand_pcg::Pcg64;
+use rand_pcg::Pcg64Mcg;
 
 use events::{HitEvent, ScatterEvent};
 use lights::Light;
@@ -23,7 +23,7 @@ pub fn render_normals(ray: Ray, scene: &Scene) -> Vec3A {
     }
 }
 
-pub fn render_beauty(mut ray: Ray, scene: &Scene, rng: &mut Pcg64) -> (Vec3A, Vec3A, Vec3A) {
+pub fn render_beauty(mut ray: Ray, scene: &Scene, rng: &mut Pcg64Mcg) -> (Vec3A, Vec3A, Vec3A) {
     let mut color = Vec3A::ZERO;
     let mut throughput = Vec3A::ONE;
     let mut previous_bounce = PreviousBounce::None;
@@ -149,7 +149,7 @@ fn sample_direct_lighting(
     scatter_event: &ScatterEvent,
     scene: &Scene,
     throughput: &Vec3A,
-    rng: &mut Pcg64,
+    rng: &mut Pcg64Mcg,
 ) -> Vec3A {
     let mut direct_light = Vec3A::ZERO;
 
@@ -204,7 +204,7 @@ fn prepare_next_ray(
     hit_event: &HitEvent,
     material: &Material,
     scatter_event: &ScatterEvent,
-    rng: &mut Pcg64,
+    rng: &mut Pcg64Mcg,
 ) -> Option<(Ray, Vec3A, f32)> {
     let scattered_direction = scatter_event.sampling_strategy.pick_direction(rng);
     let material_weight = scatter_event.sampling_strategy.calculate_probability(scattered_direction);
@@ -225,7 +225,7 @@ fn prepare_next_ray(
     Some((scattered_ray, throughput, material_weight))
 }
 
-fn apply_roulette(throughput: &Vec3A, rng: &mut Pcg64) -> Option<Vec3A> {
+fn apply_roulette(throughput: &Vec3A, rng: &mut Pcg64Mcg) -> Option<Vec3A> {
     let roulette_factor = (1.0 - throughput.max_element()).max(0.05);
 
     if rng.random::<f32>() < roulette_factor {

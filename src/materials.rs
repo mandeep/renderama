@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use glam::Vec3A;
 use rand::RngExt;
-use rand_pcg::Pcg64;
+use rand_pcg::Pcg64Mcg;
 
 use basis::OrthonormalBasis;
 use events::{HitEvent, ScatterEvent};
@@ -68,7 +68,7 @@ macro_rules! mat {
 }
 
 impl Material {
-    pub fn generate_response(&self, ray: &Ray, hit: &HitEvent, rng: &mut Pcg64) -> Option<ScatterEvent> {
+    pub fn generate_response(&self, ray: &Ray, hit: &HitEvent, rng: &mut Pcg64Mcg) -> Option<ScatterEvent> {
         match self {
             Material::Diffuse(m) => m.generate_response(ray, hit, rng),
             Material::Emissive(m) => m.generate_response(ray, hit, rng),
@@ -126,7 +126,7 @@ impl Diffuse {
                   beta }
     }
 
-    fn generate_response(&self, ray: &Ray, event: &HitEvent, _rng: &mut Pcg64) -> Option<ScatterEvent> {
+    fn generate_response(&self, ray: &Ray, event: &HitEvent, _rng: &mut Pcg64Mcg) -> Option<ScatterEvent> {
         // ray.direction is passed here because the integrator generates
         // an offset point itself for diffuse materials
         let scattered = Ray::new(event.point, ray.direction);
@@ -259,7 +259,7 @@ impl Reflective {
     /// factor is also added in to account for the reflection fuzz due to
     /// the size of the sphere. The target minus the event.point is used
     /// to determine the ray that is being reflected from the surface of the material.
-    fn generate_response(&self, ray: &Ray, event: &HitEvent, _rng: &mut Pcg64) -> Option<ScatterEvent> {
+    fn generate_response(&self, ray: &Ray, event: &HitEvent, _rng: &mut Pcg64Mcg) -> Option<ScatterEvent> {
         let forward_geometric_normal = if ray.direction.dot(event.geometric_normal) < 0.0 {
             event.geometric_normal
         } else {
@@ -340,7 +340,7 @@ impl Refractive {
     /// See Peter Shirley's Ray Tracing in One Weekend for an overview of refractive
     /// scattering and Section 10.3.2 in Mathematical and Computer Programming
     /// Techniques for Computer Graphics by Peter Comininos.
-    fn generate_response(&self, ray: &Ray, event: &HitEvent, rng: &mut Pcg64) -> Option<ScatterEvent> {
+    fn generate_response(&self, ray: &Ray, event: &HitEvent, rng: &mut Pcg64Mcg) -> Option<ScatterEvent> {
         let geometric_incident: f32 = ray.direction.dot(event.geometric_normal);
         let entering = geometric_incident < 0.0;
 
@@ -406,7 +406,7 @@ impl Emissive {
         Emissive { emissive_texture }
     }
 
-    fn generate_response(&self, _ray: &Ray, _event: &HitEvent, _rng: &mut Pcg64) -> Option<ScatterEvent> {
+    fn generate_response(&self, _ray: &Ray, _event: &HitEvent, _rng: &mut Pcg64Mcg) -> Option<ScatterEvent> {
         None
     }
 
@@ -430,7 +430,7 @@ impl Isotropic {
         Isotropic { albedo }
     }
 
-    fn generate_response(&self, _ray: &Ray, event: &HitEvent, rng: &mut Pcg64) -> Option<ScatterEvent> {
+    fn generate_response(&self, _ray: &Ray, event: &HitEvent, rng: &mut Pcg64Mcg) -> Option<ScatterEvent> {
         let scattered = Ray::new(event.point, pick_sphere_point(rng));
         let attenuation = self.albedo.sample_texture(event.u, event.v, &event.point);
         let pdf = MaterialPDF::Uniform;
@@ -451,7 +451,7 @@ impl Plastic {
         Plastic { albedo, roughness: roughness * roughness, ior }
     }
 
-    fn generate_response(&self, ray: &Ray, event: &HitEvent, rng: &mut Pcg64) -> Option<ScatterEvent> {
+    fn generate_response(&self, ray: &Ray, event: &HitEvent, rng: &mut Pcg64Mcg) -> Option<ScatterEvent> {
         let cos_theta_i = (-ray.direction).dot(event.shading_normal).max(0.0);
         let fresnel = schlick(cos_theta_i, self.ior);  // using schlick for ggx
 

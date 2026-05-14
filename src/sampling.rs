@@ -2,7 +2,7 @@ use std::f32::consts::PI;
 
 use glam::Vec3A;
 use rand::RngExt;
-use rand_pcg::Pcg64;
+use rand_pcg::Pcg64Mcg;
 use rand_distr::StandardNormal;
 
 /// Pick a random point on the unit sphere
@@ -15,7 +15,7 @@ use rand_distr::StandardNormal;
 ///
 /// Reference: http://mathworld.wolfram.com/SpherePointPicking.html
 ///
-pub fn pick_sphere_point(rng: &mut Pcg64) -> Vec3A {
+pub fn pick_sphere_point(rng: &mut Pcg64Mcg) -> Vec3A {
     let x: f32 = rng.sample(StandardNormal);
     let y: f32 = rng.sample(StandardNormal);
     let z: f32 = rng.sample(StandardNormal);
@@ -23,7 +23,7 @@ pub fn pick_sphere_point(rng: &mut Pcg64) -> Vec3A {
     Vec3A::new(x, y, z).normalize()
 }
 
-pub fn cosine_sample_hemisphere(rng: &mut Pcg64) -> Vec3A {
+pub fn cosine_sample_hemisphere(rng: &mut Pcg64Mcg) -> Vec3A {
     let r1 = rng.random::<f32>();
     let r2 = rng.random::<f32>();
 
@@ -44,7 +44,7 @@ pub fn cosine_sample_hemisphere(rng: &mut Pcg64) -> Vec3A {
 }
 
 #[allow(dead_code)]
-pub fn uniform_sample_hemisphere(rng: &mut Pcg64) -> Vec3A {
+pub fn uniform_sample_hemisphere(rng: &mut Pcg64Mcg) -> Vec3A {
     let u = rng.random::<f32>();
     let v = rng.random::<f32>();
 
@@ -58,7 +58,7 @@ pub fn uniform_sample_hemisphere(rng: &mut Pcg64) -> Vec3A {
     Vec3A::new(x, y, z)
 }
 
-pub fn uniform_sample_sphere(rng: &mut Pcg64) -> Vec3A {
+pub fn uniform_sample_sphere(rng: &mut Pcg64Mcg) -> Vec3A {
     let u = rng.random::<f32>();
     let v = rng.random::<f32>();
 
@@ -72,7 +72,7 @@ pub fn uniform_sample_sphere(rng: &mut Pcg64) -> Vec3A {
     Vec3A::new(x, y, z)
 }
 
-pub fn uniform_sample_cone(cos_theta_max: f32, rng: &mut Pcg64) -> Vec3A {
+pub fn uniform_sample_cone(cos_theta_max: f32, rng: &mut Pcg64Mcg) -> Vec3A {
     let r1 = rng.random::<f32>();
     let r2 = rng.random::<f32>();
     let cos_theta = 1.0 + r1 * (cos_theta_max - 1.0); // r1=0 → 1, r1=1 → cos_θ_max

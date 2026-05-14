@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use glam::Vec3A;
-use rand_pcg::Pcg64;
+use rand_pcg::Pcg64Mcg;
 
 use primitive::Primitive;
 use plane::Plane;
@@ -62,7 +62,7 @@ impl Light {
         }
     }
 
-    pub fn sample_direction_to_light(&self, origin: Vec3A, rng: &mut Pcg64) -> Vec3A {
+    pub fn sample_direction_to_light(&self, origin: Vec3A, rng: &mut Pcg64Mcg) -> Vec3A {
         match &self.primitive {
             LightPrimitive::Plane(p) => p.sample_direction_to_light(origin, rng),
             LightPrimitive::Sphere(s) => s.sample_direction_to_light(origin, rng),

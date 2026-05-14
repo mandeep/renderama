@@ -2,7 +2,7 @@ use f32::consts::PI;
 
 use glam::Vec3A;
 use image;
-use rand_pcg::Pcg64;
+use rand_pcg::Pcg64Mcg;
 use rand::RngExt;
 
 
@@ -127,7 +127,7 @@ impl EnvironmentMap {
     }
 
     /// Sample a direction from the environment map proportional to luminance.
-    pub fn sample_direction_to_light(&self, rng: &mut Pcg64) -> Vec3A {
+    pub fn sample_direction_to_light(&self, rng: &mut Pcg64Mcg) -> Vec3A {
         let u1 = rng.random::<f32>();
         let u2 = rng.random::<f32>();
 
