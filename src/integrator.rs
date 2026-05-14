@@ -155,9 +155,9 @@ pub fn render_nee_integrator(mut ray: Ray, scene: &Scene, rng: &mut ThreadRng) -
             if bounce == 0 {
                 if let Some(environment) = &scene.environment {
                     first_albedo = environment.sample_map(0.0, 0.0, &ray.direction).clamp(Vec3A::ZERO, Vec3A::ONE);
-                } else if scene.atmosphere {
-                    let point: f32 = 0.5 * (ray.direction.y + 1.0);
-                    first_albedo = (1.0 - point) * Vec3A::splat(1.0) + point * Vec3A::new(0.5, 0.7, 1.0);
+                } else if let Some(atmosphere) = &scene.atmosphere {
+                    let atmosphere_color = atmosphere.compute_atmosphere_color(&ray.direction);
+                    first_albedo = atmosphere_color
                 }
             }
             if let Some(environment) = &scene.environment {
@@ -172,10 +172,9 @@ pub fn render_nee_integrator(mut ray: Ray, scene: &Scene, rng: &mut ThreadRng) -
 
                 color += contribution;
 
-            } else if scene.atmosphere {
-                let point: f32 = 0.5 * (ray.direction.y + 1.0);
-                let lerp = (1.0 - point) * Vec3A::splat(1.0) + point * Vec3A::new(0.5, 0.7, 1.0);
-                color += throughput * lerp;
+            } else if let Some(atmosphere) = &scene.atmosphere {
+                let atmosphere_color = atmosphere.compute_atmosphere_color(&ray.direction);
+                color += throughput * atmosphere_color;
             }
             break;
         }

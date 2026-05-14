@@ -49,5 +49,5 @@ pub fn cornell_box_dragon_scene(width: Option<usize>, height: Option<usize>) -> 
 
     let light_shape = Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 554.0, white_id);
 
-    Scene::new(String::from("Cornell Box with Dragon"), bvh, materials, camera, vec![Light::new(light_shape.into(), Vec3A::new(25.0, 25.0, 25.0))], None, false)
+    Scene::new(String::from("Cornell Box with Dragon"), bvh, materials, camera, vec![Light::new(light_shape.into(), Vec3A::new(25.0, 25.0, 25.0))], None, None)
 }

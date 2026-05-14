@@ -59,6 +59,6 @@ pub fn albedo_one_sphere_scene(width: Option<usize>, height: Option<usize>) -> S
         camera,
         vec![Light::new(light_plane.into(), Vec3A::new(50.0, 50.0, 50.0))],
         None,
-        false, // no environment — dark background so energy loss is unambiguous
+        None, // no environment — dark background so energy loss is unambiguous
     )
 }

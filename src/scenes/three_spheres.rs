@@ -50,5 +50,5 @@ pub fn three_spheres_scene(width: Option<usize>, height: Option<usize>) -> Scene
 
     let environment = EnvironmentMap::new("docs/textures/golden_gate_hills.exr").into();
 
-    Scene::new(String::from("Three Spheres"), bvh, materials, camera, vec![], Some(environment), false)
+    Scene::new(String::from("Three Spheres"), bvh, materials, camera, vec![], Some(environment), None)
 }

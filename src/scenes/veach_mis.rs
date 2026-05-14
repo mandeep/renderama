@@ -143,6 +143,6 @@ pub fn veach_mis_scene(width: Option<usize>, height: Option<usize>) -> Scene {
         camera,
         light_sources,
         None,
-        false,
+        None,
     )
 }

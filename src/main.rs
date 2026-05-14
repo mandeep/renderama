@@ -9,6 +9,7 @@ extern crate tobj;
 extern crate wide;
 
 mod aabb;
+mod atmosphere;
 mod basis;
 mod bvh;
 mod camera;
