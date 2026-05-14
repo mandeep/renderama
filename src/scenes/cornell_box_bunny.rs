@@ -1,4 +1,5 @@
 use std::f32;
+use std::sync::Arc;
 
 use glam::Vec3A;
 
@@ -46,8 +47,8 @@ pub fn cornell_box_bunny_scene(width: Option<usize>, height: Option<usize>) -> S
     objects.push(Plane::new(Axis::XY, Bounds2D::new(0.0..555.0, 0.0..555.0), 555.0, white_id).into_reversed());
 
     let bunny_material = mat!(materials, Refractive::new(1.5, Vec3A::ONE));
-    let bunny_mesh = Primitive::TriangleMesh(Box::new(TriangleMesh::from("docs/models/bunny.obj", bunny_material)));
-    objects.push(Primitive::TransformedMesh(Box::new(TransformedMesh::new(Vec3A::new(224.0, -66.0, 278.0), Vec3A::new(0.0, 180.0, 0.0), 2000.0, bunny_mesh))));
+    let bunny_mesh = Primitive::TriangleMesh(Arc::new(TriangleMesh::from("docs/models/bunny.obj", bunny_material)));
+    objects.push(Primitive::TransformedMesh(Arc::new(TransformedMesh::new(Vec3A::new(224.0, -66.0, 278.0), Vec3A::new(0.0, 180.0, 0.0), 2000.0, bunny_mesh))));
 
     let buddha_material = mat!(materials, Reflective::new(Vec3A::new(0.95, 0.64, 0.54), 0.05));
     let buddha = TriangleMesh::from("docs/models/happy_buddha.obj", buddha_material).into();

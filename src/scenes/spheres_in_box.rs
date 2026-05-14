@@ -1,4 +1,5 @@
 use std::f32;
+use std::sync::Arc;
 
 use glam::Vec3A;
 
@@ -54,7 +55,7 @@ pub fn spheres_in_box_scene(width: Option<usize>, height: Option<usize>) -> Scen
         }
     }
 
-    objects.push(Primitive::ReverseOrientation(Box::new(Plane::new(Axis::XZ, Bounds2D::new(123.0..423.0, 147.0..412.0), 554.0, big_light).into())));
+    objects.push(Primitive::ReverseOrientation(Arc::new(Plane::new(Axis::XZ, Bounds2D::new(123.0..423.0, 147.0..412.0), 554.0, big_light).into())));
 
     objects.push(Sphere::new(Vec3A::new(400.0, 400.0, 200.0),
                           50.0,

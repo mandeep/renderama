@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use glam::Vec3A;
 use wide::f32x4;
 
@@ -52,8 +54,8 @@ pub struct BVH {
 enum TreeNode {
     Internal {
         bbox: AABB,
-        left: Box<TreeNode>,
-        right: Box<TreeNode>,
+        left: Arc<TreeNode>,
+        right: Arc<TreeNode>,
     },
     Leaf {
         bbox: AABB,
@@ -93,8 +95,8 @@ fn build_tree(world: &mut Vec<Primitive>, start_time: f32, end_time: f32) -> Tre
         let right_box = world[1].bounding_box().unwrap();
         return TreeNode::Internal {
             bbox: main_box,
-            left: Box::new(TreeNode::Leaf { bbox: left_box, primitive: world[0].clone() }),
-            right: Box::new(TreeNode::Leaf { bbox: right_box, primitive: world[1].clone() }),
+            left: Arc::new(TreeNode::Leaf { bbox: left_box, primitive: world[0].clone() }),
+            right: Arc::new(TreeNode::Leaf { bbox: right_box, primitive: world[1].clone() }),
         };
     }
 
@@ -116,8 +118,8 @@ fn build_tree(world: &mut Vec<Primitive>, start_time: f32, end_time: f32) -> Tre
 
         return TreeNode::Internal {
             bbox: main_box,
-            left: Box::new(left),
-            right: Box::new(right),
+            left: Arc::new(left),
+            right: Arc::new(right),
         };
     }
 
@@ -247,8 +249,8 @@ fn build_tree(world: &mut Vec<Primitive>, start_time: f32, end_time: f32) -> Tre
         let right = build_tree(&mut right_objects, start_time, end_time);
         return TreeNode::Internal {
             bbox: main_box,
-            left: Box::new(left),
-            right: Box::new(right),
+            left: Arc::new(left),
+            right: Arc::new(right),
         };
     }
 
@@ -257,8 +259,8 @@ fn build_tree(world: &mut Vec<Primitive>, start_time: f32, end_time: f32) -> Tre
 
     TreeNode::Internal {
         bbox: main_box,
-        left: Box::new(left),
-        right: Box::new(right),
+        left: Arc::new(left),
+        right: Arc::new(right),
     }
 }
 

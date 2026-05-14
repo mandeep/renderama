@@ -1,4 +1,5 @@
 use std::f32;
+use std::sync::Arc;
 
 use glam::Vec3A;
 use rand::rngs::ThreadRng;
@@ -81,7 +82,7 @@ impl Plane {
     /// Convert the Plane into a Plane with its normal flipped so that
     /// the plane can be used in the opposite orientation
     pub fn into_reversed(self) -> Primitive {
-        Primitive::ReverseOrientation(Box::new(Primitive::Plane(self)))
+        Primitive::ReverseOrientation(Arc::new(Primitive::Plane(self)))
     }
 
     pub fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitEvent> {

@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use glam::Vec3A;
 use rand::rngs::ThreadRng;
 
@@ -35,13 +37,14 @@ impl_from_primitive!(
 );
 
 impl From<Primitive> for LightPrimitive {
-    fn from(geom: Primitive) -> Self {
-        match geom {
-            Primitive::Plane(p) => LightPrimitive::Plane(p),
-            Primitive::Sphere(s) => LightPrimitive::Sphere(s),
-            Primitive::ReverseOrientation(inner) => {
+    fn from(primitive: Primitive) -> Self {
+        match primitive {
+            Primitive::Plane(plane) => LightPrimitive::Plane(plane),
+            Primitive::Sphere(sphere) => LightPrimitive::Sphere(sphere),
+            Primitive::ReverseOrientation(primitive) => {
                 // convert a ReverseOrientation Primitive type back into a Plane
-                Self::from(*inner)
+                let inner_primitive = Arc::unwrap_or_clone(primitive);
+                LightPrimitive::from(inner_primitive)
             },
             _ => panic!("This primitive type cannot be used as a light source!"),
         }
