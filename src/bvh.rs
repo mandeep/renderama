@@ -4,7 +4,7 @@ use glam::Vec3A;
 use wide::f32x4;
 
 use aabb::AABB;
-use events::HitEvent;
+use results::HitResult;
 use primitive::Primitive;
 use ray::Ray;
 
@@ -360,14 +360,14 @@ impl BVH {
         BVH { internals, leaves, root }
     }
 
-    pub fn hit(&self, ray: &Ray, start_distance: f32, end_distance: f32) -> Option<HitEvent> {
+    pub fn hit(&self, ray: &Ray, start_distance: f32, end_distance: f32) -> Option<HitResult> {
         // we iterate the traversal with a depth of 64 which should be okay for
         // millions of objects
         let mut stack: [u32; 64] = [0; 64];
         let mut stack_ptr: usize = 0;
 
         let mut closest_distance = end_distance;
-        let mut best_hit: Option<HitEvent> = None;
+        let mut best_hit: Option<HitResult> = None;
 
         stack[stack_ptr] = self.root;
         stack_ptr += 1;

@@ -4,7 +4,7 @@ use std::sync::Arc;
 use glam::Vec3A;
 
 use aabb::AABB;
-use events::HitEvent;
+use results::HitResult;
 use primitive::Primitive;
 use materials::MaterialId;
 use ray::Ray;
@@ -22,7 +22,7 @@ impl Volume {
         Volume { density, boundary, material_id }
     }
 
-    pub fn hit(&self, ray: &Ray, start_distance: f32, end_distance: f32) -> Option<HitEvent> {
+    pub fn hit(&self, ray: &Ray, start_distance: f32, end_distance: f32) -> Option<HitResult> {
         // Find both intersections of the ray with the volume's boundary.
         // We search the entire ray range (not just [start_distance, end_distance]) because
         // a ray origin inside the volume would miss the near boundary otherwise.
@@ -46,7 +46,7 @@ impl Volume {
                         let t = hit1.parameter + hit_distance / ray.direction.length();
                         let point = ray.point_at_parameter(t);
                         let normal = Vec3A::new(1.0, 0.0, 0.0);
-                        return Some(HitEvent::new(t,
+                        return Some(HitResult::new(t,
                                                    0.0,
                                                    0.0,
                                                    point,

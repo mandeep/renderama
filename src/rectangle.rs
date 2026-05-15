@@ -1,7 +1,7 @@
 use glam::Vec3A;
 
 use aabb::AABB;
-use events::HitEvent;
+use results::HitResult;
 use primitive::Primitive;
 use materials::MaterialId;
 use plane::{Axis, Bounds2D, Plane};
@@ -34,7 +34,7 @@ impl Rectangle {
         Rectangle { p0, p1, primitive, material_id }
     }
 
-    pub fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitEvent> {
+    pub fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitResult> {
         self.primitive
         .iter()
         .filter_map(|g| g.hit(ray, position_min, position_max))

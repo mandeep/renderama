@@ -5,9 +5,9 @@ use pdf::MaterialPDF;
 use ray::Ray;
 
 
-/// HitEvent contains the elements necessary to render primitives
+/// HitResult contains the elements necessary to render primitives
 /// once a ray has hit that primitive.
-pub struct HitEvent {
+pub struct HitResult {
     pub parameter: f32,
     pub u: f32,
     pub v: f32,
@@ -17,8 +17,8 @@ pub struct HitEvent {
     pub material_id: MaterialId,
 }
 
-impl HitEvent {
-    /// Create a new HitEvent for a given ray-primitive intersection.
+impl HitResult {
+    /// Create a new HitResult for a given ray-primitive intersection.
     pub fn new(parameter: f32,
                u: f32,
                v: f32,
@@ -26,11 +26,11 @@ impl HitEvent {
                geometric_normal: Vec3A,
                shading_normal: Vec3A,
                material_id: MaterialId)
-               -> HitEvent {
-        HitEvent { parameter, u, v, point, geometric_normal, shading_normal, material_id }
+               -> HitResult {
+        HitResult { parameter, u, v, point, geometric_normal, shading_normal, material_id }
     }
 }
-pub struct ScatterEvent {
+pub struct ScatterResult {
     pub specular_ray: Ray,
     pub attenuation: Vec3A,
     pub sampling_strategy: MaterialPDF,
@@ -38,8 +38,8 @@ pub struct ScatterEvent {
     pub pre_weighted: bool,
 }
 
-impl ScatterEvent {
-    pub fn new(specular_ray: Ray, attenuation: Vec3A, sampling_strategy: MaterialPDF, specular: bool, pre_weighted: bool) -> ScatterEvent {
-        ScatterEvent { specular_ray, attenuation, sampling_strategy, specular, pre_weighted }
+impl ScatterResult {
+    pub fn new(specular_ray: Ray, attenuation: Vec3A, sampling_strategy: MaterialPDF, specular: bool, pre_weighted: bool) -> ScatterResult {
+        ScatterResult { specular_ray, attenuation, sampling_strategy, specular, pre_weighted }
     }
 }
