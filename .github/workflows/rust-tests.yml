@@ -17,6 +17,11 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        lfs: true
+    
+    - name: Checkout lfs tracked files
+      run: git lfs checkout
 
     - name: Set up Rust
       uses: dtolnay/rust-toolchain@stable
