@@ -191,8 +191,9 @@ impl Plane {
     pub fn evaluate_sampling_weight(&self, origin: Vec3A, direction: Vec3A) -> f32 {
         // originally epsilon was 1e-2 but updated here to match value elsewhere
         if let Some(hit) = self.hit(&Ray::new(origin, direction), 1e-4, f32::MAX) {
+            let cosine = direction.dot(hit.shading_normal) / direction.length();
+            if cosine <= 0.0 { return 0.0; }
             let distance_squared = hit.parameter * hit.parameter * direction.length_squared();
-            let cosine = direction.dot(hit.shading_normal).abs() / direction.length();
             distance_squared / (cosine * self.bounds.area())
         } else {
             0.0
