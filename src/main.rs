@@ -1,4 +1,5 @@
 extern crate chrono;
+extern crate clap;
 extern crate glam;
 extern crate image;
 extern crate pbr;
@@ -36,15 +37,14 @@ mod triangle;
 mod utils;
 mod volume;
 
-use std::env;
 use std::f32;
-use std::str::FromStr;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use std::thread;
 use std::time::{Duration, Instant};
 
 use chrono::Local;
+use clap::Parser;
 use glam::Vec3A;
 use image::{ImageBuffer, Rgb};
 use pbr::ProgressBar;
@@ -54,78 +54,43 @@ use rayon::prelude::*;
 
 use integrator::{Integrator, render_beauty, render_normals};
 use scenes::Scenes;
+use scene::Scene;
 
 #[cfg(feature = "denoise")]
 use denoise::denoise;
 
+#[derive(Parser)]
+#[command(name = "Renderama", version, about)]
+struct Args {
+    #[arg(long, default_value = "cornell_box_objects")]
+    scene: Scenes,
+
+    #[arg(long, default_value = "64")]
+    samples: Option<usize>,
+
+    #[arg(long)]
+    width: Option<usize>,
+
+    #[arg(long)]
+    height: Option<usize>,
+
+    #[arg(long)]
+    output: Option<String>,
+
+    #[arg(long, default_value = "beauty")]
+    integrator: Integrator,
+}
+
 fn main() {
     let rendering_time = Instant::now();
 
-    let mut args = env::args().skip(1);
-    let mut samples: usize = 64;
-    let mut default_scene = Scenes::CornellBoxObjects;
-    let mut default_width = None;
-    let mut default_height = None;
-    let mut custom_output: Option<String> = None;
-    let mut default_integrator = Integrator::Beauty;
+    let args = Args::parse();
 
-    // probably need to clap-rs at some point
-    while let Some(arg) = args.next() {
-        match arg.as_str() {
-            "--resolution" => {
-                default_width = args.next().and_then(|w| w.parse().ok());
-                default_height = args.next().and_then(|h| h.parse().ok());
-            }
-            "--scene" => {
-                if let Some(scene_str) = args.next() {
-                    if let Some(selected_scene) = Scenes::from_str(&scene_str) {
-                        default_scene = selected_scene;
-                    } else {
-                        eprintln!("Error: The scene '{}' does not exist.", scene_str);
-                        std::process::exit(1);
-                    }
-                } else {
-                    // someone passed in --scene without a scene name
-                    eprintln!("Error: --scene requires a valid scene name.");
-                    std::process::exit(1);
-                }
-            }
-            "--samples" => {
-                if let Some(integer) = args.next().and_then(|integer| integer.parse::<usize>().ok()) {
-                    samples = integer;
-                }
-            },
-            "--output" => {
-                if let Some(path) = args.next() {
-                    custom_output = Some(path);
-                } else {
-                    eprintln!("Error: --output requires a valid file path.");
-                    std::process::exit(1);
-                }
-            },
-            "--integrator" => {
-                if let Some(integrator_arg) = args.next() {
-                    match Integrator::from_str(&integrator_arg) {
-                        Ok(integrator) => {
-                            default_integrator = integrator;
-                            samples = integrator.default_samples();
-                        }
-                        Err(_e) => {
-                            eprintln!("Error: --integrator requires a valid integrator.");
-                            std::process::exit(1);
-                        }
-                    }
-                }
-            },
-            unknown_argument => {
-                eprintln!("Error: Found an unrecognized argument: '{}'.", unknown_argument);
-                std::process::exit(1);
-            }
-        }
-    }
-
-    let scene = default_scene.load(default_width, default_height);
+    let integrator: Integrator = args.integrator;
+    let samples: usize = args.samples.unwrap_or(integrator.default_samples());
+    let scene: Scene = args.scene.load(args.width, args.height);
     let (width, height) = (scene.camera.resolution.0 as usize, scene.camera.resolution.1 as usize);
+    let output_path = args.output;
 
     println!("[{}] Rendering '{}' scene with {} samples at {} x {} dimensions...",
              Local::now().format("%H:%M:%S"),
@@ -178,7 +143,7 @@ fn main() {
 
                 let ray = scene.camera.generate_ray(u, v, &mut rng);
 
-                match default_integrator {
+                match integrator {
                     Integrator::Beauty => {
                         let (color_sample, albedo_sample, normal_sample) =
                             render_beauty(ray, &scene, &mut rng);
@@ -217,7 +182,7 @@ fn main() {
     let buffer: ImageBuffer<Rgb<f32>, Vec<f32>> = ImageBuffer::from_raw(width as u32, height as u32, pixels.clone()).unwrap();
 
     let timestamp = Local::now().format("%Y%m%d-%H%M%S").to_string();
-    let filepath = custom_output.unwrap_or_else(|| format!("render_{}.exr", timestamp));
+    let filepath = output_path.unwrap_or_else(|| format!("render_{}.exr", timestamp));
 
     buffer.save(&filepath).unwrap();
 

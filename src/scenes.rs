@@ -1,4 +1,6 @@
 #![allow(unused_imports)]
+use clap::ValueEnum;
+
 use scene::Scene;
 
 mod cornell_box_boxes;
@@ -24,7 +26,8 @@ pub use self::veach_mis::*;
 pub use self::white_furnace::*;
 
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, ValueEnum)]
+#[value(rename_all = "snake_case")]
 pub enum Scenes {
     CornellBoxBoxes,
     CornellBoxBunny,
@@ -39,22 +42,6 @@ pub enum Scenes {
 }
 
 impl Scenes {
-    pub fn from_str(s: &str) -> Option<Self> {
-        match s {
-            "cornell_box_boxes" => Some(Scenes::CornellBoxBoxes),
-            "cornell_box_bunny" => Some(Scenes::CornellBoxBunny),
-            "cornell_box_dragon" => Some(Scenes::CornellBoxDragon),
-            "cornell_box_objects" => Some(Scenes::CornellBoxObjects),
-            "energy_conservation" => Some(Scenes::EnergyConservation),
-            "random_spheres" => Some(Scenes::RandomSpheres),
-            "spheres_in_box" => Some(Scenes::SpheresInBox),
-            "three_spheres" => Some(Scenes::ThreeSpheres),
-            "veach_mis" => Some(Scenes::VeachMis),
-            "white_furnace" => Some(Scenes::WhiteFurnace),
-            _ => None,
-        }
-    }
-
     pub fn load(&self, width: Option<usize>, height: Option<usize>) -> Scene {
         match self {
             Scenes::CornellBoxBoxes => cornell_box_scene(width, height),

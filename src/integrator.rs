@@ -1,6 +1,7 @@
 use std::f32;
 use std::str::FromStr;
 
+use clap::ValueEnum;
 use glam::Vec3A;
 use rand::RngExt;
 use rand_pcg::Pcg64Mcg;
@@ -12,7 +13,7 @@ use pdf::power_heuristic;
 use ray::{find_offset_point, Ray};
 use scene::Scene;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, ValueEnum)]
 pub enum Integrator {
     Beauty,
     Normals,

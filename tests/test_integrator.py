@@ -75,7 +75,8 @@ def test_render_output_matches_reference(name, samples, image_dir, tmp_path, rus
             str(rust_binary),
             '--output', str(output_path),
             '--samples', str(samples),
-            '--resolution', '256', '256',
+            '--width', '256',
+            '--height', '256',
             '--scene', str(name),
         ],
         check=True)
@@ -86,12 +87,11 @@ def test_render_output_matches_reference(name, samples, image_dir, tmp_path, rus
     assert new_img.shape == ref_img.shape
     
     drange = ref_img.max() - ref_img.min()
-    score, diff = ssim(
+    score = ssim(
         ref_img, 
         new_img, 
         channel_axis=-1, 
         data_range=drange, 
-        full=True
     )
 
     print(f"SSIM Score: {score:.4f}")
