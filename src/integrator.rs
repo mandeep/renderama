@@ -62,7 +62,7 @@ pub fn render_beauty(mut ray: Ray, scene: &Scene, rng: &mut Pcg64Mcg) -> (Vec3A,
     for bounce in 0..=bounces {
         let Some(hit_result) = scene.accelerator.hit(&ray, 1e-4, f32::MAX) else {
             color +=
-                evaluate_miss(&ray, &previous_bounce, &scene, &throughput);
+                evaluate_missed_ray(&ray, &previous_bounce, &scene, &throughput);
             break;
         };
 
@@ -84,7 +84,7 @@ pub fn render_beauty(mut ray: Ray, scene: &Scene, rng: &mut Pcg64Mcg) -> (Vec3A,
             ray = scatter_result.specular_ray;
             previous_bounce = PreviousBounce::Specular;
         } else {
-            color += sample_direct_lighting(&ray, &hit_result, &material, &scatter_result, &scene, &throughput, rng);
+            color += evaluate_direct_lighting(&ray, &hit_result, &material, &scatter_result, &scene, &throughput, rng);
 
             let Some((next_ray, throughput_factor, weight)) = prepare_next_ray(&ray, &hit_result, &material, &scatter_result, rng) else { break };
             throughput *= throughput_factor;
@@ -109,7 +109,7 @@ enum PreviousBounce {
     Diffuse(f32),
 }
 
-fn evaluate_miss(
+fn evaluate_missed_ray(
     ray: &Ray,
     previous_bounce: &PreviousBounce,
     scene: &Scene,
@@ -169,7 +169,7 @@ fn evaluate_emission(
     color
 }
 
-fn sample_direct_lighting(
+fn evaluate_direct_lighting(
     ray: &Ray,
     hit_result: &HitResult,
     material: &Material,
