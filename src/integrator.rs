@@ -181,8 +181,11 @@ fn evaluate_direct_lighting(
     let mut direct_light = Vec3A::ZERO;
 
     // using a manual offset instead of the find_offset_point for now as it
-    // gives better results on shadow rays
-    let shadow_origin = hit_result.point + hit_result.geometric_normal * 1e-3;
+    // gives better results on shadow rays. seems like changes in the plane's light
+    // calculation fixed issues with offset points, so changing this back to using the
+    // find_offset_point function
+    // let shadow_origin = hit_result.point + hit_result.geometric_normal * 1e-3;
+    let shadow_origin = find_offset_point(hit_result.point, hit_result.geometric_normal);
 
     for light_source in &scene.lights {
         let light_direction_vector = light_source.sample_direction_to_light(shadow_origin, rng);
