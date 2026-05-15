@@ -40,4 +40,4 @@ jobs:
       run: pip install -r tests/requirements.txt
 
     - name: Run python tests
-      run: pytest -sv
+      run: pytest
