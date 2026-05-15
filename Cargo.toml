@@ -1,6 +1,6 @@
 [package]
 name = "renderama"
-version = "0.36.0"
+version = "0.36.1"
 authors = ["mandeep <mandeep@users.noreply.github.com>"]
 edition = "2015"
 build = "build.rs"
