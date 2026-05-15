@@ -52,3 +52,12 @@ def read_exr():
 def image_dir():
     """Returns the absolute path to the tests/images directory."""
     return Path(__file__).parent / "images"
+
+
+def pytest_collection_modifyitems(config, items):
+    """Skip all tests in update_renders unless the flag is passed."""
+    if not config.getoption("--update-renders", default=False):
+        skip = pytest.mark.skip(reason="pass --update-renders to run")
+        for item in items:
+            if item.get_closest_marker("update_renders"):
+                item.add_marker(skip)
