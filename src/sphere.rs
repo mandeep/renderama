@@ -4,7 +4,7 @@ use glam::Vec3A;
 use rand_pcg::Pcg64Mcg;
 
 use aabb::AABB;
-use events::HitEvent;
+use results::HitResult;
 use materials::MaterialId;
 use ray::Ray;
 use sampling::{uniform_sample_cone, uniform_sample_sphere};
@@ -42,7 +42,7 @@ impl Sphere {
     /// a real root. No real roots signifies a miss, one real root signifies
     /// a hit at the boundary of the sphere, and two real roots signify a
     /// ray hitting one point on the sphere and leaving through another point.
-    pub fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitEvent> {
+    pub fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitResult> {
         let sphere_center: Vec3A = ray.origin - self.center;
         let a: f32 = ray.direction.dot(ray.direction);
         let b: f32 = sphere_center.dot(ray.direction);
@@ -66,7 +66,7 @@ impl Sphere {
             let point = ray.point_at_parameter(root);
             let normal = (point - self.center) / self.radius;
             let (u, v) = get_sphere_uv(&normal);
-            return Some(HitEvent::new(root, u, v, point, normal, normal, self.material_id));
+            return Some(HitResult::new(root, u, v, point, normal, normal, self.material_id));
         }
         None
     }

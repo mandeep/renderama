@@ -6,7 +6,7 @@ use rand::RngExt;
 use rand_pcg::Pcg64Mcg;
 
 use basis::OrthonormalBasis;
-use events::{HitEvent, ScatterEvent};
+use results::{HitResult, ScatterResult};
 use ggx::{ggx_distribution, ggx_geometry, ggx_sample_vndf};
 use pdf::MaterialPDF;
 use ray::{find_offset_point, Ray};
@@ -68,7 +68,7 @@ macro_rules! mat {
 }
 
 impl Material {
-    pub fn generate_response(&self, ray: &Ray, hit: &HitEvent, rng: &mut Pcg64Mcg) -> Option<ScatterEvent> {
+    pub fn generate_response(&self, ray: &Ray, hit: &HitResult, rng: &mut Pcg64Mcg) -> Option<ScatterResult> {
         match self {
             Material::Diffuse(m) => m.generate_response(ray, hit, rng),
             Material::Emissive(m) => m.generate_response(ray, hit, rng),
@@ -79,7 +79,7 @@ impl Material {
         }
     }
 
-    pub fn evaluate_emission(&self, ray: &Ray, hit: &HitEvent) -> Vec3A {
+    pub fn evaluate_emission(&self, ray: &Ray, hit: &HitResult) -> Vec3A {
         match self {
             Material::Emissive(m) => m.evaluate_emission(ray, hit),
             Material::Diffuse(_)
@@ -90,7 +90,7 @@ impl Material {
         }
     }
 
-    pub fn compute_reflectance(&self, ray: &Ray, hit: &HitEvent, scattered: &Ray) -> f32 {
+    pub fn compute_reflectance(&self, ray: &Ray, hit: &HitResult, scattered: &Ray) -> f32 {
         match self {
             Material::Diffuse(m) => m.compute_reflectance(ray, hit, scattered),
             Material::Emissive(_) => 0.0,
@@ -126,13 +126,13 @@ impl Diffuse {
                   beta }
     }
 
-    fn generate_response(&self, ray: &Ray, event: &HitEvent, _rng: &mut Pcg64Mcg) -> Option<ScatterEvent> {
+    fn generate_response(&self, ray: &Ray, result: &HitResult, _rng: &mut Pcg64Mcg) -> Option<ScatterResult> {
         // ray.direction is passed here because the integrator generates
         // an offset point itself for diffuse materials
-        let scattered = Ray::new(event.point, ray.direction);
-        let attenuation = self.albedo.sample_texture(event.u, event.v, &event.point);
-        let pdf = MaterialPDF::Cosine { uvw: OrthonormalBasis::new(&event.shading_normal) };
-        Some(ScatterEvent::new(scattered, attenuation, pdf, false, false))
+        let scattered = Ray::new(result.point, ray.direction);
+        let attenuation = self.albedo.sample_texture(result.u, result.v, &result.point);
+        let pdf = MaterialPDF::Cosine { uvw: OrthonormalBasis::new(&result.shading_normal) };
+        Some(ScatterResult::new(scattered, attenuation, pdf, false, false))
     }
 
     /// Reflect light according to the Oren-Nayar model
@@ -143,10 +143,10 @@ impl Diffuse {
     /// https://mimosa-pudica.net/improved-oren-nayar.html
     ///
     /// https://developer.blender.org/diffusion/C/browse/master/src/kernel/closure/bsdf_oren_nayar.h
-    fn compute_reflectance(&self, wo: &Ray, event: &HitEvent, wi: &Ray) -> f32 {
+    fn compute_reflectance(&self, wo: &Ray, result: &HitResult, wi: &Ray) -> f32 {
         let l = wi.direction;
         let v = wo.direction;
-        let n = event.shading_normal;
+        let n = result.shading_normal;
 
         let nl = n.dot(l).max(0.0);
         let nv = n.dot(v).max(0.0);
@@ -253,44 +253,44 @@ impl Reflective {
 impl Reflective {
     /// Retrieve the color of the given material
     ///
-    /// For spheres, the center of the sphere is given by the event.point
-    /// plus the event.normal. We add a random point from the unit sphere
+    /// For spheres, the center of the sphere is given by the result.point
+    /// plus the result.normal. We add a random point from the unit sphere
     /// to uniformly distribute hit points on the sphere. A fuzziness
     /// factor is also added in to account for the reflection fuzz due to
-    /// the size of the sphere. The target minus the event.point is used
+    /// the size of the sphere. The target minus the result.point is used
     /// to determine the ray that is being reflected from the surface of the material.
-    fn generate_response(&self, ray: &Ray, event: &HitEvent, _rng: &mut Pcg64Mcg) -> Option<ScatterEvent> {
-        let forward_geometric_normal = if ray.direction.dot(event.geometric_normal) < 0.0 {
-            event.geometric_normal
+    fn generate_response(&self, ray: &Ray, result: &HitResult, _rng: &mut Pcg64Mcg) -> Option<ScatterResult> {
+        let forward_geometric_normal = if ray.direction.dot(result.geometric_normal) < 0.0 {
+            result.geometric_normal
         } else {
-            -event.geometric_normal
+            -result.geometric_normal
         };
 
-        let shading_normal = if event.shading_normal.dot(forward_geometric_normal) < 0.0 {
-            -event.shading_normal
+        let shading_normal = if result.shading_normal.dot(forward_geometric_normal) < 0.0 {
+            -result.shading_normal
         } else {
-            event.shading_normal
+            result.shading_normal
         };
 
-        let offset_point = find_offset_point(event.point, forward_geometric_normal);
+        let offset_point = find_offset_point(result.point, forward_geometric_normal);
         let reflected = reflect(ray.direction, shading_normal);
         let specular_ray = Ray::new(offset_point, reflected);
 
         if self.fuzz == 0.0 {
             let pdf = MaterialPDF::Cosine { uvw: OrthonormalBasis::new(&shading_normal) };
-            Some(ScatterEvent::new(specular_ray, self.albedo, pdf, true, true))
+            Some(ScatterResult::new(specular_ray, self.albedo, pdf, true, true))
         } else {
             let pdf = MaterialPDF::GGX { wi: -ray.direction, normal: shading_normal, alpha: self.fuzz };
-            Some(ScatterEvent::new(specular_ray, self.albedo, pdf, false, true))
+            Some(ScatterResult::new(specular_ray, self.albedo, pdf, false, true))
         }
     }
 
-    fn compute_reflectance(&self, ray: &Ray, event: &HitEvent, scattered: &Ray) -> f32 {
+    fn compute_reflectance(&self, ray: &Ray, result: &HitResult, scattered: &Ray) -> f32 {
         if self.fuzz == 0.0 { return 0.0; }
 
         let wi = -ray.direction;
         let wo = scattered.direction;
-        let n = event.shading_normal;
+        let n = result.shading_normal;
 
         let cos_i = n.dot(wi);
         let cos_o = n.dot(wo);
@@ -330,33 +330,33 @@ impl Refractive {
 
     /// Retrieve the color of the given material
     ///
-    /// For spheres, the center of the sphere is given by the event.point
-    /// plus the event.normal. We add a random point from the unit sphere
+    /// For spheres, the center of the sphere is given by the result.point
+    /// plus the result.normal. We add a random point from the unit sphere
     /// to uniformly distribute hit points on the sphere. A fuzziness
     /// factor is also added in to account for the reflection fuzz due to
-    /// the size of the sphere. The target minus the event.point is used
+    /// the size of the sphere. The target minus the result.point is used
     /// to determine the ray that is being reflected from the surface of the material.
     ///
     /// See Peter Shirley's Ray Tracing in One Weekend for an overview of refractive
     /// scattering and Section 10.3.2 in Mathematical and Computer Programming
     /// Techniques for Computer Graphics by Peter Comininos.
-    fn generate_response(&self, ray: &Ray, event: &HitEvent, rng: &mut Pcg64Mcg) -> Option<ScatterEvent> {
-        let geometric_incident: f32 = ray.direction.dot(event.geometric_normal);
+    fn generate_response(&self, ray: &Ray, result: &HitResult, rng: &mut Pcg64Mcg) -> Option<ScatterResult> {
+        let geometric_incident: f32 = ray.direction.dot(result.geometric_normal);
         let entering = geometric_incident < 0.0;
 
         // Pick a forward-facing geometric normal (points back toward the ray origin).
         let forward_geometric_normal = if entering {
-            event.geometric_normal
+            result.geometric_normal
         } else {
-            -event.geometric_normal
+            -result.geometric_normal
         };
 
        // For the shading side of refraction (Fresnel/Snell), use the shading normal,
         // but make sure it agrees with the forward-facing geometric normal.
-        let shading_normal = if event.shading_normal.dot(forward_geometric_normal) < 0.0 {
-            -event.shading_normal
+        let shading_normal = if result.shading_normal.dot(forward_geometric_normal) < 0.0 {
+            -result.shading_normal
         } else {
-            event.shading_normal
+            result.shading_normal
         };
 
         let (eta_i, eta_t) = if entering {
@@ -380,17 +380,17 @@ impl Refractive {
             self.absorption
         };
 
-        let pdf = MaterialPDF::Cosine { uvw: OrthonormalBasis::new(&event.shading_normal) };
+        let pdf = MaterialPDF::Cosine { uvw: OrthonormalBasis::new(&result.shading_normal) };
 
         if rng.random::<f32>() < reflect_probability {
             let reflected: Vec3A = reflect(ray.direction, shading_normal);
-            let offset_point = find_offset_point(event.point, forward_geometric_normal);
+            let offset_point = find_offset_point(result.point, forward_geometric_normal);
             let specular_ray = Ray::new(offset_point, reflected);
-            Some(ScatterEvent::new(specular_ray, attenuation, pdf, true, true))
+            Some(ScatterResult::new(specular_ray, attenuation, pdf, true, true))
         } else {
-            let offset_point = find_offset_point(event.point, -forward_geometric_normal);
+            let offset_point = find_offset_point(result.point, -forward_geometric_normal);
             let specular_ray = Ray::new(offset_point, refracted.unwrap());
-            Some(ScatterEvent::new(specular_ray, attenuation, pdf, true, true))
+            Some(ScatterResult::new(specular_ray, attenuation, pdf, true, true))
         }
     }
 }
@@ -406,11 +406,11 @@ impl Emissive {
         Emissive { emissive_texture }
     }
 
-    fn generate_response(&self, _ray: &Ray, _event: &HitEvent, _rng: &mut Pcg64Mcg) -> Option<ScatterEvent> {
+    fn generate_response(&self, _ray: &Ray, _result: &HitResult, _rng: &mut Pcg64Mcg) -> Option<ScatterResult> {
         None
     }
 
-    fn evaluate_emission(&self, ray: &Ray, hit: &HitEvent) -> Vec3A {
+    fn evaluate_emission(&self, ray: &Ray, hit: &HitResult) -> Vec3A {
         if hit.shading_normal.dot(ray.direction) < 0.0 {
             self.emissive_texture.sample_texture(hit.u, hit.v, &hit.point)
         } else {
@@ -430,11 +430,11 @@ impl Isotropic {
         Isotropic { albedo }
     }
 
-    fn generate_response(&self, _ray: &Ray, event: &HitEvent, rng: &mut Pcg64Mcg) -> Option<ScatterEvent> {
-        let scattered = Ray::new(event.point, pick_sphere_point(rng));
-        let attenuation = self.albedo.sample_texture(event.u, event.v, &event.point);
+    fn generate_response(&self, _ray: &Ray, result: &HitResult, rng: &mut Pcg64Mcg) -> Option<ScatterResult> {
+        let scattered = Ray::new(result.point, pick_sphere_point(rng));
+        let attenuation = self.albedo.sample_texture(result.u, result.v, &result.point);
         let pdf = MaterialPDF::Uniform;
-        Some(ScatterEvent::new(scattered, attenuation, pdf, false, false))
+        Some(ScatterResult::new(scattered, attenuation, pdf, false, false))
     }
 }
 
@@ -451,23 +451,23 @@ impl Plastic {
         Plastic { albedo, roughness: roughness * roughness, ior }
     }
 
-    fn generate_response(&self, ray: &Ray, event: &HitEvent, rng: &mut Pcg64Mcg) -> Option<ScatterEvent> {
-        let cos_theta_i = (-ray.direction).dot(event.shading_normal).max(0.0);
+    fn generate_response(&self, ray: &Ray, result: &HitResult, rng: &mut Pcg64Mcg) -> Option<ScatterResult> {
+        let cos_theta_i = (-ray.direction).dot(result.shading_normal).max(0.0);
         let fresnel = schlick(cos_theta_i, self.ior);  // using schlick for ggx
 
-        let forward_geometric_normal = if ray.direction.dot(event.geometric_normal) < 0.0 {
-            event.geometric_normal
+        let forward_geometric_normal = if ray.direction.dot(result.geometric_normal) < 0.0 {
+            result.geometric_normal
         } else {
-            -event.geometric_normal
+            -result.geometric_normal
         };
 
-        let shading_normal = if event.shading_normal.dot(forward_geometric_normal) < 0.0 {
-            -event.shading_normal
+        let shading_normal = if result.shading_normal.dot(forward_geometric_normal) < 0.0 {
+            -result.shading_normal
         } else {
-            event.shading_normal
+            result.shading_normal
         };
 
-        let offset_point = find_offset_point(event.point, forward_geometric_normal);
+        let offset_point = find_offset_point(result.point, forward_geometric_normal);
 
         // Probabilistically pick specular or diffuse based on Fresnel
         if rng.random::<f32>() < fresnel {
@@ -483,22 +483,22 @@ impl Plastic {
             let specular_ray = Ray::new(offset_point, reflected);
             let pdf = MaterialPDF::GGX { wi: -ray.direction, normal: shading_normal, alpha };
 
-            Some(ScatterEvent::new(specular_ray, Vec3A::ONE, pdf, false, true))
+            Some(ScatterResult::new(specular_ray, Vec3A::ONE, pdf, false, true))
         } else {
             // Diffuse path
             // even though ray.direction is given, a new ray with offset is generated in the integrator
             let scattered = Ray::new(offset_point, ray.direction);
-            let attenuation = self.albedo.sample_texture(event.u, event.v, &event.point) * (1.0 - fresnel);
-            let pdf = MaterialPDF::Cosine { uvw: OrthonormalBasis::new(&event.shading_normal) };
-            Some(ScatterEvent::new(scattered, attenuation, pdf, false, false))
+            let attenuation = self.albedo.sample_texture(result.u, result.v, &result.point) * (1.0 - fresnel);
+            let pdf = MaterialPDF::Cosine { uvw: OrthonormalBasis::new(&result.shading_normal) };
+            Some(ScatterResult::new(scattered, attenuation, pdf, false, false))
         }
     }
 
-    fn compute_reflectance(&self, wo: &Ray, event: &HitEvent, wi: &Ray) -> f32 {
+    fn compute_reflectance(&self, wo: &Ray, result: &HitResult, wi: &Ray) -> f32 {
         // we only need to compute the reflectance for the diffuse branch since
         // the specular branch is pre_weighted and this method is only called
         // for non-pre_weighted branches
-        let n = event.shading_normal;
+        let n = result.shading_normal;
 
         let cos_o = n.dot(wi.direction);
         let cos_theta_i = (-wo.direction).dot(n);

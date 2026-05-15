@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use aabb::AABB;
-use events::HitEvent;
+use results::HitResult;
 use plane::Plane;
 use ray::Ray;
 use rectangle::Rectangle;
@@ -24,7 +24,7 @@ pub enum Primitive {
 }
 
 impl Primitive {
-    pub fn hit(&self, ray: &Ray, start_distance: f32, end_distance: f32) -> Option<HitEvent> {
+    pub fn hit(&self, ray: &Ray, start_distance: f32, end_distance: f32) -> Option<HitResult> {
         match self {
             Primitive::Plane(p) => p.hit(ray, start_distance, end_distance),
             Primitive::Rectangle(r) => r.hit(ray, start_distance, end_distance),

@@ -4,7 +4,7 @@ use std::sync::Arc;
 use glam::{Mat4, Vec3A, Vec3};
 
 use aabb::AABB;
-use events::HitEvent;
+use results::HitResult;
 use primitive::Primitive;
 use ray::Ray;
 
@@ -99,7 +99,7 @@ impl TransformedMesh {
         }
     }
 
-    pub fn hit(&self, ray: &Ray, start_distance: f32, end_distance: f32) -> Option<HitEvent> {
+    pub fn hit(&self, ray: &Ray, start_distance: f32, end_distance: f32) -> Option<HitResult> {
         // Transform ray into local space using the inverse matrix.
         let local_origin = self.inv_transform.transform_point3(ray.origin.into());
         let local_direction = self.inv_transform.transform_vector3(ray.direction.into());

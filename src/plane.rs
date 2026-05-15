@@ -6,7 +6,7 @@ use rand_pcg::Pcg64Mcg;
 use rand::RngExt;
 
 use aabb::AABB;
-use events::HitEvent;
+use results::HitResult;
 use primitive::Primitive;
 use materials::MaterialId;
 use ray::Ray;
@@ -85,7 +85,7 @@ impl Plane {
         Primitive::ReverseOrientation(Arc::new(Primitive::Plane(self)))
     }
 
-    pub fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitEvent> {
+    pub fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitResult> {
         match self.axis {
             Axis::XY => {
                 let t = (self.offset - ray.origin.z) / ray.direction.z;
@@ -103,7 +103,7 @@ impl Plane {
 
                 let normal = Vec3A::new(0.0, 0.0, 1.0);
 
-                let event = HitEvent::new(t,
+                let event = HitResult::new(t,
                                             (x - self.bounds.u_min) / (self.bounds.u_max - self.bounds.u_min),
                                             (y - self.bounds.v_min) / (self.bounds.v_max - self.bounds.v_min),
                                             ray.point_at_parameter(t),
@@ -129,7 +129,7 @@ impl Plane {
 
                 let normal = Vec3A::new(1.0, 0.0, 0.0);
 
-                let event = HitEvent::new(t,
+                let event = HitResult::new(t,
                                             (y - self.bounds.u_min) / (self.bounds.u_max - self.bounds.u_min),
                                             (z - self.bounds.v_min) / (self.bounds.v_max - self.bounds.v_min),
                                             ray.point_at_parameter(t),
@@ -155,7 +155,7 @@ impl Plane {
 
                 let normal = Vec3A::new(0.0, 1.0, 0.0);
 
-                let event = HitEvent::new(t,
+                let event = HitResult::new(t,
                                             (x - self.bounds.u_min) / (self.bounds.u_max - self.bounds.u_min),
                                             (z - self.bounds.v_min) / (self.bounds.v_max - self.bounds.v_min),
                                             ray.point_at_parameter(t),

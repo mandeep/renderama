@@ -6,7 +6,7 @@ use glam::Vec3A;
 use rand::RngExt;
 use rand_pcg::Pcg64Mcg;
 
-use events::{HitEvent, ScatterEvent};
+use results::{HitResult, ScatterResult};
 use lights::Light;
 use materials::Material;
 use pdf::power_heuristic;
@@ -60,33 +60,33 @@ pub fn render_beauty(mut ray: Ray, scene: &Scene, rng: &mut Pcg64Mcg) -> (Vec3A,
     let bounces = 10;
 
     for bounce in 0..=bounces {
-        let Some(hit_event) = scene.accelerator.hit(&ray, 1e-4, f32::MAX) else {
+        let Some(hit_result) = scene.accelerator.hit(&ray, 1e-4, f32::MAX) else {
             color +=
-                evaluate_miss(&ray, &previous_bounce, &scene, &throughput);
+                evaluate_missed_ray(&ray, &previous_bounce, &scene, &throughput);
             break;
         };
 
-        let material = &scene.materials[hit_event.material_id.index()];
+        let material = &scene.materials[hit_result.material_id.index()];
 
         color += evaluate_emission(
-            &ray, &hit_event, &material, &previous_bounce, &scene.lights, &throughput
+            &ray, &hit_result, &material, &previous_bounce, &scene.lights, &throughput
         );
 
-        let Some(scatter_event) = material.generate_response(&ray, &hit_event, rng) else { break };
+        let Some(scatter_result) = material.generate_response(&ray, &hit_result, rng) else { break };
 
         if bounce == 0 {
-            first_albedo = scatter_event.attenuation;
-            first_normal = hit_event.shading_normal;
+            first_albedo = scatter_result.attenuation;
+            first_normal = hit_result.shading_normal;
         }
 
-        if scatter_event.specular {
-            throughput *= scatter_event.attenuation;
-            ray = scatter_event.specular_ray;
+        if scatter_result.specular {
+            throughput *= scatter_result.attenuation;
+            ray = scatter_result.specular_ray;
             previous_bounce = PreviousBounce::Specular;
         } else {
-            color += sample_direct_lighting(&ray, &hit_event, &material, &scatter_event, &scene, &throughput, rng);
+            color += evaluate_direct_lighting(&ray, &hit_result, &material, &scatter_result, &scene, &throughput, rng);
 
-            let Some((next_ray, throughput_factor, weight)) = prepare_next_ray(&ray, &hit_event, &material, &scatter_event, rng) else { break };
+            let Some((next_ray, throughput_factor, weight)) = prepare_next_ray(&ray, &hit_result, &material, &scatter_result, rng) else { break };
             throughput *= throughput_factor;
             ray = next_ray;
             previous_bounce = PreviousBounce::Diffuse(weight);
@@ -109,7 +109,7 @@ enum PreviousBounce {
     Diffuse(f32),
 }
 
-fn evaluate_miss(
+fn evaluate_missed_ray(
     ray: &Ray,
     previous_bounce: &PreviousBounce,
     scene: &Scene,
@@ -142,7 +142,7 @@ fn evaluate_miss(
 
 fn evaluate_emission(
     ray: &Ray,
-    hit_event: &HitEvent,
+    hit_result: &HitResult,
     material: &Material,
     previous_bounce: &PreviousBounce,
     lights: &[Light],
@@ -150,7 +150,7 @@ fn evaluate_emission(
 ) -> Vec3A {
     let mut color = Vec3A::ZERO;
 
-    let emission = material.evaluate_emission(&ray, &hit_event);
+    let emission = material.evaluate_emission(&ray, &hit_result);
     if emission.length_squared() > 0.0 {
         match previous_bounce {
             PreviousBounce::Specular | PreviousBounce::None => {
@@ -169,11 +169,11 @@ fn evaluate_emission(
     color
 }
 
-fn sample_direct_lighting(
+fn evaluate_direct_lighting(
     ray: &Ray,
-    hit_event: &HitEvent,
+    hit_result: &HitResult,
     material: &Material,
-    scatter_event: &ScatterEvent,
+    scatter_result: &ScatterResult,
     scene: &Scene,
     throughput: &Vec3A,
     rng: &mut Pcg64Mcg,
@@ -181,8 +181,11 @@ fn sample_direct_lighting(
     let mut direct_light = Vec3A::ZERO;
 
     // using a manual offset instead of the find_offset_point for now as it
-    // gives better results on shadow rays
-    let shadow_origin = hit_event.point + hit_event.geometric_normal * 1e-3;
+    // gives better results on shadow rays. seems like changes in the plane's light
+    // calculation fixed issues with offset points, so changing this back to using the
+    // find_offset_point function
+    // let shadow_origin = hit_result.point + hit_result.geometric_normal * 1e-3;
+    let shadow_origin = find_offset_point(hit_result.point, hit_result.geometric_normal);
 
     for light_source in &scene.lights {
         let light_direction_vector = light_source.sample_direction_to_light(shadow_origin, rng);
@@ -195,10 +198,10 @@ fn sample_direct_lighting(
         if !scene.accelerator.hits_anything(&shadow_ray, 1e-3, end_distance) {
             let light_weight = light_source.evaluate_sampling_weight(shadow_origin, light_direction);
             if light_weight > 1e-7 {
-                let reflectance = material.compute_reflectance(&ray, &hit_event, &shadow_ray);
-                let material_weight = scatter_event.sampling_strategy.calculate_probability(light_direction);
+                let reflectance = material.compute_reflectance(&ray, &hit_result, &shadow_ray);
+                let material_weight = scatter_result.sampling_strategy.calculate_probability(light_direction);
                 let weight = power_heuristic(light_weight, material_weight);
-                direct_light += (weight * throughput * light_source.emission * scatter_event.attenuation * reflectance) / light_weight;
+                direct_light += (weight * throughput * light_source.emission * scatter_result.attenuation * reflectance) / light_weight;
             }
         }
     }
@@ -207,17 +210,17 @@ fn sample_direct_lighting(
         let environment_direction = environment.sample_direction_to_light(rng);
         let environment_weight = environment.evaluate_sampling_weight(&environment_direction);
         if environment_weight > 1e-7 {
-            let shadow_origin = hit_event.point + hit_event.geometric_normal * 1e-3;
+            let shadow_origin = hit_result.point + hit_result.geometric_normal * 1e-3;
             let environment_shadow_ray = Ray::new(shadow_origin, environment_direction);
             if scene.accelerator.hit(&environment_shadow_ray, 1e-3, f32::MAX).is_none() {
                 let environment_value = environment.sample_map(0.0, 0.0, &environment_direction);
-                let material_weight = scatter_event.sampling_strategy.calculate_probability(environment_direction);
-                let reflectance = material.compute_reflectance(&ray, &hit_event, &environment_shadow_ray);
+                let material_weight = scatter_result.sampling_strategy.calculate_probability(environment_direction);
+                let reflectance = material.compute_reflectance(&ray, &hit_result, &environment_shadow_ray);
                 let weight = power_heuristic(environment_weight, material_weight);
                 direct_light += (weight *
                     throughput *
                     environment_value *
-                    scatter_event.attenuation *
+                    scatter_result.attenuation *
                     reflectance) / environment_weight;
             }
         }
@@ -228,25 +231,25 @@ fn sample_direct_lighting(
 
 fn prepare_next_ray(
     ray: &Ray,
-    hit_event: &HitEvent,
+    hit_result: &HitResult,
     material: &Material,
-    scatter_event: &ScatterEvent,
+    scatter_result: &ScatterResult,
     rng: &mut Pcg64Mcg,
 ) -> Option<(Ray, Vec3A, f32)> {
-    let scattered_direction = scatter_event.sampling_strategy.pick_direction(rng);
-    let material_weight = scatter_event.sampling_strategy.calculate_probability(scattered_direction);
+    let scattered_direction = scatter_result.sampling_strategy.pick_direction(rng);
+    let material_weight = scatter_result.sampling_strategy.calculate_probability(scattered_direction);
     if material_weight <= 0.0 { return None; }
 
-    let offset_point = find_offset_point(hit_event.point, hit_event.geometric_normal);
+    let offset_point = find_offset_point(hit_result.point, hit_result.geometric_normal);
     let scattered_ray = Ray::new(offset_point, scattered_direction);
-    let reflectance = material.compute_reflectance(&ray, &hit_event, &scattered_ray);
+    let reflectance = material.compute_reflectance(&ray, &hit_result, &scattered_ray);
 
     // if we're using a material with pre-weighted ggx vndf
     // then no need to compute the reflactance and weight
-    let throughput = if scatter_event.pre_weighted {
-        scatter_event.attenuation
+    let throughput = if scatter_result.pre_weighted {
+        scatter_result.attenuation
     } else {
-        (reflectance * scatter_event.attenuation) / material_weight
+        (reflectance * scatter_result.attenuation) / material_weight
     };
 
     Some((scattered_ray, throughput, material_weight))
