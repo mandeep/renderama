@@ -73,15 +73,10 @@ impl Sphere {
 
     pub fn bounding_box(&self) -> Option<AABB> {
         let radius = Vec3A::new(self.radius, self.radius, self.radius);
-        let min0 = self.center - radius;
-        let max0 = self.center + radius;
-        let min1 = self.center - radius;
-        let max1 = self.center + radius;
+        let min = self.center - radius;
+        let max = self.center + radius;
 
-        let small = AABB::from(min0, max0);
-        let big = AABB::from(min1, max1);
-
-        Some(small.surrounding_box(&big))
+        Some(AABB::from(min, max))
     }
 
     pub fn evaluate_sampling_weight(&self, origin: Vec3A, direction: Vec3A) -> f32 {
