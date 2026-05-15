@@ -38,7 +38,7 @@ mod volume;
 
 use std::env;
 use std::f32;
-use rand::RngExt;
+use std::str::FromStr;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use std::thread;
@@ -48,10 +48,11 @@ use chrono::Local;
 use glam::Vec3A;
 use image::{ImageBuffer, Rgb};
 use pbr::ProgressBar;
-use rand::{rng, SeedableRng};
+use rand::{rng, RngExt, SeedableRng};
 use rand_pcg::Pcg64Mcg;
 use rayon::prelude::*;
 
+use integrator::{Integrator, render_beauty, render_normals};
 use scenes::Scenes;
 
 #[cfg(feature = "denoise")]
@@ -61,11 +62,12 @@ fn main() {
     let rendering_time = Instant::now();
 
     let mut args = env::args().skip(1);
-    let mut samples: u32 = 64;
+    let mut samples: usize = 64;
     let mut default_scene = Scenes::CornellBoxObjects;
     let mut default_width = None;
     let mut default_height = None;
     let mut custom_output: Option<String> = None;
+    let mut default_integrator = Integrator::Beauty;
 
     // probably need to clap-rs at some point
     while let Some(arg) = args.next() {
@@ -89,7 +91,7 @@ fn main() {
                 }
             }
             "--samples" => {
-                if let Some(integer) = args.next().and_then(|integer| integer.parse::<u32>().ok()) {
+                if let Some(integer) = args.next().and_then(|integer| integer.parse::<usize>().ok()) {
                     samples = integer;
                 }
             },
@@ -100,7 +102,21 @@ fn main() {
                     eprintln!("Error: --output requires a valid file path.");
                     std::process::exit(1);
                 }
-            }
+            },
+            "--integrator" => {
+                if let Some(integrator_arg) = args.next() {
+                    match Integrator::from_str(&integrator_arg) {
+                        Ok(integrator) => {
+                            default_integrator = integrator;
+                            samples = integrator.default_samples();
+                        }
+                        Err(_e) => {
+                            eprintln!("Error: --integrator requires a valid integrator.");
+                            std::process::exit(1);
+                        }
+                    }
+                }
+            },
             unknown_argument => {
                 eprintln!("Error: Found an unrecognized argument: '{}'.", unknown_argument);
                 std::process::exit(1);
@@ -162,15 +178,20 @@ fn main() {
 
                 let ray = scene.camera.generate_ray(u, v, &mut rng);
 
-                // render_normals is used for debugging
-                // color += utils::de_nan(&integrator::render_normals(ray, &scene));
+                match default_integrator {
+                    Integrator::Beauty => {
+                        let (color_sample, albedo_sample, normal_sample) =
+                            render_beauty(ray, &scene, &mut rng);
 
-                let (color_sample, albedo_sample, normal_sample) =
-                    integrator::render_beauty(ray, &scene, &mut rng);
-
-                color += utils::de_nan(&color_sample);
-                albedo += albedo_sample;
-                normal += normal_sample;
+                        color += utils::de_nan(&color_sample);
+                        albedo += albedo_sample;
+                        normal += normal_sample;
+                    },
+                    Integrator::Normals => {
+                        // render_normals is used for debugging
+                        color += utils::de_nan(&render_normals(ray, &scene));
+                    }
+                }
         })});
 
         color /= (samples_sqrt * samples_sqrt) as f32;
