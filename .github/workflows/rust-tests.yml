@@ -28,5 +28,11 @@ jobs:
       with:
         cache-on-failure: true
 
-    - name: Run tests
+    - name: Run rust tests
       run: cargo test --verbose
+
+    - name: Install python dependencies
+      run: pip install -r tests/requirements.txt
+
+    - name: Run python tests
+      run: pytest -sv
