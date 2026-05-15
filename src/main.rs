@@ -65,7 +65,7 @@ struct Args {
     #[arg(long, default_value = "cornell_box_objects")]
     scene: Scenes,
 
-    #[arg(long, default_value = "64")]
+    #[arg(long)]
     samples: Option<usize>,
 
     #[arg(long)]
