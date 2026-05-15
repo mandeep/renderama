@@ -1,4 +1,5 @@
 use std::f32;
+use std::str::FromStr;
 
 use glam::Vec3A;
 use rand::RngExt;
@@ -11,8 +12,33 @@ use pdf::power_heuristic;
 use ray::{find_offset_point, Ray};
 use scene::Scene;
 
+#[derive(Copy, Clone)]
+pub enum Integrator {
+    Beauty,
+    Normals,
+}
 
-#[allow(dead_code)]
+impl FromStr for Integrator {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "beauty" => Ok(Integrator::Beauty),
+            "normals" => Ok(Integrator::Normals),
+            _ => Err(format!("Unknown integrator: {}", s)),
+        }
+    }
+}
+
+impl Integrator {
+    pub fn default_samples(&self) -> usize {
+        match self {
+            Integrator::Beauty => 64,
+            Integrator::Normals => 1,
+        }
+    }
+}
+
 pub fn render_normals(ray: Ray, scene: &Scene) -> Vec3A {
     if let Some(hit) = scene.accelerator.hit(&ray, 1e-4, f32::MAX) {
         let normal = hit.shading_normal;
