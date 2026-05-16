@@ -46,7 +46,7 @@ pub fn three_spheres_scene(width: Option<usize>, height: Option<usize>) -> Scene
     let floor_idx = mat!(materials, Diffuse::new(Color::new(0.5, 0.5, 0.5).into(), 0.0));
     objects.push(Sphere::new(Vec3A::new(0.0, -100.5, -1.0), 100.0, floor_idx).into());
 
-    let bvh = BVH::new(&mut objects, 0.0, 1.0);
+    let bvh = BVH::new(&mut objects);
 
     let environment = EnvironmentMap::new("docs/textures/golden_gate_hills.exr").into();
 

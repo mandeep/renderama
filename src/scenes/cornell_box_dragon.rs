@@ -45,7 +45,7 @@ pub fn cornell_box_dragon_scene(width: Option<usize>, height: Option<usize>) -> 
     let dragon = TriangleMesh::from("docs/models/dragon.obj", dragon_material).into();
     objects.push(TransformedMesh::new(Vec3A::new(283.0, 114.0, 268.0), Vec3A::new(0.0, -60.0, 0.0), 425.0, dragon).into());
 
-    let bvh = BVH::new(&mut objects, 0.0, 1.0);
+    let bvh = BVH::new(&mut objects);
 
     let light_shape = Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 554.0, white_id);
 

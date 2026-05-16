@@ -42,7 +42,7 @@ pub fn white_furnace_scene(width: Option<usize>, height: Option<usize>) -> Scene
         objects.push(Sphere::new(Vec3A::new(x_pos, 278.0, 278.0), radius, mat_id).into());
     }
 
-    let bvh = BVH::new(&mut objects, 0.0, 1.0);
+    let bvh = BVH::new(&mut objects);
 
     let atmosphere = Atmosphere::new(Vec3A::ONE, false);
 

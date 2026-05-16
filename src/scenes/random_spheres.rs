@@ -109,7 +109,7 @@ pub fn random_spheres_scene(width: Option<usize>, height: Option<usize>) -> Scen
                           1.0,
                           refl_idx).into());
 
-    let bvh = BVH::new(&mut objects, 0.0, 1.0);
+    let bvh = BVH::new(&mut objects);
 
     Scene::new(String::from("Random Spheres"), bvh, materials, camera, vec![], Some(environment), None)
 }

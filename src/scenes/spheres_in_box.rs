@@ -112,7 +112,7 @@ pub fn spheres_in_box_scene(width: Option<usize>, height: Option<usize>) -> Scen
         objects.push(transformed_sphere.into());
     }
 
-    let bvh = BVH::new(&mut objects, 0.0, 1.0);
+    let bvh = BVH::new(&mut objects);
     let light_shape = Plane::new(Axis::XZ, Bounds2D::new(123.0..423.0, 147.0..412.0), 554.0, white);
 
     Scene::new(String::from("Spheres in Box"), bvh, materials, camera, vec![Light::new(light_shape.into(), Vec3A::splat(7.0))], None, None)
