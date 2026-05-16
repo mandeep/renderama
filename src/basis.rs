@@ -1,5 +1,11 @@
 use glam::Vec3A;
 
+
+/// Construct an orthonormal basis from a given normal
+///
+/// Orthonormal bases are used to calculate where to scatter the ray
+/// when leaving a hit object. ONBs allow for quick and easy computation for
+/// such cases as we can use the normal as one of the vectors.
 pub struct OrthonormalBasis {
     axis: [Vec3A; 3],
 }
@@ -11,7 +17,8 @@ impl OrthonormalBasis {
     ///
     /// Tom Duff, James Burgess, Per Christensen, Christophe Hery, Andrew Kensler,
     /// Max Liani, Ryusuke Villemin: Building an Orthonormal Basis, Revisited,
-    /// Journal of Computer Graphics Techniques Vol. 6, No. 1, 2017 http://jcgt.org
+    /// Journal of Computer Graphics Techniques Vol. 6, No. 1, 2017
+    /// https://www.jcgt.org/published/0006/01/01/paper-lowres.pdf
     pub fn new(normal: &Vec3A) -> OrthonormalBasis {
         let w = normal.normalize();
 
@@ -37,6 +44,7 @@ impl OrthonormalBasis {
         self.axis[2]
     }
 
+    /// Convert the given vector from world space into local space
     pub fn local(&self, v: &Vec3A) -> Vec3A {
         v.x * self.u() + v.y * self.v() + v.z * self.w()
     }

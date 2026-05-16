@@ -14,7 +14,6 @@ use rand_distr::StandardNormal;
 /// axis and the unit vector of this newly created vector is returned.
 ///
 /// Reference: http://mathworld.wolfram.com/SpherePointPicking.html
-///
 pub fn pick_sphere_point(rng: &mut Pcg64Mcg) -> Vec3A {
     let x: f32 = rng.sample(StandardNormal);
     let y: f32 = rng.sample(StandardNormal);
@@ -23,6 +22,10 @@ pub fn pick_sphere_point(rng: &mut Pcg64Mcg) -> Vec3A {
     Vec3A::new(x, y, z).normalize()
 }
 
+/// Sample a cosine-weighted vector from the hemisphere.
+///
+/// Matches the cos_theta term in the rendering equation making
+/// it necessary for calculating the reflectance of Diffuse materials.
 pub fn cosine_sample_hemisphere(rng: &mut Pcg64Mcg) -> Vec3A {
     let r1 = rng.random::<f32>();
     let r2 = rng.random::<f32>();
@@ -43,7 +46,10 @@ pub fn cosine_sample_hemisphere(rng: &mut Pcg64Mcg) -> Vec3A {
     Vec3A::new(x, y, z)
 }
 
-#[allow(dead_code)]
+#[allow(unused)]
+/// Sample uniformly on a hemisphere.
+///
+/// Useful when equal probability across a hemisphere is necessary.
 pub fn uniform_sample_hemisphere(rng: &mut Pcg64Mcg) -> Vec3A {
     let u = rng.random::<f32>();
     let v = rng.random::<f32>();
@@ -58,6 +64,10 @@ pub fn uniform_sample_hemisphere(rng: &mut Pcg64Mcg) -> Vec3A {
     Vec3A::new(x, y, z)
 }
 
+/// Sample uniformly over an entire sphere.
+///
+/// Useful when needing to sample directions for items that
+/// scatter/radiate in all directions equally. Volumes, lights, etc.
 pub fn uniform_sample_sphere(rng: &mut Pcg64Mcg) -> Vec3A {
     let u = rng.random::<f32>();
     let v = rng.random::<f32>();
@@ -72,6 +82,10 @@ pub fn uniform_sample_sphere(rng: &mut Pcg64Mcg) -> Vec3A {
     Vec3A::new(x, y, z)
 }
 
+/// Sample uniformly over a cone.
+///
+/// Needed when sampling items that subtend a cone of directions like
+/// the sun or other light sources.
 pub fn uniform_sample_cone(cos_theta_max: f32, rng: &mut Pcg64Mcg) -> Vec3A {
     let r1 = rng.random::<f32>();
     let r2 = rng.random::<f32>();

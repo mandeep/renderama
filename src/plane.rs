@@ -51,9 +51,9 @@ impl Bounds2D {
 
 #[derive(Clone)]
 /// Plane allows for the creation of an axis-aligned plane on the given Axis
-/// bounds is a Bounds2D that houses the range of the first and second axes
-/// offset is the third axis on which the plane sits
-/// material_id is the index to the material in the materials vec
+/// bounds is a Bounds2D that houses the range of the first and second axes.
+/// offset is the third axis on which the plane sits.
+/// material_id is the index to the material in the materials vec.
 pub struct Plane {
     axis: Axis,
     bounds: Bounds2D,
@@ -85,6 +85,7 @@ impl Plane {
         Primitive::ReverseOrientation(Arc::new(Primitive::Plane(self)))
     }
 
+    /// Calculate ray-plane intersection with the given ray and positions.
     pub fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitResult> {
         match self.axis {
             Axis::XY => {
@@ -103,7 +104,7 @@ impl Plane {
 
                 let normal = Vec3A::new(0.0, 0.0, 1.0);
 
-                let event = HitResult::new(t,
+                let result = HitResult::new(t,
                                             (x - self.bounds.u_min) / (self.bounds.u_max - self.bounds.u_min),
                                             (y - self.bounds.v_min) / (self.bounds.v_max - self.bounds.v_min),
                                             ray.point_at_parameter(t),
@@ -111,7 +112,7 @@ impl Plane {
                                             normal,
                                             self.material_id);
 
-                Some(event)
+                Some(result)
             }
             Axis::YZ => {
                 let t = (self.offset - ray.origin.x) / ray.direction.x;
@@ -129,7 +130,7 @@ impl Plane {
 
                 let normal = Vec3A::new(1.0, 0.0, 0.0);
 
-                let event = HitResult::new(t,
+                let result = HitResult::new(t,
                                             (y - self.bounds.u_min) / (self.bounds.u_max - self.bounds.u_min),
                                             (z - self.bounds.v_min) / (self.bounds.v_max - self.bounds.v_min),
                                             ray.point_at_parameter(t),
@@ -137,7 +138,7 @@ impl Plane {
                                             normal,
                                             self.material_id);
 
-                Some(event)
+                Some(result)
             }
             Axis::XZ => {
                 let t = (self.offset - ray.origin.y) / ray.direction.y;
@@ -155,7 +156,7 @@ impl Plane {
 
                 let normal = Vec3A::new(0.0, 1.0, 0.0);
 
-                let event = HitResult::new(t,
+                let result = HitResult::new(t,
                                             (x - self.bounds.u_min) / (self.bounds.u_max - self.bounds.u_min),
                                             (z - self.bounds.v_min) / (self.bounds.v_max - self.bounds.v_min),
                                             ray.point_at_parameter(t),
@@ -163,11 +164,12 @@ impl Plane {
                                             normal,
                                             self.material_id);
 
-                Some(event)
+                Some(result)
             }
         }
     }
 
+    /// Create the bounding box around the minimum and maximum points of the plane
     pub fn bounding_box(&self) -> Option<AABB> {
         match self.axis {
             Axis::XY => {
@@ -188,18 +190,31 @@ impl Plane {
         }
     }
 
-    pub fn evaluate_sampling_weight(&self, origin: Vec3A, direction: Vec3A) -> f32 {
+    /// Given a Ray, calculate the probability density function (pdf)
+    /// of having sampled in the ray's direction.
+    ///
+    /// Evaluated when calculating light source emission weight and weight from
+    /// the light source being hit by a shadow ray.
+    pub fn evaluate_sampling_weight(&self, ray: &Ray) -> f32 {
         // originally epsilon was 1e-2 but updated here to match value elsewhere
-        if let Some(hit) = self.hit(&Ray::new(origin, direction), 1e-4, f32::MAX) {
-            let cosine = direction.dot(hit.shading_normal) / direction.length();
+        if let Some(hit) = self.hit(ray, 1e-4, f32::MAX) {
+            let cosine = ray.direction.dot(hit.shading_normal) / ray.direction.length();
+            // confirm that the direction hits the surface from the front
             if cosine <= 0.0 { return 0.0; }
-            let distance_squared = hit.parameter * hit.parameter * direction.length_squared();
+
+            // farther lights need a higher weight since they're hrader to hit.
+            // larger planes are easier to hit randomly, so we weigh them lower
+            let distance_squared = hit.parameter * hit.parameter * ray.direction.length_squared();
             distance_squared / (cosine * self.bounds.area())
         } else {
             0.0
         }
     }
 
+    /// Pick a random point on the light plane's surface and return the vector from the
+    /// surface hit to the light source.
+    ///
+    /// Used to send shadow rays directly to the light source.
     pub fn sample_direction_to_light(&self, origin: Vec3A, rng: &mut Pcg64Mcg) -> Vec3A {
         let u = self.bounds.u_min + rng.random::<f32>() * (self.bounds.u_max - self.bounds.u_min);
         let v = self.bounds.v_min + rng.random::<f32>() * (self.bounds.v_max - self.bounds.v_min);

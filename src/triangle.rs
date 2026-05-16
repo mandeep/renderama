@@ -31,7 +31,9 @@ pub struct TriangleMesh {
 }
 
 impl Triangle {
-    /// Create a new triangle with vertices v0, v1, and v2
+    /// Create a new triangle with vertices v0, v1, and v2,
+    /// normals n0, n1, and n2, and uvs uv0, uv1, and uv2
+    /// These are typically loaded from a file such as OBJ.
     pub fn new(v0: Vec3A, v1: Vec3A, v2: Vec3A,
                n0: Vec3A, n1: Vec3A, n2: Vec3A,
                uv0: Vec2, uv1: Vec2, uv2: Vec2,
@@ -54,7 +56,7 @@ impl Triangle {
     /// Tomas Moller, Ben Trumbore
     /// Fast, Minimum Storage Ray/Triangle Intersection
     /// Journal of Graphics Tools Vol. 2 Issue 1, 1997
-    /// http://www.acm.org/jgt/papers/MollerTrumbore97/
+    /// https://dl.acm.org/doi/abs/10.1145/1198555.1198746
     ///
     pub fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitResult> {
         let edge1 = self.v1 - self.v0;
@@ -63,9 +65,6 @@ impl Triangle {
         let pvec = ray.direction.cross(edge2);
         let determinant = edge1.dot(pvec);
 
-        // Reject rays that are (nearly) parallel to the triangle. We do NOT
-        // backface-cull here because a path tracer needs to hit both sides
-        // (e.g. refraction exiting a mesh).
         if determinant.abs() < 1e-8 {
             return None;
         }
@@ -89,13 +88,10 @@ impl Triangle {
             return None;
         }
 
-        // Möller-Trumbore barycentrics: (1-u-v) weights v0, u weights v1, v weights v2.
-        // Use point_at_parameter to get the hit position directly from the ray.
         let point = ray.point_at_parameter(t);
         let geometric_normal = edge1.cross(edge2).normalize();
         let shading_normal = ((1.0 - u - v) * self.n0 + u * self.n1 + v * self.n2).normalize();
 
-        // Interpolate texture coordinates with the same barycentric weights.
         let w = 1.0 - u - v;
         let interpolated_uv = w * self.uv0 + u * self.uv1 + v * self.uv2;
 
@@ -124,14 +120,12 @@ impl TriangleMesh {
             .cloned()
             .map(Primitive::Triangle)
             .collect();
-        let accelerator = BVH::new(&mut geometries, 0.0, 1.0);
+        let accelerator = BVH::new(&mut geometries);
 
         TriangleMesh { triangles, accelerator }
     }
 
     pub fn from(filepath: &str, material_id: MaterialId) -> TriangleMesh {
-        // single_index + triangulate: tobj reindexes so positions and normals
-        // are parallel arrays, and quads/ngons are split into triangles.
         let load_options = tobj::LoadOptions {
             single_index: true,
             triangulate: true,
@@ -159,8 +153,6 @@ impl TriangleMesh {
                                             vec![Vec2::ZERO; positions.len()]
                                         };
 
-            // Use the file's normals if present. Otherwise, compute smooth
-            // per-vertex normals by averaging area-weighted face normals.
             let normals: Vec<Vec3A> = if !mesh.normals.is_empty() {
                 mesh.normals.chunks(3)
                             .map(|i| Vec3A::new(i[0], i[1], i[2]))

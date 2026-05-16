@@ -5,6 +5,10 @@ use glam::Vec3A;
 use ray::Ray;
 
 #[derive(Clone, Copy)]
+/// Axis-aligned bounding boxes are used to subdivide objects in the
+/// scene. Since ray-object intersection is the most costly computation
+/// in a ray tracer, we use AABBs to optimize that cost. When used in a BVH,
+/// the search for objects that a ray hits decreases from O(n) to O(logn).
 pub struct AABB {
     pub minimum: Vec3A,
     pub maximum: Vec3A,

@@ -10,7 +10,7 @@ from skimage.metrics import structural_similarity as ssim
 
 
 RENDER_SCENES = [
-    # scene name and number of samples to render with
+    # scene name, number of samples, and resolution to render with
     ("cornell_box_dragon", 128, (512, 512)),
     ("cornell_box_boxes", 64, (512, 512)),
     ("cornell_box_bunny", 128, (512, 512)),
@@ -25,19 +25,24 @@ RENDER_SCENES = [
 def compile_binary():
     """Compiles the Rust binary with test_mode once per session."""
     print("\n[Cargo] Compiling as `cargo build --features tests`...")
+
     subprocess.run(["cargo", "build", "--features", "tests"], check=True)
 
 
 @pytest.fixture
 def rust_binary():
     """Returns the path to the compiled executable."""
-    ext = ".exe" if os.name == "nt" else ""
-    return Path(__file__).parent.parent / "target" / "debug" / f"renderama{ext}"
+    extension = ""
+
+    if os.name == "nt":
+        extension = ".exe"
+
+    return Path(__file__).parent.parent / "target" / "debug" / f"renderama{extension}"
 
 
 @pytest.fixture
 def read_exr():
-    """Loads the reference exr file."""
+    """Loads the given exr file."""
     def read(path):
         img = cv2.imread(str(path), cv2.IMREAD_UNCHANGED)
         if img is None:
@@ -55,7 +60,12 @@ def image_dir():
 
 
 def pytest_collection_modifyitems(config, items):
-    """Skip all tests in update_renders unless the flag is passed."""
+    """Skip all tests in update_renders unless the flag is passed.
+
+    See https://docs.pytest.org/en/7.1.x/reference/reference.html?highlight=pytest_collection_modifyitems
+    for more. Called after collection has been performed so skipped tests will still
+    be collected.
+    """
     if not config.getoption("--update-renders", default=False):
         skip = pytest.mark.skip(reason="pass --update-renders to run")
         for item in items:
