@@ -4,20 +4,23 @@ use glam::Vec3A;
 use rand_pcg::Pcg64Mcg;
 
 use aabb::AABB;
+use basis::OrthonormalBasis;
 use results::HitResult;
 use materials::MaterialId;
 use ray::Ray;
 use sampling::{uniform_sample_cone, uniform_sample_sphere};
 
 
-fn get_sphere_uv(p: &Vec3A) -> (f32, f32) {
-    let phi = p.z.atan2(p.x);
-    let theta = p.y.asin();
+/// Retrieve the spherical UV coordinates with the given normal
+fn get_sphere_uv(normal: &Vec3A) -> (f32, f32) {
+    let phi = normal.z.atan2(normal.x);
+    let theta = normal.y.asin();
     let u = 1.0 - (phi + PI) / (2.0 * PI);
     let v = (theta + PI / 2.0) / PI;
     (u, v)
 }
 
+/// Sphere is a basic UV sphere.
 #[derive(Clone)]
 pub struct Sphere {
     pub center: Vec3A,
@@ -26,11 +29,10 @@ pub struct Sphere {
 }
 
 impl Sphere {
-    /// Create a new sphere to place into the world
+    /// Create a new sphere to place into the world.
     ///
-    /// We use the 'static lifetime so that we can create a Arc material
-    /// within the function rather than having to pass a Arc material
-    /// as an input parameter.
+    /// center is the point in world space where the sphere resides with diameter
+    /// of 2 * radius using the material at the material_id index.
     pub fn new(center: Vec3A, radius: f32, material_id: MaterialId) -> Sphere {
 
         Sphere { center, radius, material_id }
@@ -42,6 +44,8 @@ impl Sphere {
     /// a real root. No real roots signifies a miss, one real root signifies
     /// a hit at the boundary of the sphere, and two real roots signify a
     /// ray hitting one point on the sphere and leaving through another point.
+    ///
+    /// Reference: https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-sphere-intersection.html
     pub fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitResult> {
         let sphere_center: Vec3A = ray.origin - self.center;
         let a: f32 = ray.direction.dot(ray.direction);
@@ -71,6 +75,7 @@ impl Sphere {
         None
     }
 
+    /// Create a bounding box around the sphere using it's radius
     pub fn bounding_box(&self) -> Option<AABB> {
         let radius = Vec3A::new(self.radius, self.radius, self.radius);
         let min = self.center - radius;
@@ -79,63 +84,57 @@ impl Sphere {
         Some(AABB::from(min, max))
     }
 
-    pub fn evaluate_sampling_weight(&self, origin: Vec3A, direction: Vec3A) -> f32 {
+    /// Given a ray, calculate the probability density function (pdf)
+    /// of having sampled in the ray's direction.
+    pub fn evaluate_sampling_weight(&self, ray: &Ray) -> f32 {
         let center = self.center;
-        let to_center = center - origin;
+        let to_center = center - ray.origin;
         let distance_squared = to_center.length_squared();
 
-        // Origin inside the sphere — fall back to uniform sphere sampling
-        // (cone subtends the full 4π steradians).
+        // if the ray originates from inside the sphere,
+        // fallback to uniform sampling.
         if distance_squared <= self.radius * self.radius {
             return 1.0 / (4.0 * PI);
         }
 
-        // Half-angle of the cone subtending the sphere from `origin`.
-        //   sin²θ_max = r² / d²    →    cos θ_max = sqrt(1 - r²/d²)
+        // compute the cone of directions that can possibly hit the spherical light
         let cos_theta_max = (1.0 - self.radius * self.radius / distance_squared).sqrt();
-
-        // Solid angle of the cone: Ω = 2π(1 − cos θ_max).
-        // Uniform sampling over the cone gives p(ω) = 1 / Ω.
         let solid_angle = 2.0 * PI * (1.0 - cos_theta_max);
 
-        // Use the same discriminant test as sphere::hit so that pdf_value returns
-        // a positive PDF for exactly the same directions that hit() accepts.  The
-        // earlier dot-product cone check and hit()'s discriminant can disagree near
-        // the tangent due to floating-point rounding, which made power_heuristic
-        // assign weight=1 to near-tangent samples and created a bright ring artifact.
-        let oc = origin - center;
-        let a = direction.dot(direction);
-        let b = oc.dot(direction);
+        let oc = ray.origin - center;
+        let a = ray.direction.dot(ray.direction);
+        let b = oc.dot(ray.direction);
         let c = oc.dot(oc) - self.radius * self.radius;
         if b * b - a * c <= 0.0 {
             return 0.0;
         }
 
+        // a smaller, farther light subtends a tighter cone, so it has a smaller
+        // solid angle which leads to a higher weight
         1.0 / solid_angle
     }
 
+    /// Sample a direction from the given point to the spherical light.
+    ///
+    /// origin is the offset point from the ray-primitive intersection test.
     pub fn sample_direction_to_light(&self, origin: Vec3A, rng: &mut Pcg64Mcg) -> Vec3A {
         let center = self.center;
         let to_center = center - origin;
         let distance_squared = to_center.length_squared();
+        let distance = to_center.length();
 
-        // Inside the sphere: just return a random direction on the unit sphere.
+        // fallback to uniform sampling if the origin is inside the sphere
         if distance_squared <= self.radius * self.radius {
             return uniform_sample_sphere(rng);
         }
 
+        // uniformly sample from a cone as it's more efficient and more likely to hit
+        // the spherical light
         let cos_theta_max = (1.0 - self.radius * self.radius / distance_squared).sqrt();
-
-        // Sample (cos θ, φ) uniformly in the cone.
         let [cos_theta, sin_theta, phi] = uniform_sample_cone(cos_theta_max, rng).to_array();
 
-        // Local frame around the axis from origin → center.
-        let w = to_center.normalize();
-        let a = if w.x.abs() > 0.9 { Vec3A::new(0.0, 1.0, 0.0) } else { Vec3A::new(1.0, 0.0, 0.0) };
-        let v = w.cross(a).normalize();
-        let u = w.cross(v);
+        let basis = OrthonormalBasis::new(&to_center);
 
-        let dist = distance_squared.sqrt();
-        dist * (phi.cos() * sin_theta * u + phi.sin() * sin_theta * v + cos_theta * w)
+        distance * basis.local(&Vec3A::new(phi.cos() * sin_theta, phi.sin() * sin_theta, cos_theta))
     }
 }

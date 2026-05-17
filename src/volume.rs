@@ -27,36 +27,29 @@ impl Volume {
         // We search the entire ray range (not just [start_distance, end_distance]) because
         // a ray origin inside the volume would miss the near boundary otherwise.
         // We then clamp against [start_distance, end_distance] below.
-        if let Some(mut hit1) = self.boundary.hit(ray, f32::NEG_INFINITY, f32::INFINITY) {
-            if let Some(mut hit2) =
-                self.boundary.hit(ray, hit1.parameter + 0.0001, f32::INFINITY)
-            {
-                if hit1.parameter < start_distance {
-                    hit1.parameter = start_distance
-                };
-                if hit2.parameter > end_distance {
-                    hit2.parameter = end_distance
-                };
-                if hit1.parameter < hit2.parameter {
-                    let distance_inside_boundary =
-                        (hit2.parameter - hit1.parameter) * ray.direction.length();
-                    let hit_distance = -(1.0 / self.density) * rand::random::<f32>().ln();
+        let Some(mut entry_hit) = self.boundary.hit(ray, f32::NEG_INFINITY, f32::INFINITY) else { return None };
+        // a volume can be hit anywhere inside it, not just the surface like other geometry
+        let Some(mut exit_hit) = self.boundary.hit(ray, entry_hit.parameter + 1e-4, f32::INFINITY) else { return None };
 
-                    if hit_distance < distance_inside_boundary {
-                        let t = hit1.parameter + hit_distance / ray.direction.length();
-                        let point = ray.point_at_parameter(t);
-                        let normal = Vec3A::new(1.0, 0.0, 0.0);
-                        return Some(HitResult::new(t,
-                                                   0.0,
-                                                   0.0,
-                                                   point,
-                                                   normal,
-                                                   normal,
-                                                   self.material_id));
-                    }
-                }
+        if entry_hit.parameter < start_distance { entry_hit.parameter = start_distance };
+        if exit_hit.parameter > end_distance { exit_hit.parameter = end_distance };
+
+        if entry_hit.parameter < exit_hit.parameter {
+            let distance_inside_boundary = (exit_hit.parameter - entry_hit.parameter) * ray.direction.length();
+            let hit_distance = -(1.0 / self.density) * rand::random::<f32>().ln();
+
+            if hit_distance < distance_inside_boundary {
+                let parameter = entry_hit.parameter + hit_distance / ray.direction.length();
+                let point = ray.point_at_parameter(parameter);
+                 // arbitrary normal is used since light is scattered equally in all directions
+                 // regardless of surface orientation
+                let normal = Vec3A::new(1.0, 0.0, 0.0);
+                return Some(
+                    HitResult::new(parameter, 0.0, 0.0, point, normal, normal, self.material_id)
+                );
             }
         }
+
         None
     }
 

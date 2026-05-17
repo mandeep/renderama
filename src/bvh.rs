@@ -1,3 +1,11 @@
+//! Contains all of the necessary structures for building a flattened
+//! 4-wide BVH.
+//!
+//! Further reading:
+//! https://medium.com/@bromanz/how-to-create-awesome-accelerators-the-surface-area-heuristic-e14b5dec6160
+//! https://www.sci.utah.edu/~wald/Publications/2007/ParallelBVHBuild/fastbuild.pdf
+//! https://research.nvidia.com/sites/default/files/pubs/2013-09_On-Quality-Metrics/aila2013hpg_paper.pdf
+//! https://pbr-book.org/3ed-2018/Primitives_and_Intersection_Acceleration/Bounding_Volume_Hierarchies
 use std::sync::Arc;
 
 use glam::Vec3A;
@@ -9,17 +17,23 @@ use primitive::Primitive;
 use ray::Ray;
 
 
+// 16 is used as the number of buckets as it's a common number in BVH builds
 const NUM_BUCKETS: usize = 16;
+// leaf flag is used so that we don't have extra overhead.
+// if bit 31 is set then it's a leaf, otherwise it's an index into internals[].
+// this keeps branching at a minimum
 const LEAF_FLAG: u32 = 1 << 31;
 
 fn is_leaf(idx: u32) -> bool { idx & LEAF_FLAG != 0 }
 fn leaf_index(idx: u32) -> usize { (idx & !LEAF_FLAG) as usize }
 fn make_leaf_ref(idx: usize) -> u32 { (idx as u32) | LEAF_FLAG }
 
-/// SOA-layout BVH4 internal node. Stores four child AABBs with each
-/// component in its own array so a single f32x4 slab test covers all
-/// four children at once.
 #[derive(Clone, Default)]
+/// Store child bounding boxes in a Structure-of-Arrays (SoA) format.
+/// This allows slab testing in a single instruction with SIMD.
+/// min_x, min_y, etc. are the values of each of the four children.
+/// children contains the index into internals[] or leaves[] for
+/// the count members of the node.
 struct InternalNode4 {
     min_x: [f32; 4],
     min_y: [f32; 4],
@@ -32,25 +46,28 @@ struct InternalNode4 {
 }
 
 #[derive(Clone)]
+/// Store the primitive and AABB for the primitive at the leaf node.
+/// Used once we determine that BVH traversal has resulted in a hit.
 struct LeafNode {
     bbox: AABB,
     primitive: Primitive,  // unboxed is fine here, leaves are rarely touched
 }
 
-/// Flattened BVH stored as a Vec, traversed iteratively.
-///
-/// Children are referenced by index into `nodes` rather than by
-/// pointer, eliminating cache misses from chasing Arc pointers.
-/// The root is always at index 0.
+
 #[derive(Clone)]
+/// Flattened BVH structure used as the finalized BVH. This representation
+/// avoids the overhead of recursion and is cache friendly. Instead of storing
+/// nodes on the heap, having a contiguous block of memory avoids the pain
+/// of a cache miss.
 pub struct BVH {
     internals: Vec<InternalNode4>,
     leaves: Vec<LeafNode>,
     root: u32,
 }
 
-/// Temporary tree structure used during construction.
-/// Gets collapsed into InternalNode4 / LeafNode at the end.
+/// Recursive binary tree used as an intermediate step to build the binary tree.
+/// Using Arc to store TreeNode's on the heap is okay here since this tree
+/// isn't used in traversal.
 enum TreeNode {
     Internal {
         bbox: AABB,
@@ -72,11 +89,15 @@ impl TreeNode {
     }
 }
 
-/// Recursively builds a TreeNode using binned SAH.
-fn build_tree(world: &mut Vec<Primitive>, start_time: f32, end_time: f32) -> TreeNode {
+/// Build a BVH using the binary tree node representation using the surface area
+/// heuristic (SAH). Fall back methods are provided if the number of primitives
+/// in the scene don't pass the threshold where the cost of computing SAH is
+/// necessary. Once built, this tree is then flattened for use with SIMD.
+fn build_tree(world: &mut Vec<Primitive>) -> TreeNode {
     let n = world.len();
 
-    // compute the bounding box that contains all of the objects in the world and their bounding boxes
+    // compute the bounding box that contains all of the objects in the world
+    // and their bounding boxes
     let mut main_box = world[0].bounding_box().unwrap();
     for i in 1..n {
         let new_box = world[i].bounding_box().unwrap();
@@ -100,8 +121,9 @@ fn build_tree(world: &mut Vec<Primitive>, start_time: f32, end_time: f32) -> Tre
         };
     }
 
-    // For very small node counts, fall back to median split (avoids SAH overhead).
-    // 4 objects here is just a randomly picked low number
+    // fall back to median split when not enough objects in scene.
+    // 4 objects here is just a randomly picked low number.
+    // this is the BVH leftover from Shirley's Ray Tracing series.
     if n <= 4 {
         let axis = main_box.longest_axis();
         world.sort_by(|a, b| {
@@ -110,11 +132,11 @@ fn build_tree(world: &mut Vec<Primitive>, start_time: f32, end_time: f32) -> Tre
             centroid_a.partial_cmp(&centroid_b).unwrap()
         });
 
-        // split off the world in two halves. `right_objects` takes half of the
-        // objects while `world` keeps the other half
+        // split off the world in two halves. right_objects takes half of the
+        // objects while world keeps the other half
         let mut right_objects = world.split_off(n / 2);
-        let left = build_tree(world, start_time, end_time);
-        let right = build_tree(&mut right_objects, start_time, end_time);
+        let left = build_tree(world);
+        let right = build_tree(&mut right_objects);
 
         return TreeNode::Internal {
             bbox: main_box,
@@ -124,14 +146,16 @@ fn build_tree(world: &mut Vec<Primitive>, start_time: f32, end_time: f32) -> Tre
     }
 
     // SAH binned split begins here
-    // Compute the centroid of each bounding box
+
+    // compute the centroid of each bounding box.
+    // using centroid's makes binning more stable
     let centroids: Vec<Vec3A> = world.iter().map(|hit| {
         let bbox = hit.bounding_box().unwrap();
         (bbox.minimum + bbox.maximum) * 0.5
     }).collect();
 
-    // Find the bounds of each centroid so we can later bin them into buckets
-    // We bin objects into buckets along each axis based on their centroid
+    // find the bounds of each centroid so we can later bin them into buckets.
+    // we bin objects into buckets along each axis based on their centroid
     let mut centroid_min = centroids[0];
     let mut centroid_max = centroids[0];
     for centroid in &centroids[1..] {
@@ -139,32 +163,34 @@ fn build_tree(world: &mut Vec<Primitive>, start_time: f32, end_time: f32) -> Tre
         centroid_max = centroid_max.max(*centroid);
     }
 
-    // Beginning of optimization loop for binning. `parent_area` is the
+    // beginning of optimization loop for binning. parent_area is the
     // surface area bounding box for SAH cost computation
     let parent_area = main_box.surface_area();
     let mut best_cost = f32::INFINITY;
     let mut best_axis = 0;
     let mut best_bucket = NUM_BUCKETS / 2;
 
-    // Find the centroid range along each axis. This will allow us to
-    // find which bucket each object goes into
+    // find the centroid range along each axis. this will allow us to
+    // find which bucket each object goes into. the buckets are then used
+    // to find the best split.
     for axis in 0..3 {
         let (cmin, cmax) = (axis_value(centroid_min, axis), axis_value(centroid_max, axis));
         if (cmax - cmin) < 1e-6 { continue; }
 
-        // For each bucket in NUM_BUCKETS we track how many objects fall into that bin
+        // for each bucket in NUM_BUCKETS we track how many objects fall into that bin
         // and the bounding box that covers all of the objects in that bin
         let mut bucket_counts = [0usize; NUM_BUCKETS];
         let mut bucket_boxes: Vec<Option<AABB>> = vec![None; NUM_BUCKETS];
 
-        // Compute the bucket each centroid falls into
+        // compute the bucket each centroid falls into
         for (i, centroid) in centroids.iter().enumerate() {
             let position = axis_value(*centroid, axis);
+            // each primitive is mapped to a bucket baised on its centroid
             let mut bucket = (((position - cmin) / (cmax - cmin)) * NUM_BUCKETS as f32) as usize;
             if bucket >= NUM_BUCKETS { bucket = NUM_BUCKETS - 1; }
 
-            // Update the bucket count for the bin and expand the bucket's bounding box
-            // to include this object
+            // update the bucket count for the bin and expand the bucket's
+            // bounding box to include this object
             bucket_counts[bucket] += 1;
             let obj_box = world[i].bounding_box().unwrap();
             bucket_boxes[bucket] = Some(match &bucket_boxes[bucket] {
@@ -173,8 +199,10 @@ fn build_tree(world: &mut Vec<Primitive>, start_time: f32, end_time: f32) -> Tre
             });
         }
 
-        // Evaluate the split between the buckets. We try every possible split in this O(n^2) loop
-        // and compute the cost of each split. Whichever has the lowest cost is chosen as our split.
+        // evaluate the split between the buckets.
+        // we try every possible split in this O(n^2) loop
+        // and compute the cost of each split.
+        // whichever has the lowest cost is chosen as our split.
         for split in 1..NUM_BUCKETS {
             let mut left_count = 0;
             let mut right_count = 0;
@@ -191,7 +219,8 @@ fn build_tree(world: &mut Vec<Primitive>, start_time: f32, end_time: f32) -> Tre
                 }
             }
 
-            // Compute the number of right side counts along with the number of bounding boxes on that side
+            // compute the number of right side counts along with the number
+            // of bounding boxes on that side
             for bucket in split..NUM_BUCKETS {
                 right_count += bucket_counts[bucket];
                 if let Some(bbox) = &bucket_boxes[bucket] {
@@ -207,7 +236,8 @@ fn build_tree(world: &mut Vec<Primitive>, start_time: f32, end_time: f32) -> Tre
             let left_area = left_box.unwrap().surface_area();
             let right_area = right_box.unwrap().surface_area();
 
-            // This is the surface area heuristic (SAH). Compute the probability that a random ray hits each child
+            // this is the surface area heuristic (SAH).
+            // compute the probability that a random ray hits each child
             let cost = 0.125 + (left_area * left_count as f32 + right_area * right_count as f32) / parent_area;
 
             if cost < best_cost {
@@ -227,6 +257,8 @@ fn build_tree(world: &mut Vec<Primitive>, start_time: f32, end_time: f32) -> Tre
         bucket
     };
 
+    // now that we've calculated the best split we can subdivide the objects in
+    // the scene
     let mut left_items = Vec::new();
     let mut right_items = Vec::new();
     for i in 0..n {
@@ -238,6 +270,7 @@ fn build_tree(world: &mut Vec<Primitive>, start_time: f32, end_time: f32) -> Tre
         }
     }
 
+    // fallback to median split if everything ends up on one side of the split
     if left_items.is_empty() || right_items.is_empty() {
         world.sort_by(|a, b| {
             let centroid_a = centroid(a, best_axis);
@@ -245,8 +278,8 @@ fn build_tree(world: &mut Vec<Primitive>, start_time: f32, end_time: f32) -> Tre
             centroid_a.partial_cmp(&centroid_b).unwrap()
         });
         let mut right_objects = world.split_off(n / 2);
-        let left = build_tree(world, start_time, end_time);
-        let right = build_tree(&mut right_objects, start_time, end_time);
+        let left = build_tree(world);
+        let right = build_tree(&mut right_objects);
         return TreeNode::Internal {
             bbox: main_box,
             left: Arc::new(left),
@@ -254,8 +287,8 @@ fn build_tree(world: &mut Vec<Primitive>, start_time: f32, end_time: f32) -> Tre
         };
     }
 
-    let left = build_tree(&mut left_items, start_time, end_time);
-    let right = build_tree(&mut right_items, start_time, end_time);
+    let left = build_tree(&mut left_items);
+    let right = build_tree(&mut right_items);
 
     TreeNode::Internal {
         bbox: main_box,
@@ -264,25 +297,27 @@ fn build_tree(world: &mut Vec<Primitive>, start_time: f32, end_time: f32) -> Tre
     }
 }
 
-/// Collapse a binary tree node into up to 4 children.
+/// Collapse the children in the BVH.
 ///
-/// Starts with the two direct children and repeatedly expands the
-/// internal child with the largest surface area until we have 4
-/// children or all remaining children are leaves.
+/// Used to convert children in a binary tree
+/// into a collection of 4 children for our flattened BVH. Children are
+/// collapsed from largest surface area to smallest.
 fn collect_children(tree: &TreeNode) -> Vec<&TreeNode> {
     let (left, right) = match tree {
         TreeNode::Internal { left, right, .. } => (left.as_ref(), right.as_ref()),
         TreeNode::Leaf { .. } => return vec![tree],
     };
+
     let mut children: Vec<&TreeNode> = vec![left, right];
+
     while children.len() < 4 {
-        let pos = children.iter().enumerate()
+        let position = children.iter().enumerate()
             .filter(|(_, c)| matches!(c, TreeNode::Internal { .. }))
             .max_by(|(_, a), (_, b)| {
                 a.bbox().surface_area().partial_cmp(&b.bbox().surface_area()).unwrap()
             })
             .map(|(i, _)| i);
-        match pos {
+        match position {
             None => break,
             Some(i) => {
                 let child = children.remove(i);
@@ -296,14 +331,19 @@ fn collect_children(tree: &TreeNode) -> Vec<&TreeNode> {
     children
 }
 
-/// Flatten the binary tree into InternalNode4 / LeafNode vecs. Returns the index of the root.
+/// Flatten the binary tree BVH into a Vec for traversal purposes
 fn flatten4(tree: &TreeNode, internals: &mut Vec<InternalNode4>, leaves: &mut Vec<LeafNode>) -> u32 {
     match tree {
+        // push a leaf into the leaves vec and encode the leaf as a u32 index.
+        // this index is stored in the children array
         TreeNode::Leaf { bbox, primitive } => {
             let index = leaves.len();
             leaves.push(LeafNode { bbox: *bbox, primitive: primitive.clone() });
             make_leaf_ref(index)
         }
+        // collect all children of the binary tree into the internals vec.
+        // this is the step that converts from binary to 4-wide. the u32
+        // index returned is the index into the internals vec.
         TreeNode::Internal { .. } => {
             let index = internals.len();
             internals.push(InternalNode4::default()); // reserve slot before recursing
@@ -331,7 +371,6 @@ fn flatten4(tree: &TreeNode, internals: &mut Vec<InternalNode4>, leaves: &mut Ve
     }
 }
 
-
 /// Index into a vector with the given axis
 fn axis_value(vector: Vec3A, axis: usize) -> f32 {
     match axis {
@@ -342,16 +381,15 @@ fn axis_value(vector: Vec3A, axis: usize) -> f32 {
 }
 
 /// Compute the centroid of an object's bounding box along the given axis
-/// Used for sorting in small lists
 fn centroid(hit: &Primitive, axis: usize) -> f32 {
     let bbox = hit.bounding_box().unwrap();
     axis_value((bbox.minimum + bbox.maximum) * 0.5, axis)
 }
 
+
 impl BVH {
-    pub fn new(world: &mut Vec<Primitive>, start_time: f32, end_time: f32) -> BVH {
-        // Build the tree using SAH, then flatten it.
-        let tree = build_tree(world, start_time, end_time);
+    pub fn new(world: &mut Vec<Primitive>) -> BVH {
+        let tree = build_tree(world);
 
         let mut internals = Vec::new();
         let mut leaves = Vec::new();
@@ -360,6 +398,7 @@ impl BVH {
         BVH { internals, leaves, root }
     }
 
+    /// Traverse the BVH and return the closest hit.
     pub fn hit(&self, ray: &Ray, start_distance: f32, end_distance: f32) -> Option<HitResult> {
         // we iterate the traversal with a depth of 64 which should be okay for
         // millions of objects
@@ -372,7 +411,7 @@ impl BVH {
         stack[stack_ptr] = self.root;
         stack_ptr += 1;
 
-        // Splat ray data once — reused for every internal node test.
+        // splat the ray into SIMD registers for quicker computations
         let ox = f32x4::splat(ray.origin.x);
         let oy = f32x4::splat(ray.origin.y);
         let oz = f32x4::splat(ray.origin.z);
@@ -398,7 +437,7 @@ impl BVH {
             } else {
                 let node = &self.internals[node_ref as usize];
 
-                // Slab test for all 4 children simultaneously using SIMD.
+                // perform a SIMD slab test on internal nodes (children)
                 let t0x = (f32x4::from(node.min_x) - ox) * idx;
                 let t1x = (f32x4::from(node.max_x) - ox) * idx;
                 let t0y = (f32x4::from(node.min_y) - oy) * idy;
@@ -407,17 +446,17 @@ impl BVH {
                 let t1z = (f32x4::from(node.max_z) - oz) * idz;
 
                 let start_distance4 = t0x.min(t1x).max(t0y.min(t1y)).max(t0z.min(t1z)).max(start_distance_floor);
-                // Clamp end_distance by closest_distance so we skip nodes entirely behind a known hit.
+
                 let end_distance4 = t0x.max(t1x).min(t0y.max(t1y)).min(t0z.max(t1z))
                     .min(f32x4::splat(closest_distance));
 
                 let start_distance_arr: [f32; 4] = start_distance4.into();
                 let end_distance_arr: [f32; 4] = end_distance4.into();
 
-                // Collect hit children and sort so the nearest is visited first.
                 let mut hits: [(f32, u32); 4] = [(f32::MAX, 0); 4];
                 let mut hit_count = 0usize;
 
+                // collect the hit children with their entry distances
                 for i in 0..node.count as usize {
                     if start_distance_arr[i] <= end_distance_arr[i] {
                         hits[hit_count] = (start_distance_arr[i], node.children[i]);
@@ -425,8 +464,8 @@ impl BVH {
                     }
                 }
 
-                // Insertion sort descending by start_distance — farthest pushed first so
-                // nearest is on top of the stack.
+                // sort the hit children in descending order based on entry distance.
+                // since there are only 4 children, insertion sort works fine here.
                 for i in 1..hit_count {
                     let key = hits[i];
                     let mut j = i;
@@ -437,6 +476,7 @@ impl BVH {
                     hits[j] = key;
                 }
 
+                // push hit children onto the stack
                 for i in 0..hit_count {
                     stack[stack_ptr] = hits[i].1;
                     stack_ptr += 1;
@@ -447,6 +487,7 @@ impl BVH {
         best_hit
     }
 
+    /// Test if a shadow ray hits anything on its path to the light source
     pub fn hits_anything(&self, ray: &Ray, start_distance: f32, end_distance: f32) -> bool {
         let mut stack: [u32; 64] = [0; 64];
         let mut stack_ptr: usize = 0;

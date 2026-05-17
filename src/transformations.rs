@@ -4,34 +4,39 @@ use std::sync::Arc;
 use glam::{Mat4, Vec3A, Vec3};
 
 use aabb::AABB;
-use results::HitResult;
 use primitive::Primitive;
 use ray::Ray;
+use results::HitResult;
 
-/// A mesh with combined translation, rotation (XYZ Euler), and uniform scale,
-/// stored as precomputed forward and inverse matrices for fast ray transforms.
-#[allow(dead_code)]
+/// TransformedMesh provides a way to transform a mesh.
+///
+/// Instead of changing the geometry of the mesh, rays are
+/// transformed into the primitive's local space and the
+/// ray-object intersection test is performed there. Once complete,
+/// the result is transformed back into world space.
+///
+/// inverse_transform: world-to-local space transform matrix
+/// forward_transform: local-to-world space transform matrix
+/// normal_transform: surface normal transform matrix
+/// bbox: bounding box in world space
+/// primitive: the primitive being transformed
 #[derive(Clone)]
 pub struct TransformedMesh {
-    /// Inverse of the transform: world-to-local. Used to transform rays.
-    inv_transform: Mat4,
-    /// Forward transform: local-to-world. Used to transform hits back.
+    inverse_transform: Mat4,
     forward_transform: Mat4,
-    /// Inverse-transpose for normal transformation (handles non-uniform scale,
-    /// though we use uniform scale so it could be simpler).
     normal_transform: Mat4,
-    /// World-space bounding box, computed once at construction.
     bbox: AABB,
-    /// Uniform scale factor — needed to convert ray parameter t back to world space.
-    scale: f32,
     primitive: Arc<Primitive>,
 }
 
+/// Transform the local space AABB into world space with the given transform matrix.
 fn transform_aabb(bbox: &AABB, transform: &Mat4) -> AABB {
-    // Transform all 8 corners and take their bounds.
     let min = bbox.minimum;
     let max = bbox.maximum;
-    
+
+    // after a rotation or non-uniform transform, the old min and max are
+    // no longer relevant, so we have to compute a new min and max for the bbox
+    // by testing all eight vertices.
     let corners = [
         Vec3::new(min.x, min.y, min.z),
         Vec3::new(max.x, min.y, min.z),
@@ -43,10 +48,12 @@ fn transform_aabb(bbox: &AABB, transform: &Mat4) -> AABB {
         Vec3::new(max.x, max.y, max.z),
     ];
     
+    // first select the first corner as min and max
     let first = transform.transform_point3(corners[0]);
     let mut new_min = first;
     let mut new_max = first;
     
+    // iterate through the rest of the corners and find the new min and max
     for i in 1..8 {
         let p = transform.transform_point3(corners[i]);
         new_min = new_min.min(p);
@@ -57,82 +64,80 @@ fn transform_aabb(bbox: &AABB, transform: &Mat4) -> AABB {
 }
 
 impl TransformedMesh {
+    /// Create a new TransformedMesh.
+    ///
+    /// translate: the translation vector
+    /// rotation: the rotation vector where each position correlates to that same axis
+    /// scale: uniform scale factor
+    /// primitive: the primitive to transform
     pub fn new(
         translate: Vec3A,
-        rotate_xyz_degrees: Vec3A,
+        rotation: Vec3A,
         scale: f32,
         primitive: Primitive,
     ) -> TransformedMesh {
-        // Build the forward transform: local → world.
-        // Order: Scale, then Rotate (X then Y then Z), then Translate.
-        // This matches your existing Translate(Rotate(Scale(...))) composition.
-        
-        let scale_mat = Mat4::from_scale(Vec3::new(scale, scale, scale));
-        
-        let rx = rotate_xyz_degrees.x.to_radians();
-        let ry = rotate_xyz_degrees.y.to_radians();
-        let rz = rotate_xyz_degrees.z.to_radians();
-        
-        // Match your Rotate's sign convention (Y rotation matches original)
-        let rot_x = Mat4::from_rotation_x(rx);
-        let rot_y = Mat4::from_rotation_y(ry);
-        let rot_z = Mat4::from_rotation_z(rz);
-        
-        let translate_mat = Mat4::from_translation(translate.into());
-        
-        let forward = translate_mat * rot_z * rot_y * rot_x * scale_mat;
-        let inv = forward.inverse();
-        
-        // Compute world-space bounding box by transforming local bbox corners.
+        let scale_matrix = Mat4::from_scale(Vec3::new(scale, scale, scale));
+
+        // build rotation matrices for each rotation axis
+        let rotation_x = Mat4::from_rotation_x(rotation.x.to_radians());
+        let rotation_y = Mat4::from_rotation_y(rotation.y.to_radians());
+        let rotation_z = Mat4::from_rotation_z(rotation.z.to_radians());
+
+        let translate_matrix = Mat4::from_translation(translate.into());
+
+        // remember that matrix multiplication applies from right to left
+        // so first we apply scale; then rotation x, rotation y, rotation z;
+        // and finally the translation matrix 
+        let forward_transform = translate_matrix * rotation_z * rotation_y * rotation_x * scale_matrix;
+        // the inverse transform is needed for converting back from world space to local space
+        let inverse_transform = forward_transform.inverse();
+
+        // transform the local space bbox to world space
         let local_bbox = primitive.bounding_box().unwrap();
-        let bbox = transform_aabb(&local_bbox, &forward);
+        let bbox = transform_aabb(&local_bbox, &forward_transform);
 
         let primitive = Arc::new(primitive);
         
         TransformedMesh {
-            inv_transform: inv,
-            forward_transform: forward,
-            normal_transform: inv.transpose(),
+            inverse_transform,
+            forward_transform,
+            normal_transform: inverse_transform.transpose(),
             bbox,
-            scale,
             primitive,
         }
     }
 
+    /// Determine whether the TransformedMesh has been hit by the given ray.
     pub fn hit(&self, ray: &Ray, start_distance: f32, end_distance: f32) -> Option<HitResult> {
-        // Transform ray into local space using the inverse matrix.
-        let local_origin = self.inv_transform.transform_point3(ray.origin.into());
-        let local_direction = self.inv_transform.transform_vector3(ray.direction.into());
-        
-        // The local direction may not be unit-length if there's scaling.
-        // We need to handle the t-parameter rescaling carefully.
-        let local_dir_length = local_direction.length();
-        let local_direction_normalized = local_direction / local_dir_length;
-        
-        // The t-parameter in local space differs from world space by 1/local_dir_length
-        // (since we normalized). Convert t bounds:
-        let local_start_distance = start_distance * local_dir_length;
-        let local_end_distance = end_distance * local_dir_length;
-        
+        // transform the ray from world space into local space using the inverse transform
+        let local_origin = self.inverse_transform.transform_point3(ray.origin.into());
+        let local_direction = self.inverse_transform.transform_vector3(ray.direction.into());
+
+        let local_direction_length = local_direction.length();
+        let local_direction_normalized = local_direction / local_direction_length;
+
+        // scale the distance range into local space using the stretched direction vector
+        let local_start_distance = start_distance * local_direction_length;
+        let local_end_distance = end_distance * local_direction_length;
+
+        // construct the local space ray
         let local_ray = Ray::new(local_origin.into(), local_direction_normalized.into());
-        
-        if let Some(mut hit) = self.primitive.hit(&local_ray, local_start_distance, local_end_distance) {
-            // Transform hit point back to world space.
-            hit.point = self.forward_transform.transform_point3(hit.point.into()).into();
-            
-            // Transform normals using the inverse-transpose, then renormalize.
-            hit.shading_normal = self.normal_transform.transform_vector3(hit.shading_normal.into()).normalize().into();
-            hit.geometric_normal = self.normal_transform.transform_vector3(hit.geometric_normal.into()).normalize().into();
-            
-            // Convert local-space t to world-space t.
-            hit.parameter /= local_dir_length;
-            
-            Some(hit)
+
+        if let Some(hit) = self.primitive.hit(&local_ray, local_start_distance, local_end_distance) {
+            // transform the hit attributes back into world space before returning them
+            // in a new HitResult
+            let parameter = hit.parameter / local_direction_length;
+            let point = self.forward_transform.transform_point3(hit.point.into()).into();
+                        let geometric_normal = self.normal_transform.transform_vector3(hit.geometric_normal.into()).normalize().into();
+            let shading_normal = self.normal_transform.transform_vector3(hit.shading_normal.into()).normalize().into();
+
+            Some(HitResult::new(parameter, hit.u, hit.v, point, geometric_normal, shading_normal, hit.material_id))
         } else {
             None
         }
     }
     
+    /// Return the world space bounding box of the TransformedMesh
     pub fn bounding_box(&self) -> Option<AABB> {
         Some(self.bbox)
     }

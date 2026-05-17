@@ -41,10 +41,12 @@ impl Camera {
         let half_height: f32 = (theta / 2.0).tan();
         let half_width: f32 = (aspect.0 / aspect.1) * half_height;
 
-        let w: Vec3A = (origin - lookat).normalize();
-        let u: Vec3A = view.cross(w).normalize();
-        let v: Vec3A = w.cross(u);
+        let w: Vec3A = (origin - lookat).normalize(); // points away from scene
+        let u: Vec3A = view.cross(w).normalize(); // points to the right
+        let v: Vec3A = w.cross(u); // points up
 
+        // rotated right-handed coordinate system where +X is to the left,
+        // +Y is up, and +Z goes into the screen
         let lower_left_corner: Vec3A = origin
                                       - half_width * focus_distance * u
                                       - half_height * focus_distance * v

@@ -17,7 +17,6 @@ use triangle::TriangleMesh;
 use mat;
 
 pub fn cornell_box_bunny_scene(width: Option<usize>, height: Option<usize>) -> Scene {
-    // Same camera as the classic Cornell box so the framing looks identical.
     let origin = Vec3A::new(278.0, 278.0, -800.0);
     let lookat = Vec3A::new(278.0, 278.0, 0.0);
     let view = Vec3A::new(0.0, 1.0, 0.0);
@@ -54,7 +53,7 @@ pub fn cornell_box_bunny_scene(width: Option<usize>, height: Option<usize>) -> S
     let buddha = TriangleMesh::from("docs/models/happy_buddha.obj", buddha_material).into();
     objects.push(TransformedMesh::new(Vec3A::new(150.0, -175.0, 450.0), Vec3A::new(0.0, 180.0, 0.0), 2600.0, buddha).into());
 
-    let bvh = BVH::new(&mut objects, 0.0, 1.0);
+    let bvh = BVH::new(&mut objects);
 
     let light_shape = Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 554.0, white_id);
 

@@ -7,7 +7,7 @@ use bvh::BVH;
 use camera::Camera;
 use primitive::{Primitive};
 use lights::Light;
-use materials::{Diffuse, Emissive, Isotropic, Reflective, Refractive, Material};
+use materials::{Diffuse, Emissive, Material, Reflective, Refractive, Volumetric};
 use plane::{Axis, Bounds2D, Plane};
 use rectangle::Rectangle;
 use scene::Scene;
@@ -78,14 +78,14 @@ pub fn spheres_in_box_scene(width: Option<usize>, height: Option<usize>) -> Scen
     let cloned_boundary = boundary.clone();
     objects.push(boundary);
 
-    let vol_idx = mat!(materials, Isotropic::new(Color::new(0.2, 0.4, 0.9).into()));
+    let vol_idx = mat!(materials, Volumetric::new(Color::new(0.2, 0.4, 0.9).into()));
     objects.push(Volume::new(0.2, cloned_boundary, vol_idx).into());
 
     let fog = Sphere::new(Vec3A::new(0.0, 0.0, 0.0),
                           5000.0,
                           refr_idx).into();
 
-    let fog_idx = mat!(materials, Isotropic::new(Color::new(1.0, 1.0, 1.0).into()));
+    let fog_idx = mat!(materials, Volumetric::new(Color::new(1.0, 1.0, 1.0).into()));
     objects.push(Volume::new(0.0001, fog, fog_idx).into());
 
     // Image provided by NASA; details can be found here:
@@ -112,7 +112,7 @@ pub fn spheres_in_box_scene(width: Option<usize>, height: Option<usize>) -> Scen
         objects.push(transformed_sphere.into());
     }
 
-    let bvh = BVH::new(&mut objects, 0.0, 1.0);
+    let bvh = BVH::new(&mut objects);
     let light_shape = Plane::new(Axis::XZ, Bounds2D::new(123.0..423.0, 147.0..412.0), 554.0, white);
 
     Scene::new(String::from("Spheres in Box"), bvh, materials, camera, vec![Light::new(light_shape.into(), Vec3A::splat(7.0))], None, None)

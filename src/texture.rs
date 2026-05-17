@@ -3,6 +3,8 @@ use image;
 
 
 #[derive(Clone)]
+/// Housing items here such as Color and ImageTexture allows us to pass
+/// Texture as the type for the albedo in materials.
 pub enum Texture {
     Color(Color),
     ImageTexture(ImageTexture),

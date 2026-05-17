@@ -58,7 +58,7 @@ pub fn cornell_box_object_scene(width: Option<usize>, height: Option<usize>) -> 
     let buddha = TriangleMesh::from("docs/models/buddha_relief.obj", buddha_material).into();
     objects.push(TransformedMesh::new(Vec3A::new(273.0, 180.0, 530.0), Vec3A::new(-90.0, 180.0, 0.0), 24.0, buddha).into());
 
-    let bvh = BVH::new(&mut objects, 0.0, 1.0);
+    let bvh = BVH::new(&mut objects);
 
     let light_shape = Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 554.0, white_id);
 

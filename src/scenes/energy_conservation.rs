@@ -30,9 +30,6 @@ pub fn energy_conservation_scene(width: Option<usize>, height: Option<usize>) ->
     let spacing = 55.0;
     let start_x = 278.0 - ((count as f32 - 1.0) * spacing / 2.0);
 
-    // Row of spheres with albedo=1 and increasing roughness.
-    // Under a directional light, any energy loss from single-scattering GGX
-    // will show up as darkening at high roughness even with albedo=1.
     for i in 0..count {
         let roughness = i as f32 * 0.10;
         let x_pos = start_x + (i as f32 * spacing);
@@ -41,15 +38,10 @@ pub fn energy_conservation_scene(width: Option<usize>, height: Option<usize>) ->
         objects.push(Sphere::new(Vec3A::new(x_pos, 278.0, 278.0), radius, mat_id).into());
     }
 
-    let bvh = BVH::new(&mut objects, 0.0, 1.0);
+    let bvh = BVH::new(&mut objects);
 
-    // Small, bright directional light placed above and to the side so it
-    // illuminates all spheres at a consistent angle. The key difference from
-    // white_furnace is that radiance is non-uniform — energy lost to
-    // inter-microfacet shadowing is NOT compensated by the environment,
-    // so darkening at high roughness becomes visible.
-    let light_mat = mat!(materials, Emissive::new(Color::new(50.0, 50.0, 50.0).into()));
-    let light_plane = Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 600.0, light_mat);
+    let light_material = mat!(materials, Emissive::new(Color::new(50.0, 50.0, 50.0).into()));
+    let light_plane = Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 600.0, light_material);
     objects.push(light_plane.clone().into_reversed());
 
     Scene::new(
@@ -59,6 +51,6 @@ pub fn energy_conservation_scene(width: Option<usize>, height: Option<usize>) ->
         camera,
         vec![Light::new(light_plane.into(), Vec3A::new(50.0, 50.0, 50.0))],
         None,
-        None, // no environment — dark background so energy loss is unambiguous
+        None,
     )
 }

@@ -5,13 +5,18 @@ use image;
 use rand_pcg::Pcg64Mcg;
 use rand::RngExt;
 
-
+/// Retrieve the relative luminance of a color in sRGB colorspace.
+///
+/// Necessary to determine luminance when sampling in the
+/// direction of high luminance areas.
+///
+/// Reference: https://www.w3.org/WAI/GL/wiki/Relative_luminance
 fn luminance(r: f32, g: f32, b: f32) -> f32 {
     0.2126 * r + 0.7152 * g + 0.0722 * b
 }
 
-/// Binary search a normalized CDF (cdf[0] = 0, cdf[n] = 1) for uniform sample u.
-/// Returns the bin index k such that cdf[k] <= u < cdf[k+1].
+/// Given a cdf and random variable u,
+/// use binary search to find largest values in the area around u.
 fn sample_brightest_pixels(cdf: &[f32], u: f32) -> usize {
     let mut lo = 0usize;
     let mut hi = cdf.len();
@@ -29,46 +34,60 @@ fn sample_brightest_pixels(cdf: &[f32], u: f32) -> usize {
     lo.saturating_sub(1).min(cdf.len().saturating_sub(2))
 }
 
-/// EnvironmentMap is a struct for loading an HDR environment map from an EXR file.
+/// EnvironmentMap allows for the use of HDRI image-based lighting.
 ///
-/// At construction time a 2-D luminance CDF is built over the image pixels
-/// (weighted by sin(theta) to correct for equirectangular pole distortion).
-/// This enables O(log n) importance sampling that directs samples toward
-/// bright regions like the sun, eliminating the fireflies that appear when
-/// a diffuse path happens to scatter toward a 100 000-nit pixel.
+/// We set up conditional distribution functions (CDF) to map pixels to luminance.
+/// CDFs lets us compute the probability of a variable taking
+/// on a value in a specified range.
+///
+/// References:
+/// https://www.pbr-book.org/3ed-2018/Monte_Carlo_Integration/2D_Sampling_with_Multidimensional_Transformations#eq:2d-discrete-conditional-density
+/// https://github.com/mmp/pbrt-v3/blob/master/src/core/sampling.h
+/// https://glue.mustafaisik.net/2018/10/image-based-lighting.html
+/// https://www.cg.tuwien.ac.at/sites/default/files/course/4411/attachments/06_importance_sampling_0.pdf
 #[derive(Clone)]
 pub struct EnvironmentMap {
-    im: image::Rgb32FImage,
+    img: image::Rgb32FImage,
     width: usize,
     height: usize,
-    /// Row CDF — marginal distribution p(v). Length = height + 1.
     marginal_cdf: Vec<f32>,
-    /// Per-row column CDFs — conditional distribution p(u|v).
-    /// Row j occupies indices [j*(width+1) .. j*(width+1)+width+1].
     conditional_cdf: Vec<f32>,
-    /// Raw sum Σ luminance*sin_theta used in the solid-angle PDF formula.
     total_weight: f32,
 }
 
 impl EnvironmentMap {
+    /// Create a new EnvironmentMap from the image at the given path.
     pub fn new(filename: &str) -> EnvironmentMap {
-        let im = image::open(filename).unwrap().to_rgb32f();
-        let width = im.width() as usize;
-        let height = im.height() as usize;
+        let img = image::open(filename).unwrap().to_rgb32f();
+        let width = img.width() as usize;
+        let height = img.height() as usize;
 
+        // conditional_pdf stores the probabilities for picking a
+        // specific pixel within a single row
         let mut conditional_cdf = vec![0.0f32; height * (width + 1)];
+
+        // stores the total brightness of each row
         let mut marginal_weights = vec![0.0f32; height];
 
+        // compute the horizontal probabilities
         for j in 0..height {
-            // sin_theta corrects for the shrinking pixel area toward the poles
+            // since HDRI images are equirectangular projections we
+            // need to account for the stretching at the poles
             let sin_theta = (PI * (j as f32 + 0.5) / height as f32).sin();
+
             let row = j * (width + 1);
             conditional_cdf[row] = 0.0;
+
+            // calculate the luminance for every pixel in this row and weigh by sin_theta.
             for i in 0..width {
-                let pixel = im.get_pixel(i as u32, j as u32);
-                let w = luminance(pixel[0], pixel[1], pixel[2]) * sin_theta;
-                conditional_cdf[row + i + 1] = conditional_cdf[row + i] + w;
+                let pixel = img.get_pixel(i as u32, j as u32);
+                let luminance = luminance(pixel[0], pixel[1], pixel[2]) * sin_theta;
+                conditional_cdf[row + i + 1] = conditional_cdf[row + i] + luminance;
             }
+
+            // the row's total sum of brightness at conditional_cdf[row + width]
+            // is saved to marginal_weights. every row is then divided by the
+            // row_sum to normalize the row and create a valid probability distribution
             marginal_weights[j] = conditional_cdf[row + width];
             let row_sum = marginal_weights[j];
             if row_sum > 0.0 {
@@ -78,10 +97,13 @@ impl EnvironmentMap {
             }
         }
 
+        // build a running total of the brightness of each row
         let mut marginal_cdf = vec![0.0f32; height + 1];
         for j in 0..height {
             marginal_cdf[j + 1] = marginal_cdf[j] + marginal_weights[j];
         }
+
+        // normalize the marginal_cdf totals
         let total_weight = marginal_cdf[height];
         if total_weight > 0.0 {
             for j in 1..=height {
@@ -89,28 +111,30 @@ impl EnvironmentMap {
             }
         }
 
-        EnvironmentMap { im, width, height, marginal_cdf, conditional_cdf, total_weight }
+        EnvironmentMap { img, width, height, marginal_cdf, conditional_cdf, total_weight }
     }
 
     /// Determine which pixel to retrieve from the image by
-    /// converting pixel coordinates to UV coordinates
+    /// converting pixel coordinates to UV coordinates.
+    ///
+    /// Converts the direction into spherical UV coordinates via atan2 and asin
+    /// and performs a nearest neighbor pixel fetch.
     pub fn sample_map(&self, _u: f32, _v: f32, direction: &Vec3A) -> Vec3A {
         let u = 0.5 + direction.z.atan2(direction.x) / (2.0 * PI);
         let v = 0.5 - direction.y.asin() / PI;
 
-        let i = 0.0f32.max((u * self.im.width() as f32).min(self.im.width() as f32 - 1.0));
-        let j = 0.0f32.max((v * self.im.height() as f32).min(self.im.height() as f32 - 1.0));
+        let i = 0.0f32.max((u * self.img.width() as f32).min(self.img.width() as f32 - 1.0));
+        let j = 0.0f32.max((v * self.img.height() as f32).min(self.img.height() as f32 - 1.0));
 
-        let image::Rgb([r, g, b]) = *self.im.get_pixel(i as u32, j as u32);
+        let image::Rgb([r, g, b]) = *self.img.get_pixel(i as u32, j as u32);
 
         Vec3A::new(r, g, b)
     }
 
-    /// Solid-angle PDF for the given direction.
+    /// Compute the weight on how likely we will sample in the given direction.
     ///
-    /// Derivation: p(ω) = L * W * H / (total_weight * 2π²).
-    /// The sin_theta factor from the area element cancels with the sin_theta
-    /// in the CDF weight, leaving only the raw luminance scaled by resolution.
+    /// After converting the direction into spherical UV coordinates,
+    /// we retrieve the luminance and compute the weight of that luminance.
     pub fn evaluate_sampling_weight(&self, direction: &Vec3A) -> f32 {
         if self.total_weight <= 0.0 { return 0.0; }
 
@@ -120,29 +144,39 @@ impl EnvironmentMap {
         let i = ((u * self.width as f32) as usize).min(self.width - 1);
         let j = ((v * self.height as f32) as usize).min(self.height - 1);
 
-        let pixel = self.im.get_pixel(i as u32, j as u32);
-        let lum = luminance(pixel[0], pixel[1], pixel[2]);
+        let pixel = self.img.get_pixel(i as u32, j as u32);
+        let luminance = luminance(pixel[0], pixel[1], pixel[2]);
 
-        lum * self.width as f32 * self.height as f32 / (self.total_weight * 2.0 * PI * PI)
+        // since we're working in the solid angle domain we need to transform
+        // p(i, j) to p(w).
+        // https://glue.mustafaisik.net/2018/10/image-based-lighting.html
+        luminance * self.width as f32 * self.height as f32 / (self.total_weight * 2.0 * PI * PI)
     }
 
-    /// Sample a direction from the environment map proportional to luminance.
+    /// Find areas of high luminance in the conditional_cdf and
+    /// return the direction to that area.
     pub fn sample_direction_to_light(&self, rng: &mut Pcg64Mcg) -> Vec3A {
         let u1 = rng.random::<f32>();
         let u2 = rng.random::<f32>();
 
+        // sample the brightest rows using random variable u1
         let j = sample_brightest_pixels(&self.marginal_cdf, u1);
+
+        // now that we've found a row of high density, we sample
+        // the column with random variable u2
         let row = j * (self.width + 1);
         let i = sample_brightest_pixels(&self.conditional_cdf[row..row + self.width + 1], u2);
 
-        // Convert pixel center to spherical direction (inverse of value() mapping)
         let u = (i as f32 + 0.5) / self.width as f32;
         let v = (j as f32 + 0.5) / self.height as f32;
 
-        let phi = (u - 0.5) * 2.0 * PI;       // azimuth: atan2(z, x)
-        let elevation = (0.5 - v) * PI;         // elevation: asin(y)
+        // convert cartesian coordinates to spherical coordinates
+        let phi = (u - 0.5) * 2.0 * PI;
+        let elevation = (0.5 - v) * PI;
         let (sin_el, cos_el) = elevation.sin_cos();
         let (sin_phi, cos_phi) = phi.sin_cos();
+
+        // map spherical angles to 3D direction vector in direction of light source
         Vec3A::new(cos_el * cos_phi, sin_el, cos_el * sin_phi)
     }
 }

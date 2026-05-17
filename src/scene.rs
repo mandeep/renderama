@@ -5,6 +5,7 @@ use environment::EnvironmentMap;
 use lights::Light;
 use materials::Material;
 
+/// Scene contains all the items necessary for the integrator to start a render
 pub struct Scene {
     pub name: String,
     pub accelerator: BVH,

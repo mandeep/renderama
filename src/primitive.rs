@@ -12,6 +12,8 @@ use volume::Volume;
 
 
 #[derive(Clone)]
+/// The Primitive enum allows us to statically dispatch all shapes currently
+/// accepted by the integrators.
 pub enum Primitive {
     Plane(Plane),
     Rectangle(Rectangle),
@@ -56,11 +58,6 @@ impl Primitive {
             Primitive::TransformedMesh(g) => g.bounding_box(),
             Primitive::Volume(v) => v.bounding_box(),
         }
-    }
-
-    #[allow(dead_code)]
-    pub fn reversed(self) -> Self {
-        Primitive::ReverseOrientation(Arc::new(self))
     }
 }
 

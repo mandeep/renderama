@@ -60,11 +60,8 @@ pub fn veach_mis_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     for (tilt_deg, fuzz) in plate_configs {
         let tilt_rad = tilt_deg.to_radians();
 
-        // In Right-Handed, a negative X rotation tilts the Z-axis UP.
-        // Direction vector: (0, -sin(theta), cos(theta))
         let direction = Vec3A::new(0.0, -tilt_rad.sin(), tilt_rad.cos());
 
-        // Center is half-way along that direction from the current cursor
         let center_pos = cursor + (direction * (plate_length * 0.5));
 
         let mat_id = mat!(materials, Reflective::new(silver, fuzz));
@@ -78,15 +75,12 @@ pub fn veach_mis_scene(width: Option<usize>, height: Option<usize>) -> Scene {
         cursor += direction * plate_length;
     }
 
-    // After the plate loop, use the 'cursor' to find the midpoint so that the sphere
-    // lights appear on all plates
-    let chain_end = cursor; // Where the last plate ended
+    let chain_end = cursor;
     let chain_start = Vec3A::new(0.0, 0.15, 2.0);
     let chain_midpoint = (chain_start + chain_end) * 0.5;
 
-    // Place lights relative to this midpoint
     let light_y = chain_midpoint.y + 2.5;
-    let light_z = chain_midpoint.z + 1.5; // Offset slightly deeper for reflection math
+    let light_z = chain_midpoint.z + 1.5;
 
     let sphere_lights: [(f32, f32, f32); 3] = [
         ( 2.0, 0.025, 100.0),
@@ -102,29 +96,28 @@ pub fn veach_mis_scene(width: Option<usize>, height: Option<usize>) -> Scene {
         ).into());
     }
 
+    // added two plane lights on each side wall just in case
     let fill_intensity = 0.005;
     let fill_mat = mat!(materials, Emissive::new(Color::new(fill_intensity, fill_intensity, fill_intensity).into()));
     let fill_color = Vec3A::splat(fill_intensity);
 
-    // Left Fill Light (facing right toward the center)
     let left_light_primitive = Plane::new(
         Axis::YZ, 
         Bounds2D::new(0.0..10.0, -5.0..20.0), 
-        -19.5, // Just inside the left wall
+        -19.5,
         fill_mat
     ).into_primitive();
     objects.push(left_light_primitive.clone());
 
-    // Right Fill Light (facing left toward the center)
     let right_light_primitive = Plane::new(
         Axis::YZ, 
         Bounds2D::new(0.0..10.0, -5.0..20.0), 
-        19.5, // Just inside the right wall
+        19.5,
         fill_mat
-    ).into_reversed(); // Reverse normal to face inward
+    ).into_reversed();
     objects.push(right_light_primitive.clone());
 
-    let bvh = BVH::new(&mut objects, 0.0, 1.0);
+    let bvh = BVH::new(&mut objects);
 
     let mut light_sources: Vec<Light> = sphere_lights.iter().map(|&(x, r, intensity)| {
         Light::new(
