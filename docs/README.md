@@ -1,4 +1,6 @@
 [![Random Spheres on Ground](renders/random_spheres.png)](renders/random_spheres.png)
+[![Random Spheres on Ground with Clouds](renders/random_spheres_clouds.png)](renders/random_spheres_clouds.png)
+[![Three Spheres](renders/three_spheres.png)](renders/three_spheres.png)
 [![Spheres in a Box with Fog](renders/spheres_in_box.png)](renders/spheres_in_box.png)
 [![Veach MIS Scene](renders/veach_mis.png)](renders/veach_mis.png)
 [![Cornell Box](renders/cornell_box_denoised.png)](renders/cornell_box_denoised.png)
