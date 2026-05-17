@@ -1,16 +1,17 @@
 use std::f32;
-use std::str::FromStr;
 
 use clap::ValueEnum;
 use glam::Vec3A;
 use rand::RngExt;
 use rand_pcg::Pcg64Mcg;
 
+use basis::OrthonormalBasis;
 use results::{HitResult, ScatterResult};
 use lights::Light;
 use materials::Material;
 use pdf::power_heuristic;
 use ray::{find_offset_point, Ray};
+use sampling::cosine_sample_hemisphere;
 use scene::Scene;
 
 /// Integrator houses all of the possible integrators one can use
@@ -19,19 +20,7 @@ use scene::Scene;
 pub enum Integrator {
     Beauty,
     Normals,
-}
-
-/// Implement FromStr so that clap can parse string arguments.
-impl FromStr for Integrator {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "beauty" => Ok(Integrator::Beauty),
-            "normals" => Ok(Integrator::Normals),
-            _ => Err(format!("Unknown integrator: {}", s)),
-        }
-    }
+    AmbientOcclusion,
 }
 
 impl Integrator {
@@ -41,8 +30,13 @@ impl Integrator {
         match self {
             Integrator::Beauty => 64,
             Integrator::Normals => 1,
+            Integrator::AmbientOcclusion => 16,
         }
     }
+
+    /// eventually need to use this to select the renderer
+    #[allow(unused)]
+    pub fn render_scene (&self) {}
 }
 
 /// Render a normal pass.
@@ -50,13 +44,43 @@ impl Integrator {
 /// Typically used in debugging whether or not the geometry in
 /// the scene is setup correctly.
 pub fn render_normals(ray: Ray, scene: &Scene) -> Vec3A {
-    if let Some(hit) = scene.accelerator.hit(&ray, 1e-4, f32::MAX) {
-        let normal = hit.shading_normal;
+    if let Some(hit_result) = scene.accelerator.hit(&ray, 1e-4, f32::MAX) {
+        let normal = hit_result.shading_normal;
         0.5 * Vec3A::new(normal.x + 1.0, normal.y + 1.0, normal.z + 1.0)
     } else {
         let point = 0.5 * (ray.direction.y + 1.0);
         (1.0 - point) * Vec3A::new(1.0, 1.0, 1.0) + point * Vec3A::new(0.5, 0.7, 1.0)
     }
+}
+
+/// Render a scene with ambient occlusion.
+///
+/// This integrator renders all geometry as white and shadows as black.
+/// Extremely useful in viewing how light interacts with the geometry in a scene
+/// prior to running a beauty pass. A high number of samples can be rendered
+/// relatively quickly as well.
+///
+/// References:
+/// https://github.com/mmp/pbrt-v3/blob/master/src/integrators/ao.cpp#L71
+/// https://rmanwiki-26.pixar.com/space/REN26/19661789/PxrOcclusion
+/// https://developer.nvidia.com/gpugems/gpugems/part-iii-materials/chapter-17-ambient-occlusion
+pub fn render_ambient_occlusion(ray: Ray, scene: &Scene, rng: &mut Pcg64Mcg) -> Vec3A {
+    let mut color: f32 = 0.0;
+
+    let Some(hit_result) = scene.accelerator.hit(&ray, 1e-4, f32::MAX) else {
+        return Vec3A::ONE;
+    };
+
+    let uvw = OrthonormalBasis::new(&hit_result.shading_normal);
+    let local = cosine_sample_hemisphere(rng);
+    let direction = uvw.local(&local);
+    let offset_point = find_offset_point(hit_result.point, hit_result.geometric_normal);
+    let ao_ray = Ray::new(offset_point, direction);
+
+    if !scene.accelerator.hits_anything(&ao_ray, 1e-3, f32::MAX) {
+        color += 1.0;
+    }
+    Vec3A::splat(color)
 }
 
 /// Render a beauty pass.
