@@ -174,7 +174,7 @@ fn main() {
         println!("[{}] Denoising image...",
                  Local::now().format("%H:%M:%S"));
 
-        let denoised_output = denoise(&pixels, &albedo_pixels, &normal_pixels, width, height);
+        let denoised_output = denoise(&pixels, width, height);
         let denoised_buffer: ImageBuffer<Rgb<f32>, Vec<f32>> = ImageBuffer::from_raw(width as u32, height as u32, denoised_output).unwrap();
 
         let timestamp = Local::now().format("%Y%m%d-%H%M%S").to_string();
