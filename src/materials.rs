@@ -312,7 +312,7 @@ impl Reflective {
         if self.roughness == 0.0 {
             // if roughness is set to 0.0, then handle this as a pre-weighted
             // specular material and skip NEE
-            let pdf = PDF::Cosine { uvw: OrthonormalBasis::new(&shading_normal) };
+            let pdf = PDF::Delta;
             Some(ScatterResult::new(scattered_ray, self.albedo, pdf, true, true))
         } else {
             let pdf = PDF::GGX { wi: -ray.direction, normal: shading_normal, alpha: self.roughness };
@@ -421,16 +421,16 @@ impl Refractive {
             self.absorption
         };
 
-        let pdf = PDF::Cosine { uvw: OrthonormalBasis::new(&result.shading_normal) };
-
         if rng.random::<f32>() < reflect_probability {
             let reflected: Vec3A = reflect(ray.direction, shading_normal);
             let offset_point = find_offset_point(result.point, geometric_normal);
             let scattered_ray = Ray::new(offset_point, reflected);
+            let pdf = PDF::Delta;
             Some(ScatterResult::new(scattered_ray, attenuation, pdf, true, true))
         } else {
             let offset_point = find_offset_point(result.point, -geometric_normal);
             let scattered_ray = Ray::new(offset_point, refracted.unwrap());
+            let pdf = PDF::Cosine { uvw: OrthonormalBasis::new(&result.shading_normal) };
             Some(ScatterResult::new(scattered_ray, attenuation, pdf, true, true))
         }
     }
