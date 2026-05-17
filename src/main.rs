@@ -52,7 +52,7 @@ use rand::{rng, RngExt, SeedableRng};
 use rand_pcg::Pcg64Mcg;
 use rayon::prelude::*;
 
-use integrator::{Integrator, render_beauty, render_normals};
+use integrator::{Integrator, render_ambient_occlusion, render_beauty, render_normals};
 use scenes::Scenes;
 use scene::Scene;
 
@@ -153,8 +153,10 @@ fn main() {
                         normal += normal_sample;
                     },
                     Integrator::Normals => {
-                        // render_normals is used for debugging
                         color += utils::de_nan(&render_normals(ray, &scene));
+                    },
+                    Integrator::AmbientOcclusion => {
+                        color += utils::de_nan(&render_ambient_occlusion(ray, &scene, &mut rng));
                     }
                 }
         })});
