@@ -31,6 +31,7 @@ pub fn power_heuristic(f_pdf: f32, g_pdf: f32) -> f32 {
 /// to determine how likely a ray is to be sampled in that direction.
 pub enum PDF {
     Cosine { uvw: OrthonormalBasis },
+    Delta,
     GGX { wi: Vec3A, normal: Vec3A, alpha: f32 },
     Uniform,
 }
@@ -42,7 +43,8 @@ impl PDF {
             PDF::Cosine { uvw } => {
                 let cosine = direction.dot(uvw.w());
                 if cosine > 0.0 { cosine / PI } else { 0.0 }
-            }
+            },
+            PDF::Delta => panic!("Delta PDF has no meaningful probability."),
             PDF::GGX { wi, normal, alpha } => {
                 let cos_i = normal.dot(*wi);
                 if cos_i <= 0.0 { return 0.0; }
@@ -53,7 +55,7 @@ impl PDF {
                 if cos_h <= 0.0 || direction.dot(h) <= 0.0 { return 0.0; }
 
                 ggx_distribution(cos_h, *alpha) * ggx_g1_masking(cos_i, *alpha) / (4.0 * cos_i)
-            }
+            },
             PDF::Uniform => 1.0 / (4.0 * PI),
         }
     }
@@ -63,13 +65,14 @@ impl PDF {
         match self {
             PDF::Cosine { uvw } => {
                 uvw.local(&cosine_sample_hemisphere(rng))
-            }
+            },
+            PDF::Delta => panic!("Delta PDF should never be sampled directly."),
             PDF::GGX { wi, normal, alpha } => {
                 let h = ggx_sample_vndf(*normal, *wi, *alpha, rng);
                 let wi_dot_h = wi.dot(h);
                 if wi_dot_h <= 0.0 { return *normal; }
                 2.0 * wi_dot_h * h - *wi
-            }
+            },
             PDF::Uniform => pick_sphere_point(rng),
         }
     }
