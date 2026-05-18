@@ -267,7 +267,7 @@ fn fresnel_coefficient(cos_theta_i: f32, eta_i: f32, eta_t: f32) -> f32 {
 /// albedo is the color of the material and roughness is the amount of fuzziness.
 #[derive(Clone)]
 pub struct Reflective {
-    pub albedo: Vec3A,
+    pub albedo: Arc<Texture>,
     pub roughness: f32,
 }
 
@@ -279,7 +279,8 @@ impl Reflective {
     /// for the fuzziness of the reflections due to the size of the primitive.
     ///
     /// Generally, the larger the primitive, the fuzzier the reflections will be.
-    pub fn new(albedo: Vec3A, roughness: f32) -> Reflective {
+    pub fn new(albedo: Texture, roughness: f32) -> Reflective {
+        let albedo = Arc::new(albedo);
         Reflective { albedo, roughness: roughness * roughness }
     }
 }
@@ -308,15 +309,16 @@ impl Reflective {
         let offset_point = find_offset_point(result.point, geometric_normal);
         let reflected = reflect(ray.direction, shading_normal);
         let scattered_ray = Ray::new(offset_point, reflected);
+        let contribution = self.albedo.sample_texture(result.u, result.v, &result.point);
 
         if self.roughness == 0.0 {
             // if roughness is set to 0.0, then handle this as a pre-weighted
             // specular material and skip NEE
             let pdf = PDF::Delta;
-            Some(ScatterResult::new(scattered_ray, self.albedo, pdf, true, true))
+            Some(ScatterResult::new(scattered_ray, contribution, pdf, true, true))
         } else {
             let pdf = PDF::GGX { wi: -ray.direction, normal: shading_normal, alpha: self.roughness };
-            Some(ScatterResult::new(scattered_ray, self.albedo, pdf, false, true))
+            Some(ScatterResult::new(scattered_ray, contribution, pdf, false, true))
         }
     }
 
@@ -360,7 +362,7 @@ impl Reflective {
 #[derive(Clone)]
 pub struct Refractive {
     pub refractive_index: f32,
-    pub absorption: Vec3A,
+    pub absorption: Arc<Texture>,
 }
 
 impl Refractive {
@@ -369,7 +371,8 @@ impl Refractive {
     /// albedo is a Vec3A of the RGB values assigned to the material
     /// where each value is a float between 0.0 and 1.0.
     /// index determines how much of the light is refracted when entering the material.
-    pub fn new(index: f32, albedo: Vec3A) -> Refractive {
+    pub fn new(albedo: Texture, index: f32) -> Refractive {
+        let albedo = Arc::new(albedo);
         Refractive { refractive_index: index, absorption: albedo }
     }
 
@@ -418,19 +421,19 @@ impl Refractive {
         let attenuation = if entering {
             Vec3A::ONE
         } else {
-            self.absorption
+            self.absorption.sample_texture(result.u, result.v, &result.point)
         };
+
+        let pdf = PDF::Delta;
 
         if rng.random::<f32>() < reflect_probability {
             let reflected: Vec3A = reflect(ray.direction, shading_normal);
             let offset_point = find_offset_point(result.point, geometric_normal);
             let scattered_ray = Ray::new(offset_point, reflected);
-            let pdf = PDF::Delta;
             Some(ScatterResult::new(scattered_ray, attenuation, pdf, true, true))
         } else {
             let offset_point = find_offset_point(result.point, -geometric_normal);
             let scattered_ray = Ray::new(offset_point, refracted.unwrap());
-            let pdf = PDF::Cosine { uvw: OrthonormalBasis::new(&result.shading_normal) };
             Some(ScatterResult::new(scattered_ray, attenuation, pdf, true, true))
         }
     }

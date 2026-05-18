@@ -73,10 +73,10 @@ impl TransformedMesh {
     pub fn new(
         translate: Vec3A,
         rotation: Vec3A,
-        scale: f32,
+        scale: Vec3A,
         primitive: Primitive,
     ) -> TransformedMesh {
-        let scale_matrix = Mat4::from_scale(Vec3::new(scale, scale, scale));
+        let scale_matrix = Mat4::from_scale(scale.into());
 
         // build rotation matrices for each rotation axis
         let rotation_x = Mat4::from_rotation_x(rotation.x.to_radians());

@@ -35,6 +35,7 @@ pub fn random_spheres_scene(width: Option<usize>, height: Option<usize>) -> Scen
     let environment = EnvironmentMap::new("docs/textures/pure_sky_qwantani.exr").into();
 
     let floor_idx = mat!(materials, Diffuse::new(Color::new(0.5, 0.5, 0.5).into(), 0.0));
+    let refr_idx = mat!(materials, Refractive::new(Color::new(1.0, 1.0, 1.0).into(), 1.5));
 
     objects.push(Sphere::new(Vec3A::new(0.0, -1000.0, 0.0),
                           1000.0,
@@ -73,19 +74,17 @@ pub fn random_spheres_scene(width: Option<usize>, height: Option<usize>) -> Scen
                     let random_idx = mat!(materials, Diffuse::new(material.into(), 0.0));
                     objects.push(Sphere::new(center, 0.2, random_idx).into());
             } else if material < 0.95 {
-                let material = Reflective::new(Vec3A::new(
+                let material = Reflective::new(Color::new(
                     0.5 * (1.0 * rand::random::<f32>()),
                     0.5 * (1.0 * rand::random::<f32>()),
-                    0.5 * (1.0 * rand::random::<f32>())),
+                    0.5 * (1.0 * rand::random::<f32>())).into(),
                     0.5 * rand::random::<f32>());
                     let random_idx = mat!(materials, material);
                     objects.push(
                         Sphere::new(center, 0.2, random_idx).into());
             } else {
-                    let refl_idx = mat!(materials, Refractive::new(1.5, Vec3A::ONE));
-                    objects.push(Sphere::new(center, 0.2, refl_idx).into());
-                    let refr_idx = mat!(materials, Refractive::new(1.5, Vec3A::ONE));
-                    objects.push(Sphere::new(center, -0.19,refr_idx).into());
+                    objects.push(Sphere::new(center, 0.2, refr_idx).into());
+                    objects.push(Sphere::new(center, -0.19, refr_idx).into());
             }
         }
     }
@@ -95,16 +94,15 @@ pub fn random_spheres_scene(width: Option<usize>, height: Option<usize>) -> Scen
                           1.0,
                           red_idx).into());
 
-    let refr_idx1 = mat!(materials, Refractive::new(1.5, Vec3A::ONE));
     objects.push(Sphere::new(Vec3A::new(0.0, 1.0, 0.0),
                           1.0,
-                          refr_idx1).into());
+                          refr_idx).into());
 
     objects.push(Sphere::new(Vec3A::new(0.0, 1.0, 0.0),
                           -0.99,
-                          refr_idx1).into());
+                          refr_idx).into());
 
-    let refl_idx = mat!(materials, Reflective::new(Vec3A::new(0.5, 0.5, 0.5), 0.05));
+    let refl_idx = mat!(materials, Reflective::new(Color::new(0.5, 0.5, 0.5).into(), 0.05));
     objects.push(Sphere::new(Vec3A::new(2.0, 1.0, 0.0),
                           1.0,
                           refl_idx).into());

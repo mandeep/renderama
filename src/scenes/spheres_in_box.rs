@@ -61,12 +61,12 @@ pub fn spheres_in_box_scene(width: Option<usize>, height: Option<usize>) -> Scen
                           50.0,
                           red).into());
 
-    let refr_idx = mat!(materials, Refractive::new(1.5, Vec3A::ONE));
+    let refr_idx = mat!(materials, Refractive::new(Color::new(1.0, 1.0, 1.0).into(), 1.5));
     objects.push(Sphere::new(Vec3A::new(260.0, 150.0, 45.0),
                           50.0,
                           refr_idx).into());
 
-    let refl_idx = mat!(materials, Reflective::new(Vec3A::new(0.8, 0.8, 0.9), 0.0));
+    let refl_idx = mat!(materials, Reflective::new(Color::new(0.8, 0.8, 0.9).into(), 0.0));
     objects.push(Sphere::new(Vec3A::new(0.0, 150.0, 145.0),
                           50.0,
                           refl_idx).into());
@@ -108,7 +108,7 @@ pub fn spheres_in_box_scene(width: Option<usize>, height: Option<usize>) -> Scen
                                165.0 * rand::random::<f32>());
 
         let sphere = Sphere::new(center, 10.0, white);
-        let transformed_sphere = TransformedMesh::new(Vec3A::new(-100.0, 270.0, 395.0), Vec3A::new(0.0, 15.0, 0.0), 1.0, sphere.into());
+        let transformed_sphere = TransformedMesh::new(Vec3A::new(-100.0, 270.0, 395.0), Vec3A::new(0.0, 15.0, 0.0), Vec3A::ONE, sphere.into());
         objects.push(transformed_sphere.into());
     }
 

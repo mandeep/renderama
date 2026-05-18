@@ -41,7 +41,7 @@ pub fn veach_mis_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     objects.push(Plane::new(Axis::YZ, Bounds2D::new( 0.0..15.0, -5.0..25.0),-20.0, grey).into_primitive());
     objects.push(Plane::new(Axis::YZ, Bounds2D::new( 0.0..15.0, -5.0..25.0), 20.0, grey).into_reversed());
 
-    let silver = Vec3A::new(0.75, 0.75, 0.75);
+    let silver = Color::new(0.75, 0.75, 0.75);
 
     // use a cursor to place planes edge to edge
     let mut cursor = Vec3A::new(0.0, 0.15, 2.0);
@@ -64,13 +64,13 @@ pub fn veach_mis_scene(width: Option<usize>, height: Option<usize>) -> Scene {
 
         let center_pos = cursor + (direction * (plate_length * 0.5));
 
-        let mat_id = mat!(materials, Reflective::new(silver, fuzz));
+        let mat_id = mat!(materials, Reflective::new(silver.into(), fuzz));
         let rot = Vec3A::new(tilt_deg, 0.0, 0.0);
         let base = Rectangle::new(Vec3A::new(-2.25, 0.1, -visual_length / 2.0),
             Vec3A::new(2.25, 0.125, visual_length / 2.0), mat_id)
             .into();
 
-        objects.push(TransformedMesh::new(center_pos, rot, 1.0, base).into());
+        objects.push(TransformedMesh::new(center_pos, rot, Vec3A::ONE, base).into());
 
         cursor += direction * plate_length;
     }
