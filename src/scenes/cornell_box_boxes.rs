@@ -46,8 +46,8 @@ pub fn cornell_box_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let p1 = Vec3A::new(165.0, 165.0, 165.0);
     let p2 = Vec3A::new(165.0, 330.0, 165.0);
 
-    objects.push(TransformedMesh::new(Vec3A::new(130.0, 0.0, 65.0), Vec3A::new(0.0, -18.0, 0.0), 1.0, Rectangle::new(p0, p1, white_id).into()).into());
-    objects.push(TransformedMesh::new(Vec3A::new(265.0, 0.0, 295.0), Vec3A::new(0.0, 15.0, 0.0), 1.0, Rectangle::new(p0, p2, white_id).into()).into());
+    objects.push(TransformedMesh::new(Vec3A::new(130.0, 0.0, 65.0), Vec3A::new(0.0, -18.0, 0.0), Vec3A::splat(1.0), Rectangle::new(p0, p1, white_id).into()).into());
+    objects.push(TransformedMesh::new(Vec3A::new(265.0, 0.0, 295.0), Vec3A::new(0.0, 15.0, 0.0), Vec3A::splat(1.0), Rectangle::new(p0, p2, white_id).into()).into());
 
     let bvh = BVH::new(&mut objects);
 

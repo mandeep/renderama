@@ -34,7 +34,7 @@ pub fn energy_conservation_scene(width: Option<usize>, height: Option<usize>) ->
         let roughness = i as f32 * 0.10;
         let x_pos = start_x + (i as f32 * spacing);
 
-        let mat_id = mat!(materials, Reflective::new(Vec3A::ONE, roughness));
+        let mat_id = mat!(materials, Reflective::new(Color::new(1.0, 1.0, 1.0).into(), roughness));
         objects.push(Sphere::new(Vec3A::new(x_pos, 278.0, 278.0), radius, mat_id).into());
     }
 
