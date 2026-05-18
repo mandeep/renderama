@@ -36,7 +36,7 @@ impl_from_texture!(
     ImageTexture => ImageTexture
 );
 
-#[derive(Clone)]
+#[derive(Copy, Clone)]
 /// Color is just a wrapping for a Vec3A of RGB values
 pub struct Color {
     color: Vec3A,
