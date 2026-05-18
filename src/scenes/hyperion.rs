@@ -77,7 +77,7 @@ pub fn hyperion_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let cricket_ball_mesh = TriangleMesh::from("docs/models/cricket_ball.obj", cricket_idx);
     let cricked_ball = TransformedMesh::new(Vec3A::new(-0.6, 0.70, -2.5), Vec3A::new(-30.0, 0.0, 15.0), Vec3A::splat(1.75), cricket_ball_mesh.into());
 
-    let pingpong_sphere = TransformedMesh::new(Vec3A::new(-1.25, 0.45, -0.3), Vec3A::new(0.0, 0.0, 90.0), Vec3A::ONE, Sphere::new(Vec3A::new(0.0, 0.0, 0.0), 0.285, pingpong_idx).into());
+    let pingpong_sphere = TransformedMesh::new(Vec3A::new(-1.25, 0.47, -0.3), Vec3A::new(0.0, 0.0, 90.0), Vec3A::ONE, Sphere::new(Vec3A::new(0.0, 0.0, 0.0), 0.285, pingpong_idx).into());
 
     let golf_ball_mesh = TriangleMesh::from("docs/models/golf_ball.obj", white_idx);
     let golf_ball = TransformedMesh::new(Vec3A::new(1.70, 0.67, -0.35), Vec3A::new(-30.0, 0.0, 15.0), Vec3A::splat(0.23), golf_ball_mesh.into());
