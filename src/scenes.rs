@@ -8,6 +8,7 @@ mod cornell_box_bunny;
 mod cornell_box_dragon;
 mod cornell_box_objects;
 mod energy_conservation;
+mod hyperion;
 mod random_spheres;
 mod spheres_in_box;
 mod three_spheres;
@@ -19,6 +20,7 @@ pub use self::cornell_box_bunny::*;
 pub use self::cornell_box_dragon::*;
 pub use self::cornell_box_objects::*;
 pub use self::energy_conservation::*;
+pub use self::hyperion::*;
 pub use self::random_spheres::*;
 pub use self::spheres_in_box::*;
 pub use self::three_spheres::*;
@@ -34,6 +36,7 @@ pub enum Scenes {
     CornellBoxDragon,
     CornellBoxObjects,
     EnergyConservation,
+    Hyperion,
     RandomSpheres,
     SpheresInBox,
     ThreeSpheres,
@@ -49,6 +52,7 @@ impl Scenes {
             Scenes::CornellBoxDragon => cornell_box_dragon_scene(width, height),
             Scenes::CornellBoxObjects => cornell_box_object_scene(width, height),
             Scenes::EnergyConservation => energy_conservation_scene(width, height),
+            Scenes::Hyperion => hyperion_scene(width, height),
             Scenes::RandomSpheres => random_spheres_scene(width, height),
             Scenes::SpheresInBox => spheres_in_box_scene(width, height),
             Scenes::ThreeSpheres => three_spheres_scene(width, height),
