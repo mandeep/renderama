@@ -34,9 +34,14 @@ impl Integrator {
         }
     }
 
-    /// eventually need to use this to select the renderer
-    #[allow(unused)]
-    pub fn render_scene (&self) {}
+    /// Dispatch the integrator chosen by the user in the command line interface
+    pub fn render_scene(&self, ray: Ray, scene: &Scene, rng: &mut Pcg64Mcg) -> Vec3A {
+        match self {
+            Integrator::Beauty => render_beauty(ray, &scene, rng),
+            Integrator::Normals => render_normals(ray, &scene),
+            Integrator::AmbientOcclusion => render_ambient_occlusion(ray, &scene, rng),
+        }
+    }
 }
 
 /// Render a normal pass.
@@ -91,12 +96,10 @@ pub fn render_ambient_occlusion(ray: Ray, scene: &Scene, rng: &mut Pcg64Mcg) -> 
 /// A combination of BSDF sampling and many light sampling is used to provide
 /// physically correct results. Bounces are set to a default of 10 though russian
 /// roulette is applied after 3 bounces.
-pub fn render_beauty(mut ray: Ray, scene: &Scene, rng: &mut Pcg64Mcg) -> (Vec3A, Vec3A, Vec3A) {
+pub fn render_beauty(mut ray: Ray, scene: &Scene, rng: &mut Pcg64Mcg) -> Vec3A {
     let mut color = Vec3A::ZERO;
     let mut throughput = Vec3A::ONE;
     let mut previous_bounce = PreviousBounce::None;
-    let mut first_albedo = Vec3A::ZERO;
-    let mut first_normal = Vec3A::ZERO;
 
     let bounces = 10;
 
@@ -114,11 +117,6 @@ pub fn render_beauty(mut ray: Ray, scene: &Scene, rng: &mut Pcg64Mcg) -> (Vec3A,
         );
 
         let Some(scatter_result) = material.generate_response(&ray, &hit_result, rng) else { break };
-
-        if bounce == 0 {
-            first_albedo = scatter_result.contribution;
-            first_normal = hit_result.shading_normal;
-        }
 
         if scatter_result.specular {
             throughput *= scatter_result.contribution;
@@ -139,7 +137,7 @@ pub fn render_beauty(mut ray: Ray, scene: &Scene, rng: &mut Pcg64Mcg) -> (Vec3A,
         }
     }
 
-    (color, first_albedo, first_normal)
+    color
 }
 
 // Store the material's weight so that we don't need to perform a best estimate
