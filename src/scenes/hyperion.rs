@@ -21,9 +21,9 @@ use mat;
 
 pub fn hyperion_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let origin = Vec3A::new(0.0, 6.0, 6.0);
-    let lookat = Vec3A::new(0.0, 0.0, -1.0);
+    let lookat = Vec3A::new(0.0, 0.0, -1.25);
     let view = Vec3A::new(0.0, 1.0, 0.0);
-    let fov = 29.0;
+    let fov = 25.0;
     let aspect_ratio = (width.unwrap_or(2048) as f32, height.unwrap_or(1024) as f32);
     let aperture = 0.01;
     let focus_distance = (lookat - origin).length();
@@ -43,13 +43,13 @@ pub fn hyperion_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let floor_idx = mat!(materials, Diffuse::new(Color::new(0.5, 0.5, 0.5).into(), 0.0));
     let glass_idx = mat!(materials, Refractive::new(1.5, Vec3A::ONE.into()));
     let metal_idx = mat!(materials, Reflective::new(Vec3A::new(0.93, 0.93, 0.93), 0.12));
-    let box_idx = mat!(materials, Diffuse::new(Color::new(0.75, 0.75, 0.75).into(), 0.0));
+    let platform_idx = mat!(materials, Diffuse::new(Color::new(0.75, 0.75, 0.75).into(), 0.0));
     // let vol_idx = mat!(materials, Volumetric::new(orange_color.into()));
     let orange_idx = mat!(materials, Plastic::new(orange_color.into(), 0.25, 1.45));
     let marble_idx = mat!(materials, Refractive::new(1.5, Vec3A::new(0.25, 0.48, 0.29)));
 
     let floor_plane = Plane::new(Axis::XZ, Bounds2D::new(-50.0..50.0, -50.0..50.0), 0.0, floor_idx);
-    let layout_box = Rectangle::new(Vec3A::new(-3.5, 0.0, -4.0), Vec3A::new(3.5, 0.2, 1.0), box_idx);
+    let platform = Rectangle::new(Vec3A::new(-3.5, 0.0, -4.0), Vec3A::new(3.5, 0.2, 0.5), platform_idx);
     let glass_sphere = Sphere::new(Vec3A::new(2.0, 0.60, -1.0), 0.4, glass_idx);
     // let orange_sphere = Sphere::new(Vec3A::new(1.0, 0.56, -2.0), 0.4, glass_idx);
     let orange_sphere = Sphere::new(Vec3A::new(1.0, 0.55, -2.0), 0.35, orange_idx);
@@ -63,7 +63,7 @@ pub fn hyperion_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let ring_transformed = TransformedMesh::new(Vec3A::new(-0.5, 0.20, -1.25), Vec3A::new(0.0, 0.0, 0.0), 0.15, ring_mesh);
 
     objects.push(floor_plane.into());
-    objects.push(layout_box.into());
+    objects.push(platform.into());
     objects.push(glass_sphere.into());
     objects.push(metal_sphere.into());
     objects.push(orange_sphere.into());
