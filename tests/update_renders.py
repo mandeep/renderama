@@ -7,7 +7,7 @@ from conftest import RENDER_SCENES
 
 @pytest.mark.update_renders
 @pytest.mark.parametrize("name, samples, resolution", RENDER_SCENES)
-def test_create_new_renders(name, samples, resolution, image_dir, tmp_path, rust_binary, read_exr):
+def test_create_new_renders(name, samples, resolution, image_dir, rust_binary):
     """Create new renders to test against.
     
     Run by calling pytest -m update_renders.

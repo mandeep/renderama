@@ -65,9 +65,13 @@ def pytest_collection_modifyitems(config, items):
     See https://docs.pytest.org/en/7.1.x/reference/reference.html?highlight=pytest_collection_modifyitems
     for more. Called after collection has been performed so skipped tests will still
     be collected.
+
+    Run the following command to update the reference images:
+    pytest -m update_renders
     """
-    if not config.getoption("--update-renders", default=False):
-        skip = pytest.mark.skip(reason="pass --update-renders to run")
+    marker_expr = getattr(config.option, "markexpr", "")
+    if "update_renders" not in marker_expr:
+        skip = pytest.mark.skip(reason="To update renders run pytest -m update_renders")
         for item in items:
             if item.get_closest_marker("update_renders"):
                 item.add_marker(skip)
