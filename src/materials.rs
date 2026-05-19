@@ -540,7 +540,7 @@ impl Plastic {
         if rng.random::<f32>() < fresnel {
             // this is the specular path
             let alpha = self.roughness;
-            let microfacet_normal = ggx_sample_vndf(shading_normal, -ray.direction, alpha, rng);
+            let microfacet_normal = ggx_sample_vndf(&shading_normal, &-ray.direction, &alpha, rng);
             let reflected = reflect(ray.direction, microfacet_normal);
 
             if shading_normal.dot(reflected) <= 0.0 {

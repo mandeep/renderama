@@ -47,12 +47,20 @@ impl PDF {
             PDF::Delta => panic!("Delta PDF has no meaningful probability."),
             PDF::GGX { wi, normal, alpha } => {
                 let cos_i = normal.dot(*wi);
-                if cos_i <= 0.0 { return 0.0; }
-                let h_unnorm = *wi + direction;
-                if h_unnorm.length_squared() < 1e-14 { return 0.0; }
-                let h = h_unnorm.normalize();
-                let cos_h = normal.dot(h);
-                if cos_h <= 0.0 || direction.dot(h) <= 0.0 { return 0.0; }
+                if cos_i <= 0.0 {
+                    return 0.0;
+                }
+
+                let half_vector = wi + direction;
+                if half_vector.length_squared() < 1e-14 {
+                    return 0.0;
+                }
+
+                let half_vector_norm = half_vector.normalize();
+                let cos_h = normal.dot(half_vector_norm);
+                if cos_h <= 0.0 || direction.dot(half_vector_norm) <= 0.0 {
+                    return 0.0;
+                }
 
                 ggx_distribution(cos_h, *alpha) * ggx_g1_masking(cos_i, *alpha) / (4.0 * cos_i)
             },
@@ -68,7 +76,7 @@ impl PDF {
             },
             PDF::Delta => panic!("Delta PDF should never be sampled directly."),
             PDF::GGX { wi, normal, alpha } => {
-                let h = ggx_sample_vndf(*normal, *wi, *alpha, rng);
+                let h = ggx_sample_vndf(normal, wi, alpha, rng);
                 let wi_dot_h = wi.dot(h);
                 if wi_dot_h <= 0.0 { return *normal; }
                 2.0 * wi_dot_h * h - *wi

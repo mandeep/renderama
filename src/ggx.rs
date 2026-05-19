@@ -77,21 +77,28 @@ pub fn ggx_geometry(cos_i: f32, cos_o: f32, alpha: f32) -> f32 {
 ///
 /// Reference: https://www.jcgt.org/published/0007/04/01/paper.pdf
 /// Full code implementation on page 10
-pub fn ggx_sample_vndf(normal: Vec3A, wi: Vec3A, alpha: f32, rng: &mut Pcg64Mcg) -> Vec3A {
+pub fn ggx_sample_vndf(normal: &Vec3A, wi: &Vec3A, alpha: &f32, rng: &mut Pcg64Mcg) -> Vec3A {
     let uvw = OrthonormalBasis::new(&normal);
+    // convert world to local
     let vh = Vec3A::new(wi.dot(uvw.u()), wi.dot(uvw.v()), wi.dot(uvw.w()));
-    if vh.z <= 0.0 { return uvw.w(); }
+    if vh.z <= 0.0 {
+        return uvw.w();
+    }
 
     let wi_s = Vec3A::new(alpha * vh.x, alpha * vh.y, vh.z).normalize();
 
     let lensq = wi_s.x * wi_s.x + wi_s.y * wi_s.y;
+
     let t1 = if lensq > 1e-10 {
         Vec3A::new(-wi_s.y, wi_s.x, 0.0) / lensq.sqrt()
     } else {
         Vec3A::new(1.0, 0.0, 0.0)
     };
+
     let t2 = wi_s.cross(t1);
 
+    // cosine sample hemisphere but not using function from sampling module
+    // as it would break tests. fix this when we refactor the function
     let u1 = rng.random::<f32>();
     let u2 = rng.random::<f32>();
     let r = u1.sqrt();
@@ -104,5 +111,6 @@ pub fn ggx_sample_vndf(normal: Vec3A, wi: Vec3A, alpha: f32, rng: &mut Pcg64Mcg)
     let nh = p1 * t1 + p2 * t2 + (1.0 - p1 * p1 - p2 * p2).max(0.0).sqrt() * wi_s;
 
     let nh_local = Vec3A::new(alpha * nh.x, alpha * nh.y, nh.z.max(0.0)).normalize();
+
     uvw.local(&nh_local)
 }
