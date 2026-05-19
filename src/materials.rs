@@ -550,12 +550,12 @@ impl Plastic {
             let specular_ray = Ray::new(offset_point, reflected);
             let pdf = PDF::GGX { wi: -ray.direction, normal: shading_normal, alpha };
 
-            Some(ScatterResult::new(specular_ray, Vec3A::ONE, pdf, false, true))
+            Some(ScatterResult::new(specular_ray, Vec3A::ONE, pdf, true, true))
         } else {
             // this is the diffuse path
             // even though ray.direction is given, a new ray with offset is generated in the integrator
             let scattered_ray = Ray::new(offset_point, ray.direction);
-            let contribution = self.albedo.sample_texture(result.u, result.v, &result.point) * (1.0 - fresnel);
+            let contribution = self.albedo.sample_texture(result.u, result.v, &result.point);
             let pdf = PDF::Cosine { uvw: OrthonormalBasis::new(&result.shading_normal) };
             Some(ScatterResult::new(scattered_ray, contribution, pdf, false, false))
         }
@@ -575,8 +575,6 @@ impl Plastic {
             return 0.0;
         }
 
-        let fresnel = schlick(cos_theta_i, self.ior);
-
-        (1.0 - fresnel) * cos_o / PI
+        cos_o / PI
     }
 }
