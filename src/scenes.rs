@@ -1,4 +1,5 @@
 use clap::ValueEnum;
+use rand_pcg::Pcg64Mcg;
 
 use scene::Scene;
 
@@ -44,7 +45,7 @@ pub enum Scenes {
 }
 
 impl Scenes {
-    pub fn load(&self, width: Option<usize>, height: Option<usize>) -> Scene {
+    pub fn load(&self, width: Option<usize>, height: Option<usize>, rng: &mut Pcg64Mcg) -> Scene {
         match self {
             Scenes::CornellBoxBoxes => cornell_box_scene(width, height),
             Scenes::CornellBoxBunny => cornell_box_bunny_scene(width, height),
@@ -52,8 +53,8 @@ impl Scenes {
             Scenes::CornellBoxObjects => cornell_box_object_scene(width, height),
             Scenes::EnergyConservation => energy_conservation_scene(width, height),
             Scenes::Hyperion => hyperion_scene(width, height),
-            Scenes::RandomSpheres => random_spheres_scene(width, height),
-            Scenes::SpheresInBox => spheres_in_box_scene(width, height),
+            Scenes::RandomSpheres => random_spheres_scene(width, height, rng),
+            Scenes::SpheresInBox => spheres_in_box_scene(width, height, rng),
             Scenes::ThreeSpheres => three_spheres_scene(width, height),
             Scenes::VeachMis => veach_mis_scene(width, height),
             Scenes::WhiteFurnace => white_furnace_scene(width, height),

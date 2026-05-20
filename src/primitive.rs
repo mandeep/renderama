@@ -1,5 +1,7 @@
 use std::sync::Arc;
 
+use rand_pcg::Pcg64Mcg;
+
 use aabb::AABB;
 use results::HitResult;
 use plane::Plane;
@@ -26,15 +28,15 @@ pub enum Primitive {
 }
 
 impl Primitive {
-    pub fn hit(&self, ray: &Ray, start_distance: f32, end_distance: f32) -> Option<HitResult> {
+    pub fn hit(&self, ray: &Ray, start_distance: f32, end_distance: f32, rng: &mut Pcg64Mcg) -> Option<HitResult> {
         match self {
             Primitive::Plane(p) => p.hit(ray, start_distance, end_distance),
-            Primitive::Rectangle(r) => r.hit(ray, start_distance, end_distance),
+            Primitive::Rectangle(r) => r.hit(ray, start_distance, end_distance, rng),
             Primitive::Sphere(s) => s.hit(ray, start_distance, end_distance),
             Primitive::Triangle(t) => t.hit(ray, start_distance, end_distance),
-            Primitive::TriangleMesh(m) => m.hit(ray, start_distance, end_distance),
+            Primitive::TriangleMesh(m) => m.hit(ray, start_distance, end_distance, rng),
             Primitive::ReverseOrientation(g) => {
-                if let Some(mut h) = g.hit(ray, start_distance, end_distance) {
+                if let Some(mut h) = g.hit(ray, start_distance, end_distance, rng) {
                     h.geometric_normal = -h.geometric_normal;
                     h.shading_normal = -h.shading_normal;
                     Some(h)
@@ -42,8 +44,8 @@ impl Primitive {
                     None
                 }
             },
-            Primitive::TransformedMesh(m) => m.hit(ray, start_distance, end_distance),
-            Primitive::Volume(v) => v.hit(ray, start_distance, end_distance)
+            Primitive::TransformedMesh(m) => m.hit(ray, start_distance, end_distance, rng),
+            Primitive::Volume(v) => v.hit(ray, start_distance, end_distance, rng)
         }
     }
 

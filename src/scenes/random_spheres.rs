@@ -1,6 +1,8 @@
 use std::f32;
 
 use glam::Vec3A;
+use rand::RngExt;
+use rand_pcg::Pcg64Mcg;
 
 use bvh::BVH;
 use camera::Camera;
@@ -12,7 +14,7 @@ use texture::Color;
 
 use mat;
 
-pub fn random_spheres_scene(width: Option<usize>, height: Option<usize>) -> Scene {
+pub fn random_spheres_scene(width: Option<usize>, height: Option<usize>, rng: &mut Pcg64Mcg) -> Scene {
     let origin = Vec3A::new(13.0, 2.0, 3.0);
     let lookat = Vec3A::new(0.0, 0.0, 0.0);
     let view = Vec3A::new(0.0, 1.0, 0.0);
@@ -53,11 +55,11 @@ pub fn random_spheres_scene(width: Option<usize>, height: Option<usize>) -> Scen
 
     for a in -11..11 {
         for b in -11..11 {
-            let material = rand::random::<f32>();
+            let material = rng.random::<f32>();
             let center: Vec3A = Vec3A::new(
-                a as f32 + 0.9 * rand::random::<f32>(),
+                a as f32 + 0.9 * rng.random::<f32>(),
                 0.2,
-                b as f32 + 0.9 * rand::random::<f32>());
+                b as f32 + 0.9 * rng.random::<f32>());
 
             let overlaps = placed.iter().any(|(c, r)| {
                 (center - *c).length() < 0.2 + r + 0.05
@@ -67,18 +69,18 @@ pub fn random_spheres_scene(width: Option<usize>, height: Option<usize>) -> Scen
 
             if material < 0.75 {
                 let material = Color::new(
-                    rand::random::<f32>() * rand::random::<f32>(),
-                    rand::random::<f32>() * rand::random::<f32>(),
-                    rand::random::<f32>() * rand::random::<f32>());
+                    rng.random::<f32>() * rng.random::<f32>(),
+                    rng.random::<f32>() * rng.random::<f32>(),
+                    rng.random::<f32>() * rng.random::<f32>());
                     // let roughness = rand::distributions::Uniform::new(0.0, 1.0);
                     let random_idx = mat!(materials, Diffuse::new(material.into(), 0.0));
                     objects.push(Sphere::new(center, 0.2, random_idx).into());
             } else if material < 0.95 {
                 let material = Reflective::new(Color::new(
-                    0.5 * (1.0 * rand::random::<f32>()),
-                    0.5 * (1.0 * rand::random::<f32>()),
-                    0.5 * (1.0 * rand::random::<f32>())).into(),
-                    0.5 * rand::random::<f32>());
+                    0.5 * (1.0 * rng.random::<f32>()),
+                    0.5 * (1.0 * rng.random::<f32>()),
+                    0.5 * (1.0 * rng.random::<f32>())).into(),
+                    0.5 * rng.random::<f32>());
                     let random_idx = mat!(materials, material);
                     objects.push(
                         Sphere::new(center, 0.2, random_idx).into());

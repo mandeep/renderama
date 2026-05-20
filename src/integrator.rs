@@ -38,7 +38,7 @@ impl Integrator {
     pub fn render_scene(&self, ray: Ray, scene: &Scene, rng: &mut Pcg64Mcg) -> Vec3A {
         match self {
             Integrator::Beauty => render_beauty(ray, &scene, rng),
-            Integrator::Normals => render_normals(ray, &scene),
+            Integrator::Normals => render_normals(ray, &scene, rng),
             Integrator::AmbientOcclusion => render_ambient_occlusion(ray, &scene, rng),
         }
     }
@@ -48,8 +48,8 @@ impl Integrator {
 ///
 /// Typically used in debugging whether or not the geometry in
 /// the scene is setup correctly.
-pub fn render_normals(ray: Ray, scene: &Scene) -> Vec3A {
-    if let Some(hit_result) = scene.accelerator.hit(&ray, 1e-4, f32::MAX) {
+pub fn render_normals(ray: Ray, scene: &Scene, rng: &mut Pcg64Mcg) -> Vec3A {
+    if let Some(hit_result) = scene.accelerator.hit(&ray, 1e-4, f32::MAX, rng) {
         let normal = hit_result.shading_normal;
         0.5 * Vec3A::new(normal.x + 1.0, normal.y + 1.0, normal.z + 1.0)
     } else {
@@ -72,7 +72,7 @@ pub fn render_normals(ray: Ray, scene: &Scene) -> Vec3A {
 pub fn render_ambient_occlusion(ray: Ray, scene: &Scene, rng: &mut Pcg64Mcg) -> Vec3A {
     let mut color: f32 = 0.0;
 
-    let Some(hit_result) = scene.accelerator.hit(&ray, 1e-4, f32::MAX) else {
+    let Some(hit_result) = scene.accelerator.hit(&ray, 1e-4, f32::MAX, rng) else {
         return Vec3A::ONE;
     };
 
@@ -82,7 +82,7 @@ pub fn render_ambient_occlusion(ray: Ray, scene: &Scene, rng: &mut Pcg64Mcg) -> 
     let offset_point = find_offset_point(hit_result.point, hit_result.geometric_normal);
     let ao_ray = Ray::new(offset_point, direction);
 
-    if !scene.accelerator.hits_anything(&ao_ray, 1e-3, f32::MAX) {
+    if !scene.accelerator.hits_anything(&ao_ray, 1e-3, f32::MAX, rng) {
         color += 1.0;
     }
     Vec3A::splat(color)
@@ -104,7 +104,7 @@ pub fn render_beauty(mut ray: Ray, scene: &Scene, rng: &mut Pcg64Mcg) -> Vec3A {
     let bounces = 10;
 
     for bounce in 0..=bounces {
-        let Some(hit_result) = scene.accelerator.hit(&ray, 1e-4, f32::MAX) else {
+        let Some(hit_result) = scene.accelerator.hit(&ray, 1e-4, f32::MAX, rng) else {
             color +=
                 evaluate_missed_ray(&ray, &previous_bounce, &scene, &throughput);
             break;
@@ -248,7 +248,7 @@ fn evaluate_direct_lighting(
         let shadow_ray = Ray::new(shadow_origin, light_direction);
         let end_distance = light_source.calculate_distance_from(light_distance);
 
-        if !scene.accelerator.hits_anything(&shadow_ray, 1e-3, end_distance) {
+        if !scene.accelerator.hits_anything(&shadow_ray, 1e-3, end_distance, rng) {
             let light_weight = light_source.evaluate_sampling_weight(&shadow_ray);
             if light_weight > 1e-7 {
                 let reflectance = material.compute_reflectance(&ray, &hit_result, &shadow_ray);
@@ -265,7 +265,7 @@ fn evaluate_direct_lighting(
         if environment_weight > 1e-7 {
             let shadow_origin = hit_result.point + hit_result.geometric_normal * 1e-3;
             let environment_shadow_ray = Ray::new(shadow_origin, environment_direction);
-            if scene.accelerator.hit(&environment_shadow_ray, 1e-3, f32::MAX).is_none() {
+            if scene.accelerator.hit(&environment_shadow_ray, 1e-3, f32::MAX, rng).is_none() {
                 let environment_value = environment.sample_map(0.0, 0.0, &environment_direction);
                 let material_weight = scatter_result.sampling_strategy.calculate_probability(environment_direction);
                 let reflectance = material.compute_reflectance(&ray, &hit_result, &environment_shadow_ray);

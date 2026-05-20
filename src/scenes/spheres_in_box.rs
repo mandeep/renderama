@@ -2,6 +2,8 @@ use std::f32;
 use std::sync::Arc;
 
 use glam::Vec3A;
+use rand::RngExt;
+use rand_pcg::Pcg64Mcg;
 
 use bvh::BVH;
 use camera::Camera;
@@ -19,7 +21,7 @@ use volume::Volume;
 use mat;
 
 
-pub fn spheres_in_box_scene(width: Option<usize>, height: Option<usize>) -> Scene {
+pub fn spheres_in_box_scene(width: Option<usize>, height: Option<usize>, rng: &mut Pcg64Mcg) -> Scene {
     let origin = Vec3A::new(478.0, 278.0, -600.0);
     let lookat = Vec3A::new(278.0, 278.0, 0.0);
     let view = Vec3A::new(0.0, 1.0, 0.0);
@@ -50,7 +52,7 @@ pub fn spheres_in_box_scene(width: Option<usize>, height: Option<usize>) -> Scen
         for j in 0..number_of_boxes {
             let w = 100.0;
             let p0 = Vec3A::new(-1000.0 + i as f32 * w, 0.0, -1000.0 + j as f32 * w);
-            let p1 = p0 + Vec3A::new(w, 100.0 * (rand::random::<f32>() + 0.01), w);
+            let p1 = p0 + Vec3A::new(w, 100.0 * (rng.random::<f32>() + 0.01), w);
             objects.push(Rectangle::new(p0, p1, snow).into());
         }
     }
@@ -103,9 +105,9 @@ pub fn spheres_in_box_scene(width: Option<usize>, height: Option<usize>) -> Scen
 
     let number_of_spheres = 1000;
     for _ in 0..number_of_spheres {
-        let center = Vec3A::new(165.0 * rand::random::<f32>(),
-                               165.0 * rand::random::<f32>(),
-                               165.0 * rand::random::<f32>());
+        let center = Vec3A::new(165.0 * rng.random::<f32>(),
+                               165.0 * rng.random::<f32>(),
+                               165.0 * rng.random::<f32>());
 
         let sphere = Sphere::new(center, 10.0, white);
         let transformed_sphere = TransformedMesh::new(Vec3A::new(-100.0, 270.0, 395.0), Vec3A::new(0.0, 15.0, 0.0), Vec3A::ONE, sphere.into());

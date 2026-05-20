@@ -2,6 +2,7 @@ use std::f32;
 use std::sync::Arc;
 
 use glam::{Mat4, Vec3A, Vec3};
+use rand_pcg::Pcg64Mcg;
 
 use aabb::AABB;
 use primitive::Primitive;
@@ -108,7 +109,7 @@ impl TransformedMesh {
     }
 
     /// Determine whether the TransformedMesh has been hit by the given ray.
-    pub fn hit(&self, ray: &Ray, start_distance: f32, end_distance: f32) -> Option<HitResult> {
+    pub fn hit(&self, ray: &Ray, start_distance: f32, end_distance: f32, rng: &mut Pcg64Mcg) -> Option<HitResult> {
         // transform the ray from world space into local space using the inverse transform
         let local_origin = self.inverse_transform.transform_point3(ray.origin.into());
         let local_direction = self.inverse_transform.transform_vector3(ray.direction.into());
@@ -123,7 +124,7 @@ impl TransformedMesh {
         // construct the local space ray
         let local_ray = Ray::new(local_origin.into(), local_direction_normalized.into());
 
-        if let Some(hit) = self.primitive.hit(&local_ray, local_start_distance, local_end_distance) {
+        if let Some(hit) = self.primitive.hit(&local_ray, local_start_distance, local_end_distance, rng) {
             // transform the hit attributes back into world space before returning them
             // in a new HitResult
             let parameter = hit.parameter / local_direction_length;

@@ -87,9 +87,15 @@ fn main() {
 
     let args = Args::parse();
 
+    let mut scene_rng = if cfg!(feature = "tests") {
+        Pcg64Mcg::seed_from_u64(0)
+    } else {
+        Pcg64Mcg::from_rng(&mut rng())
+    };
+
     let integrator: Integrator = args.integrator;
     let samples: usize = args.samples.unwrap_or(integrator.default_samples());
-    let scene: Scene = args.scene.load(args.width, args.height);
+    let scene: Scene = args.scene.load(args.width, args.height, &mut scene_rng);
     let (width, height) = (scene.camera.resolution.0 as usize, scene.camera.resolution.1 as usize);
     let output_path = args.output;
 

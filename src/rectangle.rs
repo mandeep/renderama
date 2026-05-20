@@ -1,4 +1,5 @@
 use glam::Vec3A;
+use rand_pcg::Pcg64Mcg;
 
 use aabb::AABB;
 use results::HitResult;
@@ -50,10 +51,10 @@ impl Rectangle {
 
     /// Iterate through each of the Plane primitives held in the primitives Vec and
     /// call their hit method. Return the closest hit if it exists.
-    pub fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitResult> {
+    pub fn hit(&self, ray: &Ray, position_min: f32, position_max: f32, rng: &mut Pcg64Mcg) -> Option<HitResult> {
         self.primitives
         .iter()
-        .filter_map(|plane| plane.hit(ray, position_min, position_max))
+        .filter_map(|plane| plane.hit(ray, position_min, position_max, rng))
         .filter(|hit| hit.parameter.is_finite())
         .min_by(|a, b| a.parameter.partial_cmp(&b.parameter).unwrap())
     }

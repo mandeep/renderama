@@ -1,6 +1,7 @@
 use std::f32;
 
 use glam::{Vec2, Vec3A};
+use rand_pcg::Pcg64Mcg;
 use tobj;
 
 use aabb::AABB;
@@ -196,8 +197,8 @@ impl TriangleMesh {
         TriangleMesh::new(triangles)
     }
 
-    pub fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitResult> {
-        self.accelerator.hit(ray, position_min, position_max)
+    pub fn hit(&self, ray: &Ray, position_min: f32, position_max: f32, rng: &mut Pcg64Mcg) -> Option<HitResult> {
+        self.accelerator.hit(ray, position_min, position_max, rng)
     }
 
     pub fn bounding_box(&self) -> Option<AABB> {

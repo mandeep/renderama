@@ -7,6 +7,7 @@
 //! https://research.nvidia.com/sites/default/files/pubs/2013-09_On-Quality-Metrics/aila2013hpg_paper.pdf
 //! https://pbr-book.org/3ed-2018/Primitives_and_Intersection_Acceleration/Bounding_Volume_Hierarchies
 use std::sync::Arc;
+use rand_pcg::Pcg64Mcg;
 
 use glam::Vec3A;
 use wide::f32x4;
@@ -399,7 +400,7 @@ impl BVH {
     }
 
     /// Traverse the BVH and return the closest hit.
-    pub fn hit(&self, ray: &Ray, start_distance: f32, end_distance: f32) -> Option<HitResult> {
+    pub fn hit(&self, ray: &Ray, start_distance: f32, end_distance: f32, rng: &mut Pcg64Mcg) -> Option<HitResult> {
         // we iterate the traversal with a depth of 64 which should be okay for
         // millions of objects
         let mut stack: [u32; 64] = [0; 64];
@@ -427,7 +428,7 @@ impl BVH {
             if is_leaf(node_ref) {
                 let leaf = &self.leaves[leaf_index(node_ref)];
                 if leaf.bbox.hit(ray, start_distance, closest_distance) {
-                    if let Some(hit) = leaf.primitive.hit(ray, start_distance, closest_distance) {
+                    if let Some(hit) = leaf.primitive.hit(ray, start_distance, closest_distance, rng) {
                         if hit.parameter < closest_distance {
                             closest_distance = hit.parameter;
                             best_hit = Some(hit);
@@ -488,7 +489,7 @@ impl BVH {
     }
 
     /// Test if a shadow ray hits anything on its path to the light source
-    pub fn hits_anything(&self, ray: &Ray, start_distance: f32, end_distance: f32) -> bool {
+    pub fn hits_anything(&self, ray: &Ray, start_distance: f32, end_distance: f32, rng: &mut Pcg64Mcg) -> bool {
         let mut stack: [u32; 64] = [0; 64];
         let mut stack_ptr: usize = 0;
 
@@ -511,7 +512,7 @@ impl BVH {
             if is_leaf(node_ref) {
                 let leaf = &self.leaves[leaf_index(node_ref)];
                 if leaf.bbox.hit(ray, start_distance, end_distance) {
-                    if leaf.primitive.hit(ray, start_distance, end_distance).is_some() {
+                    if leaf.primitive.hit(ray, start_distance, end_distance, rng).is_some() {
                         return true;
                     }
                 }
