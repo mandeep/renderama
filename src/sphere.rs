@@ -131,10 +131,8 @@ impl Sphere {
         // uniformly sample from a cone as it's more efficient and more likely to hit
         // the spherical light
         let cos_theta_max = (1.0 - self.radius * self.radius / distance_squared).sqrt();
-        let [cos_theta, sin_theta, phi] = uniform_sample_cone(cos_theta_max, rng).to_array();
-
+        let local_direction = uniform_sample_cone(cos_theta_max, rng);
         let basis = OrthonormalBasis::new(&to_center);
-
-        distance * basis.local(&Vec3A::new(phi.cos() * sin_theta, phi.sin() * sin_theta, cos_theta))
+        distance * basis.local(&local_direction)
     }
 }

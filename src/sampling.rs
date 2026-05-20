@@ -85,12 +85,15 @@ pub fn uniform_sample_sphere(rng: &mut Pcg64Mcg) -> Vec3A {
 ///
 /// Needed when sampling items that subtend a cone of directions like
 /// the sun or other light sources.
+///
+/// References: https://pbr-book.org/3ed-2018/Light_Transport_I_Surface_Reflection/Sampling_Light_Sources
 pub fn uniform_sample_cone(cos_theta_max: f32, rng: &mut Pcg64Mcg) -> Vec3A {
     let r1 = rng.random::<f32>();
     let r2 = rng.random::<f32>();
-    let cos_theta = 1.0 + r1 * (cos_theta_max - 1.0); // r1=0 → 1, r1=1 → cos_θ_max
+    let cos_theta = 1.0 + r1 * (cos_theta_max - 1.0);
     let sin_theta = (1.0 - cos_theta * cos_theta).max(0.0).sqrt();
     let phi = 2.0 * PI * r2;
+    let (sin_phi, cos_phi) = phi.sin_cos();
 
-    Vec3A::new(cos_theta, sin_theta, phi)
+    Vec3A::new(sin_theta * cos_phi, sin_theta * sin_phi, cos_theta)
 }
