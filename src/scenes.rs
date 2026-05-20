@@ -1,4 +1,3 @@
-#![allow(unused_imports)]
 use clap::ValueEnum;
 
 use scene::Scene;
