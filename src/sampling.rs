@@ -46,7 +46,6 @@ pub fn cosine_sample_hemisphere(rng: &mut Pcg64Mcg) -> Vec3A {
     Vec3A::new(x, y, z)
 }
 
-#[allow(unused)]
 /// Sample uniformly on a hemisphere.
 ///
 /// Useful when equal probability across a hemisphere is necessary.

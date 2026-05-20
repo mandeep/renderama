@@ -8,7 +8,6 @@ use ggx::{ggx_distribution, ggx_g1_masking, ggx_sample_vndf};
 use sampling::{cosine_sample_hemisphere, pick_sphere_point};
 
 
-#[allow(unused)]
 /// The balance heuristic weighs samples by their relative PDF contribution.
 ///
 /// Reference: https://pbr-book.org/3ed-2018/Monte_Carlo_Integration/Importance_Sampling
