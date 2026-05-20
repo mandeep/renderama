@@ -8,7 +8,7 @@ use environment::EnvironmentMap;
 use materials::{Diffuse, Reflective, Refractive, Material};
 use scene::Scene;
 use sphere::Sphere;
-use texture::{Color, Texture};
+use texture::Color;
 
 use mat;
 

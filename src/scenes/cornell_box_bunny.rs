@@ -7,10 +7,10 @@ use bvh::BVH;
 use camera::Camera;
 use primitive::{Primitive};
 use lights::Light;
-use materials::{Diffuse, Emissive, Plastic, Reflective, Refractive, Material};
+use materials::{Diffuse, Emissive, Reflective, Refractive, Material};
 use plane::{Axis, Bounds2D, Plane};
 use scene::Scene;
-use texture::{ImageTexture, Color};
+use texture::Color;
 use transformations::TransformedMesh;
 use triangle::TriangleMesh;
 

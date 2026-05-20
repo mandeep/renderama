@@ -5,14 +5,10 @@ use glam::Vec3A;
 use atmosphere::Atmosphere;
 use bvh::BVH;
 use camera::Camera;
-use lights::Light;
-use materials::{Diffuse, Emissive, Material, Reflective};
-use plane::{Axis, Bounds2D, Plane};
-use rectangle::Rectangle;
+use materials::{Material, Reflective};
 use scene::Scene;
 use sphere::Sphere;
 use texture::{Color};
-use transformations::TransformedMesh;
 
 use mat;
 

@@ -5,10 +5,10 @@ use glam::Vec3A;
 use bvh::BVH;
 use camera::Camera;
 use lights::Light;
-use materials::{Diffuse, Emissive, Plastic, Refractive, Material};
+use materials::{Diffuse, Emissive, Plastic, Material};
 use plane::{Axis, Bounds2D, Plane};
 use scene::Scene;
-use texture::{Color, ImageTexture};
+use texture::Color;
 use transformations::TransformedMesh;
 use triangle::TriangleMesh;
 
