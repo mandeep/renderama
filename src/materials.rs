@@ -104,14 +104,14 @@ impl Material {
     }
 
     /// Compute the manner in which the material reflects/absorbs light
-    pub fn compute_reflectance(&self, ray: &Ray, hit: &HitResult, scattered: &Ray) -> f32 {
+    pub fn compute_reflectance(&self, ray: &Ray, hit: &HitResult, scattered: &Ray) -> Vec3A {
         match self {
             Material::Diffuse(m) => m.compute_reflectance(ray, hit, scattered),
-            Material::Emissive(_) => 0.0,
+            Material::Emissive(_) => Vec3A::ZERO,
             Material::Plastic(m) => m.compute_reflectance(ray, hit, scattered),
             Material::Reflective(m) => m.compute_reflectance(ray, hit, scattered),
-            Material::Refractive(_) => 0.0,
-            Material::Volumetric(_) => 1.0 / (4.0 * PI),
+            Material::Refractive(_) => Vec3A::ZERO,
+            Material::Volumetric(_) => Vec3A::splat(1.0 / (4.0 * PI)),
         }
     }
 }
@@ -166,7 +166,7 @@ impl Diffuse {
     /// https://mimosa-pudica.net/improved-oren-nayar.html
     ///
     /// https://developer.blender.org/diffusion/C/browse/master/src/kernel/closure/bsdf_oren_nayar.h
-    fn compute_reflectance(&self, wo: &Ray, result: &HitResult, wi: &Ray) -> f32 {
+    fn compute_reflectance(&self, wo: &Ray, result: &HitResult, wi: &Ray) -> Vec3A {
         let l = wi.direction;
         let v = wo.direction;
         let n = result.shading_normal;
@@ -178,7 +178,8 @@ impl Diffuse {
         let s = lv - nl * nv;
         let t = if s > 0.0 { nl.max(nv) } else { 1.0 };
 
-        nl * (self.alpha + self.beta * s / t)
+        let diffuse = nl * (self.alpha + self.beta * s / t);
+        Vec3A::splat(diffuse)
     }
 }
 
@@ -309,16 +310,19 @@ impl Reflective {
         let offset_point = find_offset_point(result.point, geometric_normal);
         let reflected = reflect(ray.direction, shading_normal);
         let scattered_ray = Ray::new(offset_point, reflected);
-        let contribution = self.albedo.sample_texture(result.u, result.v, &result.point);
+
+        let f0 = self.albedo.sample_texture(result.u, result.v, &result.point);
+        let cos_theta_i = (-ray.direction).dot(shading_normal).max(0.0);
+        let fresnel = f0 + (Vec3A::ONE - f0) * (1.0 - cos_theta_i).powi(5);
 
         if self.roughness == 0.0 {
             // if roughness is set to 0.0, then handle this as a pre-weighted
             // specular material and skip NEE
             let pdf = PDF::Delta;
-            Some(ScatterResult::new(scattered_ray, contribution, pdf, true, true))
+            Some(ScatterResult::new(scattered_ray, fresnel, pdf, true, true))
         } else {
             let pdf = PDF::GGX { wi: -ray.direction, normal: shading_normal, alpha: self.roughness };
-            Some(ScatterResult::new(scattered_ray, contribution, pdf, false, true))
+            Some(ScatterResult::new(scattered_ray, fresnel, pdf, false, true))
         }
     }
 
@@ -326,8 +330,8 @@ impl Reflective {
     ///
     /// References:
     /// https://learnopengl.com/PBR/Theory
-    fn compute_reflectance(&self, ray: &Ray, result: &HitResult, scattered: &Ray) -> f32 {
-        if self.roughness == 0.0 { return 0.0; }
+    fn compute_reflectance(&self, ray: &Ray, result: &HitResult, scattered: &Ray) -> Vec3A {
+        if self.roughness == 0.0 { return Vec3A::ZERO; }
 
         let wi = -ray.direction;
         let wo = scattered.direction;
@@ -339,7 +343,7 @@ impl Reflective {
         // if the dot product is less than 0 then the rays are below the horizon
         // of the surface and don't contribute to reflectance
         if cos_i <= 0.0 || cos_o <= 0.0 {
-            return 0.0;
+            return Vec3A::ZERO;
         }
 
         let h = (wi + wo).normalize();
@@ -348,13 +352,24 @@ impl Reflective {
         // a safety check for the half-way vector that may be unnecessary
         // since we checked cos_i and cos_o beforehand
         if cos_h <= 0.0 {
-            return 0.0;
+            return Vec3A::ZERO;
         }
 
-        // currently there is intentionally no fresnel term in the numerator
-        // as Reflective is a singular specular lobe. Once a diffuse lobe is added
-        // we can add in the fresnel term in this Cook-Torrance calculation.
-        ggx_distribution(cos_h, self.roughness) * ggx_geometry(cos_i, cos_o, self.roughness) / (4.0 * cos_i)
+        let f0 = self.albedo.sample_texture(result.u, result.v, &result.point);
+
+        let v_dot_h = wi.dot(h);
+        let l_dot_h = wo.dot(h);
+
+        // performing this check so that we don't end up with fireflies
+        if v_dot_h <= 0.0 || l_dot_h <= 0.0 {
+            return Vec3A::ZERO;
+        }
+
+        let f = f0 + (Vec3A::ONE - f0) * (1.0 - v_dot_h).powi(5);
+        let d = ggx_distribution(cos_h, self.roughness);
+        let g = ggx_geometry(cos_i, cos_o, self.roughness);
+
+        (f * d * g)  / (4.0 * cos_i)
     }
 }
 
@@ -562,7 +577,7 @@ impl Plastic {
     }
 
     /// Compute how the Plastic material handles reflectance.
-    fn compute_reflectance(&self, wo: &Ray, result: &HitResult, wi: &Ray) -> f32 {
+    fn compute_reflectance(&self, wo: &Ray, result: &HitResult, wi: &Ray) -> Vec3A {
         // we only need to compute the reflectance for the diffuse branch since
         // the specular branch is pre_weighted and this method is only called
         // for non-pre_weighted branches
@@ -572,9 +587,9 @@ impl Plastic {
         let cos_theta_i = (-wo.direction).dot(n);
 
         if cos_o <= 0.0 || cos_theta_i < 0.0 {
-            return 0.0;
+            return Vec3A::ZERO;
         }
 
-        cos_o / PI
+        Vec3A::splat(cos_o / PI)
     }
 }
