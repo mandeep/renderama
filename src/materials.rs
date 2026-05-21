@@ -7,7 +7,7 @@ use rand_pcg::Pcg64Mcg;
 
 use basis::OrthonormalBasis;
 use results::{HitResult, ScatterResult};
-use ggx::{ggx_distribution, ggx_geometry, ggx_sample_vndf};
+use ggx::{ggx_distribution, ggx_geometry};
 use pdf::PDF;
 use ray::{find_offset_point, Ray};
 use sampling::pick_sphere_point;
@@ -541,10 +541,7 @@ impl Plastic {
 
     /// Generate either a specular or diffuse response to a surface hit, dependent
     /// on a random reflect probability.
-    fn generate_response(&self, ray: &Ray, result: &HitResult, rng: &mut Pcg64Mcg) -> Option<ScatterResult> {
-        let cos_theta_i = (-ray.direction).dot(result.shading_normal).max(0.0);
-        let fresnel = schlick_from_ior(cos_theta_i, self.ior);
-
+    fn generate_response(&self, ray: &Ray, result: &HitResult, _rng: &mut Pcg64Mcg) -> Option<ScatterResult> {
         let geometric_normal = if ray.direction.dot(result.geometric_normal) < 0.0 {
             result.geometric_normal
         } else {
@@ -557,49 +554,56 @@ impl Plastic {
             result.shading_normal
         };
 
+        let cos_theta_i = (-ray.direction).dot(result.shading_normal).max(0.0);
+        let fresnel = schlick_from_ior(cos_theta_i, self.ior);
+
         let offset_point = find_offset_point(result.point, geometric_normal);
+        let scattered_ray = Ray::new(offset_point, ray.direction);
 
-        // probabilistically pick specular or diffuse based on Fresnel.
-        // this material has two lobes, specular and diffuse. in the future
-        // we need to work on returning both lobes rather than picking one randomly.
-        if rng.random::<f32>() < fresnel {
-            // this is the specular path
-            let alpha = self.roughness;
-            let microfacet_normal = ggx_sample_vndf(&shading_normal, &-ray.direction, &alpha, rng);
-            let reflected = reflect(ray.direction, microfacet_normal);
+        let pdf = PDF::Composite {
+            uvw: OrthonormalBasis::new(&shading_normal),
+            wi: -ray.direction,
+            normal: shading_normal,
+            alpha: self.roughness,
+            specular_weight: fresnel,
+        };
 
-            if shading_normal.dot(reflected) <= 0.0 {
-                return None;
-            }
-
-            let specular_ray = Ray::new(offset_point, reflected);
-            let pdf = PDF::GGX { wi: -ray.direction, normal: shading_normal, alpha };
-
-            Some(ScatterResult::new(specular_ray, Vec3A::ONE, pdf, true, true))
-        } else {
-            // this is the diffuse path
-            // even though ray.direction is given, a new ray with offset is generated in the integrator
-            let scattered_ray = Ray::new(offset_point, ray.direction);
-            let contribution = self.albedo.sample_texture(result.u, result.v, &result.point);
-            let pdf = PDF::Cosine { uvw: OrthonormalBasis::new(&result.shading_normal) };
-            Some(ScatterResult::new(scattered_ray, contribution, pdf, false, false))
-        }
+        Some(ScatterResult::new(scattered_ray, Vec3A::ONE, pdf, false, false))
     }
 
     /// Compute how the Plastic material handles reflectance.
-    fn compute_reflectance(&self, wo: &Ray, result: &HitResult, wi: &Ray) -> Vec3A {
-        // we only need to compute the reflectance for the diffuse branch since
-        // the specular branch is pre_weighted and this method is only called
-        // for non-pre_weighted branches
+    fn compute_reflectance(&self, ray: &Ray, result: &HitResult, scattered: &Ray) -> Vec3A {
+        if self.roughness == 0.0 { return Vec3A::ZERO; }
+
+        let wi = -ray.direction;
+        let wo = scattered.direction;
         let n = result.shading_normal;
 
-        let cos_o = n.dot(wi.direction);
-        let cos_theta_i = (-wo.direction).dot(n);
+        let cos_i = n.dot(wi);
+        let cos_o = n.dot(wo);
 
-        if cos_o <= 0.0 || cos_theta_i < 0.0 {
+        if cos_i <= 0.0 || cos_o <= 0.0 {
             return Vec3A::ZERO;
         }
 
-        Vec3A::splat(cos_o / PI)
+        let h = (wi + wo).normalize();
+        let cos_h = n.dot(h);
+
+        if cos_h <= 0.0 {
+            return Vec3A::ZERO;
+        }
+
+        let v_dot_h = wi.dot(h).max(0.0);
+        let micro_fresnel = schlick_from_ior(v_dot_h, self.ior);
+
+        let d = ggx_distribution(cos_h, self.roughness);
+        let g = ggx_geometry(cos_i, cos_o, self.roughness);
+        let specular = Vec3A::splat(micro_fresnel * d * g / (4.0 * cos_i));
+
+        let macro_fresnel = schlick_from_ior(cos_i, self.ior);
+        let albedo = self.albedo.sample_texture(result.u, result.v, &result.point);
+        let diffuse = albedo * (1.0 - macro_fresnel) * cos_o / PI;
+
+        specular + diffuse
     }
 }

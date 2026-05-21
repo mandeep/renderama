@@ -1,6 +1,7 @@
 use std::f32::consts::PI;
 
 use glam::Vec3A;
+use rand::RngExt;
 use rand_pcg::Pcg64Mcg;
 
 use basis::OrthonormalBasis;
@@ -30,6 +31,7 @@ pub fn power_heuristic(f_pdf: f32, g_pdf: f32) -> f32 {
 /// to determine how likely a ray is to be sampled in that direction.
 pub enum PDF {
     Cosine { uvw: OrthonormalBasis },
+    Composite { uvw: OrthonormalBasis, wi: Vec3A, normal: Vec3A, alpha: f32, specular_weight: f32 },
     Delta,
     GGX { wi: Vec3A, normal: Vec3A, alpha: f32 },
     Uniform,
@@ -43,6 +45,12 @@ impl PDF {
                 let cosine = direction.dot(uvw.w());
                 if cosine > 0.0 { cosine / PI } else { 0.0 }
             },
+            PDF::Composite { uvw, wi, normal, alpha, specular_weight } => {
+                let diffuse_pdf = PDF::Cosine { uvw: *uvw }.calculate_probability(direction);
+                let specular_pdf = PDF::GGX { wi: *wi, normal: *normal, alpha: *alpha }.calculate_probability(direction);
+
+                (*specular_weight * specular_pdf) + ((1.0 - *specular_weight) * diffuse_pdf)
+            }
             PDF::Delta => panic!("Delta PDF has no meaningful probability."),
             PDF::GGX { wi, normal, alpha } => {
                 let cos_i = normal.dot(*wi);
@@ -73,6 +81,13 @@ impl PDF {
             PDF::Cosine { uvw } => {
                 uvw.local(&cosine_sample_hemisphere(rng))
             },
+            PDF::Composite { uvw, wi, normal, alpha, specular_weight } => {
+                if rng.random::<f32>() < *specular_weight {
+                    PDF::GGX { wi: *wi, normal: *normal, alpha: *alpha }.pick_direction(rng)
+                } else {
+                    PDF::Cosine { uvw: *uvw }.pick_direction(rng)
+                }
+            }
             PDF::Delta => panic!("Delta PDF should never be sampled directly."),
             PDF::GGX { wi, normal, alpha } => {
                 let h = ggx_sample_vndf(normal, wi, alpha, rng);
