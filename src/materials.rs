@@ -223,9 +223,19 @@ fn refract(v: Vec3A, n: Vec3A, refractive_index: f32) -> Option<Vec3A> {
 /// For derivation see Section 10.10.3 in Mathematical and Computer Programming
 /// Techniques for Computer Graphics by Peter Comininos and
 /// https://en.wikipedia.org/wiki/Schlick's_approximation.
-fn schlick(cosine: f32, reference_index: f32) -> f32 {
-    let r0: f32 = ((1.0 - reference_index) / (1.0 + reference_index)).powi(2);
+fn schlick_from_ior(cosine: f32, reference_index: f32) -> f32 {
+    let r = (1.0 - reference_index) / (1.0 + reference_index);
+    let r0 = r.powi(2);
     r0 + (1.0 - r0) * (1.0 - cosine).powi(5)
+}
+
+/// Calculate the Schlick approximation for conductors.
+///
+/// For conductors, like metal, the Schlick term is
+/// approximated from the base color of the object's
+/// material, f0 in this case.
+fn schlick_from_f0(cosine: f32, f0: Vec3A) -> Vec3A {
+    f0 + (Vec3A::ONE - f0) * (1.0 - cosine).powi(5)
 }
 
 /// Fresnel equations are used to compute physically accurate transmission.
@@ -313,7 +323,7 @@ impl Reflective {
 
         let f0 = self.albedo.sample_texture(result.u, result.v, &result.point);
         let cos_theta_i = (-ray.direction).dot(shading_normal).max(0.0);
-        let fresnel = f0 + (Vec3A::ONE - f0) * (1.0 - cos_theta_i).powi(5);
+        let fresnel = schlick_from_f0(cos_theta_i, f0);
 
         if self.roughness == 0.0 {
             // if roughness is set to 0.0, then handle this as a pre-weighted
@@ -365,11 +375,11 @@ impl Reflective {
             return Vec3A::ZERO;
         }
 
-        let f = f0 + (Vec3A::ONE - f0) * (1.0 - v_dot_h).powi(5);
+        let f = schlick_from_f0(v_dot_h, f0);
         let d = ggx_distribution(cos_h, self.roughness);
         let g = ggx_geometry(cos_i, cos_o, self.roughness);
 
-        (f * d * g)  / (4.0 * cos_i)
+        (f * d * g) / (4.0 * cos_i)
     }
 }
 
@@ -533,7 +543,7 @@ impl Plastic {
     /// on a random reflect probability.
     fn generate_response(&self, ray: &Ray, result: &HitResult, rng: &mut Pcg64Mcg) -> Option<ScatterResult> {
         let cos_theta_i = (-ray.direction).dot(result.shading_normal).max(0.0);
-        let fresnel = schlick(cos_theta_i, self.ior);
+        let fresnel = schlick_from_ior(cos_theta_i, self.ior);
 
         let geometric_normal = if ray.direction.dot(result.geometric_normal) < 0.0 {
             result.geometric_normal
