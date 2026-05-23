@@ -45,14 +45,14 @@ pub fn hyperion_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let floor_idx = mat!(materials, Diffuse::new(Color::new(0.63, 0.61, 0.59).into(), 0.0));
     let glass_idx = mat!(materials, Refractive::new(Color::new(1.0, 1.0, 1.0).into(), 1.5));
     let metal_idx = mat!(materials, Reflective::new(Color::new(0.93, 0.93, 0.93).into(), 0.2));
-    let dark_metal_idx = mat!(materials, Reflective::new(Color::new(0.757, 0.729, 0.694).into(), 0.2));
+    let dark_metal_idx = mat!(materials, Reflective::new(Color::new(0.757, 0.729, 0.694).into(), 0.10));
     let platform_idx = mat!(materials, Diffuse::new(Color::new(0.76, 0.74, 0.72).into(), 0.0));
     // let vol_idx = mat!(materials, Volumetric::new(orange_color.into()));
     let orange_idx = mat!(materials, Plastic::new(orange_color.into(), 0.15, 1.5));
     let orange_rough_idx = mat!(materials, Plastic::new(orange_bright_color.into(), 0.25, 1.5));
     let marble_vol_idx = mat!(materials, Volumetric::new(Color::new(0.60, 0.71, 0.49).into()));
     let cricket_idx = mat!(materials, Diffuse::new(ImageTexture::new("docs/textures/cricket_ball_diffuse.jpg", 1.0).into(), 0.0));
-    let pingpong_idx = mat!(materials, Diffuse::new(ImageTexture::new("docs/textures/pingpong.jpg", 1.0).into(), 0.0));
+    let pingpong_idx = mat!(materials, Plastic::new(Color::new(0.93, 0.89, 0.85).into(), 0.35, 1.45));
     let white_idx = mat!(materials, Plastic::new(Color::new(1.0, 1.0, 1.0).into(), 0.1, 1.45));
 
     let floor_plane = Plane::new(Axis::XZ, Bounds2D::new(-50.0..50.0, -50.0..50.0), 0.0, floor_idx);
@@ -77,7 +77,8 @@ pub fn hyperion_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let cricket_ball_mesh = TriangleMesh::from("docs/models/cricket_ball.obj", cricket_idx);
     let cricked_ball = TransformedMesh::new(Vec3A::new(-0.6, 0.70, -2.5), Vec3A::new(-30.0, 0.0, 15.0), Vec3A::splat(1.75), cricket_ball_mesh.into());
 
-    let pingpong_sphere = TransformedMesh::new(Vec3A::new(-1.25, 0.47, -0.3), Vec3A::new(0.0, 0.0, 90.0), Vec3A::ONE, Sphere::new(Vec3A::new(0.0, 0.0, 0.0), 0.285, pingpong_idx).into());
+    let pingpong_mesh = TriangleMesh::from("docs/models/pingpong.obj", pingpong_idx);
+    let pingpong_sphere = TransformedMesh::new(Vec3A::new(-1.25, 0.475, -0.3), Vec3A::new(0.0, 0.0, 90.0), Vec3A::splat(0.28), pingpong_mesh.into());
 
     let golf_ball_mesh = TriangleMesh::from("docs/models/golf_ball.obj", white_idx);
     let golf_ball = TransformedMesh::new(Vec3A::new(1.70, 0.67, -0.35), Vec3A::new(-30.0, 0.0, 15.0), Vec3A::splat(0.23), golf_ball_mesh.into());
