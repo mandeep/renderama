@@ -192,7 +192,7 @@ impl Diffuse {
 ///
 /// For derivation see Section 10.4.2 in Mathematical and Computer Programming
 /// Techniques for Computer Graphics by Peter Comininos.
-fn reflect(incident: Vec3A, normal: Vec3A) -> Vec3A {
+pub fn reflect(incident: Vec3A, normal: Vec3A) -> Vec3A {
     incident - 2.0 * incident.dot(normal) * normal
 }
 

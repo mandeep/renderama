@@ -16,6 +16,10 @@
 //! Sampling the GGX Distribution of Visible Normals
 //! Eric Heitz
 //! https://pdfs.semanticscholar.org/63bc/928467d760605cdbf77a25bb7c3ad957e40e.pdf 
+//!
+//! Roughness Using Microfacet Theory
+//! Pharr et al.
+//! https://pbr-book.org/4ed/Reflection_Models/Roughness_Using_Microfacet_Theory#x5-TheHalf-DirectionTransform
 
 use std::f32::consts::PI;
 

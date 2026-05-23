@@ -5,6 +5,7 @@ use rand_pcg::Pcg64Mcg;
 
 use basis::OrthonormalBasis;
 use ggx::{ggx_distribution, ggx_g1_masking, ggx_sample_vndf};
+use materials::reflect;
 use sampling::{cosine_sample_hemisphere, pick_sphere_point};
 
 
@@ -76,9 +77,19 @@ impl PDF {
             PDF::Delta => panic!("Delta PDF should never be sampled directly."),
             PDF::GGX { wi, normal, alpha } => {
                 let h = ggx_sample_vndf(normal, wi, alpha, rng);
+
+                // if the microfacet is hit from behind due to floating point precision
+                // errors, then we discard the sampled normal and use the macrosurface normal
                 let wi_dot_h = wi.dot(h);
-                if wi_dot_h <= 0.0 { return *normal; }
-                2.0 * wi_dot_h * h - *wi
+                if wi_dot_h <= 0.0 {
+                    return *normal;
+                }
+
+                // we reflect wi across h to obtain the outgoing vector wo
+                // wi is negative since the reflect function expects the vectors to point
+                // towards the surface when we model it here as pointing away from the surface
+                // https://www.cs.cornell.edu/~srm/publications/EGSR07-btdf.pdf equation (39)
+                reflect(-wi, h)
             },
             PDF::Uniform => pick_sphere_point(rng),
         }
