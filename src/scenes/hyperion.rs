@@ -51,7 +51,7 @@ pub fn hyperion_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let orange_idx = mat!(materials, Plastic::new(orange_color.into(), 0.15, 1.5));
     let orange_rough_idx = mat!(materials, Plastic::new(orange_bright_color.into(), 0.25, 1.5));
     let marble_vol_idx = mat!(materials, Volumetric::new(Color::new(0.60, 0.71, 0.49).into()));
-    let cricket_idx = mat!(materials, Diffuse::new(ImageTexture::new("docs/textures/cricket_ball_diffuse.jpg", 1.0).into(), 0.0));
+    let cricket_idx = mat!(materials, Plastic::new(ImageTexture::new("docs/textures/cricket_ball_diffuse.jpg", 1.0).into(), 0.10, 1.5));
     let pingpong_idx = mat!(materials, Plastic::new(Color::new(0.93, 0.89, 0.85).into(), 0.35, 1.45));
     let white_idx = mat!(materials, Plastic::new(Color::new(1.0, 1.0, 1.0).into(), 0.1, 1.45));
 
