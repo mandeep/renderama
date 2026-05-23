@@ -303,19 +303,7 @@ impl Reflective {
         // if the dot product between the ray direction and normals are less than 0
         // then the ray hit the surface from the outside, otherwise it hit the
         // surface from the inside
-        let geometric_normal = if ray.direction.dot(result.geometric_normal) < 0.0 {
-            // ray hits the surface from outside the primitive
-            result.geometric_normal
-        } else {
-            // ray hits the surface from inside the primitive
-            -result.geometric_normal
-        };
-
-        let shading_normal = if result.shading_normal.dot(geometric_normal) < 0.0 {
-            -result.shading_normal
-        } else {
-            result.shading_normal
-        };
+        let (geometric_normal, shading_normal) = result.face_forward_normals(ray.direction);
 
         let offset_point = find_offset_point(result.point, geometric_normal);
         let reflected = reflect(ray.direction, shading_normal);
@@ -413,20 +401,7 @@ impl Refractive {
         let geometric_incident: f32 = ray.direction.dot(result.geometric_normal);
         let entering = geometric_incident < 0.0;
 
-        // if the dot product between the ray direction and normals are less than 0
-        // then the ray hit the surface from the outside, otherwise it hit the
-        // surface from the inside
-        let geometric_normal = if ray.direction.dot(result.geometric_normal) < 0.0 {
-            result.geometric_normal
-        } else {
-            -result.geometric_normal
-        };
-
-        let shading_normal = if result.shading_normal.dot(geometric_normal) < 0.0 {
-            -result.shading_normal
-        } else {
-            result.shading_normal
-        };
+        let (geometric_normal, shading_normal) = result.face_forward_normals(ray.direction);
 
         let (eta_i, eta_t) = if entering {
             (1.0, self.refractive_index)
@@ -545,17 +520,7 @@ impl Plastic {
         let cos_theta_i = (-ray.direction).dot(result.shading_normal).max(0.0);
         let fresnel = schlick_from_ior(cos_theta_i, self.ior);
 
-        let geometric_normal = if ray.direction.dot(result.geometric_normal) < 0.0 {
-            result.geometric_normal
-        } else {
-            -result.geometric_normal
-        };
-
-        let shading_normal = if result.shading_normal.dot(geometric_normal) < 0.0 {
-            -result.shading_normal
-        } else {
-            result.shading_normal
-        };
+        let (geometric_normal, shading_normal) = result.face_forward_normals(ray.direction);
 
         let offset_point = find_offset_point(result.point, geometric_normal);
 

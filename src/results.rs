@@ -36,6 +36,30 @@ impl HitResult {
                -> HitResult {
         HitResult { parameter, u, v, point, geometric_normal, shading_normal, material_id }
     }
+
+    /// Orients both the geometric and shading normals to face against the incoming ray
+    /// depending on which side (inside/outside) of the surface the ray is coming from.
+    ///
+    /// If the dot product between the ray direction and normals are less than 0,
+    /// then the ray hit the surface from the outside, otherwise it hit the
+    /// surface from the inside.
+    pub fn face_forward_normals(&self, incoming_direction: Vec3A) -> (Vec3A, Vec3A) {
+        let geometric_normal = if incoming_direction.dot(self.geometric_normal) < 0.0 {
+            // ray hits the surface from outside the primitive
+            self.geometric_normal
+        } else {
+            // ray hits the surface from inside the primitive
+            -self.geometric_normal
+        };
+
+        let shading_normal = if self.shading_normal.dot(geometric_normal) < 0.0 {
+            -self.shading_normal
+        } else {
+            self.shading_normal
+        };
+
+        (geometric_normal, shading_normal)
+    }
 }
 
 /// ScatterResult contains all the information that tells us how a
