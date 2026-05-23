@@ -61,6 +61,15 @@ pub fn cornell_box_object_scene(width: Option<usize>, height: Option<usize>) -> 
     let bvh = BVH::new(&mut objects);
 
     let light_shape = Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 554.0, white_id);
+    let light_intensity = Vec3A::new(37.5, 27.0, 15.0);
 
-    Scene::new(String::from("Cornell Box with Multiple Objects"), bvh, materials, camera, vec![Light::new(light_shape.into(), Vec3A::new(25.0, 18.0, 10.0))], None, None)
+    Scene::new(
+        String::from("Cornell Box with Multiple Objects"),
+        bvh,
+        materials,
+        camera,
+        vec![Light::new(light_shape.into(), light_intensity)],
+        None,
+        None
+    )
 }
