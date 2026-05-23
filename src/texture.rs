@@ -78,6 +78,12 @@ impl ImageTexture {
 
         let image::Rgb([r, g, b]) = *self.im.get_pixel(i as u32, j as u32);
 
-        Vec3A::new(r as f32 / 255.0, g as f32 / 255.0, b as f32 / 255.0)
+        // need to convert from srgb color space to linear as the
+        // renderer computes color in linear color space
+        let linear_r = (r as f32 / 255.0).powf(2.2);
+        let linear_g = (g as f32 / 255.0).powf(2.2);
+        let linear_b = (b as f32 / 255.0).powf(2.2);
+
+        Vec3A::new(linear_r, linear_g, linear_b)
     }
 }
