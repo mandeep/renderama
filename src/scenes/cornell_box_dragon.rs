@@ -42,7 +42,7 @@ pub fn cornell_box_dragon_scene(width: Option<usize>, height: Option<usize>) -> 
     objects.push(Plane::new(Axis::XY, Bounds2D::new(0.0..555.0, 0.0..555.0), 555.0, white_id).into_reversed());
 
     let dragon_material = mat!(materials, Plastic::new(Color::new(0.0, 0.06, 0.18).into(), 0.15, 1.5));
-    let dragon = TriangleMesh::from("docs/models/dragon.obj", dragon_material).into();
+    let dragon = TriangleMesh::from("extras/models/dragon.obj", dragon_material).into();
     objects.push(TransformedMesh::new(Vec3A::new(283.0, 114.0, 268.0), Vec3A::new(0.0, -60.0, 0.0), Vec3A::splat(425.0), dragon).into());
 
     let bvh = BVH::new(&mut objects);

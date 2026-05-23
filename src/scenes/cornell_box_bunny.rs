@@ -46,11 +46,11 @@ pub fn cornell_box_bunny_scene(width: Option<usize>, height: Option<usize>) -> S
     objects.push(Plane::new(Axis::XY, Bounds2D::new(0.0..555.0, 0.0..555.0), 555.0, white_id).into_reversed());
 
     let bunny_material = mat!(materials, Refractive::new(Color::new(1.0, 1.0, 1.0).into(), 1.5));
-    let bunny_mesh = Primitive::TriangleMesh(Arc::new(TriangleMesh::from("docs/models/bunny.obj", bunny_material)));
+    let bunny_mesh = Primitive::TriangleMesh(Arc::new(TriangleMesh::from("extras/models/bunny.obj", bunny_material)));
     objects.push(Primitive::TransformedMesh(Arc::new(TransformedMesh::new(Vec3A::new(224.0, -66.0, 278.0), Vec3A::new(0.0, 180.0, 0.0), Vec3A::splat(2000.0), bunny_mesh))));
 
     let buddha_material = mat!(materials, Reflective::new(Color::new(0.95, 0.64, 0.54).into(), 0.05));
-    let buddha = TriangleMesh::from("docs/models/happy_buddha.obj", buddha_material).into();
+    let buddha = TriangleMesh::from("extras/models/happy_buddha.obj", buddha_material).into();
     objects.push(TransformedMesh::new(Vec3A::new(150.0, -175.0, 450.0), Vec3A::new(0.0, 180.0, 0.0), Vec3A::splat(2600.0), buddha).into());
 
     let bvh = BVH::new(&mut objects);

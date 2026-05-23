@@ -42,20 +42,20 @@ pub fn cornell_box_object_scene(width: Option<usize>, height: Option<usize>) -> 
     objects.push(Plane::new(Axis::XY, Bounds2D::new(0.0..555.0, 0.0..555.0), 555.0, white_id).into_reversed());
 
     let lucy_material = mat!(materials, Diffuse::new(Color::new(0.92, 0.88, 0.82).into(), 0.05));
-    let lucy = TriangleMesh::from("docs/models/lucy.obj", lucy_material).into();
+    let lucy = TriangleMesh::from("extras/models/lucy.obj", lucy_material).into();
     objects.push(TransformedMesh::new(Vec3A::new(200.0, 180.0, 364.0), Vec3A::new(0.0, 0.0, 0.0), Vec3A::splat(0.30), lucy).into());
 
     let dragon_material = mat!(materials, Plastic::new(Color::new(0.7, 0.85, 0.45).into(), 0.05, 1.5));
-    let dragon = TriangleMesh::from("docs/models/dragon.obj", dragon_material).into();
+    let dragon = TriangleMesh::from("extras/models/dragon.obj", dragon_material).into();
     objects.push(TransformedMesh::new(Vec3A::new(283.0, 96.0, 268.0), Vec3A::new(0.0, -60.0, 0.0), Vec3A::splat(350.0), dragon).into());
 
     let bunny_material = mat!(materials, Refractive::new(Color::new(1.0, 1.0, 1.0).into(), 1.5));
-    let bunny = TriangleMesh::from("docs/models/bunny.obj", bunny_material).into();
+    let bunny = TriangleMesh::from("extras/models/bunny.obj", bunny_material).into();
     objects.push(TransformedMesh::new(Vec3A::new(110.0, -25.0, 140.0), Vec3A::new(0.0, 180.0, 0.0), Vec3A::splat(750.0), bunny).into());
 
-    let buddha_texture = ImageTexture::new("docs/textures/buddha_relief_diffuse.jpeg", 1.0).into();
+    let buddha_texture = ImageTexture::new("extras/textures/buddha_relief_diffuse.jpeg", 1.0).into();
     let buddha_material = mat!(materials, Diffuse::new(buddha_texture, 0.0));
-    let buddha = TriangleMesh::from("docs/models/buddha_relief.obj", buddha_material).into();
+    let buddha = TriangleMesh::from("extras/models/buddha_relief.obj", buddha_material).into();
     objects.push(TransformedMesh::new(Vec3A::new(273.0, 180.0, 530.0), Vec3A::new(-90.0, 180.0, 0.0), Vec3A::splat(24.0), buddha).into());
 
     let bvh = BVH::new(&mut objects);

@@ -93,12 +93,12 @@ pub fn spheres_in_box_scene(width: Option<usize>, height: Option<usize>, rng: &m
     // Image provided by NASA; details can be found here:
     // https://science.nasa.gov/earth/earth-observatory/blue-marble-next-generation/
     // The map used for this render is a Base Map with Topography and Bathymetry
-    let topo_idx = mat!(materials, Diffuse::new(ImageTexture::new("docs/textures/world_topo_nasa.jpg", 1.0).into(), 0.0));
+    let topo_idx = mat!(materials, Diffuse::new(ImageTexture::new("extras/textures/world_topo_nasa.jpg", 1.0).into(), 0.0));
     objects.push(Sphere::new(Vec3A::new(400.0, 200.0, 400.0),
                           100.0,
                           topo_idx).into());
 
-    let marble = mat!(materials, Diffuse::new(ImageTexture::new("docs/textures/marble.jpg", 2.0).into(), 0.0));
+    let marble = mat!(materials, Diffuse::new(ImageTexture::new("extras/textures/marble.jpg", 2.0).into(), 0.0));
     objects.push(Sphere::new(Vec3A::new(220.0, 280.0, 300.0),
                           80.0,
                           marble).into());

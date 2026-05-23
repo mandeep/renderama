@@ -51,7 +51,7 @@ pub fn hyperion_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let orange_idx = mat!(materials, Plastic::new(orange_color.into(), 0.15, 1.5));
     let orange_rough_idx = mat!(materials, Plastic::new(orange_bright_color.into(), 0.25, 1.5));
     let marble_vol_idx = mat!(materials, Volumetric::new(Color::new(0.60, 0.71, 0.49).into()));
-    let cricket_idx = mat!(materials, Plastic::new(ImageTexture::new("docs/textures/cricket_ball_diffuse.jpg", 1.0).into(), 0.30, 1.5));
+    let cricket_idx = mat!(materials, Plastic::new(ImageTexture::new("extras/textures/cricket_ball_diffuse.jpg", 1.0).into(), 0.30, 1.5));
     let pingpong_idx = mat!(materials, Plastic::new(Color::new(0.93, 0.89, 0.85).into(), 0.35, 1.45));
     let white_idx = mat!(materials, Plastic::new(Color::new(1.0, 1.0, 1.0).into(), 0.1, 1.45));
 
@@ -69,18 +69,18 @@ pub fn hyperion_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let small_marble_volume = Volume::new(15.0, small_marble.clone().into(), marble_vol_idx);
     let orange_sphere_small = Sphere::new(Vec3A::new(-1.5, 0.35, -2.0), 0.15, orange_rough_idx);
 
-    let ring_mesh = Arc::new(TriangleMesh::from("docs/models/ring.obj", metal_idx));
+    let ring_mesh = Arc::new(TriangleMesh::from("extras/models/ring.obj", metal_idx));
     let ring_left = TransformedMesh::new(Vec3A::new(-0.5, 0.20, -1.25), Vec3A::new(0.0, 0.0, 0.0), Vec3A::new(0.15, 0.17, 0.15), Primitive::TriangleMesh(Arc::clone(&ring_mesh)));
     let ring_center = TransformedMesh::new(Vec3A::new(0.20, 0.20, -0.80), Vec3A::new(0.0, 45.0, 0.0), Vec3A::new(0.15, 0.17, 0.15), Primitive::TriangleMesh(Arc::clone(&ring_mesh)));
     let ring_right = TransformedMesh::new(Vec3A::new(0.375, 0.25, -1.0), Vec3A::new(-15.0, 0.0, -10.0), Vec3A::new(0.15, 0.17, 0.15), Primitive::TriangleMesh(Arc::clone(&ring_mesh)));
 
-    let cricket_ball_mesh = TriangleMesh::from("docs/models/cricket_ball.obj", cricket_idx);
+    let cricket_ball_mesh = TriangleMesh::from("extras/models/cricket_ball.obj", cricket_idx);
     let cricked_ball = TransformedMesh::new(Vec3A::new(-0.6, 0.70, -2.5), Vec3A::new(-30.0, 0.0, 15.0), Vec3A::splat(1.75), cricket_ball_mesh.into());
 
-    let pingpong_mesh = TriangleMesh::from("docs/models/pingpong.obj", pingpong_idx);
+    let pingpong_mesh = TriangleMesh::from("extras/models/pingpong.obj", pingpong_idx);
     let pingpong_sphere = TransformedMesh::new(Vec3A::new(-1.25, 0.475, -0.3), Vec3A::new(0.0, 0.0, 90.0), Vec3A::splat(0.28), pingpong_mesh.into());
 
-    let golf_ball_mesh = TriangleMesh::from("docs/models/golf_ball.obj", white_idx);
+    let golf_ball_mesh = TriangleMesh::from("extras/models/golf_ball.obj", white_idx);
     let golf_ball = TransformedMesh::new(Vec3A::new(1.70, 0.67, -0.35), Vec3A::new(-30.0, 0.0, 15.0), Vec3A::splat(0.23), golf_ball_mesh.into());
 
 
@@ -104,7 +104,7 @@ pub fn hyperion_scene(width: Option<usize>, height: Option<usize>) -> Scene {
 
     let bvh = BVH::new(&mut objects);
 
-    let environment = EnvironmentMap::new("docs/textures/white_studio_03.exr").into();
+    let environment = EnvironmentMap::new("extras/textures/white_studio_03.exr").into();
 
     Scene::new(String::from("Hyperion"), bvh, materials, camera, vec![], Some(environment), None)
 }
