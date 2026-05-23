@@ -21,8 +21,4 @@ vendor/oidn/lib/*.dylib binary
 *.exr filter=lfs diff=lfs merge=lfs -text
 *.png binary
 *.jpg filter=lfs diff=lfs merge=lfs -text
-extras/models/lucy.obj filter=lfs diff=lfs merge=lfs -text
-extras/models/dragon.obj filter=lfs diff=lfs merge=lfs -text
-extras/models/buddha_relief.obj filter=lfs diff=lfs merge=lfs -text
 *.obj filter=lfs diff=lfs merge=lfs -text
-extras/models/happy_buddha.obj filter=lfs diff=lfs merge=lfs -text
