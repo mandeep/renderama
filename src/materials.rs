@@ -141,9 +141,7 @@ impl Diffuse {
         let alpha = 1.0 / constant;
         let beta = sigma / constant;
 
-        Diffuse { albedo,
-                  alpha,
-                  beta }
+        Diffuse { albedo, alpha, beta }
     }
 
     /// The contribution of this Diffuse material is just its albedo. The pdf is
@@ -168,7 +166,7 @@ impl Diffuse {
     /// https://developer.blender.org/diffusion/C/browse/master/src/kernel/closure/bsdf_oren_nayar.h
     fn compute_reflectance(&self, wo: &Ray, result: &HitResult, wi: &Ray) -> Vec3A {
         let l = wi.direction;
-        let v = wo.direction;
+        let v = -wo.direction;
         let n = result.shading_normal;
 
         let nl = n.dot(l).max(0.0);
