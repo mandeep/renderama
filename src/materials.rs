@@ -7,7 +7,7 @@ use rand_pcg::Pcg64Mcg;
 
 use basis::OrthonormalBasis;
 use results::{HitResult, ScatterResult};
-use ggx::{ggx_distribution, ggx_geometry, ggx_sample_vndf};
+use ggx::{ggx_distribution, ggx_height_correlated_geometry, ggx_sample_vndf};
 use pdf::PDF;
 use ray::{find_offset_point, Ray};
 use sampling::pick_sphere_point;
@@ -363,7 +363,7 @@ impl Reflective {
 
         let f = schlick_from_f0(v_dot_h, f0);
         let d = ggx_distribution(cos_h, self.roughness);
-        let g = ggx_geometry(cos_i, cos_o, self.roughness);
+        let g = ggx_height_correlated_geometry(cos_i, cos_o, self.roughness);
 
         (f * d * g) / (4.0 * cos_i)
     }

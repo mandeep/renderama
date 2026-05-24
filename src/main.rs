@@ -17,7 +17,7 @@ mod bvh;
 mod camera;
 mod denoise;
 mod environment;
-mod ggx;
+pub mod ggx;
 mod integrator;
 mod lights;
 pub mod materials;

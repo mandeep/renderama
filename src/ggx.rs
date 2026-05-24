@@ -76,6 +76,22 @@ pub fn ggx_geometry(cos_i: f32, cos_o: f32, alpha: f32) -> f32 {
     ggx_g1_masking(cos_i, alpha) * ggx_g1_masking(cos_o, alpha)
 }
 
+/// The height correlated function correctly accounts for glossy
+/// highlights at grazing angles.
+///
+/// References:
+/// https://inria.hal.science/hal-01024289v1/document
+/// https://media.gdcvault.com/gdc2017/Presentations/Hammon_Earl_PBR_Diffuse_Lighting.pdf
+/// https://pbr-book.org/4ed/Reflection_Models/Roughness_Using_Microfacet_Theory#sec:torrance-sparrow-shadowing-masking
+pub fn ggx_height_correlated_geometry(cos_i: f32, cos_o: f32, alpha: f32) -> f32 {
+    let a2 = alpha * alpha;
+
+    let denominator_i = cos_o * (a2 + (1.0 - a2) * cos_i * cos_i).sqrt();
+    let denominator_o = cos_i * (a2 + (1.0 - a2) * cos_o * cos_o).sqrt();
+
+    (2.0 * cos_i * cos_o) / (denominator_i + denominator_o)
+}
+
 /// Generates a microfacet normal (half vector) based only on the
 /// microfacets that are visible in the camera's viewing angle.
 ///
