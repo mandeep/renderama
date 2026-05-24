@@ -45,4 +45,4 @@ def test_render_output_matches_reference(name, samples, resolution, image_dir, t
 
     print(f"SSIM Score: {score:.4f}")
 
-    assert score > 0.9998
+    assert score > 0.9997
