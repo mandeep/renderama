@@ -64,21 +64,28 @@ use denoise::denoise;
 #[command(name = "Renderama", version, about)]
 struct Args {
     #[arg(long, default_value = "cornell_box_objects")]
+    /// The scene to render.
     scene: Scenes,
 
     #[arg(long)]
+    /// The number of samples to render the scene with.
     samples: Option<usize>,
 
     #[arg(long)]
+    /// The width of the output render.
     width: Option<usize>,
 
     #[arg(long)]
+    /// The height of the output render.
     height: Option<usize>,
 
     #[arg(long)]
+    /// The path at which to save the output render.
+    /// Must be an image format that supports 32bit floating-point.
     output: Option<String>,
 
     #[arg(long, default_value = "beauty")]
+    /// The integrator used to render the scene.
     integrator: Integrator,
 }
 
