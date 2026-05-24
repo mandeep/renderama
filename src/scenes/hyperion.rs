@@ -54,6 +54,7 @@ pub fn hyperion_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let cricket_idx = mat!(materials, Plastic::new(ImageTexture::new("extras/textures/cricket_ball_diffuse.jpg", 1.0).into(), 0.30, 1.5));
     let pingpong_idx = mat!(materials, Plastic::new(Color::new(0.93, 0.89, 0.85).into(), 0.35, 1.45));
     let white_idx = mat!(materials, Plastic::new(Color::new(1.0, 1.0, 1.0).into(), 0.1, 1.45));
+    let cream_idx = mat!(materials, Plastic::new(Color::new(1.0, 0.904, 0.725).into(), 1.0, 1.45));
 
     let floor_plane = Plane::new(Axis::XZ, Bounds2D::new(-50.0..50.0, -50.0..50.0), 0.0, floor_idx);
     let platform = Rectangle::new(Vec3A::new(-3.5, 0.0, -4.0), Vec3A::new(3.5, 0.2, 0.5), platform_idx);
@@ -74,8 +75,12 @@ pub fn hyperion_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let ring_center = TransformedMesh::new(Vec3A::new(0.20, 0.20, -0.80), Vec3A::new(0.0, 45.0, 0.0), Vec3A::new(0.15, 0.17, 0.15), Primitive::TriangleMesh(Arc::clone(&ring_mesh)));
     let ring_right = TransformedMesh::new(Vec3A::new(0.375, 0.25, -1.0), Vec3A::new(-15.0, 0.0, -10.0), Vec3A::new(0.15, 0.17, 0.15), Primitive::TriangleMesh(Arc::clone(&ring_mesh)));
 
-    let cricket_ball_mesh = TriangleMesh::from("extras/models/cricket_ball.obj", cricket_idx);
+    let cricket_ball_mesh = TriangleMesh::from("extras/models/cricket_ball_no_stitch.obj", cricket_idx);
+    let cricket_ball_stitch_bottom_mesh = TriangleMesh::from("extras/models/cricket_ball_stitch_bottom.obj", cream_idx);
+    let cricket_ball_stitch_top_mesh = TriangleMesh::from("extras/models/cricket_ball_stitch_top.obj", cream_idx);
     let cricked_ball = TransformedMesh::new(Vec3A::new(-0.6, 0.70, -2.5), Vec3A::new(-30.0, 0.0, 15.0), Vec3A::splat(1.75), cricket_ball_mesh.into());
+    let cricked_ball_stitch_bottom = TransformedMesh::new(Vec3A::new(-0.6, 0.70, -2.5), Vec3A::new(-30.0, 0.0, 15.0), Vec3A::splat(1.75), cricket_ball_stitch_bottom_mesh.into());
+    let cricked_ball_stitch_top = TransformedMesh::new(Vec3A::new(-0.6, 0.70, -2.5), Vec3A::new(-30.0, 0.0, 15.0), Vec3A::splat(1.75), cricket_ball_stitch_top_mesh.into());
 
     let pingpong_mesh = TriangleMesh::from("extras/models/pingpong.obj", pingpong_idx);
     let pingpong_sphere = TransformedMesh::new(Vec3A::new(-1.25, 0.475, -0.3), Vec3A::new(0.0, 0.0, 90.0), Vec3A::splat(0.28), pingpong_mesh.into());
@@ -98,6 +103,8 @@ pub fn hyperion_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     objects.push(ring_center.into());
     objects.push(ring_right.into());
     objects.push(cricked_ball.into());
+    objects.push(cricked_ball_stitch_bottom.into());
+    objects.push(cricked_ball_stitch_top.into());
     objects.push(pingpong_sphere.into());
     objects.push(golf_ball.into());
     objects.push(orange_sphere_small.into());
