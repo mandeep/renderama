@@ -27,7 +27,6 @@ pub struct Triangle {
 
 #[derive(Clone)]
 pub struct TriangleMesh {
-    triangles: Vec<Triangle>,
     accelerator: BVH,
 }
 
@@ -117,13 +116,13 @@ impl Triangle {
 impl TriangleMesh {
     pub fn new(triangles: Vec<Triangle>) -> TriangleMesh {
         let mut geometries: Vec<Primitive> = triangles
-            .iter()
-            .cloned()
+            .into_iter()
             .map(Primitive::Triangle)
             .collect();
+
         let accelerator = BVH::new(&mut geometries);
 
-        TriangleMesh { triangles, accelerator }
+        TriangleMesh { accelerator }
     }
 
     pub fn from(filepath: &str, material_id: MaterialId) -> TriangleMesh {
@@ -202,14 +201,50 @@ impl TriangleMesh {
     }
 
     pub fn bounding_box(&self) -> Option<AABB> {
-        let mut minimum = Vec3A::splat(f32::MAX);
-        let mut maximum = Vec3A::splat(f32::MIN);
+        self.accelerator.bounding_box()
+    }
+}
 
-        for triangle in &self.triangles {
-            minimum = minimum.min(triangle.minimum());
-            maximum = maximum.max(triangle.maximum());
-        }
 
-        Some(AABB::from(minimum, maximum))
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use glam::{Vec2, Vec3A};
+    use materials::MaterialId;
+    use ray::Ray;
+
+    fn create_test_triangle() -> Triangle {
+        Triangle::new(
+            Vec3A::new(-1.0, -1.0, 0.0),
+            Vec3A::new(1.0, -1.0, 0.0),
+            Vec3A::new(0.0, 1.0, 0.0),
+            Vec3A::Z, Vec3A::Z, Vec3A::Z,
+            Vec2::ZERO, Vec2::X, Vec2::Y,
+            MaterialId(0),
+        )
+    }
+
+    #[test]
+    fn test_triangle_hit() {
+        let triangle = create_test_triangle();
+
+        let ray = Ray::new(Vec3A::new(0.0, 0.0, 2.0), Vec3A::new(0.0, 0.0, -1.0));
+
+        let hit = triangle.hit(&ray, 0.001, 100.0);
+        assert!(hit.is_some());
+
+        let result = hit.unwrap();
+        assert!((result.parameter - 2.0).abs() < 1e-5);
+    }
+
+    #[test]
+    fn test_triangle_miss() {
+        let triangle = create_test_triangle();
+
+        let ray_parallel = Ray::new(Vec3A::new(0.0, 0.0, 2.0), Vec3A::new(1.0, 0.0, 0.0));
+        assert!(triangle.hit(&ray_parallel, 0.001, 100.0).is_none());
+
+        let ray_away = Ray::new(Vec3A::new(0.0, 0.0, 2.0), Vec3A::new(0.0, 0.0, 1.0));
+        assert!(triangle.hit(&ray_away, 0.001, 100.0).is_none());
     }
 }

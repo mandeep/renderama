@@ -1,6 +1,6 @@
-use std::f32::consts::PI;
+use std::f32::consts::{FRAC_PI_2, FRAC_PI_4, PI};
 
-use glam::Vec3A;
+use glam::{Vec2, Vec3A};
 use rand::RngExt;
 use rand_pcg::Pcg64Mcg;
 use rand_distr::StandardNormal;
@@ -20,6 +20,29 @@ pub fn pick_sphere_point(rng: &mut Pcg64Mcg) -> Vec3A {
     let z: f32 = rng.sample(StandardNormal);
 
     Vec3A::new(x, y, z).normalize()
+}
+
+/// Pick a point on a unit disk using concentric mapping.
+///
+/// References:
+/// https://www.pbr-book.org/3ed-2018/Monte_Carlo_Integration/2D_Sampling_with_Multidimensional_Transformations
+pub fn pick_disk_point(rng: &mut Pcg64Mcg) -> Vec2 {
+    let u: f32 = rng.random_range(-1.0..1.0);
+    let v: f32 = rng.random_range(-1.0..1.0);
+
+    if u == 0.0 && v == 0.0 {
+        return Vec2::ZERO;
+    }
+
+    let (r, theta) = if u.abs() > v.abs() {
+        (u, FRAC_PI_4 * (v / u))
+    }  else {
+        (v, FRAC_PI_2 - FRAC_PI_4 * (u / v))
+    };
+
+    let (sin_theta, cos_theta) = theta.sin_cos();
+
+    Vec2::new(r * cos_theta, r * sin_theta)
 }
 
 /// Sample a cosine-weighted vector from the hemisphere.
@@ -96,4 +119,101 @@ pub fn uniform_sample_cone(cos_theta_max: f32, rng: &mut Pcg64Mcg) -> Vec3A {
     let (sin_phi, cos_phi) = phi.sin_cos();
 
     Vec3A::new(sin_theta * cos_phi, sin_theta * sin_phi, cos_theta)
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rand::SeedableRng;
+    use glam::Vec3A;
+
+    fn get_rng() -> Pcg64Mcg {
+        Pcg64Mcg::seed_from_u64(0)
+    }
+
+    fn assert_unit_vector(v: Vec3A) {
+        let length = v.length();
+        assert!((length - 1.0).abs() < 1e-4);
+    }
+
+    #[test]
+    fn test_pick_sphere_point() {
+        let mut rng = get_rng();
+        let mut min_z = f32::MAX;
+        let mut max_z = f32::MIN;
+
+        for _ in 0..10_000 {
+            let v = pick_sphere_point(&mut rng);
+            assert_unit_vector(v);
+            min_z = min_z.min(v.z);
+            max_z = max_z.max(v.z);
+        }
+
+        assert!(min_z < -0.9);
+        assert!(max_z > 0.9);
+    }
+
+    #[test]
+    fn test_uniform_sample_sphere() {
+        let mut rng = get_rng();
+        let mut sum_z = 0.0;
+
+        for _ in 0..10_000 {
+            let v = uniform_sample_sphere(&mut rng);
+            assert_unit_vector(v);
+            sum_z += v.z;
+        }
+
+        let avg_z = sum_z / 10_000.0;
+
+        assert!(avg_z.abs() < 0.01);
+    }
+
+    #[test]
+    fn test_uniform_sample_hemisphere() {
+        let mut rng = get_rng();
+        let mut sum_z = 0.0;
+
+        for _ in 0..10_000 {
+            let v = uniform_sample_hemisphere(&mut rng);
+            assert_unit_vector(v);
+            assert!(v.z >= 0.0);
+            sum_z += v.z;
+        }
+
+        let avg_z = sum_z / 10_000.0;
+        assert!((avg_z - 0.5).abs() < 0.02);
+    }
+
+    #[test]
+    fn test_cosine_sample_hemisphere() {
+        let mut rng = get_rng();
+        let mut sum_z = 0.0;
+
+        for _ in 0..10_000 {
+            let v = cosine_sample_hemisphere(&mut rng);
+            assert_unit_vector(v);
+            assert!(v.z >= 0.0);
+            sum_z += v.z;
+        }
+
+        let avg_z = sum_z / 10_000.0;
+        assert!((avg_z - 0.666).abs() < 0.02);
+    }
+
+    #[test]
+    fn test_uniform_sample_cone() {
+        let mut rng = get_rng();
+
+        // use an angle of 60 degrees
+        let cos_theta_max = 0.5;
+
+        for _ in 0..10_000 {
+            let v = uniform_sample_cone(cos_theta_max, &mut rng);
+            assert_unit_vector(v);
+
+            assert!(v.z >= cos_theta_max - 1e-5);
+        }
+    }
 }

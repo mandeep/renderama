@@ -30,41 +30,40 @@ pub enum Primitive {
 impl Primitive {
     pub fn hit(&self, ray: &Ray, start_distance: f32, end_distance: f32, rng: &mut Pcg64Mcg) -> Option<HitResult> {
         match self {
-            Primitive::Plane(p) => p.hit(ray, start_distance, end_distance),
-            Primitive::Rectangle(r) => r.hit(ray, start_distance, end_distance, rng),
-            Primitive::Sphere(s) => s.hit(ray, start_distance, end_distance),
-            Primitive::Triangle(t) => t.hit(ray, start_distance, end_distance),
-            Primitive::TriangleMesh(m) => m.hit(ray, start_distance, end_distance, rng),
-            Primitive::ReverseOrientation(g) => {
-                if let Some(mut h) = g.hit(ray, start_distance, end_distance, rng) {
-                    h.geometric_normal = -h.geometric_normal;
-                    h.shading_normal = -h.shading_normal;
-                    Some(h)
+            Primitive::Plane(plane) => plane.hit(ray, start_distance, end_distance),
+            Primitive::Rectangle(rectangle) => rectangle.hit(ray, start_distance, end_distance, rng),
+            Primitive::Sphere(sphere) => sphere.hit(ray, start_distance, end_distance),
+            Primitive::Triangle(triangle) => triangle.hit(ray, start_distance, end_distance),
+            Primitive::TriangleMesh(mesh) => mesh.hit(ray, start_distance, end_distance, rng),
+            Primitive::ReverseOrientation(primitive) => {
+                if let Some(mut hit_result) = primitive.hit(ray, start_distance, end_distance, rng) {
+                    hit_result.geometric_normal = -hit_result.geometric_normal;
+                    hit_result.shading_normal = -hit_result.shading_normal;
+                    Some(hit_result)
                 } else {
                     None
                 }
             },
-            Primitive::TransformedMesh(m) => m.hit(ray, start_distance, end_distance, rng),
-            Primitive::Volume(v) => v.hit(ray, start_distance, end_distance, rng)
+            Primitive::TransformedMesh(mesh) => mesh.hit(ray, start_distance, end_distance, rng),
+            Primitive::Volume(volume) => volume.hit(ray, start_distance, end_distance, rng)
         }
     }
 
     pub fn bounding_box(&self) -> Option<AABB> {
         match self {
-            Primitive::Plane(p) => p.bounding_box(),
-            Primitive::Rectangle(p) => p.bounding_box(),
-            Primitive::Sphere(s) => s.bounding_box(),
-            Primitive::Triangle(t) => t.bounding_box(),
-            Primitive::TriangleMesh(m) => m.bounding_box(),
-            Primitive::ReverseOrientation(g) => g.bounding_box(),
-            Primitive::TransformedMesh(g) => g.bounding_box(),
-            Primitive::Volume(v) => v.bounding_box(),
+            Primitive::Plane(plane) => plane.bounding_box(),
+            Primitive::Rectangle(rectangle) => rectangle.bounding_box(),
+            Primitive::Sphere(sphere) => sphere.bounding_box(),
+            Primitive::Triangle(triangle) => triangle.bounding_box(),
+            Primitive::TriangleMesh(mesh) => mesh.bounding_box(),
+            Primitive::ReverseOrientation(primitive) => primitive.bounding_box(),
+            Primitive::TransformedMesh(mesh) => mesh.bounding_box(),
+            Primitive::Volume(volume) => volume.bounding_box(),
         }
     }
 }
 
 macro_rules! impl_from_for_primitive {
-    // Direct variants: From<T> wraps as Variant(t)
     ($($variant:ident => $type:ty),* $(,)?) => {
         $(
             impl From<$type> for Primitive {
@@ -77,7 +76,6 @@ macro_rules! impl_from_for_primitive {
 }
 
 macro_rules! impl_from_boxed_for_primitive {
-    // Boxed variants: From<T> wraps as Variant(Arc::new(t))
     ($($variant:ident => $type:ty),* $(,)?) => {
         $(
             impl From<$type> for Primitive {
@@ -100,4 +98,30 @@ impl_from_boxed_for_primitive! {
     TriangleMesh => TriangleMesh,
     TransformedMesh => TransformedMesh,
     Volume => Volume,
+}
+
+
+#[cfg(test)]
+mod tests {
+    use materials::MaterialId;
+    use super::*;
+    use glam::Vec3A;
+    use rand::{rng, SeedableRng};
+    use rand_pcg::Pcg64Mcg;
+
+    #[test]
+    fn test_primitive_from_impl() {
+        let mut rng = Pcg64Mcg::from_rng(&mut rng());
+        let material = MaterialId::new(0);
+        let sphere: Sphere = Sphere::new(Vec3A::ZERO, 1.0, material);
+        let primitive: Primitive = sphere.into();
+        let ray = Ray::new(Vec3A::new(0.0, 0.0, -1.0), Vec3A::new(0.0, 0.0, 1.0));
+        let hit_result = primitive.hit(&ray, 0.0, f32::INFINITY, &mut rng);
+        assert!(hit_result.is_some());
+
+        let aabb = primitive.bounding_box();
+        assert!(aabb.is_some());
+        assert_eq!(aabb.unwrap().minimum, Vec3A::new(-1.0, -1.0, -1.0));
+        assert_eq!(aabb.unwrap().maximum, Vec3A::ONE);
+    }
 }

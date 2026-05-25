@@ -84,3 +84,37 @@ impl ScatterResult {
         ScatterResult { scattered_ray, contribution, sampling_strategy, specular, pre_weighted }
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use materials::MaterialId;
+
+    #[test]
+    fn test_normals_direction() {
+        let result = HitResult::new(
+            0.0,
+            0.0,
+            0.0,
+            Vec3A::ZERO,
+            Vec3A::new(0.0, 0.0, 1.0),
+            Vec3A::new(0.0, 0.0, 1.0),
+            MaterialId(0),
+        );
+
+        let incoming_direction = Vec3A::new(0.0, 0.0, -1.0);
+
+        assert_eq!(
+            result.face_forward_normals(incoming_direction),
+            (result.geometric_normal, result.shading_normal),
+        );
+
+        let incoming_direction = Vec3A::new(0.0, 0.0, 1.0);
+
+        assert_eq!(
+            result.face_forward_normals(incoming_direction),
+            (-result.geometric_normal, -result.shading_normal),
+        );
+    }
+}

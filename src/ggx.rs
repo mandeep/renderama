@@ -134,3 +134,90 @@ pub fn ggx_sample_vndf(normal: &Vec3A, wi: &Vec3A, alpha: &f32, rng: &mut Pcg64M
 
     uvw.local(&nh_local)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use glam::Vec3A;
+    use rand_pcg::Pcg64Mcg;
+    use rand::SeedableRng;
+
+    #[test]
+    fn test_ggx_g1_masking() {
+        // ggx_g1_masking returns 1.0 when the surface is 100% visible to the camera
+        let alpha = 1.0;
+        let cosine = 1.0;
+        let result = ggx_g1_masking(cosine, alpha);
+        assert!((result - 1.0).abs() < f32::EPSILON);
+
+        let alpha = 0.0;
+        let result_smooth = ggx_g1_masking(cosine, alpha);
+        assert!((result_smooth - 1.0).abs() < f32::EPSILON);
+
+        // at a grazing angle, the microfacets shadow each other and 0.0 should be returned
+        let cosine = 0.0;
+        let alpha = 0.5;
+        let result = ggx_g1_masking(cosine, alpha);
+        assert!((result - 0.0).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_ggx_distribution() {
+        let alpha = 1.0;
+        let half_vector = 1.0;
+        let expected = 1.0 / PI;
+        let result = ggx_distribution(half_vector, alpha);
+        // perfect alignment and rough surface means function should return alpha / PI
+        assert!((result - expected).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_ggx_geometry() {
+        let cos_i = 1.0;
+        let cos_o = 1.0;
+        let alpha = 1.0;
+        let result = ggx_geometry(cos_i, cos_o, alpha);
+        // 1.0 * 1.0 should be 1.0
+        assert!((result - 1.0).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_ggx_height_correlated_geometry() {
+        let cos_i = 1.0;
+        let cos_o = 1.0;
+        let alpha = 1.0;
+        let result = ggx_height_correlated_geometry(cos_i, cos_o, alpha);
+        // numerator should equal denominator
+        assert!((result - 1.0).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_ggx_sample_vndf() {
+        let mut rng = Pcg64Mcg::seed_from_u64(0);
+
+        let normal = Vec3A::Z;
+        let wi = Vec3A::new(1.0, 0.0, 1.0).normalize(); // 45 degree angle of incident
+        let alpha = 0.5;
+
+        let sampled_half_vector = ggx_sample_vndf(&normal, &wi, &alpha, &mut rng);
+
+        assert!((sampled_half_vector.length_squared() - 1.0).abs() < f32::EPSILON);
+        assert!(sampled_half_vector.z >= 0.0);
+    }
+
+    #[test]
+    fn test_ggx_sample_vndf_backface() {
+        let mut rng = Pcg64Mcg::seed_from_u64(12345);
+        let normal = Vec3A::Z;
+
+        let wi = Vec3A::new(0.0, 0.0, -1.0); 
+        let alpha = 0.5;
+
+        let sampled_half_vector = ggx_sample_vndf(&normal, &wi, &alpha, &mut rng);
+
+        // test that uvw.z() is returned in degenerate cases
+        assert!((sampled_half_vector.x - normal.x).abs() < f32::EPSILON);
+        assert!((sampled_half_vector.y - normal.y).abs() < f32::EPSILON);
+        assert!((sampled_half_vector.z - normal.z).abs() < f32::EPSILON);
+    }
+}

@@ -63,3 +63,61 @@ impl Rectangle {
         Some(AABB::from(self.p0, self.p1))
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_rectangle_setup() {
+        let p0 = Vec3A::new(0.0, 0.0, 0.0);
+        let p1 = Vec3A::new(100.0, 200.0, 300.0);
+        let mat_idx = MaterialId(0);
+        let rectangle = Rectangle::new(p0, p1, mat_idx);
+
+        assert_eq!(rectangle.p0, p0);
+        assert_eq!(rectangle.p1, p1);
+        assert_eq!(rectangle.primitives.len(), 6);
+    }
+
+    #[test]
+    fn test_rectangle_bbox() {
+        let p0 = Vec3A::new(0.0, 0.0, 0.0);
+        let p1 = Vec3A::new(2.0, 3.0, 5.0);
+        let mat_idx = MaterialId(0);
+        let rectangle = Rectangle::new(p0, p1, mat_idx);
+
+        let aabb = rectangle.bounding_box().unwrap();
+        assert_eq!(aabb.minimum, p0);
+        assert_eq!(aabb.maximum, p1);
+    }
+
+    #[test]
+    fn test_rectangle_hit() {
+        use rand::SeedableRng;
+
+        let p0 = Vec3A::ZERO;
+        let p1 = Vec3A::ONE;
+        let mat_idx = MaterialId(0);
+        let rectangle = Rectangle::new(p0, p1, mat_idx);
+        let mut rng = Pcg64Mcg::seed_from_u64(0);
+
+        let ray = Ray::new(Vec3A::new(0.0, 0.0, 5.0), Vec3A::new(0.0, 0.0, -1.0));
+        assert!(rectangle.hit(&ray, 0.0, f32::MAX, &mut rng).is_some());
+    }
+
+    #[test]
+    fn test_rectangle_miss() {
+        use rand::SeedableRng;
+
+        let p0 = Vec3A::ZERO;
+        let p1 = Vec3A::ONE;
+        let mat_idx = MaterialId(0);
+        let rectangle = Rectangle::new(p0, p1, mat_idx);
+        let mut rng = Pcg64Mcg::seed_from_u64(0);
+
+        let ray = Ray::new(Vec3A::new(0.0, 0.0, 5.0), Vec3A::new(0.0, 0.0, 1.0));
+        assert!(rectangle.hit(&ray, 0.0, f32::MAX, &mut rng).is_none());
+    }
+}

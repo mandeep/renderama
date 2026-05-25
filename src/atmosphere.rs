@@ -46,3 +46,34 @@ impl Default for Atmosphere {
         }
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::Atmosphere;
+    use glam::Vec3A;
+
+    #[test]
+    fn test_default_atmosphere() {
+        let atmosphere = Atmosphere::default();
+        assert_eq!(atmosphere.background, Vec3A::new(0.5, 0.7, 1.0));
+        assert_eq!(atmosphere.lerp, true);
+    }
+
+    #[test]
+    fn test_atmosphere_lerp() {
+        let atmosphere = Atmosphere::new(Vec3A::new(0.4, 0.5, 0.6), true);
+
+        let direction = Vec3A::new(0.0, -2.0, 0.0).normalize();
+        let color = atmosphere.compute_atmosphere_color(&direction);
+        assert_eq!(color, Vec3A::ONE);
+        
+        let direction = Vec3A::new(0.0, 2.0, 0.0).normalize();
+        let color = atmosphere.compute_atmosphere_color(&direction);
+        assert_eq!(color, atmosphere.background);
+
+        let direction = Vec3A::new(1.0, 0.0, 1.0).normalize();
+        let color = atmosphere.compute_atmosphere_color(&direction);
+        assert_eq!(color, Vec3A::new(0.70, 0.75, 0.80));
+    }
+}

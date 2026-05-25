@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use glam::Vec3A;
+use glam::{BVec3A, Vec3A};
 
 /// Convert a Duration to a String formatted as HH:MM:SS
 pub fn format_time(instant: Duration) -> String {
@@ -12,12 +12,31 @@ pub fn format_time(instant: Duration) -> String {
     format!("{:02}:{:02}:{:02}", hours, minutes, seconds)
 }
 
-/// Check if a computed color contains any NaNs
+/// Check if a computed color contains any NaNs or infinites
 pub fn de_nan(color: &Vec3A) -> Vec3A {
-    let mut correction = Vec3A::new(color.x, color.y, color.z);
-    if correction.x.is_nan() { correction.x = 0.0; }
-    if correction.y.is_nan() { correction.y = 0.0; }
-    if correction.z.is_nan() { correction.z = 0.0; }
+    let mask = BVec3A::new(color.x.is_finite(), color.y.is_finite(), color.z.is_finite());
 
-    correction
+    Vec3A::select(mask, *color, Vec3A::ZERO)
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use glam::Vec3A;
+
+    #[test]
+    fn test_de_nan() {
+        let color = Vec3A::new(1.0 / 0.0, 2.0 / 0.0, 3.0 / 0.0);
+        let corrected = de_nan(&color);
+        assert_eq!(corrected, Vec3A::ZERO);
+
+        let color = Vec3A::new(f32::NAN, 0.0, 0.0);
+        let corrected = de_nan(&color);
+        assert_eq!(corrected, Vec3A::ZERO);
+
+        let color = Vec3A::new(f32::NAN, 10.0 / 0.0, 1.0);
+        let corrected = de_nan(&color);
+        assert_eq!(corrected, Vec3A::new(0.0, 0.0, 1.0));
+    }
 }

@@ -1,10 +1,10 @@
 use std::f32::consts::PI;
 
-use glam::Vec3A;
+use glam::{Vec2, Vec3A};
 use rand_pcg::Pcg64Mcg;
 
 use ray::Ray;
-use sampling::pick_sphere_point;
+use sampling::pick_disk_point;
 
 pub struct Camera {
     pub lower_left_corner: Vec3A,
@@ -68,7 +68,7 @@ impl Camera {
 
     /// Generate the ray that is sent from the camera into the world
     pub fn generate_ray(&self, s: f32, t: f32, rng: &mut Pcg64Mcg) -> Ray {
-        let radius: Vec3A = self.lens_radius * pick_sphere_point(rng);
+        let radius: Vec2 = self.lens_radius * pick_disk_point(rng);
         let offset: Vec3A = self.u * radius.x + self.v * radius.y;
         Ray::new(self.origin + offset,
                  self.lower_left_corner + s * self.horizontal + t * self.vertical - self.origin - offset,

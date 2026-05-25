@@ -69,7 +69,7 @@ impl TransformedMesh {
     ///
     /// translate: the translation vector
     /// rotation: the rotation vector where each position correlates to that same axis
-    /// scale: uniform scale factor
+    /// scale: scale factor
     /// primitive: the primitive to transform
     pub fn new(
         translate: Vec3A,
@@ -129,7 +129,7 @@ impl TransformedMesh {
             // in a new HitResult
             let parameter = hit.parameter / local_direction_length;
             let point = self.forward_transform.transform_point3(hit.point.into()).into();
-                        let geometric_normal = self.normal_transform.transform_vector3(hit.geometric_normal.into()).normalize().into();
+            let geometric_normal = self.normal_transform.transform_vector3(hit.geometric_normal.into()).normalize().into();
             let shading_normal = self.normal_transform.transform_vector3(hit.shading_normal.into()).normalize().into();
 
             Some(HitResult::new(parameter, hit.u, hit.v, point, geometric_normal, shading_normal, hit.material_id))
@@ -141,5 +141,75 @@ impl TransformedMesh {
     /// Return the world space bounding box of the TransformedMesh
     pub fn bounding_box(&self) -> Option<AABB> {
         Some(self.bbox)
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use glam::{Vec3A, Vec3};
+    use materials::MaterialId;
+    use rand::SeedableRng;
+use ray::Ray;
+    use sphere::Sphere;
+
+    fn get_rng() -> Pcg64Mcg {
+        Pcg64Mcg::seed_from_u64(0)
+    }
+
+    #[test]
+    fn test_translation_hit() {
+        let sphere = Sphere::new(Vec3A::ZERO, 1.0, MaterialId(0));
+        let mut rng = get_rng();
+
+        let transformed = TransformedMesh::new(
+            Vec3A::new(5.0, 0.0, 0.0),
+            Vec3A::ZERO,
+            Vec3A::ONE,
+            sphere.into(),
+        );
+
+        let ray = Ray::new(Vec3A::new(0.0, 0.0, 0.0), Vec3A::new(1.0, 0.0, 0.0));
+
+        let hit = transformed.hit(&ray, 0.001, 100.0, &mut rng);
+        assert!(hit.is_some());
+
+        let hit_result = hit.unwrap();
+        assert_eq!(hit_result.parameter, 4.0);
+        assert_eq!(hit_result.point.x, 4.0);
+    }
+
+    #[test]
+    fn test_scaling_hit() {
+        let sphere = Sphere::new(Vec3A::ZERO, 1.0, MaterialId(0));
+        let mut rng = get_rng();
+
+        let transformed = TransformedMesh::new(
+            Vec3A::ZERO,
+            Vec3A::ZERO,
+            Vec3A::new(2.0, 2.0, 2.0),
+            sphere.into(),
+        );
+
+        let ray = Ray::new(Vec3A::new(-5.0, 0.0, 0.0), Vec3A::new(1.0, 0.0, 0.0));
+
+        let hit = transformed.hit(&ray, 0.001, 100.0, &mut rng);
+        assert!(hit.is_some());
+
+        let hit_result = hit.unwrap();
+        assert_eq!(hit_result.parameter, 3.0);
+        assert_eq!(hit_result.geometric_normal.x, -1.0);
+    }
+
+    #[test]
+    fn test_aabb_transformation() {
+        let original_bbox = AABB::from(Vec3A::new(-1.0, -1.0, -1.0), Vec3A::ONE);
+        let translate = Mat4::from_translation(Vec3::new(0.0, 1.0, 0.0));
+        let transformed_bbox = transform_aabb(&original_bbox, &translate);
+
+        assert_eq!(transformed_bbox.minimum.x, -1.0);
+        assert_eq!(transformed_bbox.minimum.y, 0.0);
+        assert_eq!(transformed_bbox.maximum.y, 2.0);
     }
 }

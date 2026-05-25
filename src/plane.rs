@@ -89,6 +89,10 @@ impl Plane {
     pub fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitResult> {
         match self.axis {
             Axis::XY => {
+                if ray.direction.z.abs() < f32::EPSILON {
+                    return None;
+                }
+
                 let t = (self.offset - ray.origin.z) / ray.direction.z;
 
                 if t < position_min || t > position_max {
@@ -115,6 +119,10 @@ impl Plane {
                 Some(result)
             }
             Axis::YZ => {
+                if ray.direction.x.abs() < f32::EPSILON {
+                    return None;
+                }
+
                 let t = (self.offset - ray.origin.x) / ray.direction.x;
 
                 if t < position_min || t > position_max {
@@ -141,6 +149,10 @@ impl Plane {
                 Some(result)
             }
             Axis::XZ => {
+                if ray.direction.y.abs() < f32::EPSILON {
+                        return None;
+                    }
+
                 let t = (self.offset - ray.origin.y) / ray.direction.y;
 
                 if t < position_min || t > position_max {
@@ -226,5 +238,73 @@ impl Plane {
         };
 
         random_point - origin
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use glam::Vec3A;
+    use materials::MaterialId;
+    use ray::Ray;
+
+    #[test]
+    fn test_plane_hit() {
+        let bounds = Bounds2D::new(-1.0..1.0, -1.0..1.0);
+        let plane = Plane::new(Axis::XY, bounds, 5.0, MaterialId(0));
+
+        let ray = Ray::new(Vec3A::new(0.0, 0.0, 0.0), Vec3A::new(0.0, 0.0, 1.0));
+
+        let hit = plane.hit(&ray, 0.001, f32::MAX);
+        assert!(hit.is_some());
+
+        let hit = hit.unwrap();
+        assert_eq!(hit.parameter, 5.0);
+        assert_eq!(hit.shading_normal, Vec3A::new(0.0, 0.0, 1.0));
+    }
+
+    #[test]
+    fn test_plane_miss() {
+        let bounds = Bounds2D::new(-1.0..1.0, -1.0..1.0);
+        let plane = Plane::new(Axis::XY, bounds, 5.0, MaterialId(0));
+
+        let ray = Ray::new(Vec3A::new(2.0, 2.0, 0.0), Vec3A::new(0.0, 0.0, 1.0));
+
+        let hit = plane.hit(&ray, 0.001, f32::MAX);
+        assert!(hit.is_none());
+    }
+
+    #[test]
+    fn test_plane_hit_parallel_ray_returns_none() {
+        let bounds = Bounds2D::new(-1.0..1.0, -1.0..1.0);
+        let plane = Plane::new(Axis::XY, bounds, 0.0, MaterialId(0));
+
+        let ray = Ray::new(Vec3A::new(0.0, 0.0, 0.0), Vec3A::new(1.0, 0.0, 0.0));
+
+        let hit = plane.hit(&ray, 0.0, f32::MAX);
+        assert!(hit.is_none());
+    }
+
+    #[test]
+    fn test_evaluate_sampling_weight_front_facing() {
+        let bounds = Bounds2D::new(-1.0..1.0, -1.0..1.0);
+        let plane = Plane::new(Axis::XY, bounds, 5.0, MaterialId(0));
+
+        let ray = Ray::new(Vec3A::new(0.0, 0.0, 0.0), Vec3A::new(0.0, 0.0, 1.0));
+
+        let weight = plane.evaluate_sampling_weight(&ray);
+        assert!(weight > 0.0);
+    }
+
+    #[test]
+    fn test_evaluate_sampling_weight_back_facing() {
+        let bounds = Bounds2D::new(-1.0..1.0, -1.0..1.0);
+        let plane = Plane::new(Axis::XY, bounds, 5.0, MaterialId(0));
+
+        let ray = Ray::new(Vec3A::new(0.0, 0.0, 10.0), Vec3A::new(0.0, 0.0, -1.0));
+
+        let weight = plane.evaluate_sampling_weight(&ray);
+        assert_eq!(weight, 0.0);
     }
 }

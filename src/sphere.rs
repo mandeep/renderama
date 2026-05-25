@@ -105,7 +105,18 @@ impl Sphere {
         let a = ray.direction.dot(ray.direction);
         let b = oc.dot(ray.direction);
         let c = oc.dot(oc) - self.radius * self.radius;
-        if b * b - a * c <= 0.0 {
+        let discriminant = b * b - a * c;
+
+        if discriminant <= 0.0 {
+            return 0.0;
+        }
+
+        // need to perform the same discriminant check as in hit()
+        let sqrt_d = discriminant.sqrt();
+        let first_root = (-b - sqrt_d) / a;
+        let second_root = (-b + sqrt_d) / a;
+
+        if first_root <= 1e-4 && second_root <= 1e-4 {
             return 0.0;
         }
 
@@ -131,8 +142,69 @@ impl Sphere {
         // uniformly sample from a cone as it's more efficient and more likely to hit
         // the spherical light
         let cos_theta_max = (1.0 - self.radius * self.radius / distance_squared).sqrt();
+        let normalized_to_center = to_center / distance;
         let local_direction = uniform_sample_cone(cos_theta_max, rng);
-        let basis = OrthonormalBasis::new(&to_center);
-        distance * basis.local(&local_direction)
+        let basis = OrthonormalBasis::new(&normalized_to_center);
+        distance * basis.local(&local_direction).normalize()
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use glam::Vec3A;
+    use materials::MaterialId;
+    use ray::Ray;
+
+    #[test]
+    fn test_sphere_hit() {
+        let sphere = Sphere::new(Vec3A::new(0.0, 0.0, 5.0), 1.0, MaterialId(0));
+        let ray = Ray::new(Vec3A::ZERO, Vec3A::new(0.0, 0.0, 1.0));
+
+        let hit = sphere.hit(&ray, 1e-4, 100.0);
+        assert!(hit.is_some());
+
+        let result = hit.unwrap();
+        assert!((result.parameter - 4.0).abs() < 1e-5);
+    }
+
+    #[test]
+    fn test_sphere_miss() {
+        let sphere = Sphere::new(Vec3A::new(0.0, 0.0, -5.0), 1.0, MaterialId(0));
+        let ray = Ray::new(Vec3A::ZERO, Vec3A::new(0.0, 0.0, 1.0));
+
+        let hit = sphere.hit(&ray, 1e-4, 100.0);
+        assert!(hit.is_none());
+    }
+
+    #[test]
+    fn test_sphere_hit_inside_out() {
+        let sphere = Sphere::new(Vec3A::ZERO, 2.0, MaterialId(0));
+        let ray = Ray::new(Vec3A::ZERO, Vec3A::new(0.0, 1.0, 0.0));
+
+        let hit = sphere.hit(&ray, 1e-4, 100.0);
+        assert!(hit.is_some());
+
+        let result = hit.unwrap();
+        assert!((result.parameter - 2.0).abs() < 1e-5);
+    }
+
+    #[test]
+    fn test_bounding_box() {
+        let sphere = Sphere::new(Vec3A::new(2.0, 2.0, 2.0), 3.0, MaterialId(0));
+        let bbox = sphere.bounding_box().unwrap();
+
+        assert_eq!(bbox.minimum, Vec3A::new(-1.0, -1.0, -1.0));
+        assert_eq!(bbox.maximum, Vec3A::new(5.0, 5.0, 5.0));
+    }
+
+    #[test]
+    fn test_sampling_weight_miss_returns_zero() {
+        let sphere = Sphere::new(Vec3A::new(0.0, 0.0, 5.0), 1.0, MaterialId(0));
+        let ray = Ray::new(Vec3A::ZERO, Vec3A::new(0.0, 0.0, -1.0));
+
+        let weight = sphere.evaluate_sampling_weight(&ray);
+        assert_eq!(weight, 0.0);
     }
 }
