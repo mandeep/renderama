@@ -18,20 +18,12 @@ fn luminance(r: f32, g: f32, b: f32) -> f32 {
 /// Given a cdf and random variable u,
 /// use binary search to find largest values in the area around u.
 fn sample_brightest_pixels(cdf: &[f32], u: f32) -> usize {
-    let mut lo = 0usize;
-    let mut hi = cdf.len();
-
-    while lo < hi {
-        let mid = lo + (hi - lo) / 2;
-
-        if cdf[mid] <= u {
-            lo = mid + 1;
-        } else {
-            hi = mid;
-        }
-    }
-
-    lo.saturating_sub(1).min(cdf.len().saturating_sub(2))
+    // use rust's built-in binary search algorithm rather than writing
+    // our own. find the boundary where probability p is less than u and
+    // return the index where this becomes false.
+    cdf.partition_point(|&p| p <= u)
+        .saturating_sub(1)
+        .min(cdf.len().saturating_sub(2))
 }
 
 /// EnvironmentMap allows for the use of HDRI image-based lighting.
@@ -119,7 +111,7 @@ impl EnvironmentMap {
     ///
     /// Converts the direction into spherical UV coordinates via atan2 and asin
     /// and performs a nearest neighbor pixel fetch.
-    pub fn sample_map(&self, _u: f32, _v: f32, direction: &Vec3A) -> Vec3A {
+    pub fn sample_map(&self, direction: &Vec3A) -> Vec3A {
         let u = 0.5 + direction.z.atan2(direction.x) / (2.0 * PI);
         let v = 0.5 - direction.y.asin() / PI;
 
@@ -167,6 +159,8 @@ impl EnvironmentMap {
         let row = j * (self.width + 1);
         let i = sample_brightest_pixels(&self.conditional_cdf[row..row + self.width + 1], u2);
 
+        // look into continuous inverse sampling transform instead of
+        // using a jittered sampling appraoch.
         let u = (i as f32 + 0.5) / self.width as f32;
         let v = (j as f32 + 0.5) / self.height as f32;
 

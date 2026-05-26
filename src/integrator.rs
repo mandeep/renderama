@@ -159,7 +159,7 @@ fn evaluate_missed_ray(
     throughput: &Vec3A
 ) -> Vec3A {
     if let Some(environment) = &scene.environment {
-        let environment_response = environment.sample_map(0.0, 0.0, &ray.direction);
+        let environment_response = environment.sample_map(&ray.direction);
         let environment_weight = environment.evaluate_sampling_weight(&ray.direction);
         let mut contribution = throughput * environment_response;
 
@@ -266,7 +266,7 @@ fn evaluate_direct_lighting(
             let shadow_origin = hit_result.point + hit_result.geometric_normal * 1e-3;
             let environment_shadow_ray = Ray::new(shadow_origin, environment_direction);
             if scene.accelerator.hit(&environment_shadow_ray, 1e-3, f32::MAX, rng).is_none() {
-                let environment_value = environment.sample_map(0.0, 0.0, &environment_direction);
+                let environment_value = environment.sample_map(&environment_direction);
                 let material_weight = scatter_result.sampling_strategy.calculate_probability(environment_direction);
                 let reflectance = material.compute_reflectance(&ray, &hit_result, &environment_shadow_ray);
                 let weight = power_heuristic(environment_weight, material_weight);
