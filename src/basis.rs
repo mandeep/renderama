@@ -6,6 +6,7 @@ use glam::Vec3A;
 /// Orthonormal bases are used to calculate where to scatter the ray
 /// when leaving a hit object. ONBs allow for quick and easy computation for
 /// such cases as we can use the normal as one of the vectors.
+#[derive(Copy, Clone)]
 pub struct OrthonormalBasis {
     axis: [Vec3A; 3],
 }

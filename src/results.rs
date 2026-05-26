@@ -43,7 +43,7 @@ impl HitResult {
     /// If the dot product between the ray direction and normals are less than 0,
     /// then the ray hit the surface from the outside, otherwise it hit the
     /// surface from the inside.
-    pub fn face_forward_normals(&self, incoming_direction: Vec3A) -> (Vec3A, Vec3A) {
+    pub fn face_forward_normals(&self, incoming_direction: &Vec3A) -> (Vec3A, Vec3A) {
         let geometric_normal = if incoming_direction.dot(self.geometric_normal) < 0.0 {
             // ray hits the surface from outside the primitive
             self.geometric_normal
