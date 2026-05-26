@@ -6,10 +6,8 @@
 //! https://www.sci.utah.edu/~wald/Publications/2007/ParallelBVHBuild/fastbuild.pdf
 //! https://research.nvidia.com/sites/default/files/pubs/2013-09_On-Quality-Metrics/aila2013hpg_paper.pdf
 //! https://pbr-book.org/3ed-2018/Primitives_and_Intersection_Acceleration/Bounding_Volume_Hierarchies
-use std::sync::Arc;
-use rand_pcg::Pcg64Mcg;
-
 use glam::Vec3A;
+use rand_pcg::Pcg64Mcg;
 use wide::f32x4;
 
 use aabb::AABB;
@@ -29,12 +27,14 @@ fn is_leaf(idx: u32) -> bool { idx & LEAF_FLAG != 0 }
 fn leaf_index(idx: u32) -> usize { (idx & !LEAF_FLAG) as usize }
 fn make_leaf_ref(idx: usize) -> u32 { (idx as u32) | LEAF_FLAG }
 
-#[derive(Clone, Default)]
+
 /// Store child bounding boxes in a Structure-of-Arrays (SoA) format.
 /// This allows slab testing in a single instruction with SIMD.
 /// min_x, min_y, etc. are the values of each of the four children.
 /// children contains the index into internals[] or leaves[] for
 /// the count members of the node.
+#[derive(Clone, Default)]
+#[repr(C, align(16))]
 struct InternalNode4 {
     min_x: [f32; 4],
     min_y: [f32; 4],
@@ -72,8 +72,8 @@ pub struct BVH {
 enum TreeNode {
     Internal {
         bbox: AABB,
-        left: Arc<TreeNode>,
-        right: Arc<TreeNode>,
+        left: Box<TreeNode>,
+        right: Box<TreeNode>,
     },
     Leaf {
         bbox: AABB,
@@ -117,8 +117,8 @@ fn build_tree(world: &mut Vec<Primitive>) -> TreeNode {
         let right_box = world[1].bounding_box().unwrap();
         return TreeNode::Internal {
             bbox: main_box,
-            left: Arc::new(TreeNode::Leaf { bbox: left_box, primitive: world[0].clone() }),
-            right: Arc::new(TreeNode::Leaf { bbox: right_box, primitive: world[1].clone() }),
+            left: Box::new(TreeNode::Leaf { bbox: left_box, primitive: world[0].clone() }),
+            right: Box::new(TreeNode::Leaf { bbox: right_box, primitive: world[1].clone() }),
         };
     }
 
@@ -141,8 +141,8 @@ fn build_tree(world: &mut Vec<Primitive>) -> TreeNode {
 
         return TreeNode::Internal {
             bbox: main_box,
-            left: Arc::new(left),
-            right: Arc::new(right),
+            left: Box::new(left),
+            right: Box::new(right),
         };
     }
 
@@ -283,8 +283,8 @@ fn build_tree(world: &mut Vec<Primitive>) -> TreeNode {
         let right = build_tree(&mut right_objects);
         return TreeNode::Internal {
             bbox: main_box,
-            left: Arc::new(left),
-            right: Arc::new(right),
+            left: Box::new(left),
+            right: Box::new(right),
         };
     }
 
@@ -293,8 +293,8 @@ fn build_tree(world: &mut Vec<Primitive>) -> TreeNode {
 
     TreeNode::Internal {
         bbox: main_box,
-        left: Arc::new(left),
-        right: Arc::new(right),
+        left: Box::new(left),
+        right: Box::new(right),
     }
 }
 
@@ -390,6 +390,11 @@ fn centroid(hit: &Primitive, axis: usize) -> f32 {
 
 impl BVH {
     pub fn new(world: &mut Vec<Primitive>) -> BVH {
+        if world.is_empty() {
+            eprintln!("BVH contains no objects. Stopping render.");
+            std::process::exit(0);
+        }
+
         let tree = build_tree(world);
 
         let mut internals = Vec::new();
@@ -403,7 +408,7 @@ impl BVH {
     pub fn hit(&self, ray: &Ray, start_distance: f32, end_distance: f32, rng: &mut Pcg64Mcg) -> Option<HitResult> {
         // we iterate the traversal with a depth of 64 which should be okay for
         // millions of objects
-        let mut stack: [u32; 64] = [0; 64];
+        let mut stack: [u32; 256] = [0; 256];
         let mut stack_ptr: usize = 0;
 
         let mut closest_distance = end_distance;
