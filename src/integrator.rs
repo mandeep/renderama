@@ -263,14 +263,15 @@ fn evaluate_direct_lighting(
         let environment_direction = environment.sample_direction_to_light(rng);
         let environment_weight = environment.evaluate_sampling_weight(&environment_direction);
         if environment_weight > 1e-7 {
-            let shadow_origin = hit_result.point + hit_result.geometric_normal * 1e-3;
+            let shadow_origin = find_offset_point(hit_result.point, hit_result.geometric_normal);
             let environment_shadow_ray = Ray::new(shadow_origin, environment_direction);
             if scene.accelerator.hit(&environment_shadow_ray, 1e-3, f32::MAX, rng).is_none() {
                 let environment_value = environment.sample_map(&environment_direction);
                 let material_weight = scatter_result.sampling_strategy.calculate_probability(environment_direction);
                 let reflectance = material.compute_reflectance(&ray, &hit_result, &environment_shadow_ray);
                 let weight = power_heuristic(environment_weight, material_weight);
-                direct_light += (weight *
+                direct_light += (
+                    weight *
                     throughput *
                     environment_value *
                     scatter_result.contribution *
