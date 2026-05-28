@@ -55,7 +55,7 @@ pub fn three_spheres_scene(width: Option<usize>, height: Option<usize>) -> Scene
 
     let bvh = BVH::new(&mut objects);
 
-    let environment = EnvironmentMap::new("extras/textures/dusk_1_puresky.exr").into();
+    let environment = EnvironmentMap::new("extras/textures/dusk_1_puresky.exr", 1.0).into();
 
     Scene::new(String::from("Three Spheres"), bvh, materials, camera, vec![], Some(environment), None)
 }

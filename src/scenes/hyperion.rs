@@ -111,7 +111,7 @@ pub fn hyperion_scene(width: Option<usize>, height: Option<usize>) -> Scene {
 
     let bvh = BVH::new(&mut objects);
 
-    let environment = EnvironmentMap::new("extras/textures/white_studio_03.exr").into();
+    let environment = EnvironmentMap::new("extras/textures/white_studio_03.exr", 1.0).into();
 
     Scene::new(String::from("Hyperion"), bvh, materials, camera, vec![], Some(environment), None)
 }

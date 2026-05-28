@@ -45,11 +45,12 @@ pub struct EnvironmentMap {
     marginal_cdf: Vec<f32>,
     conditional_cdf: Vec<f32>,
     total_weight: f32,
+    intensity: f32,
 }
 
 impl EnvironmentMap {
     /// Create a new EnvironmentMap from the image at the given path.
-    pub fn new(filename: &str) -> EnvironmentMap {
+    pub fn new(filename: &str, intensity: f32) -> EnvironmentMap {
         let img = image::open(filename).unwrap().to_rgb32f();
         let width = img.width() as usize;
         let height = img.height() as usize;
@@ -103,7 +104,7 @@ impl EnvironmentMap {
             }
         }
 
-        EnvironmentMap { img, width, height, marginal_cdf, conditional_cdf, total_weight }
+        EnvironmentMap { img, width, height, marginal_cdf, conditional_cdf, total_weight, intensity }
     }
 
     /// Determine which pixel to retrieve from the image by
@@ -120,7 +121,7 @@ impl EnvironmentMap {
 
         let image::Rgb([r, g, b]) = *self.img.get_pixel(i as u32, j as u32);
 
-        Vec3A::new(r, g, b)
+        Vec3A::new(r, g, b) * self.intensity
     }
 
     /// Compute the weight on how likely we will sample in the given direction.
