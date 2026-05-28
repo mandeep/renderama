@@ -34,7 +34,7 @@ mod sphere;
 mod texture;
 mod transformations;
 mod triangle;
-mod utils;
+pub mod utils;
 mod volume;
 
 use std::f32;

@@ -12,6 +12,38 @@ pub fn format_time(instant: Duration) -> String {
     format!("{:02}:{:02}:{:02}", hours, minutes, seconds)
 }
 
+/// Clamp a float between 0.0 and 255.0
+///
+/// This function is used due to an LLVM bug
+/// where casting a float to u8 can lead to
+/// undefined behavior:
+/// https://github.com/rust-lang/rust/issues/10184
+pub fn clamp_rgb(n: f32) -> f32 {
+    n.min(255.0).max(0.0)
+}
+
+/// Clamp a value between the lower bound and upper bound
+pub fn clamp(n: f32, lower_bound: f32, upper_bound: f32) -> f32 {
+    let minimum = n.max(lower_bound);
+    let maximum = n.min(upper_bound);
+
+    minimum.min(maximum)
+}
+
+/// Gamma correct the given luminance
+pub fn gamma_correct(luminance: f32, gamma: f32) -> f32 {
+    luminance.powf(1.0 / gamma)
+}
+
+/// Convert from linear f32 to srgb u8
+pub fn linear_to_srgb(linear_f32: f32) -> u8 {
+    let clamped = clamp(linear_f32, 0.0, 1.0);
+    let gamma_corrected = gamma_correct(clamped, 2.2);
+
+    clamp_rgb(gamma_corrected * 255.0) as u8
+}
+
+
 /// Check if a computed color contains any NaNs or infinites
 pub fn de_nan(color: &Vec3A) -> Vec3A {
     let mask = BVec3A::new(color.x.is_finite(), color.y.is_finite(), color.z.is_finite());
