@@ -47,7 +47,6 @@ pub fn hyperion_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let metal_idx = mat!(materials, Reflective::new(Color::new(0.93, 0.93, 0.93).into(), 0.2));
     let dark_metal_idx = mat!(materials, Reflective::new(Color::new(0.757, 0.729, 0.694).into(), 0.10));
     let platform_idx = mat!(materials, Diffuse::new(Color::new(0.76, 0.74, 0.72).into(), 0.0));
-    // let vol_idx = mat!(materials, Volumetric::new(orange_color.into()));
     let orange_idx = mat!(materials, Plastic::new(orange_color.into(), 0.15, 1.5));
     let orange_rough_idx = mat!(materials, Plastic::new(orange_bright_color.into(), 0.25, 1.5));
     let marble_vol_idx = mat!(materials, Volumetric::new(Color::new(0.60, 0.71, 0.49).into()));
@@ -59,11 +58,8 @@ pub fn hyperion_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let floor_plane = Plane::new(Axis::XZ, Bounds2D::new(-50.0..50.0, -50.0..50.0), 0.0, floor_idx);
     let platform = Rectangle::new(Vec3A::new(-3.5, 0.0, -4.0), Vec3A::new(3.5, 0.2, 0.5), platform_idx);
     let glass_sphere = Sphere::new(Vec3A::new(2.1, 0.60, -1.0), 0.4, glass_idx);
-    // let orange_sphere = Sphere::new(Vec3A::new(1.0, 0.56, -2.0), 0.4, glass_idx);
     let orange_sphere = Sphere::new(Vec3A::new(1.0, 0.55, -2.0), 0.35, orange_idx);
     let metal_sphere = Sphere::new(Vec3A::new(-2.25, 0.65, -1.2), 0.45, dark_metal_idx);
-    // let cloned_sphere = orange_sphere.clone();
-    // let sphere_volume = Volume::new(3.0, cloned_sphere.into(), vol_idx);
     let large_marble = Sphere::new(Vec3A::new(0.35, 0.325, 0.0), 0.125, glass_idx);
     let small_marble = Sphere::new(Vec3A::new(-0.35, 0.30, 0.0), 0.10, glass_idx);
     let large_marble_volume = Volume::new(15.0, large_marble.clone().into(), marble_vol_idx);
@@ -78,9 +74,10 @@ pub fn hyperion_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let cricket_ball_mesh = TriangleMesh::from("extras/models/cricket_ball_no_stitch.obj", cricket_idx);
     let cricket_ball_stitch_bottom_mesh = TriangleMesh::from("extras/models/cricket_ball_stitch_bottom.obj", cream_idx);
     let cricket_ball_stitch_top_mesh = TriangleMesh::from("extras/models/cricket_ball_stitch_top.obj", cream_idx);
-    let cricked_ball = TransformedMesh::new(Vec3A::new(-0.6, 0.70, -2.5), Vec3A::new(-30.0, 0.0, 15.0), Vec3A::splat(1.75), cricket_ball_mesh.into());
-    let cricked_ball_stitch_bottom = TransformedMesh::new(Vec3A::new(-0.6, 0.70, -2.5), Vec3A::new(-30.0, 0.0, 15.0), Vec3A::splat(1.75), cricket_ball_stitch_bottom_mesh.into());
-    let cricked_ball_stitch_top = TransformedMesh::new(Vec3A::new(-0.6, 0.70, -2.5), Vec3A::new(-30.0, 0.0, 15.0), Vec3A::splat(1.75), cricket_ball_stitch_top_mesh.into());
+    let (translation, rotation, scale) = (Vec3A::new(-0.6, 0.70, -2.5), Vec3A::new(-30.0, 0.0, 15.0), Vec3A::splat(1.75));
+    let cricked_ball = TransformedMesh::new(translation, rotation, scale, cricket_ball_mesh.into());
+    let cricked_ball_stitch_bottom = TransformedMesh::new(translation, rotation, scale, cricket_ball_stitch_bottom_mesh.into());
+    let cricked_ball_stitch_top = TransformedMesh::new(translation, rotation, scale, cricket_ball_stitch_top_mesh.into());
 
     let pingpong_mesh = TriangleMesh::from("extras/models/pingpong.obj", pingpong_idx);
     let pingpong_sphere = TransformedMesh::new(Vec3A::new(-1.25, 0.475, -0.3), Vec3A::new(0.0, 0.0, 90.0), Vec3A::splat(0.28), pingpong_mesh.into());
@@ -94,7 +91,6 @@ pub fn hyperion_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     objects.push(glass_sphere.into());
     objects.push(metal_sphere.into());
     objects.push(orange_sphere.into());
-    // objects.push(sphere_volume.into());
     objects.push(large_marble.into());
     objects.push(small_marble.into());
     objects.push(large_marble_volume.into());
@@ -111,7 +107,7 @@ pub fn hyperion_scene(width: Option<usize>, height: Option<usize>) -> Scene {
 
     let bvh = BVH::new(&mut objects);
 
-    let environment = EnvironmentMap::new("extras/textures/white_studio_03.exr", 1.0).into();
+    let environment = EnvironmentMap::new("extras/textures/white_studio_03.exr", 0.6).into();
 
     Scene::new(String::from("Hyperion"), bvh, materials, camera, vec![], Some(environment), None)
 }
