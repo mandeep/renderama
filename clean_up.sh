@@ -2,7 +2,7 @@
 
 # Find files using Zsh globbing
 # (N) prevents "no matches found" errors
-files=( (render_|denoised_render_)*.exr(N) )
+files=( (render_|denoised_render_)*.(exr|png)(N) )
 
 # Check if array is empty
 if (( ${#files} == 0 )); then
