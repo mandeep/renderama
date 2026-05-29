@@ -45,6 +45,8 @@ pub struct EnvironmentMap {
     marginal_cdf: Vec<f32>,
     conditional_cdf: Vec<f32>,
     total_weight: f32,
+    #[allow(unused)]
+    max_luminance: f32, // for tone mapping
     intensity: f32,
 }
 
@@ -62,6 +64,8 @@ impl EnvironmentMap {
         // stores the total brightness of each row
         let mut marginal_weights = vec![0.0f32; height];
 
+        let mut max_luminance = 0.0f32;
+
         // compute the horizontal probabilities
         for j in 0..height {
             // since HDRI images are equirectangular projections we
@@ -75,6 +79,7 @@ impl EnvironmentMap {
             for i in 0..width {
                 let pixel = img.get_pixel(i as u32, j as u32);
                 let luminance = luminance(pixel[0], pixel[1], pixel[2]) * sin_theta;
+                max_luminance = max_luminance.max(luminance);
                 conditional_cdf[row + i + 1] = conditional_cdf[row + i] + luminance;
             }
 
@@ -104,7 +109,7 @@ impl EnvironmentMap {
             }
         }
 
-        EnvironmentMap { img, width, height, marginal_cdf, conditional_cdf, total_weight, intensity }
+        EnvironmentMap { img, width, height, marginal_cdf, conditional_cdf, total_weight, max_luminance, intensity }
     }
 
     /// Determine which pixel to retrieve from the image by
