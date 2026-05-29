@@ -1,6 +1,8 @@
 use std::time::Duration;
 
 use glam::{BVec3A, Vec3A};
+use image::RgbImage;
+use rayon::prelude::*;
 
 /// Convert a Duration to a String formatted as HH:MM:SS
 pub fn format_time(instant: Duration) -> String {
@@ -51,11 +53,27 @@ pub fn de_nan(color: &Vec3A) -> Vec3A {
     Vec3A::select(mask, *color, Vec3A::ZERO)
 }
 
+/// Apply gamma correction to an Rgb8 image buffer in-place.
+pub fn gamma_correct_buffer(image: &mut RgbImage, gamma: f32) {
+    let mut lut = [0u8; 256];
+
+    for (i, value) in lut.iter_mut().enumerate() {
+        let luminance = i as f32 / 255.0;
+        let corrected_value = gamma_correct(luminance, gamma);
+        *value = clamp_rgb(corrected_value * 255.0) as u8;
+    }
+
+    image.as_mut().par_iter_mut().for_each(|pixel| {
+        *pixel = lut[*pixel as usize];
+    });
+}
+
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use glam::Vec3A;
+    use image::Rgb;
 
     #[test]
     fn test_de_nan() {
@@ -70,5 +88,23 @@ mod tests {
         let color = Vec3A::new(f32::NAN, 10.0 / 0.0, 1.0);
         let corrected = de_nan(&color);
         assert_eq!(corrected, Vec3A::new(0.0, 0.0, 1.0));
+    }
+
+    #[test]
+    fn test_gamma_correct_buffer() {
+        let mut img = RgbImage::new(2, 2);
+
+        img.put_pixel(0, 0, Rgb([0, 0, 0]));
+        img.put_pixel(1, 0, Rgb([255, 255, 255]));
+        img.put_pixel(0, 1, Rgb([128, 128, 128]));
+        img.put_pixel(1, 1, Rgb([64, 64, 64]));
+
+        gamma_correct_buffer(&mut img, 2.2);
+
+        // ((pixel / 255.0) ^ (1.0 / 2.2)) * 255.0
+        assert_eq!(img.get_pixel(0, 0).0, [0, 0, 0]);
+        assert_eq!(img.get_pixel(1, 0).0, [255, 255, 255]);
+        assert_eq!(img.get_pixel(0, 1).0, [186, 186, 186]);
+        assert_eq!(img.get_pixel(1, 1).0, [136, 136, 136]);
     }
 }

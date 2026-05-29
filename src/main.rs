@@ -47,7 +47,7 @@ use std::time::{Duration, Instant};
 use chrono::Local;
 use clap::Parser;
 use glam::Vec3A;
-use image::{ImageBuffer, Rgb};
+use image::{DynamicImage, ImageBuffer, Rgb};
 use pbr::ProgressBar;
 use rand::{rng, RngExt, SeedableRng};
 use rand_pcg::Pcg64Mcg;
@@ -56,7 +56,7 @@ use rayon::prelude::*;
 use integrator::Integrator;
 use scenes::Scenes;
 use scene::Scene;
-use utils::de_nan;
+use utils::*;
 
 #[cfg(feature = "denoise")]
 use denoise::denoise;
@@ -67,6 +67,10 @@ struct Args {
     #[arg(long, default_value = "cornell_box_objects")]
     /// The scene to render.
     scene: Scenes,
+
+    #[arg(long, default_value = "beauty")]
+    /// The integrator used to render the scene.
+    integrator: Integrator,
 
     #[arg(long)]
     /// The number of samples to render the scene with.
@@ -85,9 +89,9 @@ struct Args {
     /// Must be an image format that supports 32bit floating-point.
     output: Option<String>,
 
-    #[arg(long, default_value = "beauty")]
-    /// The integrator used to render the scene.
-    integrator: Integrator,
+    #[arg(long)]
+    /// Save the output file as an Rgb8 PNG image.
+    png: bool
 }
 
 fn main() {
@@ -171,7 +175,7 @@ fn main() {
     let buffer: ImageBuffer<Rgb<f32>, Vec<f32>> = ImageBuffer::from_raw(width as u32, height as u32, pixels.clone()).unwrap();
 
     let timestamp = Local::now().format("%Y%m%d-%H%M%S").to_string();
-    let filepath = output_path.unwrap_or_else(|| format!("render_{}.exr", timestamp));
+    let filepath = output_path.clone().unwrap_or_else(|| format!("render_{}.exr", timestamp));
 
     buffer.save(&filepath).unwrap();
 
@@ -180,6 +184,19 @@ fn main() {
             utils::format_time(rendering_time.elapsed()),
             &filepath,
             );
+
+    if args.png {
+        let mut rgb8_buffer = DynamicImage::ImageRgb32F(buffer).into_rgb8();
+        gamma_correct_buffer(&mut rgb8_buffer, 2.2);
+        let rgb8_filepath = output_path.clone().unwrap_or_else(|| format!("render_{}.png", timestamp));
+        rgb8_buffer.save(&rgb8_filepath).unwrap();
+
+        println!("[{}] Finished rendering in {}. Render saved to {}.",
+            Local::now().format("%H:%M:%S"),
+            utils::format_time(rendering_time.elapsed()),
+            &rgb8_filepath,
+            );
+    }
 
     #[cfg(feature = "denoise")]
     {
@@ -201,5 +218,18 @@ fn main() {
                  utils::format_time(denoising_time.elapsed()),
                  &filepath,
                 );
+
+        if args.png {
+            let mut rgb8_buffer = DynamicImage::ImageRgb32F(denoised_buffer).into_rgb8();
+            gamma_correct_buffer(&mut rgb8_buffer, 2.2);
+            let rgb8_filepath = format!("denoised_render_{}.png", timestamp);
+            rgb8_buffer.save(&rgb8_filepath).unwrap();
+
+            println!("[{}] Finished rendering in {}. Render saved to {}.",
+                Local::now().format("%H:%M:%S"),
+                utils::format_time(rendering_time.elapsed()),
+                &rgb8_filepath,
+                );
+        }
     }
 }

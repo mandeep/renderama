@@ -9,8 +9,8 @@
 *.bak
 
 # ignore render artifacts and clean up scripts
-denoised_render_*.exr
-render_*.exr
+denoised_render_*.*
+render_*.*
 
 
 # need to ignore Python artifacts now that we have tests
