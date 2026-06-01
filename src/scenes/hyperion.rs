@@ -10,7 +10,7 @@ use materials::{Diffuse, Material, Plastic, Reflective, Refractive, Volumetric};
 use plane::{Axis, Bounds2D, Plane};
 use primitive::Primitive;
 use rectangle::Rectangle;
-use scene::Scene;
+use scene::{Scene, SceneBuilder};
 use sphere::Sphere;
 use texture::{Color, ImageTexture};
 use transformations::TransformedMesh;
@@ -109,5 +109,11 @@ pub fn hyperion_scene(width: Option<usize>, height: Option<usize>) -> Scene {
 
     let environment = EnvironmentMap::new("extras/textures/white_studio_03.exr", 0.6).into();
 
-    Scene::new(String::from("Hyperion"), bvh, materials, camera, vec![], Some(environment), None)
+    SceneBuilder::new("Hyperion")
+        .with_accelerator(bvh)
+        .with_camera(camera)
+        .with_materials(materials)
+        .with_environment(environment)
+        .build()
+        .expect("Failed to build Hyperion scene")
 }

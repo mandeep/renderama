@@ -6,7 +6,7 @@ use atmosphere::Atmosphere;
 use bvh::BVH;
 use camera::Camera;
 use materials::{Material, Reflective};
-use scene::Scene;
+use scene::{Scene, SceneBuilder};
 use sphere::Sphere;
 use texture::{Color};
 
@@ -42,5 +42,11 @@ pub fn white_furnace_scene(width: Option<usize>, height: Option<usize>) -> Scene
 
     let atmosphere = Atmosphere::new(Vec3A::ONE, false);
 
-    Scene::new(String::from("White Furnace Test"), bvh, materials, camera, vec![], None, Some(atmosphere))
+    SceneBuilder::new("White Furnace Test")
+        .with_accelerator(bvh)
+        .with_camera(camera)
+        .with_materials(materials)
+        .with_atmosphere(atmosphere)
+        .build()
+        .expect("Failed to build White Furnace Test scene")
 }

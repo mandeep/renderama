@@ -7,7 +7,7 @@ use camera::Camera;
 use lights::Light;
 use materials::{Diffuse, Emissive, Plastic, Material};
 use plane::{Axis, Bounds2D, Plane};
-use scene::Scene;
+use scene::{Scene, SceneBuilder};
 use texture::Color;
 use transformations::TransformedMesh;
 use triangle::TriangleMesh;
@@ -48,6 +48,13 @@ pub fn cornell_box_dragon_scene(width: Option<usize>, height: Option<usize>) -> 
     let bvh = BVH::new(&mut objects);
 
     let light_shape = Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 554.0, white_id);
+    let light = vec![Light::new(light_shape.into(), Vec3A::new(25.0, 25.0, 25.0))];
 
-    Scene::new(String::from("Cornell Box with Dragon"), bvh, materials, camera, vec![Light::new(light_shape.into(), Vec3A::new(25.0, 25.0, 25.0))], None, None)
+    SceneBuilder::new("Cornell Box with Dragon")
+        .with_accelerator(bvh)
+        .with_camera(camera)
+        .with_materials(materials)
+        .with_lights(light)
+        .build()
+        .expect("Failed to build Cornell Box Dragon scene")
 }

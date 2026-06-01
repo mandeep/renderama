@@ -8,7 +8,7 @@ use lights::Light;
 use materials::{Diffuse, Emissive, Material};
 use plane::{Axis, Bounds2D, Plane};
 use rectangle::Rectangle;
-use scene::Scene;
+use scene::{Scene, SceneBuilder};
 use texture::{Color};
 use transformations::TransformedMesh;
 
@@ -52,6 +52,13 @@ pub fn cornell_box_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let bvh = BVH::new(&mut objects);
 
     let light_shape = Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 554.0, white_id);
+    let lights = vec![Light::new(light_shape.into(), Vec3A::new(25.0, 18.0, 10.0))];
 
-    Scene::new(String::from("Cornell Box"), bvh, materials, camera, vec![Light::new(light_shape.into(), Vec3A::new(25.0, 18.0, 10.0))], None, None)
+    SceneBuilder::new("Cornell Box with Boxes")
+        .with_accelerator(bvh)
+        .with_camera(camera)
+        .with_materials(materials)
+        .with_lights(lights)
+        .build()
+        .expect("Failed to build Cornell Box scene")
 }

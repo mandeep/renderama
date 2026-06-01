@@ -6,7 +6,7 @@ use lights::Light;
 use materials::{Diffuse, Emissive, Material, Reflective};
 use plane::{Axis, Bounds2D, Plane};
 use rectangle::Rectangle;
-use scene::Scene;
+use scene::{Scene, SceneBuilder};
 use sphere::Sphere;
 use texture::Color;
 use transformations::TransformedMesh;
@@ -129,13 +129,11 @@ pub fn veach_mis_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     light_sources.push(Light::new(left_light_primitive.into(), fill_color));
     light_sources.push(Light::new(right_light_primitive.into(), fill_color));
 
-    Scene::new(
-        String::from("Veach MIS"),
-        bvh,
-        materials,
-        camera,
-        light_sources,
-        None,
-        None,
-    )
+    SceneBuilder::new("Veach MIS")
+        .with_accelerator(bvh)
+        .with_camera(camera)
+        .with_materials(materials)
+        .with_lights(light_sources)
+        .build()
+        .expect("Failed to build Veach MIS scene")
 }

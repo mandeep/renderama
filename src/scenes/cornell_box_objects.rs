@@ -7,7 +7,7 @@ use camera::Camera;
 use lights::Light;
 use materials::{Diffuse, Emissive, Plastic, Refractive, Material};
 use plane::{Axis, Bounds2D, Plane};
-use scene::Scene;
+use scene::{Scene, SceneBuilder};
 use texture::{Color, ImageTexture};
 use transformations::TransformedMesh;
 use triangle::TriangleMesh;
@@ -62,14 +62,13 @@ pub fn cornell_box_object_scene(width: Option<usize>, height: Option<usize>) -> 
 
     let light_shape = Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 554.0, white_id);
     let light_intensity = Vec3A::new(37.5, 27.0, 15.0);
+    let light = vec![Light::new(light_shape.into(), light_intensity)];
 
-    Scene::new(
-        String::from("Cornell Box with Multiple Objects"),
-        bvh,
-        materials,
-        camera,
-        vec![Light::new(light_shape.into(), light_intensity)],
-        None,
-        None
-    )
+    SceneBuilder::new("Cornell Box with Multiple Objects")
+        .with_accelerator(bvh)
+        .with_camera(camera)
+        .with_materials(materials)
+        .with_lights(light)
+        .build()
+        .expect("Failed to build Cornell Box Objects scene")
 }

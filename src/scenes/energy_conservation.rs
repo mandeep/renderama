@@ -7,7 +7,7 @@ use camera::Camera;
 use lights::Light;
 use materials::{Emissive, Material, Reflective};
 use plane::{Axis, Bounds2D, Plane};
-use scene::Scene;
+use scene::{Scene, SceneBuilder};
 use sphere::Sphere;
 use texture::Color;
 
@@ -42,15 +42,13 @@ pub fn energy_conservation_scene(width: Option<usize>, height: Option<usize>) ->
 
     let light_material = mat!(materials, Emissive::new(Color::new(50.0, 50.0, 50.0).into()));
     let light_plane = Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 600.0, light_material);
-    objects.push(light_plane.clone().into_reversed());
+    let light = vec![Light::new(light_plane.into(), Vec3A::new(50.0, 50.0, 50.0))];
 
-    Scene::new(
-        String::from("Energy Conservation Test"),
-        bvh,
-        materials,
-        camera,
-        vec![Light::new(light_plane.into(), Vec3A::new(50.0, 50.0, 50.0))],
-        None,
-        None,
-    )
+    SceneBuilder::new("Energy Conservation Test")
+        .with_accelerator(bvh)
+        .with_camera(camera)
+        .with_materials(materials)
+        .with_lights(light)
+        .build()
+        .expect("Failed to build Energy Conservation Test scene")
 }

@@ -8,7 +8,7 @@ use bvh::BVH;
 use camera::Camera;
 use environment::EnvironmentMap;
 use materials::{Diffuse, Reflective, Refractive, Material};
-use scene::Scene;
+use scene::{Scene, SceneBuilder};
 use sphere::Sphere;
 use texture::Color;
 
@@ -111,5 +111,11 @@ pub fn random_spheres_scene(width: Option<usize>, height: Option<usize>, rng: &m
 
     let bvh = BVH::new(&mut objects);
 
-    Scene::new(String::from("Random Spheres"), bvh, materials, camera, vec![], Some(environment), None)
+    SceneBuilder::new("Random Spheres")
+        .with_accelerator(bvh)
+        .with_camera(camera)
+        .with_materials(materials)
+        .with_environment(environment)
+        .build()
+        .expect("Failed to build Random Spheres scene")
 }

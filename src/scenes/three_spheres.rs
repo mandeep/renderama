@@ -7,7 +7,7 @@ use camera::Camera;
 use environment::EnvironmentMap;
 use materials::{Diffuse, Reflective, Refractive, Material, Plastic, Volumetric};
 use primitive::Primitive;
-use scene::Scene;
+use scene::{Scene, SceneBuilder};
 use sphere::Sphere;
 use texture::Color;
 use volume::Volume;
@@ -57,5 +57,11 @@ pub fn three_spheres_scene(width: Option<usize>, height: Option<usize>) -> Scene
 
     let environment = EnvironmentMap::new("extras/textures/dusk_1_puresky.exr", 1.0).into();
 
-    Scene::new(String::from("Three Spheres"), bvh, materials, camera, vec![], Some(environment), None)
+    SceneBuilder::new("Three Spheres")
+        .with_accelerator(bvh)
+        .with_camera(camera)
+        .with_materials(materials)
+        .with_environment(environment)
+        .build()
+        .expect("Failed to build Three Spheres scene")
 }

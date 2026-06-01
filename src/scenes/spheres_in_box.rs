@@ -12,7 +12,7 @@ use lights::Light;
 use materials::{Diffuse, Emissive, Material, Reflective, Refractive, Volumetric};
 use plane::{Axis, Bounds2D, Plane};
 use rectangle::Rectangle;
-use scene::Scene;
+use scene::{Scene, SceneBuilder};
 use sphere::Sphere;
 use texture::{Color, ImageTexture};
 use transformations::TransformedMesh;
@@ -116,6 +116,13 @@ pub fn spheres_in_box_scene(width: Option<usize>, height: Option<usize>, rng: &m
 
     let bvh = BVH::new(&mut objects);
     let light_shape = Plane::new(Axis::XZ, Bounds2D::new(123.0..423.0, 147.0..412.0), 554.0, white);
+    let light = vec![Light::new(light_shape.into(), Vec3A::splat(7.0))];
 
-    Scene::new(String::from("Spheres in Box"), bvh, materials, camera, vec![Light::new(light_shape.into(), Vec3A::splat(7.0))], None, None)
+    SceneBuilder::new("Spheres in Box")
+        .with_accelerator(bvh)
+        .with_camera(camera)
+        .with_materials(materials)
+        .with_lights(light)
+        .build()
+        .expect("Failed to build Spheres in Box scene")
 }

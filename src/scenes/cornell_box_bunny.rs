@@ -9,7 +9,7 @@ use primitive::{Primitive};
 use lights::Light;
 use materials::{Diffuse, Emissive, Reflective, Refractive, Material};
 use plane::{Axis, Bounds2D, Plane};
-use scene::Scene;
+use scene::{Scene, SceneBuilder};
 use texture::Color;
 use transformations::TransformedMesh;
 use triangle::TriangleMesh;
@@ -56,6 +56,13 @@ pub fn cornell_box_bunny_scene(width: Option<usize>, height: Option<usize>) -> S
     let bvh = BVH::new(&mut objects);
 
     let light_shape = Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 554.0, white_id);
+    let light = vec![Light::new(light_shape.into(), Vec3A::new(25.0, 18.0, 10.0))];
 
-    Scene::new(String::from("Cornell Box with Stanford Bunny"), bvh, materials, camera, vec![Light::new(light_shape.into(), Vec3A::new(25.0, 18.0, 10.0))], None, None)
+    SceneBuilder::new("Cornell Box with Bunny and Buddha")
+        .with_accelerator(bvh)
+        .with_camera(camera)
+        .with_materials(materials)
+        .with_lights(light)
+        .build()
+        .expect("Failed to build Cornell Box Bunny and Buddha scene")
 }
