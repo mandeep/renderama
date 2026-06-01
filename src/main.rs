@@ -39,6 +39,7 @@ pub mod utils;
 mod volume;
 
 use std::f32;
+use std::path::Path;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use std::thread;
@@ -47,7 +48,7 @@ use std::time::{Duration, Instant};
 use chrono::Local;
 use clap::Parser;
 use glam::Vec3A;
-use image::{DynamicImage, ImageBuffer, Rgb};
+use image::{ImageBuffer, Rgb};
 use pbr::ProgressBar;
 use rand::{rng, RngExt, SeedableRng};
 use rand_pcg::Pcg64Mcg;
@@ -88,10 +89,6 @@ struct Args {
     /// The path at which to save the output render.
     /// Must be an image format that supports 32bit floating-point.
     output: Option<String>,
-
-    #[arg(long)]
-    /// Save the output file as an Rgb8 PNG image.
-    png: bool
 }
 
 fn main() {
@@ -176,27 +173,15 @@ fn main() {
 
     let timestamp = Local::now().format("%Y%m%d-%H%M%S").to_string();
     let filepath = output_path.clone().unwrap_or_else(|| format!("render_{}.exr", timestamp));
+    let output_filepath = Path::new(&filepath);
 
-    buffer.save(&filepath).unwrap();
+    buffer.save(&output_filepath).unwrap();
 
     println!("[{}] Finished rendering in {}. Render saved to {}.",
             Local::now().format("%H:%M:%S"),
             utils::format_time(rendering_time.elapsed()),
             &filepath,
             );
-
-    if args.png {
-        let mut rgb8_buffer = DynamicImage::ImageRgb32F(buffer).into_rgb8();
-        gamma_correct_buffer(&mut rgb8_buffer, 2.2);
-        let rgb8_filepath = output_path.clone().unwrap_or_else(|| format!("render_{}.png", timestamp));
-        rgb8_buffer.save(&rgb8_filepath).unwrap();
-
-        println!("[{}] Finished rendering in {}. Render saved to {}.",
-            Local::now().format("%H:%M:%S"),
-            utils::format_time(rendering_time.elapsed()),
-            &rgb8_filepath,
-            );
-    }
 
     #[cfg(feature = "denoise")]
     {
@@ -208,28 +193,18 @@ fn main() {
         let denoised_output = denoise(&pixels, width, height);
         let denoised_buffer: ImageBuffer<Rgb<f32>, Vec<f32>> = ImageBuffer::from_raw(width as u32, height as u32, denoised_output).unwrap();
 
-        let timestamp = Local::now().format("%Y%m%d-%H%M%S").to_string();
-        let filepath = format!("denoised_render_{}.exr", timestamp);
+        let stem = output_filepath.file_stem().and_then(|s| s.to_str()).unwrap_or("render");
+        let extension = output_filepath.extension().and_then(|e| e.to_str()).unwrap_or("exr");
+        let parent = output_filepath.parent().unwrap_or_else(|| Path::new(""));
+        let denoised_filename = format!("{}_denoised.{}", stem, extension);
+        let denoised_filepath = parent.join(denoised_filename).to_string_lossy().into_owned();
 
-        denoised_buffer.save(&filepath).unwrap();
+        denoised_buffer.save(&denoised_filepath).unwrap();
 
         println!("[{}] Finished denoising in {}. Render saved to {}.",
                  Local::now().format("%H:%M:%S"),
                  utils::format_time(denoising_time.elapsed()),
-                 &filepath,
+                 &denoised_filepath,
                 );
-
-        if args.png {
-            let mut rgb8_buffer = DynamicImage::ImageRgb32F(denoised_buffer).into_rgb8();
-            gamma_correct_buffer(&mut rgb8_buffer, 2.2);
-            let rgb8_filepath = format!("denoised_render_{}.png", timestamp);
-            rgb8_buffer.save(&rgb8_filepath).unwrap();
-
-            println!("[{}] Finished rendering in {}. Render saved to {}.",
-                Local::now().format("%H:%M:%S"),
-                utils::format_time(rendering_time.elapsed()),
-                &rgb8_filepath,
-                );
-        }
     }
 }
