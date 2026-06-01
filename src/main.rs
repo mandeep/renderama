@@ -7,6 +7,7 @@ extern crate rand;
 extern crate rand_distr;
 extern crate rand_pcg;
 extern crate rayon;
+extern crate strum;
 extern crate tobj;
 extern crate wide;
 
@@ -105,6 +106,7 @@ fn main() {
     let integrator: Integrator = args.integrator;
     let samples: usize = args.samples.unwrap_or(integrator.default_samples());
     let scene: Scene = args.scene.load(args.width, args.height, &mut scene_rng);
+    let scene_name = args.scene.to_string();
     let (width, height) = (scene.camera.resolution.0 as usize, scene.camera.resolution.1 as usize);
     let output_path = args.output;
 
@@ -172,7 +174,7 @@ fn main() {
     let buffer: ImageBuffer<Rgb<f32>, Vec<f32>> = ImageBuffer::from_raw(width as u32, height as u32, pixels.clone()).unwrap();
 
     let timestamp = Local::now().format("%Y%m%d-%H%M%S").to_string();
-    let filepath = output_path.clone().unwrap_or_else(|| format!("render_{}.exr", timestamp));
+    let filepath = output_path.clone().unwrap_or_else(|| format!("render_{}_{}.exr", scene_name, timestamp));
     let output_filepath = Path::new(&filepath);
 
     buffer.save(&output_filepath).unwrap();
@@ -193,10 +195,10 @@ fn main() {
         let denoised_output = denoise(&pixels, width, height);
         let denoised_buffer: ImageBuffer<Rgb<f32>, Vec<f32>> = ImageBuffer::from_raw(width as u32, height as u32, denoised_output).unwrap();
 
-        let stem = output_filepath.file_stem().and_then(|s| s.to_str()).unwrap_or("render");
+        let render_filename = output_filepath.file_stem().and_then(|s| s.to_str()).unwrap_or("render");
         let extension = output_filepath.extension().and_then(|e| e.to_str()).unwrap_or("exr");
         let parent = output_filepath.parent().unwrap_or_else(|| Path::new(""));
-        let denoised_filename = format!("{}_denoised.{}", stem, extension);
+        let denoised_filename = format!("{}_denoised.{}", render_filename, extension);
         let denoised_filepath = parent.join(denoised_filename).to_string_lossy().into_owned();
 
         denoised_buffer.save(&denoised_filepath).unwrap();

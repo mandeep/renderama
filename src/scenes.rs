@@ -1,5 +1,6 @@
 use clap::ValueEnum;
 use rand_pcg::Pcg64Mcg;
+use strum::{Display, IntoStaticStr};
 
 use scene::Scene;
 
@@ -28,8 +29,9 @@ pub use self::veach_mis::*;
 pub use self::white_furnace::*;
 
 
-#[derive(Debug, Clone, ValueEnum)]
+#[derive(Clone, Debug, Display, IntoStaticStr, ValueEnum)]
 #[value(rename_all = "snake_case")]
+#[strum(serialize_all = "snake_case")]
 pub enum Scenes {
     CornellBoxBoxes,
     CornellBoxBunny,
