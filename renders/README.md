@@ -3,7 +3,7 @@
 [![Three Spheres](three_spheres.png)](three_spheres.png)
 [![Spheres in a Box with Fog](spheres_in_box.png)](spheres_in_box.png)
 [![Veach MIS Scene](veach_mis.png)](veach_mis.png)
-[![Cornell Box](cornell_box_denoised.png)](cornell_box_denoised.png)
+[![Cornell Box](cornell_box_uv.png)](cornell_box_uv.png)
 [![Cornell Box with Dragon model](cornell_box_dragon.png)](cornell_box_dragon.png)
 [![Cornell Box with Bunny model](cornell_box_bunny.png)](cornell_box_bunny.png)
 [![Cornell Box with Bunny and Buddha](cornell_box_bunny_buddha.png)](cornell_box_bunny_buddha.png)

@@ -108,9 +108,14 @@ impl Plane {
 
                 let normal = Vec3A::new(0.0, 0.0, 1.0);
 
+                let u = (x - self.bounds.u_min) / (self.bounds.u_max - self.bounds.u_min);
+                let v = (y - self.bounds.v_min) / (self.bounds.v_max - self.bounds.v_min);
+
+                let u = if ray.direction.z > 0.0 { 1.0 - u } else { u };
+
                 let result = HitResult::new(t,
-                                            (x - self.bounds.u_min) / (self.bounds.u_max - self.bounds.u_min),
-                                            (y - self.bounds.v_min) / (self.bounds.v_max - self.bounds.v_min),
+                                            u,
+                                            v,
                                             ray.point_at_parameter(t),
                                             normal,
                                             normal,
@@ -138,9 +143,15 @@ impl Plane {
 
                 let normal = Vec3A::new(1.0, 0.0, 0.0);
 
+                // mapping u to z and v to y so that the texture orients correctly
+                let u = (z - self.bounds.v_min) / (self.bounds.v_max - self.bounds.v_min);
+                let v = (y - self.bounds.u_min) / (self.bounds.u_max - self.bounds.u_min);
+
+                let u = if ray.direction.x < 0.0 { 1.0 - u } else { u };
+
                 let result = HitResult::new(t,
-                                            (y - self.bounds.u_min) / (self.bounds.u_max - self.bounds.u_min),
-                                            (z - self.bounds.v_min) / (self.bounds.v_max - self.bounds.v_min),
+                                            u,
+                                            v,
                                             ray.point_at_parameter(t),
                                             normal,
                                             normal,
@@ -168,9 +179,14 @@ impl Plane {
 
                 let normal = Vec3A::new(0.0, 1.0, 0.0);
 
+                let u = (x - self.bounds.u_min) / (self.bounds.u_max - self.bounds.u_min);
+                let v = (z - self.bounds.v_min) / (self.bounds.v_max - self.bounds.v_min);
+
+                let u = if ray.direction.y < 0.0 { 1.0 - u } else { u };
+
                 let result = HitResult::new(t,
-                                            (x - self.bounds.u_min) / (self.bounds.u_max - self.bounds.u_min),
-                                            (z - self.bounds.v_min) / (self.bounds.v_max - self.bounds.v_min),
+                                            u,
+                                            v,
                                             ray.point_at_parameter(t),
                                             normal,
                                             normal,
