@@ -104,7 +104,7 @@ pub fn random_spheres_scene(width: Option<usize>, height: Option<usize>, rng: &m
                           -0.99,
                           refr_idx).into());
 
-    let refl_idx = mat!(materials, Reflective::new(Color::new(0.5, 0.5, 0.5).into(), 0.05));
+    let refl_idx = mat!(materials, Reflective::new(Color::new(0.5, 0.5, 0.5).into(), 0.065));
     objects.push(Sphere::new(Vec3A::new(2.0, 1.0, 0.0),
                           1.0,
                           refl_idx).into());

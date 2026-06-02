@@ -312,13 +312,14 @@ impl Reflective {
         let fresnel = schlick_from_f0(cos_theta_i, f0);
 
         if self.roughness == 0.0 {
-            // if roughness is set to 0.0, then handle this as a pre-weighted
-            // specular material and skip NEE
+            // handle this as a pre-weighted specular material and skip NEE.
             let pdf = PDF::Delta;
             Some(ScatterResult::new(scattered_ray, fresnel, pdf, true, true))
         } else {
+            // for roughness in [0.0, 0.05], fireflies will appear in high
+            // luminance scenes, however these can be denoised just fine.
             let pdf = PDF::GGX { wi: -ray.direction, normal: shading_normal, alpha: self.roughness };
-            Some(ScatterResult::new(scattered_ray, fresnel, pdf, false, true))
+            Some(ScatterResult::new(scattered_ray, Vec3A::ONE, pdf, false, false))
         }
     }
 
