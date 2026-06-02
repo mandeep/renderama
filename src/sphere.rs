@@ -77,7 +77,9 @@ impl Sphere {
 
     /// Create a bounding box around the sphere using it's radius
     pub fn bounding_box(&self) -> Option<AABB> {
-        let radius = Vec3A::new(self.radius, self.radius, self.radius);
+        // need to use the absolute value of radius since we allow negative radii
+        // spheres like when constructing bubble spheres in the random_spheres scene
+        let radius = Vec3A::splat(self.radius.abs());
         let min = self.center - radius;
         let max = self.center + radius;
 
