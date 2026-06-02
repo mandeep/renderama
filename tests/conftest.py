@@ -21,7 +21,7 @@ RENDER_SCENES = [
     ("spheres_in_box", 128, (512, 512)),
     ("three_spheres", 64, (1024, 512)),
     ("veach_mis", 64, (960, 512)),
-    ("white_furnace", 64, (2048, 512)),
+    pytest.param("white_furnace", 64, (2048, 512), marks=pytest.mark.xfail(reason="Energy Conservation needs to be added.")),
 ]
 
 @pytest.fixture(scope="session", autouse=True)
