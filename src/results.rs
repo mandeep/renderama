@@ -106,14 +106,14 @@ mod tests {
         let incoming_direction = Vec3A::new(0.0, 0.0, -1.0);
 
         assert_eq!(
-            result.face_forward_normals(incoming_direction),
+            result.face_forward_normals(&incoming_direction),
             (result.geometric_normal, result.shading_normal),
         );
 
         let incoming_direction = Vec3A::new(0.0, 0.0, 1.0);
 
         assert_eq!(
-            result.face_forward_normals(incoming_direction),
+            result.face_forward_normals(&incoming_direction),
             (-result.geometric_normal, -result.shading_normal),
         );
     }

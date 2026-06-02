@@ -20,7 +20,7 @@ RENDER_SCENES = [
     ("random_spheres", 128, (1024, 512)),
     ("spheres_in_box", 128, (512, 512)),
     ("three_spheres", 64, (1024, 512)),
-    ("veach_mis", 64, (1920, 1080)),
+    ("veach_mis", 64, (960, 512)),
     ("white_furnace", 64, (2048, 512)),
 ]
 
