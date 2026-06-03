@@ -20,6 +20,7 @@ mod denoise;
 mod environment;
 pub mod ggx;
 mod integrator;
+pub mod io;
 mod lights;
 pub mod materials;
 pub mod pdf;

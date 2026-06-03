@@ -11,6 +11,7 @@ from skimage.metrics import structural_similarity as ssim
 
 RENDER_SCENES = [
     # scene name, number of samples, and resolution to render with
+    ("batmobile", 64, (960, 540)),
     ("cornell_box_dragon", 128, (512, 512)),
     ("cornell_box_boxes", 64, (512, 512)),
     ("cornell_box_bunny", 128, (512, 512)),
@@ -20,6 +21,7 @@ RENDER_SCENES = [
     ("hyperion", 128, (960, 540)),
     ("random_spheres", 128, (1024, 512)),
     ("spheres_in_box", 128, (512, 512)),
+    ("stormtrooper", 64, (960, 540)),
     ("three_spheres", 64, (1024, 512)),
     ("veach_mis", 64, (960, 512)),
     pytest.param("white_furnace", 64, (2048, 512), marks=pytest.mark.xfail(reason="Energy Conservation needs to be added.")),
