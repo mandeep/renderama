@@ -1,4 +1,4 @@
-use glam::Vec3A;
+use glam::{Vec2, Vec3A};
 use image;
 
 
@@ -58,20 +58,20 @@ impl Color {
 /// ImageTexture is a struct for textures loaded from file
 pub struct ImageTexture {
     im: image::RgbImage,
-    scale: f32,
+    scale: Vec2,
 }
 
 /// Create a new texture from the given data and image dimensions
 impl ImageTexture {
-    pub fn new(filename: &str, scale: f32) -> ImageTexture {
+    pub fn new(filename: &str, scale: Vec2) -> ImageTexture {
         ImageTexture { im: image::open(filename).unwrap().flipv().to_rgb8(), scale }
     }
 
     /// Determine which pixel to retrieve from the image by
     /// converting pixel coordinates to UV coordinates
     pub fn sample_texture(&self, u: f32, v: f32, _p: &Vec3A) -> Vec3A {
-        let u_scaled = (u * self.scale) % 1.0;
-        let v_scaled = (v * self.scale) % 1.0;
+        let u_scaled = (u * self.scale.x) % 1.0;
+        let v_scaled = (v * self.scale.y) % 1.0;
 
         let i = 0.0f32.max((u_scaled * self.im.width() as f32).min(self.im.width() as f32 - 1.0));
         let j = 0.0f32.max((v_scaled * self.im.height() as f32).min(self.im.height() as f32 - 1.0));

@@ -1,6 +1,6 @@
 use std::f32;
 
-use glam::Vec3A;
+use glam::{Vec2, Vec3A};
 
 use bvh::BVH;
 use camera::Camera;
@@ -53,7 +53,7 @@ pub fn cornell_box_object_scene(width: Option<usize>, height: Option<usize>) -> 
     let bunny = TriangleMesh::from("extras/models/bunny.obj", bunny_material).into();
     objects.push(TransformedMesh::new(Vec3A::new(110.0, -25.0, 140.0), Vec3A::new(0.0, 180.0, 0.0), Vec3A::splat(750.0), bunny).into());
 
-    let buddha_texture = ImageTexture::new("extras/textures/buddha_relief_diffuse.jpeg", 1.0).into();
+    let buddha_texture = ImageTexture::new("extras/textures/buddha_relief_diffuse.jpeg", Vec2::splat(1.0)).into();
     let buddha_material = mat!(materials, Diffuse::new(buddha_texture, 0.0));
     let buddha = TriangleMesh::from("extras/models/buddha_relief.obj", buddha_material).into();
     objects.push(TransformedMesh::new(Vec3A::new(273.0, 180.0, 530.0), Vec3A::new(-90.0, 180.0, 0.0), Vec3A::splat(24.0), buddha).into());

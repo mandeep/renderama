@@ -1,7 +1,7 @@
 use std::f32;
 use std::sync::Arc;
 
-use glam::Vec3A;
+use glam::{Vec2, Vec3A};
 
 use bvh::BVH;
 use camera::Camera;
@@ -50,7 +50,7 @@ pub fn hyperion_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let orange_idx = mat!(materials, Plastic::new(orange_color.into(), 0.15, 1.5));
     let orange_rough_idx = mat!(materials, Plastic::new(orange_bright_color.into(), 0.25, 1.5));
     let marble_vol_idx = mat!(materials, Volumetric::new(Color::new(0.60, 0.71, 0.49).into()));
-    let cricket_idx = mat!(materials, Plastic::new(ImageTexture::new("extras/textures/cricket_ball_diffuse.jpg", 1.0).into(), 0.30, 1.5));
+    let cricket_idx = mat!(materials, Plastic::new(ImageTexture::new("extras/textures/cricket_ball_diffuse.jpg", Vec2::splat(1.0)).into(), 0.30, 1.5));
     let pingpong_idx = mat!(materials, Plastic::new(Color::new(0.93, 0.89, 0.85).into(), 0.35, 1.45));
     let white_idx = mat!(materials, Plastic::new(Color::new(1.0, 1.0, 1.0).into(), 0.1, 1.45));
     let cream_idx = mat!(materials, Plastic::new(Color::new(1.0, 0.904, 0.725).into(), 1.0, 1.45));

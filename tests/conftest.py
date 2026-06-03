@@ -15,6 +15,7 @@ RENDER_SCENES = [
     ("cornell_box_boxes", 64, (512, 512)),
     ("cornell_box_bunny", 128, (512, 512)),
     ("cornell_box_objects", 128, (512, 512)),
+    ("cornell_box_uv", 128, (512, 512)),
     ("energy_conservation", 64, (2048, 512)),
     ("hyperion", 128, (960, 540)),
     ("random_spheres", 128, (1024, 512)),
