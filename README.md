@@ -6,6 +6,6 @@ Renderama is a path tracer in progress based off of Peter Shirley's
 
 ![Stormtrooper](renders/stormtrooper.png)
 ![Batmobile](renders/batmobile.png)
-![Cornell Box with UVs](renders/cornell_box_uv.png)
-![Cornell Box](renders/cornell_box_objects.png)
+![Subway](renders/subway.png)
 ![Veach MIS Scene](renders/veach_mis.png)
+![Cornell Box with UVs](renders/cornell_box_uv.png)

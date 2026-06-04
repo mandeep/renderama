@@ -39,7 +39,7 @@ pub fn batmobile_scene(width: Option<usize>, height: Option<usize>) -> Scene {
 
     let default_material = Plastic::new(Color::new(0.9, 0.9, 0.9).into(), 0.01, 1.49).into();
 
-    let meshes = io::load_obj("extras/models/batmobile.obj", &mut materials, None, default_material);
+    let (meshes, _) = io::load_obj("extras/models/batmobile.obj", &mut materials, None, default_material);
 
     let translation = Vec3A::new(0.0, 0.0, 0.0);
     let rotation = Vec3A::new(0.0, 0.0, 0.0);

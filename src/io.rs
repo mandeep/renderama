@@ -3,7 +3,9 @@ use std::collections::HashMap;
 use glam::{Vec2, Vec3A};
 use tobj;
 
+use lights::Light;
 use materials::{Diffuse, Emissive, Material, MaterialId, Plastic, Reflective, Refractive};
+use sphere::Sphere;
 use texture::{Color, ImageTexture};
 use triangle::{Triangle, TriangleMesh};
 
@@ -16,7 +18,11 @@ pub fn load_obj(
     materials: &mut Vec<Material>,
     material_overrides: Option<HashMap<String, Material>>,
     default_material: Material,
-) -> Vec<TriangleMesh> {
+) -> (Vec<TriangleMesh>, Vec<Light>) {
+    let base_directory = std::path::Path::new(filepath)
+        .parent()
+        .unwrap_or(std::path::Path::new("."));
+
     let load_options = tobj::LoadOptions {
         single_index: true,
         triangulate: true,
@@ -39,10 +45,10 @@ pub fn load_obj(
                     if let Some(override_material) = overrides.get(&material.name) {
                         override_material.clone()
                     } else{
-                        map_mtl_to_material(&material)
+                        map_mtl_to_material(&material, base_directory)
                     }
                 },
-                None => map_mtl_to_material(&material),
+                None => map_mtl_to_material(&material, base_directory),
             };
 
             let new_id = MaterialId::new(materials.len() as u32);
@@ -52,6 +58,7 @@ pub fn load_obj(
     }
 
     let mut meshes: Vec<TriangleMesh> = Vec::new();
+    let mut lights: Vec<Light> = Vec::new();
 
     for model in models {
         let mesh = &model.mesh;
@@ -110,10 +117,27 @@ pub fn load_obj(
             let triangle = Triangle::new(v0, v1, v2, n0, n1, n2, uv0, uv1, uv2, current_mat_id);
             triangles.push(triangle);
         }
+
+        // currently adding a sphere light for any emissive material since it
+        // seems like a decent fallback. will need to revisit if this is the best
+        // approach later.
+        if let Material::Emissive(emissive) = &materials[current_mat_id.index()] {
+            let intensity = emissive.emissive_texture
+                .sample_texture(0.0, 0.0, &Vec3A::ZERO);
+            let centroid = positions.iter().fold(Vec3A::ZERO, |a, &b| a + b)
+                           / positions.len() as f32;
+            let radius = positions.iter()
+                .map(|&p| (p - centroid).length())
+                .fold(0.0_f32, f32::max);
+            let sphere = Sphere::new(centroid, radius, current_mat_id);
+            let light = Light::new(sphere.into(), intensity);
+            lights.push(light);
+        }
+
         meshes.push(TriangleMesh::new(triangles));
     }
 
-    meshes
+    (meshes, lights)
 }
 
 /// Map the material properties in the MTL file to one of our materials.
@@ -121,7 +145,7 @@ pub fn load_obj(
 /// References:
 /// https://en.wikipedia.org/wiki/Wavefront_.obj_file
 /// https://steamcommunity.com/sharedfiles/filedetails/?l=brazilian&id=2005695630
-fn map_mtl_to_material(material: &tobj::Material) -> Material {
+fn map_mtl_to_material(material: &tobj::Material, base_directory: &std::path::Path) -> Material {
     let kd = material.diffuse.unwrap_or([0.8, 0.8, 0.8]);
     let ks = material.specular.unwrap_or([0.0, 0.0, 0.0]);
     let ke = material.emissive.unwrap_or([0.0, 0.0, 0.0]);
@@ -133,29 +157,9 @@ fn map_mtl_to_material(material: &tobj::Material) -> Material {
     // mapping Ns to a lower roughness range by using powf(13.5)
     let roughness = (1.0 - ns / 1000.0).powf(13.5).clamp(0.025, 1.0);
 
-    let ks_luminance = 0.2126 * ks[0] + 0.7152 * ks[1] + 0.0722 * ks[2];
-    let ks_chroma = (ks[0] - ks_luminance).abs()
-                  + (ks[1] - ks_luminance).abs()
-                  + (ks[2] - ks_luminance).abs();
-    let is_metallic = ks_chroma > 0.05 && ks_luminance > 0.1;
-
-    let ke_lum = ke[0] + ke[1] + ke[2];
-    if ke_lum > 1e-4 {
-        return Emissive::new(Color::new(ke[0], ke[1], ke[2]).into()).into();
-    }
-
-    if illum == 6 || illum == 7 || d < 0.99 {
-        let absorption = Color::new(kd[0], kd[1], kd[2]).into();
-        return Refractive::new(absorption, ni).into();
-    }
-
-    if illum == 3 || is_metallic {
-        let albedo = Color::new(ks[0], ks[1], ks[2]).into();
-        return Reflective::new(albedo, roughness).into();
-    }
-
     let albedo = if let Some(path) = &material.diffuse_texture {
-        ImageTexture::new(path, Vec2::ONE).into()
+        let full_path = base_directory.join(path);
+        ImageTexture::new(full_path.to_str().unwrap(), Vec2::ONE).into()
     } else {
         Color::new(kd[0], kd[1], kd[2]).into()
     };
@@ -164,5 +168,20 @@ fn map_mtl_to_material(material: &tobj::Material) -> Material {
         return Diffuse::new(albedo, roughness).into();
     }
 
+    if illum == 3 {
+        let albedo = Color::new(ks[0], ks[1], ks[2]).into();
+        return Reflective::new(albedo, roughness).into();
+    }
+
+    if matches!(illum, 4..=7) || d < 0.99 {
+        let absorption = Color::new(kd[0], kd[1], kd[2]).into();
+        return Refractive::new(absorption, ni).into();
+    }
+
+    if ke.iter().sum::<f32>() > f32::EPSILON {
+        return Emissive::new(Color::new(ke[0], ke[1], ke[2]).into()).into();
+    }
+
+    // illum 2 or if illum is not provided, default to Plastic
     Plastic::new(albedo, roughness, ni).into()
 }

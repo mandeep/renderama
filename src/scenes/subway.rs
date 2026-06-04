@@ -14,9 +14,9 @@ use texture::Color;
 use transformations::TransformedMesh;
 
 
-pub fn stormtrooper_scene(width: Option<usize>, height: Option<usize>) -> Scene {
-    let origin = Vec3A::new(0.25, -0.5, 5.5);
-    let lookat = Vec3A::new(0.0, 0.0, -2.0);
+pub fn subway_scene(width: Option<usize>, height: Option<usize>) -> Scene {
+    let origin = Vec3A::new(-0.25, 1.0, 4.0);
+    let lookat = Vec3A::new(0.0, 1.0, 0.0);
     let view = Vec3A::new(0.0, 1.0, 0.0);
     let fov = 22.0;
     let aspect_ratio = (width.unwrap_or(1920) as f32, height.unwrap_or(1080) as f32);
@@ -34,24 +34,9 @@ pub fn stormtrooper_scene(width: Option<usize>, height: Option<usize>) -> Scene 
     let mut objects: Vec<Primitive> = Vec::new();
     let mut materials: Vec<Material> = Vec::new();
 
-    // an example of material overrides for the obj loader
-    // Some(overrides) would be passed into the io::load_obj constructor
-    //
-    // let mut overrides: HashMap<String, Material> = HashMap::new();
-
-    // overrides.insert(
-    //     "white".to_string(), 
-    //     Plastic::new(Color::new(0.9, 0.9, 0.9).into(), 1.0, 1.49).into()
-    // );
-
-    // overrides.insert(
-    //     "Material.001".to_string(), 
-    //     Plastic::new(Color::new(0.01, 0.01, 0.01).into(), 1.0, 1.49).into()
-    // );
-
     let default_material = Plastic::new(Color::new(0.9, 0.9, 0.9).into(), 0.025, 1.49).into();
 
-    let (meshes, _) = io::load_obj("extras/models/stormtrooper.obj", &mut materials, None, default_material);
+    let (meshes, lights) = io::load_obj("extras/models/subway/subway.obj", &mut materials, None, default_material);
 
     let translation = Vec3A::new(0.0, 0.0, 0.0);
     let rotation = Vec3A::new(0.0, 0.0, 0.0);
@@ -69,13 +54,14 @@ pub fn stormtrooper_scene(width: Option<usize>, height: Option<usize>) -> Scene 
 
     let bvh = BVH::new(&mut objects);
 
-    let environment = EnvironmentMap::new("extras/textures/car_studio_lighting.exr", 0.7).into();
+    let environment = EnvironmentMap::new("extras/textures/dusk_1_puresky.exr", 1.0).into();
 
-    SceneBuilder::new("Stormtrooper")
+    SceneBuilder::new("Subway Train Interior")
         .with_accelerator(bvh)
         .with_camera(camera)
         .with_materials(materials)
         .with_environment(environment)
+        .with_lights(lights)
         .build()
-        .expect("Failed to build Stormtrooper scene")
+        .expect("Failed to build Subway Train Interior scene")
 }

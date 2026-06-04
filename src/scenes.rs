@@ -15,6 +15,7 @@ mod hyperion;
 mod random_spheres;
 mod spheres_in_box;
 mod stormtrooper;
+mod subway;
 mod three_spheres;
 mod veach_mis;
 mod white_furnace;
@@ -29,6 +30,7 @@ pub use self::energy_conservation::*;
 pub use self::hyperion::*;
 pub use self::random_spheres::*;
 pub use self::spheres_in_box::*;
+pub use self::subway::*;
 pub use self::stormtrooper::*;
 pub use self::three_spheres::*;
 pub use self::veach_mis::*;
@@ -50,6 +52,7 @@ pub enum Scenes {
     RandomSpheres,
     SpheresInBox,
     Stormtrooper,
+    Subway,
     ThreeSpheres,
     VeachMis,
     WhiteFurnace,
@@ -69,6 +72,7 @@ impl Scenes {
             Scenes::RandomSpheres => random_spheres_scene(width, height, rng),
             Scenes::SpheresInBox => spheres_in_box_scene(width, height, rng),
             Scenes::Stormtrooper => stormtrooper_scene(width, height),
+            Scenes::Subway => subway_scene(width, height),
             Scenes::ThreeSpheres => three_spheres_scene(width, height),
             Scenes::VeachMis => veach_mis_scene(width, height),
             Scenes::WhiteFurnace => white_furnace_scene(width, height),
