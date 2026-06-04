@@ -739,7 +739,7 @@ dependencies = [
 
 [[package]]
 name = "renderama"
-version = "0.41.0"
+version = "0.42.0"
 dependencies = [
  "chrono",
  "clap",
@@ -901,8 +901,7 @@ dependencies = [
 [[package]]
 name = "tobj"
 version = "4.0.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "04aca6092e5978e708ee784e8ab9b5cf3cdb598b28f99a2f257446e7081a7025"
+source = "git+https://github.com/mandeep/tobj.git?branch=add-emissive-attribute#30bf3c32fcbc037505b038210e97a94d24546316"
 dependencies = [
  "ahash",
 ]

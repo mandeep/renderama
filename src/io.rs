@@ -121,13 +121,14 @@ pub fn load_obj(
 /// References:
 /// https://en.wikipedia.org/wiki/Wavefront_.obj_file
 /// https://steamcommunity.com/sharedfiles/filedetails/?l=brazilian&id=2005695630
-fn map_mtl_to_material(mat: &tobj::Material) -> Material {
-    let kd = mat.diffuse.unwrap_or([0.8, 0.8, 0.8]);
-    let ks = mat.specular.unwrap_or([0.0, 0.0, 0.0]);
-    let ns = mat.shininess.unwrap_or(0.0);
-    let ni = mat.optical_density.unwrap_or(1.5);
-    let d  = mat.dissolve.unwrap_or(1.0);
-    let illum = mat.illumination_model.unwrap_or(2);
+fn map_mtl_to_material(material: &tobj::Material) -> Material {
+    let kd = material.diffuse.unwrap_or([0.8, 0.8, 0.8]);
+    let ks = material.specular.unwrap_or([0.0, 0.0, 0.0]);
+    let ke = material.emissive.unwrap_or([0.0, 0.0, 0.0]);
+    let ns = material.shininess.unwrap_or(0.0);
+    let ni = material.optical_density.unwrap_or(1.5);
+    let d  = material.dissolve.unwrap_or(1.0);
+    let illum = material.illumination_model.unwrap_or(2);
 
     // mapping Ns to a lower roughness range by using powf(13.5)
     let roughness = (1.0 - ns / 1000.0).powf(13.5).clamp(0.025, 1.0);
@@ -138,45 +139,30 @@ fn map_mtl_to_material(mat: &tobj::Material) -> Material {
                   + (ks[2] - ks_luminance).abs();
     let is_metallic = ks_chroma > 0.05 && ks_luminance > 0.1;
 
-    let ke = mat.unknown_param.get("Ke")
-        .or_else(|| mat.unknown_param.get("ke"))
-        .and_then(|s| {
-            let v: Vec<f32> = s.split_whitespace()
-                .filter_map(|x| x.parse().ok())
-                .collect();
-            if v.len() == 3 { Some([v[0], v[1], v[2]]) } else { None }
-        })
-        .unwrap_or([0.0, 0.0, 0.0]);
-
     let ke_lum = ke[0] + ke[1] + ke[2];
     if ke_lum > 1e-4 {
-        return Material::Emissive(Emissive::new(
-            Color::new(ke[0], ke[1], ke[2]).into()
-        ));
+        return Emissive::new(Color::new(ke[0], ke[1], ke[2]).into()).into();
     }
 
     if illum == 6 || illum == 7 || d < 0.99 {
         let absorption = Color::new(kd[0], kd[1], kd[2]).into();
-        return Material::Refractive(Refractive::new(absorption, ni));
+        return Refractive::new(absorption, ni).into();
     }
 
     if illum == 3 || is_metallic {
         let albedo = Color::new(ks[0], ks[1], ks[2]).into();
-        return Material::Reflective(Reflective::new(albedo, roughness));
+        return Reflective::new(albedo, roughness).into();
     }
 
-    if illum <= 1 {
-        return Material::Diffuse(Diffuse::new(
-            Color::new(kd[0], kd[1], kd[2]).into(),
-            roughness,
-        ));
-    }
-
-    let albedo = if let Some(ref path) = mat.diffuse_texture {
+    let albedo = if let Some(path) = &material.diffuse_texture {
         ImageTexture::new(path, Vec2::ONE).into()
     } else {
         Color::new(kd[0], kd[1], kd[2]).into()
     };
 
-    Material::Plastic(Plastic::new(albedo, roughness, ni))
+    if illum <= 1 {
+        return Diffuse::new(albedo, roughness).into();
+    }
+
+    Plastic::new(albedo, roughness, ni).into()
 }
