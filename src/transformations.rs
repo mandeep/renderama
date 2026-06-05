@@ -64,6 +64,16 @@ fn transform_aabb(bbox: &AABB, transform: &Mat4) -> AABB {
     AABB::from(new_min.into(), new_max.into())
 }
 
+fn build_transform_matrix(translate: Vec3A, rotation: Vec3A, scale: Vec3A) -> Mat4 {
+    let scale_matrix = Mat4::from_scale(scale.into());
+    let rotation_x = Mat4::from_rotation_x(rotation.x.to_radians());
+    let rotation_y = Mat4::from_rotation_y(rotation.y.to_radians());
+    let rotation_z = Mat4::from_rotation_z(rotation.z.to_radians());
+    let translate_matrix = Mat4::from_translation(translate.into());
+
+    translate_matrix * rotation_z * rotation_y * rotation_x * scale_matrix
+}
+
 impl TransformedMesh {
     /// Create a new TransformedMesh.
     ///
@@ -122,7 +132,7 @@ impl TransformedMesh {
         let local_end_distance = end_distance * local_direction_length;
 
         // construct the local space ray
-        let local_ray = Ray::new(local_origin.into(), local_direction_normalized.into());
+        let local_ray = Ray::new(local_origin.into(), local_direction_normalized.into(), ray.time);
 
         if let Some(hit) = self.primitive.hit(&local_ray, local_start_distance, local_end_distance, rng) {
             // transform the hit attributes back into world space before returning them
@@ -139,6 +149,89 @@ impl TransformedMesh {
     }
     
     /// Return the world space bounding box of the TransformedMesh
+    pub fn bounding_box(&self) -> Option<AABB> {
+        Some(self.bbox)
+    }
+}
+
+#[derive(Clone)]
+pub struct MotionMesh {
+    translate0: Vec3A, translate1: Vec3A,
+    rotation0: Vec3A, rotation1: Vec3A,
+    scale0: Vec3A, scale1: Vec3A,
+    time0: f32, time1: f32,
+    bbox: AABB,
+    primitive: Arc<Primitive>,
+}
+
+impl MotionMesh {
+    /// Create a new mesh that moves over time.
+    pub fn new(
+        translate0: Vec3A, translate1: Vec3A,
+        rotation0: Vec3A, rotation1: Vec3A,
+        scale0: Vec3A, scale1: Vec3A,
+        time0: f32, time1: f32,
+        primitive: Primitive,
+    ) -> MotionMesh {
+        let transform0 = build_transform_matrix(translate0, rotation0, scale0);
+        let transform1 = build_transform_matrix(translate1, rotation1, scale1);
+
+        let local_bbox = primitive.bounding_box().unwrap();
+
+        let bbox0 = transform_aabb(&local_bbox, &transform0);
+        let bbox1 = transform_aabb(&local_bbox, &transform1);
+        let bbox = bbox0.surrounding_box(&bbox1);
+
+        let primitive = Arc::new(primitive);
+
+        MotionMesh {
+            translate0, translate1,
+            rotation0, rotation1,
+            scale0, scale1,
+            time0, time1,
+            bbox,
+            primitive,
+        }
+    }
+
+    pub fn hit(&self, ray: &Ray, start_distance: f32, end_distance: f32, rng: &mut Pcg64Mcg) -> Option<HitResult> {
+        let time = if self.time1 > self.time0 {
+            ((ray.time - self.time0) / (self.time1 - self.time0)).clamp(0.0, 1.0)
+        } else {
+            0.0
+        };
+
+        let current_translate = self.translate0.lerp(self.translate1, time);
+        let current_rotation = self.rotation0.lerp(self.rotation1, time);
+        let current_scale = self.scale0.lerp(self.scale1, time);
+
+        let forward_transform = build_transform_matrix(current_translate, current_rotation, current_scale);
+        let inverse_transform = forward_transform.inverse();
+        let normal_transform = inverse_transform.transpose();
+
+        let local_origin = inverse_transform.transform_point3(ray.origin.into());
+        let local_direction = inverse_transform.transform_vector3(ray.direction.into());
+
+        let local_direction_length = local_direction.length();
+        let local_direction_normalized = local_direction / local_direction_length;
+
+        let local_start_distance = start_distance * local_direction_length;
+        let local_end_distance = end_distance * local_direction_length;
+
+        let local_ray = Ray::new(local_origin.into(), local_direction_normalized.into(), ray.time);
+
+        if let Some(hit) = self.primitive.hit(&local_ray, local_start_distance, local_end_distance, rng) {
+            let parameter = hit.parameter / local_direction_length;
+            let point = forward_transform.transform_point3(hit.point.into()).into();
+            let geometric_normal = normal_transform.transform_vector3(hit.geometric_normal.into()).normalize().into();
+            let shading_normal = normal_transform.transform_vector3(hit.shading_normal.into()).normalize().into();
+
+            Some(HitResult::new(parameter, hit.u, hit.v, point, geometric_normal, shading_normal, hit.material_id))
+        } else {
+            None
+        }
+    }
+
     pub fn bounding_box(&self) -> Option<AABB> {
         Some(self.bbox)
     }
@@ -170,7 +263,7 @@ use ray::Ray;
             sphere.into(),
         );
 
-        let ray = Ray::new(Vec3A::new(0.0, 0.0, 0.0), Vec3A::new(1.0, 0.0, 0.0));
+        let ray = Ray::new(Vec3A::new(0.0, 0.0, 0.0), Vec3A::new(1.0, 0.0, 0.0), 0.0);
 
         let hit = transformed.hit(&ray, 0.001, 100.0, &mut rng);
         assert!(hit.is_some());
@@ -192,7 +285,7 @@ use ray::Ray;
             sphere.into(),
         );
 
-        let ray = Ray::new(Vec3A::new(-5.0, 0.0, 0.0), Vec3A::new(1.0, 0.0, 0.0));
+        let ray = Ray::new(Vec3A::new(-5.0, 0.0, 0.0), Vec3A::new(1.0, 0.0, 0.0), 0.0);
 
         let hit = transformed.hit(&ray, 0.001, 100.0, &mut rng);
         assert!(hit.is_some());

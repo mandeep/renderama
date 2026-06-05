@@ -37,7 +37,8 @@ pub fn cornell_box_dragon_scene(width: Option<usize>, height: Option<usize>) -> 
         sensor_height,
         focus_distance,
         world_scale,
-        (aspect_width, aspect_height)
+        (aspect_width, aspect_height),
+        0.0, 0.0,
     );
 
     let mut objects = Vec::new();

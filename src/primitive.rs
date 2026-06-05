@@ -9,7 +9,7 @@ use ray::Ray;
 use rectangle::Rectangle;
 use sphere::Sphere;
 use triangle::{Triangle, TriangleMesh};
-use transformations::TransformedMesh;
+use transformations::{MotionMesh, TransformedMesh};
 use volume::Volume;
 
 
@@ -24,6 +24,7 @@ pub enum Primitive {
     TriangleMesh(Arc<TriangleMesh>),
     ReverseOrientation(Arc<Primitive>),
     TransformedMesh(Arc<TransformedMesh>),
+    MotionMesh(Arc<MotionMesh>),
     Volume(Arc<Volume>)
 }
 
@@ -45,6 +46,7 @@ impl Primitive {
                 }
             },
             Primitive::TransformedMesh(mesh) => mesh.hit(ray, start_distance, end_distance, rng),
+            Primitive::MotionMesh(mesh) => mesh.hit(ray, start_distance, end_distance, rng),
             Primitive::Volume(volume) => volume.hit(ray, start_distance, end_distance, rng)
         }
     }
@@ -58,6 +60,7 @@ impl Primitive {
             Primitive::TriangleMesh(mesh) => mesh.bounding_box(),
             Primitive::ReverseOrientation(primitive) => primitive.bounding_box(),
             Primitive::TransformedMesh(mesh) => mesh.bounding_box(),
+            Primitive::MotionMesh(mesh) => mesh.bounding_box(),
             Primitive::Volume(volume) => volume.bounding_box(),
         }
     }
@@ -95,6 +98,7 @@ impl_from_for_primitive! {
 }
 
 impl_from_boxed_for_primitive! {
+    MotionMesh => MotionMesh,
     TriangleMesh => TriangleMesh,
     TransformedMesh => TransformedMesh,
     Volume => Volume,
@@ -115,7 +119,7 @@ mod tests {
         let material = MaterialId::new(0);
         let sphere: Sphere = Sphere::new(Vec3A::ZERO, 1.0, material);
         let primitive: Primitive = sphere.into();
-        let ray = Ray::new(Vec3A::new(0.0, 0.0, -1.0), Vec3A::new(0.0, 0.0, 1.0));
+        let ray = Ray::new(Vec3A::new(0.0, 0.0, -1.0), Vec3A::new(0.0, 0.0, 1.0), 0.0);
         let hit_result = primitive.hit(&ray, 0.0, f32::INFINITY, &mut rng);
         assert!(hit_result.is_some());
 

@@ -103,7 +103,7 @@ mod tests {
         let rectangle = Rectangle::new(p0, p1, mat_idx);
         let mut rng = Pcg64Mcg::seed_from_u64(0);
 
-        let ray = Ray::new(Vec3A::new(0.0, 0.0, 5.0), Vec3A::new(0.0, 0.0, -1.0));
+        let ray = Ray::new(Vec3A::new(0.0, 0.0, 5.0), Vec3A::new(0.0, 0.0, -1.0), 0.0);
         assert!(rectangle.hit(&ray, 0.0, f32::MAX, &mut rng).is_some());
     }
 
@@ -117,7 +117,7 @@ mod tests {
         let rectangle = Rectangle::new(p0, p1, mat_idx);
         let mut rng = Pcg64Mcg::seed_from_u64(0);
 
-        let ray = Ray::new(Vec3A::new(0.0, 0.0, 5.0), Vec3A::new(0.0, 0.0, 1.0));
+        let ray = Ray::new(Vec3A::new(0.0, 0.0, 5.0), Vec3A::new(0.0, 0.0, 1.0), 0.0);
         assert!(rectangle.hit(&ray, 0.0, f32::MAX, &mut rng).is_none());
     }
 }

@@ -583,7 +583,7 @@ mod tests {
         let mut world = vec![sphere.into()];
         let bvh = BVH::new(&mut world);
 
-        let ray = Ray::new(Vec3A::ZERO, Vec3A::new(0.0, 0.0, -1.0));
+        let ray = Ray::new(Vec3A::ZERO, Vec3A::new(0.0, 0.0, -1.0), 0.0);
         let hit = bvh.hit(&ray, 0.001, f32::MAX, &mut rng);
 
         assert!(hit.is_some());
@@ -597,7 +597,7 @@ mod tests {
         let mut world = vec![sphere.into()];
         let bvh = BVH::new(&mut world);
 
-        let ray = Ray::new(Vec3A::ZERO, Vec3A::new(0.0, 1.0, 0.0));
+        let ray = Ray::new(Vec3A::ZERO, Vec3A::new(0.0, 1.0, 0.0), 0.0);
         let hit = bvh.hit(&ray, 0.001, f32::MAX, &mut rng);
 
         assert!(hit.is_none());
@@ -613,7 +613,7 @@ mod tests {
         let mut world = vec![sphere_back.into(), sphere_front.into()];
         let bvh = BVH::new(&mut world);
 
-        let ray = Ray::new(Vec3A::ZERO, Vec3A::new(0.0, 0.0, -1.0));
+        let ray = Ray::new(Vec3A::ZERO, Vec3A::new(0.0, 0.0, -1.0), 0.0);
         let hit = bvh.hit(&ray, 0.001, f32::MAX, &mut rng);
 
         assert!(hit.is_some());
@@ -628,10 +628,10 @@ mod tests {
         let mut world = vec![sphere1.into(), sphere2.into()];
         let bvh = BVH::new(&mut world);
 
-        let hit_ray = Ray::new(Vec3A::ZERO, Vec3A::new(10.0, 0.0, -10.0));
+        let hit_ray = Ray::new(Vec3A::ZERO, Vec3A::new(10.0, 0.0, -10.0), 0.0);
         assert!(bvh.hits_anything(&hit_ray, 0.001, f32::MAX, &mut rng));
 
-        let miss_ray = Ray::new(Vec3A::ZERO, Vec3A::new(0.0, 0.0, -1.0));
+        let miss_ray = Ray::new(Vec3A::ZERO, Vec3A::new(0.0, 0.0, -1.0), 0.0);
         assert!(!bvh.hits_anything(&miss_ray, 0.001, f32::MAX, &mut rng));
     }
 
@@ -642,7 +642,7 @@ mod tests {
         let mut world = vec![sphere.into()];
         let bvh = BVH::new(&mut world);
 
-        let ray = Ray::new(Vec3A::ZERO, Vec3A::new(0.0, 0.0, 1.0));
+        let ray = Ray::new(Vec3A::ZERO, Vec3A::new(0.0, 0.0, 1.0), 0.0);
 
         let too_short_hit = bvh.hit(&ray, 0.001, 5.0, &mut rng);
         assert!(too_short_hit.is_none());

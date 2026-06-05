@@ -35,7 +35,7 @@ pub mod scenes;
 mod sphere;
 mod texture;
 pub mod tone;
-mod transformations;
+pub mod transformations;
 mod triangle;
 pub mod utils;
 mod volume;

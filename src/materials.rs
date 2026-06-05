@@ -150,7 +150,7 @@ impl Diffuse {
     fn generate_response(&self, ray: &Ray, result: &HitResult, _rng: &mut Pcg64Mcg) -> Option<ScatterResult> {
         // ray.direction is passed here because the integrator generates
         // an offset point itself for the Diffuse material
-        let scattered = Ray::new(result.point, ray.direction);
+        let scattered = Ray::new(result.point, ray.direction, ray.time);
         let contribution = self.albedo.sample_texture(result.u, result.v, &result.point);
         let pdf = PDF::Cosine { uvw: OrthonormalBasis::new(&result.shading_normal) };
         Some(ScatterResult::new(scattered, contribution, pdf, false, false))
@@ -305,7 +305,7 @@ impl Reflective {
 
         let offset_point = find_offset_point(result.point, geometric_normal);
         let reflected = reflect(ray.direction, shading_normal);
-        let scattered_ray = Ray::new(offset_point, reflected);
+        let scattered_ray = Ray::new(offset_point, reflected, ray.time);
 
         let f0 = self.albedo.sample_texture(result.u, result.v, &result.point);
         let cos_theta_i = (-ray.direction).dot(shading_normal).max(0.0);
@@ -428,11 +428,11 @@ impl Refractive {
         if rng.random::<f32>() < reflect_probability {
             let reflected: Vec3A = reflect(ray.direction, shading_normal);
             let offset_point = find_offset_point(result.point, geometric_normal);
-            let scattered_ray = Ray::new(offset_point, reflected);
+            let scattered_ray = Ray::new(offset_point, reflected, ray.time);
             Some(ScatterResult::new(scattered_ray, attenuation, pdf, true, true))
         } else {
             let offset_point = find_offset_point(result.point, -geometric_normal);
-            let scattered_ray = Ray::new(offset_point, refracted.unwrap());
+            let scattered_ray = Ray::new(offset_point, refracted.unwrap(), ray.time);
             Some(ScatterResult::new(scattered_ray, attenuation, pdf, true, true))
         }
     }
@@ -485,8 +485,8 @@ impl Volumetric {
     }
 
     /// Volumetric materials generate a uniform response when hit no matter the ray's direction
-    fn generate_response(&self, _ray: &Ray, result: &HitResult, rng: &mut Pcg64Mcg) -> Option<ScatterResult> {
-        let scattered = Ray::new(result.point, pick_sphere_point(rng));
+    fn generate_response(&self, ray: &Ray, result: &HitResult, rng: &mut Pcg64Mcg) -> Option<ScatterResult> {
+        let scattered = Ray::new(result.point, pick_sphere_point(rng), ray.time);
         let contribution = self.albedo.sample_texture(result.u, result.v, &result.point);
         let pdf = PDF::Uniform;
         Some(ScatterResult::new(scattered, contribution, pdf, false, false))
@@ -524,7 +524,7 @@ impl Plastic {
         let fresnel = f0 + (1.0 - f0) * (1.0 - cos_theta_i).powi(5);
 
         let offset_point = find_offset_point(result.point, geometric_normal);
-        let scattered_ray = Ray::new(offset_point, ray.direction);
+        let scattered_ray = Ray::new(offset_point, ray.direction, ray.time);
 
         let pdf = PDF::Composite {
             uvw: OrthonormalBasis::new(&shading_normal),

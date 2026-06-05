@@ -115,42 +115,42 @@ mod tests {
     #[test]
     fn test_hit_ray_through_center() {
         let aabb = AABB::from(Vec3A::new(-1.0, -1.0, -1.0), Vec3A::new(1.0, 1.0, 1.0));
-        let ray = Ray::new(Vec3A::new(0.0, 0.0, -5.0), Vec3A::new(0.0, 0.0, 1.0));
+        let ray = Ray::new(Vec3A::new(0.0, 0.0, -5.0), Vec3A::new(0.0, 0.0, 1.0), 0.0);
         assert!(aabb.hit(&ray, 0.0, f32::INFINITY));
     }
 
     #[test]
     fn test_hit_ray_along_y_axis() {
         let aabb = AABB::from(Vec3A::new(-1.0, -1.0, -1.0), Vec3A::new(1.0, 1.0, 1.0));
-        let ray = Ray::new(Vec3A::new(0.0, -5.0, 0.0), Vec3A::new(0.0, 1.0, 0.0));
+        let ray = Ray::new(Vec3A::new(0.0, -5.0, 0.0), Vec3A::new(0.0, 1.0, 0.0), 0.0);
         assert!(aabb.hit(&ray, 0.0, f32::INFINITY));
     }
 
     #[test]
     fn test_hit_ray_along_z_axis() {
         let aabb = AABB::from(Vec3A::new(-1.0, -1.0, -1.0), Vec3A::new(1.0, 1.0, 1.0));
-        let ray = Ray::new(Vec3A::new(0.0, 0.0, -5.0), Vec3A::new(0.0, 0.0, 1.0));
+        let ray = Ray::new(Vec3A::new(0.0, 0.0, -5.0), Vec3A::new(0.0, 0.0, 1.0), 0.0);
         assert!(aabb.hit(&ray, 0.0, f32::INFINITY));
     }
 
     #[test]
     fn test_hit_ray_diagonal() {
         let aabb = AABB::from(Vec3A::ZERO, Vec3A::new(2.0, 2.0, 2.0));
-        let ray = Ray::new(Vec3A::new(-5.0, -5.0, -5.0), Vec3A::new(1.0, 1.0, 1.0));
+        let ray = Ray::new(Vec3A::new(-5.0, -5.0, -5.0), Vec3A::new(1.0, 1.0, 1.0), 0.0);
         assert!(aabb.hit(&ray, 0.0, f32::INFINITY));
     }
 
     #[test]
     fn test_missed_ray() {
         let aabb = AABB::from(Vec3A::new(10.0, 10.0, 10.0), Vec3A::new(11.0, 11.0, 11.0));
-        let ray = Ray::new(Vec3A::ZERO, Vec3A::new(0.0, 1.0, 0.0));
+        let ray = Ray::new(Vec3A::ZERO, Vec3A::new(0.0, 1.0, 0.0), 0.0);
         assert!(!aabb.hit(&ray, 0.0, f32::INFINITY));
     }
 
     #[test]
     fn test_missed_grazing_ray() {
         let aabb = AABB::from(Vec3A::ZERO, Vec3A::ONE);
-        let ray = Ray::new(Vec3A::ZERO, Vec3A::new(0.0, 1.0, 0.0));
+        let ray = Ray::new(Vec3A::ZERO, Vec3A::new(0.0, 1.0, 0.0),0.0);
         assert!(!aabb.hit(&ray, 0.0, f32::INFINITY));
     }
 

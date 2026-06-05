@@ -1,5 +1,6 @@
 use glam::{Vec2, Vec3A};
 use rand_pcg::Pcg64Mcg;
+use rand::RngExt;
 
 use ray::Ray;
 use sampling::pick_disk_point;
@@ -13,6 +14,8 @@ pub struct Camera {
     v: Vec3A,
     pub lens_radius: f32,
     pub resolution: (f32, f32),
+    pub start_time: f32,
+    pub end_time: f32,
 }
 
 impl Camera {
@@ -41,6 +44,8 @@ impl Camera {
         focus_distance: f32,
         world_scale: f32,
         resolution: (f32, f32),
+        frame_start_time: f32,
+        shutter_speed: f32,
         ) -> Camera {
         let lens_diameter = focal_length / f_stop;
         let lens_radius = (lens_diameter * world_scale) / 2.0;
@@ -65,6 +70,9 @@ impl Camera {
         let horizontal: Vec3A = 2.0 * half_width * focus_distance * u;
         let vertical: Vec3A = 2.0 * half_height * focus_distance * v;
 
+        let start_time = frame_start_time;
+        let end_time = start_time + shutter_speed;
+
         Camera { top_left_corner,
                  horizontal,
                  vertical,
@@ -73,6 +81,8 @@ impl Camera {
                  v,
                  lens_radius,
                  resolution,
+                 start_time,
+                 end_time,
                 }
     }
 
@@ -80,9 +90,16 @@ impl Camera {
     pub fn generate_ray(&self, s: f32, t: f32, rng: &mut Pcg64Mcg) -> Ray {
         let radius: Vec2 = self.lens_radius * pick_disk_point(rng);
         let offset: Vec3A = self.u * radius.x + self.v * radius.y;
+        let time = if self.start_time == self.end_time {
+            self.start_time
+        } else {
+            self.start_time + rng.random::<f32>() * (self.end_time - self.start_time)
+        };
+
         Ray::new(
             self.origin + offset,
             self.top_left_corner + s * self.horizontal - t * self.vertical - self.origin - offset,
+            time
         )
     }
 }

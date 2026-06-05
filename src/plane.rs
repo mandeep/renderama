@@ -270,7 +270,7 @@ mod tests {
         let bounds = Bounds2D::new(-1.0..1.0, -1.0..1.0);
         let plane = Plane::new(Axis::XY, bounds, 5.0, MaterialId(0));
 
-        let ray = Ray::new(Vec3A::new(0.0, 0.0, 0.0), Vec3A::new(0.0, 0.0, 1.0));
+        let ray = Ray::new(Vec3A::new(0.0, 0.0, 0.0), Vec3A::new(0.0, 0.0, 1.0), 0.0);
 
         let hit = plane.hit(&ray, 0.001, f32::MAX);
         assert!(hit.is_some());
@@ -285,7 +285,7 @@ mod tests {
         let bounds = Bounds2D::new(-1.0..1.0, -1.0..1.0);
         let plane = Plane::new(Axis::XY, bounds, 5.0, MaterialId(0));
 
-        let ray = Ray::new(Vec3A::new(2.0, 2.0, 0.0), Vec3A::new(0.0, 0.0, 1.0));
+        let ray = Ray::new(Vec3A::new(2.0, 2.0, 0.0), Vec3A::new(0.0, 0.0, 1.0), 0.0);
 
         let hit = plane.hit(&ray, 0.001, f32::MAX);
         assert!(hit.is_none());
@@ -296,7 +296,7 @@ mod tests {
         let bounds = Bounds2D::new(-1.0..1.0, -1.0..1.0);
         let plane = Plane::new(Axis::XY, bounds, 0.0, MaterialId(0));
 
-        let ray = Ray::new(Vec3A::new(0.0, 0.0, 0.0), Vec3A::new(1.0, 0.0, 0.0));
+        let ray = Ray::new(Vec3A::new(0.0, 0.0, 0.0), Vec3A::new(1.0, 0.0, 0.0), 0.0);
 
         let hit = plane.hit(&ray, 0.0, f32::MAX);
         assert!(hit.is_none());
@@ -307,7 +307,7 @@ mod tests {
         let bounds = Bounds2D::new(-1.0..1.0, -1.0..1.0);
         let plane = Plane::new(Axis::XY, bounds, 5.0, MaterialId(0));
 
-        let ray = Ray::new(Vec3A::new(0.0, 0.0, 0.0), Vec3A::new(0.0, 0.0, 1.0));
+        let ray = Ray::new(Vec3A::new(0.0, 0.0, 0.0), Vec3A::new(0.0, 0.0, 1.0), 0.0);
 
         let weight = plane.evaluate_sampling_weight(&ray);
         assert!(weight > 0.0);
@@ -318,7 +318,7 @@ mod tests {
         let bounds = Bounds2D::new(-1.0..1.0, -1.0..1.0);
         let plane = Plane::new(Axis::XY, bounds, 5.0, MaterialId(0));
 
-        let ray = Ray::new(Vec3A::new(0.0, 0.0, 10.0), Vec3A::new(0.0, 0.0, -1.0));
+        let ray = Ray::new(Vec3A::new(0.0, 0.0, 10.0), Vec3A::new(0.0, 0.0, -1.0), 0.0);
 
         let weight = plane.evaluate_sampling_weight(&ray);
         assert_eq!(weight, 0.0);

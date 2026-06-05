@@ -228,7 +228,7 @@ mod tests {
     fn test_triangle_hit() {
         let triangle = create_test_triangle();
 
-        let ray = Ray::new(Vec3A::new(0.0, 0.0, 2.0), Vec3A::new(0.0, 0.0, -1.0));
+        let ray = Ray::new(Vec3A::new(0.0, 0.0, 2.0), Vec3A::new(0.0, 0.0, -1.0), 0.0);
 
         let hit = triangle.hit(&ray, 0.001, 100.0);
         assert!(hit.is_some());
@@ -241,10 +241,10 @@ mod tests {
     fn test_triangle_miss() {
         let triangle = create_test_triangle();
 
-        let ray_parallel = Ray::new(Vec3A::new(0.0, 0.0, 2.0), Vec3A::new(1.0, 0.0, 0.0));
+        let ray_parallel = Ray::new(Vec3A::new(0.0, 0.0, 2.0), Vec3A::new(1.0, 0.0, 0.0), 0.0);
         assert!(triangle.hit(&ray_parallel, 0.001, 100.0).is_none());
 
-        let ray_away = Ray::new(Vec3A::new(0.0, 0.0, 2.0), Vec3A::new(0.0, 0.0, 1.0));
+        let ray_away = Ray::new(Vec3A::new(0.0, 0.0, 2.0), Vec3A::new(0.0, 0.0, 1.0), 0.0);
         assert!(triangle.hit(&ray_away, 0.001, 100.0).is_none());
     }
 }

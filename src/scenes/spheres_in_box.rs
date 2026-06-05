@@ -16,7 +16,7 @@ use rectangle::Rectangle;
 use scene::{Scene, SceneBuilder};
 use sphere::Sphere;
 use texture::{Color, ImageTexture};
-use transformations::TransformedMesh;
+use transformations::{MotionMesh, TransformedMesh};
 use volume::Volume;
 
 use mat;
@@ -34,6 +34,9 @@ pub fn spheres_in_box_scene(width: Option<usize>, height: Option<usize>, rng: &m
     let f_stop = std::f32::INFINITY;
     let focus_distance = 10.0;
     let world_scale = 1.0;
+    let fps = 24.0;
+    let frame_duration = 1.0 / fps;
+    let shutter_speed = 1.0;
 
     let camera = Camera::new(
         origin,
@@ -44,7 +47,9 @@ pub fn spheres_in_box_scene(width: Option<usize>, height: Option<usize>, rng: &m
         sensor_height,
         focus_distance,
         world_scale,
-        (aspect_width, aspect_height)
+        (aspect_width, aspect_height),
+        frame_duration,
+        shutter_speed,
     );
 
     let mut objects = Vec::new();
@@ -68,9 +73,9 @@ pub fn spheres_in_box_scene(width: Option<usize>, height: Option<usize>, rng: &m
 
     objects.push(Primitive::ReverseOrientation(Arc::new(Plane::new(Axis::XZ, Bounds2D::new(123.0..423.0, 147.0..412.0), 554.0, big_light).into())));
 
-    objects.push(Sphere::new(Vec3A::new(400.0, 400.0, 200.0),
-                          50.0,
-                          red).into());
+    let moving_sphere = Sphere::new(Vec3A::new(0.0, 0.0, 0.0), 1.0, red).into();
+    let motion_mesh = MotionMesh::new(Vec3A::new(400.0, 400.0, 200.0), Vec3A::new(430.0, 400.0, 200.0), Vec3A::ZERO, Vec3A::ZERO, Vec3A::splat(50.0), Vec3A::splat(50.0), frame_duration, shutter_speed, moving_sphere);
+    objects.push(motion_mesh.into());
 
     let refr_idx = mat!(materials, Refractive::new(Color::new(1.0, 1.0, 1.0).into(), 1.5));
     objects.push(Sphere::new(Vec3A::new(260.0, 150.0, 45.0),

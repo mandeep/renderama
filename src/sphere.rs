@@ -162,7 +162,7 @@ mod tests {
     #[test]
     fn test_sphere_hit() {
         let sphere = Sphere::new(Vec3A::new(0.0, 0.0, 5.0), 1.0, MaterialId(0));
-        let ray = Ray::new(Vec3A::ZERO, Vec3A::new(0.0, 0.0, 1.0));
+        let ray = Ray::new(Vec3A::ZERO, Vec3A::new(0.0, 0.0, 1.0), 0.0);
 
         let hit = sphere.hit(&ray, 1e-4, 100.0);
         assert!(hit.is_some());
@@ -174,7 +174,7 @@ mod tests {
     #[test]
     fn test_sphere_miss() {
         let sphere = Sphere::new(Vec3A::new(0.0, 0.0, -5.0), 1.0, MaterialId(0));
-        let ray = Ray::new(Vec3A::ZERO, Vec3A::new(0.0, 0.0, 1.0));
+        let ray = Ray::new(Vec3A::ZERO, Vec3A::new(0.0, 0.0, 1.0), 0.0);
 
         let hit = sphere.hit(&ray, 1e-4, 100.0);
         assert!(hit.is_none());
@@ -183,7 +183,7 @@ mod tests {
     #[test]
     fn test_sphere_hit_inside_out() {
         let sphere = Sphere::new(Vec3A::ZERO, 2.0, MaterialId(0));
-        let ray = Ray::new(Vec3A::ZERO, Vec3A::new(0.0, 1.0, 0.0));
+        let ray = Ray::new(Vec3A::ZERO, Vec3A::new(0.0, 1.0, 0.0), 0.0);
 
         let hit = sphere.hit(&ray, 1e-4, 100.0);
         assert!(hit.is_some());
@@ -204,7 +204,7 @@ mod tests {
     #[test]
     fn test_sampling_weight_miss_returns_zero() {
         let sphere = Sphere::new(Vec3A::new(0.0, 0.0, 5.0), 1.0, MaterialId(0));
-        let ray = Ray::new(Vec3A::ZERO, Vec3A::new(0.0, 0.0, -1.0));
+        let ray = Ray::new(Vec3A::ZERO, Vec3A::new(0.0, 0.0, -1.0), 0.0);
 
         let weight = sphere.evaluate_sampling_weight(&ray);
         assert_eq!(weight, 0.0);

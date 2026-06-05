@@ -80,7 +80,7 @@ pub fn render_ambient_occlusion(ray: Ray, scene: &Scene, rng: &mut Pcg64Mcg) -> 
     let local = cosine_sample_hemisphere(rng);
     let direction = uvw.local(&local);
     let offset_point = find_offset_point(hit_result.point, hit_result.geometric_normal);
-    let ao_ray = Ray::new(offset_point, direction);
+    let ao_ray = Ray::new(offset_point, direction, ray.time);
 
     if !scene.accelerator.hits_anything(&ao_ray, 1e-3, f32::MAX, rng) {
         color += 1.0;
@@ -245,7 +245,7 @@ fn evaluate_direct_lighting(
         let light_distance = light_direction_vector.length();
         let light_direction = light_direction_vector.normalize();
 
-        let shadow_ray = Ray::new(shadow_origin, light_direction);
+        let shadow_ray = Ray::new(shadow_origin, light_direction, ray.time);
         let end_distance = light_source.calculate_distance_from(light_distance);
 
         if !scene.accelerator.hits_anything(&shadow_ray, 1e-3, end_distance, rng) {
@@ -264,7 +264,7 @@ fn evaluate_direct_lighting(
         let environment_weight = environment.evaluate_sampling_weight(&environment_direction);
         if environment_weight > 1e-7 {
             let shadow_origin = find_offset_point(hit_result.point, hit_result.geometric_normal);
-            let environment_shadow_ray = Ray::new(shadow_origin, environment_direction);
+            let environment_shadow_ray = Ray::new(shadow_origin, environment_direction, ray.time);
             if scene.accelerator.hit(&environment_shadow_ray, 1e-3, f32::MAX, rng).is_none() {
                 let environment_value = environment.sample_map(&environment_direction);
                 let material_weight = scatter_result.sampling_strategy.calculate_probability(environment_direction);
@@ -300,7 +300,7 @@ fn prepare_next_ray(
     if material_weight <= 0.0 { return None; }
 
     let offset_point = find_offset_point(hit_result.point, hit_result.geometric_normal);
-    let scattered_ray = Ray::new(offset_point, scattered_direction);
+    let scattered_ray = Ray::new(offset_point, scattered_direction, ray.time);
     let reflectance = material.compute_reflectance(&ray, &hit_result, &scattered_ray);
 
     // if we're using a material with pre-weighted ggx vndf

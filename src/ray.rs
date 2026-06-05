@@ -4,13 +4,14 @@ pub struct Ray {
     pub origin: Vec3A,
     pub direction: Vec3A,
     pub inverse_direction: Vec3A,
+    pub time: f32,
 }
 
 impl Ray {
     /// Create a new Ray with origin at `a` and direction towards `b`
-    pub fn new(origin: Vec3A, direction: Vec3A) -> Ray {
+    pub fn new(origin: Vec3A, direction: Vec3A, time: f32) -> Ray {
         let direction = direction.normalize();
-        Ray { origin, direction, inverse_direction: direction.recip() }
+        Ray { origin, direction, inverse_direction: direction.recip(), time }
     }
 
     /// Find the point on the ray given the parameter of the direction vector
@@ -83,7 +84,7 @@ mod tests {
     fn test_ray_new_normalization_and_recip() {
         let origin = Vec3A::ZERO;
         let direction = Vec3A::new(0.0, 3.0, 4.0);
-        let ray = Ray::new(origin, direction);
+        let ray = Ray::new(origin, direction, 0.0);
 
         let expected_direction = Vec3A::new(0.0, 0.6, 0.8);
         assert_eq!(ray.direction, expected_direction);
@@ -94,7 +95,7 @@ mod tests {
 
     #[test]
     fn test_point_at_parameter() {
-        let ray = Ray::new(Vec3A::new(1.0, 1.0, 1.0), Vec3A::new(0.0, 1.0, 0.0));
+        let ray = Ray::new(Vec3A::new(1.0, 1.0, 1.0), Vec3A::new(0.0, 1.0, 0.0), 0.0);
         let point = ray.point_at_parameter(5.0);
         assert_eq!(point, Vec3A::new(1.0, 6.0, 1.0));
     }
