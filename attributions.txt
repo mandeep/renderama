@@ -1,0 +1,32 @@
+HDRI Environment Maps
+https://polyhaven.com/hdris
+Greg Zaal, Jarod Guest
+CC0 / Public Domain
+
+Stormtrooper Star Wars VII
+ScottGraham
+https://blendswap.com/blend/13953
+CC-BY
+
+Batmobile, Lego Technic
+SoftNote, https://sketchfab.com/softnote
+https://sketchfab.com/3d-models/batmobile-lego-technic-769305673a5a4d5d84a3f3367ff29154
+CC-BY 4.0
+
+Subway Train Interior
+Lukas Hahn 3D, https://sketchfab.com/specter
+https://sketchfab.com/3d-models/subway-train-interior-f90d26d89ad44da4af508648f870a816
+CC-BY 4.0
+
+The Birth Of The Buddha
+artfletch, https://sketchfab.com/artfletch
+https://sketchfab.com/3d-models/the-birth-of-the-buddha-c5652dbf6e0a4989ab390c5b5e9a75b5
+CC-BY 4.0
+
+Cricket Ball
+Rohit Pawar, https://sketchfab.com/rohit8999
+https://sketchfab.com/3d-models/cricket-ball-sports-b13a0d69d6ca48d4b125de2cc2e7f940
+CC-BY 4.0
+
+The Stanford 3D Scanning Repository
+https://graphics.stanford.edu/data/3Dscanrep/
