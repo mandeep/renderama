@@ -138,7 +138,7 @@ fn main() {
         let mut color = Vec3A::ZERO;
 
         let x = i % width;
-        let y = height - (i / width) - 1;
+        let y = i / width;
 
         // for testing purposes seed the rng from a u64
         // need to seed per pixel otherwise it will create the same RNG for every pixel and ray

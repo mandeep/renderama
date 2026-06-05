@@ -1,7 +1,7 @@
 use f32::consts::PI;
 
 use glam::Vec3A;
-use image;
+use image::DynamicImage;
 use rand_pcg::Pcg64Mcg;
 use rand::RngExt;
 
@@ -53,7 +53,10 @@ pub struct EnvironmentMap {
 impl EnvironmentMap {
     /// Create a new EnvironmentMap from the image at the given path.
     pub fn new(filename: &str, intensity: f32) -> EnvironmentMap {
-        let img = image::open(filename).unwrap().to_rgb32f();
+        let img = image::open(filename).unwrap_or_else(|e| {
+            eprintln!("Failed to open environment map '{}': {}", filename, e);
+            DynamicImage::new_rgb32f(1, 1)
+        }).to_rgb32f();
         let width = img.width() as usize;
         let height = img.height() as usize;
 

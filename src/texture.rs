@@ -68,7 +68,7 @@ impl ImageTexture {
             eprintln!("Failed to open texture '{}': {}", filename, e);
             DynamicImage::new_rgb8(1, 1)
         });
-        ImageTexture { im: img.flipv().to_rgb8(), scale }
+        ImageTexture { im: img.to_rgb8(), scale }
     }
 
     /// Determine which pixel to retrieve from the image by
@@ -76,8 +76,9 @@ impl ImageTexture {
     pub fn sample_texture(&self, u: f32, v: f32, _p: &Vec3A) -> Vec3A {
         // need to use rem_euclid to properly wrap negative uv coordinates
         // https://doc.rust-lang.org/std/primitive.f32.html#method.rem_euclid
+        let inverted_v = 1.0 - v;
         let u_scaled = (u * self.scale.x).rem_euclid(1.0);
-        let v_scaled = (v * self.scale.y).rem_euclid(1.0);
+        let v_scaled = (inverted_v * self.scale.y).rem_euclid(1.0);
 
         let i = 0.0f32.max((u_scaled * self.im.width() as f32).min(self.im.width() as f32 - 1.0));
         let j = 0.0f32.max((v_scaled * self.im.height() as f32).min(self.im.height() as f32 - 1.0));

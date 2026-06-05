@@ -1,4 +1,5 @@
 use std::f32;
+use std::f32::consts::PI;
 use std::sync::Arc;
 
 use glam::{Vec2, Vec3A};
@@ -24,18 +25,27 @@ pub fn hyperion_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let origin = Vec3A::new(0.0, 6.0, 6.0);
     let lookat = Vec3A::new(0.0, 0.0, -1.5);
     let view = Vec3A::new(0.0, 1.0, 0.0);
-    let fov = 22.0;
-    let aspect_ratio = (width.unwrap_or(1920) as f32, height.unwrap_or(1080) as f32);
-    let aperture = 0.01;
+    let (aspect_width, aspect_height) = (width.unwrap_or(1920) as f32, height.unwrap_or(1080) as f32);
+    let sensor_height = 24.0;
+    let old_fov = 22.0;
+    let fov_radians = old_fov * PI / 180.0;
+    let focal_length = (sensor_height / 2.0) / (fov_radians / 2.0).tan();
+    let old_aperture = 0.01;
+    let world_scale = 0.001;
+    let f_stop = (focal_length * world_scale) / old_aperture;
     let focus_distance = (lookat - origin).length();
 
-    let camera = Camera::new(origin,
-                             lookat,
-                             view,
-                             fov,
-                             aspect_ratio,
-                             aperture,
-                             focus_distance);
+    let camera = Camera::new(
+        origin,
+        lookat,
+        view,
+        focal_length,
+        f_stop,
+        sensor_height,
+        focus_distance,
+        world_scale,
+        (aspect_width, aspect_height)
+    );
 
     let mut objects: Vec<Primitive> = Vec::new();
     let mut materials: Vec<Material> = Vec::new();

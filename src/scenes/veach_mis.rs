@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 use glam::Vec3A;
 
 use bvh::BVH;
@@ -18,13 +20,26 @@ pub fn veach_mis_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let origin = Vec3A::new(0.0, 1.2, -3.5);
     let lookat = Vec3A::new(0.0, 1.9, 7.0);
     let view = Vec3A::new(0.0, 1.0,  0.0);
-    let fov = 35.0;
-    let aspect_ratio = (width.unwrap_or(1920) as f32, height.unwrap_or(1080) as f32);
-    let aperture = 0.0;
+    let old_fov = 35.0;
+    let (aspect_width, aspect_height) = (width.unwrap_or(1920) as f32, height.unwrap_or(1080) as f32);
+    let fov_radians = old_fov * PI / 180.0;
+    let sensor_height = 24.0;
+    let focal_length = (sensor_height / 2.0) / (fov_radians / 2.0).tan();
+    let f_stop = std::f32::INFINITY;
     let focus_distance = 10.0;
+    let world_scale = 1.0;
 
-    let camera = Camera::new(origin, lookat, view, fov, aspect_ratio,
-        aperture, focus_distance);
+    let camera = Camera::new(
+        origin,
+        lookat,
+        view,
+        focal_length,
+        f_stop,
+        sensor_height,
+        focus_distance,
+        world_scale,
+        (aspect_width, aspect_height)
+    );
 
     let mut objects = Vec::new();
     let mut materials: Vec<Material> = Vec::new();
