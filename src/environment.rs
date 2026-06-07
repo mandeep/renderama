@@ -38,7 +38,7 @@ fn sample_brightest_pixels(cdf: &[f32], u: f32) -> usize {
 /// https://www.cg.tuwien.ac.at/sites/default/files/course/4411/attachments/06_importance_sampling_0.pdf
 #[derive(Clone)]
 pub struct EnvironmentMap {
-    img: image::Rgb32FImage,
+    pixels: Vec<Vec3A>,
     width: usize,
     height: usize,
     marginal_cdf: Vec<f32>,
@@ -55,8 +55,13 @@ impl EnvironmentMap {
         let img = image::open(filename)
             .expect(&format!("Failed to open environment map '{}'", filename))
             .into_rgb32f();
+
         let width = img.width() as usize;
         let height = img.height() as usize;
+
+        let pixels = img.pixels()
+            .map(|p| Vec3A::new(p[0], p[1], p[2]))
+            .collect();
 
         // conditional_pdf stores the probabilities for picking a
         // specific pixel within a single row
@@ -110,7 +115,7 @@ impl EnvironmentMap {
             }
         }
 
-        EnvironmentMap { img, width, height, marginal_cdf, conditional_cdf, total_weight, max_luminance, intensity }
+        EnvironmentMap { pixels, width, height, marginal_cdf, conditional_cdf, total_weight, max_luminance, intensity }
     }
 
     /// Determine which pixel to retrieve from the image by
@@ -122,20 +127,22 @@ impl EnvironmentMap {
         let u = 0.5 + direction.z.atan2(direction.x) / (2.0 * PI);
         let v = 0.5 - direction.y.asin() / PI;
 
-        let i = 0.0f32.max((u * self.img.width() as f32).min(self.img.width() as f32 - 1.0));
-        let j = 0.0f32.max((v * self.img.height() as f32).min(self.img.height() as f32 - 1.0));
+        let i = ((u * self.width as f32) as usize).min(self.width - 1);
+        let j = ((v * self.height as f32) as usize).min(self.height - 1);
 
-        let image::Rgb([r, g, b]) = *self.img.get_pixel(i as u32, j as u32);
+        let pixel = self.pixels[j * self.width + i];
 
-        Vec3A::new(r, g, b) * self.intensity
+        Vec3A::new(pixel[0], pixel[1], pixel[2]) * self.intensity
     }
 
     /// Compute the weight on how likely we will sample in the given direction.
     ///
     /// After converting the direction into spherical UV coordinates,
     /// we retrieve the luminance and compute the weight of that luminance.
-    pub fn evaluate_sampling_weight(&self, direction: &Vec3A) -> f32 {
-        if self.total_weight <= 0.0 { return 0.0; }
+    pub fn evaluate_sampling_weight(&self, direction: &Vec3A) -> (Vec3A, f32) {
+        if self.total_weight <= 0.0 {
+            return (Vec3A::ZERO, 0.0);
+        }
 
         let u = 0.5 + direction.z.atan2(direction.x) / (2.0 * PI);
         let v = 0.5 - direction.y.asin() / PI;
@@ -143,18 +150,21 @@ impl EnvironmentMap {
         let i = ((u * self.width as f32) as usize).min(self.width - 1);
         let j = ((v * self.height as f32) as usize).min(self.height - 1);
 
-        let pixel = self.img.get_pixel(i as u32, j as u32);
-        let luminance = luminance(pixel[0], pixel[1], pixel[2]);
+        let pixel = self.pixels[j * self.width + i];
 
         // since we're working in the solid angle domain we need to transform
         // p(i, j) to p(w).
         // https://glue.mustafaisik.net/2018/10/image-based-lighting.html
-        luminance * self.width as f32 * self.height as f32 / (self.total_weight * 2.0 * PI * PI)
+        let luminance = luminance(pixel.x, pixel.y, pixel.z);
+
+        let weight = luminance * self.width as f32 * self.height as f32 / (self.total_weight * 2.0 * PI * PI);
+
+        (pixel * self.intensity, weight)
     }
 
     /// Find areas of high luminance in the conditional_cdf and
     /// return the direction to that area.
-    pub fn sample_direction_to_light(&self, rng: &mut Pcg64Mcg) -> Vec3A {
+    pub fn sample_direction_to_light(&self, rng: &mut Pcg64Mcg) -> (Vec3A, Vec3A, f32) {
         let u1 = rng.random::<f32>();
         let u2 = rng.random::<f32>();
 
@@ -178,6 +188,17 @@ impl EnvironmentMap {
         let (sin_phi, cos_phi) = phi.sin_cos();
 
         // map spherical angles to 3D direction vector in direction of light source
-        Vec3A::new(cos_el * cos_phi, sin_el, cos_el * sin_phi)
+        let direction = Vec3A::new(cos_el * cos_phi, sin_el, cos_el * sin_phi);
+
+        let pixel = self.pixels[j * self.width + i];
+        let color = pixel * self.intensity;
+
+        // since we're working in the solid angle domain we need to transform
+        // p(i, j) to p(w).
+        // https://glue.mustafaisik.net/2018/10/image-based-lighting.html
+        let luminance = luminance(pixel.x, pixel.y, pixel.z);
+        let weight = luminance * self.width as f32 * self.height as f32 / (self.total_weight * 2.0 * PI * PI);
+
+        (direction, color, weight)
     }
 }

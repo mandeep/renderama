@@ -497,7 +497,7 @@ impl BVH {
 
     /// Test if a shadow ray hits anything on its path to the light source
     pub fn hits_anything(&self, ray: &Ray, start_distance: f32, end_distance: f32, rng: &mut Pcg64Mcg) -> bool {
-        let mut stack: [u32; 64] = [0; 64];
+        let mut stack: [u32; 256] = [0; 256];
         let mut stack_ptr: usize = 0;
 
         stack[stack_ptr] = self.root;
@@ -519,7 +519,7 @@ impl BVH {
             if is_leaf(node_ref) {
                 let leaf = &self.leaves[leaf_index(node_ref)];
                 if leaf.bbox.hit(ray, start_distance, end_distance) {
-                    if leaf.primitive.hit(ray, start_distance, end_distance, rng).is_some() {
+                    if leaf.primitive.hits_anything(ray, start_distance, end_distance, rng) {
                         return true;
                     }
                 }

@@ -147,6 +147,21 @@ impl TransformedMesh {
             None
         }
     }
+
+    pub fn hits_anything(&self, ray: &Ray, start_distance: f32, end_distance: f32, rng: &mut Pcg64Mcg) -> bool {
+        let local_origin = self.inverse_transform.transform_point3(ray.origin.into());
+        let local_direction = self.inverse_transform.transform_vector3(ray.direction.into());
+
+        let local_direction_length = local_direction.length();
+        let local_direction_normalized = local_direction / local_direction_length;
+
+        let local_start_distance = start_distance * local_direction_length;
+        let local_end_distance = end_distance * local_direction_length;
+
+        let local_ray = Ray::new(local_origin.into(), local_direction_normalized.into(), ray.time);
+
+        self.primitive.hits_anything(&local_ray, local_start_distance, local_end_distance, rng)
+    }
     
     /// Return the world space bounding box of the TransformedMesh
     pub fn bounding_box(&self) -> Option<AABB> {
@@ -230,6 +245,34 @@ impl MotionMesh {
         } else {
             None
         }
+    }
+
+    pub fn hits_anything(&self, ray: &Ray, start_distance: f32, end_distance: f32, rng: &mut Pcg64Mcg) -> bool {
+        let time = if self.time1 > self.time0 {
+            ((ray.time - self.time0) / (self.time1 - self.time0)).clamp(0.0, 1.0)
+        } else {
+            0.0
+        };
+
+        let current_translate = self.translate0.lerp(self.translate1, time);
+        let current_rotation = self.rotation0.lerp(self.rotation1, time);
+        let current_scale = self.scale0.lerp(self.scale1, time);
+
+        let forward_transform = build_transform_matrix(current_translate, current_rotation, current_scale);
+        let inverse_transform = forward_transform.inverse();
+
+        let local_origin = inverse_transform.transform_point3(ray.origin.into());
+        let local_direction = inverse_transform.transform_vector3(ray.direction.into());
+
+        let local_direction_length = local_direction.length();
+        let local_direction_normalized = local_direction / local_direction_length;
+
+        let local_start_distance = start_distance * local_direction_length;
+        let local_end_distance = end_distance * local_direction_length;
+
+        let local_ray = Ray::new(local_origin.into(), local_direction_normalized.into(), ray.time);
+
+        self.primitive.hits_anything(&local_ray, local_start_distance, local_end_distance, rng)
     }
 
     pub fn bounding_box(&self) -> Option<AABB> {

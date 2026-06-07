@@ -51,6 +51,20 @@ impl Primitive {
         }
     }
 
+    pub fn hits_anything(&self, ray: &Ray, start_distance: f32, end_distance: f32, rng: &mut Pcg64Mcg) -> bool {
+        match self {
+            Primitive::Plane(plane) => plane.hit(ray, start_distance, end_distance).is_some(),
+            Primitive::Rectangle(rectangle) => rectangle.hit(ray, start_distance, end_distance, rng).is_some(),
+            Primitive::Sphere(sphere) => sphere.hit(ray, start_distance, end_distance).is_some(),
+            Primitive::Triangle(triangle) => triangle.hit(ray, start_distance, end_distance).is_some(),
+            Primitive::TriangleMesh(mesh) => mesh.hits_anything(ray, start_distance, end_distance, rng),
+            Primitive::ReverseOrientation(primitive) => primitive.hit(ray, start_distance, end_distance, rng).is_some(),
+            Primitive::TransformedMesh(mesh) => mesh.hits_anything(ray, start_distance, end_distance, rng),
+            Primitive::MotionMesh(mesh) => mesh.hits_anything(ray, start_distance, end_distance, rng),
+            Primitive::Volume(volume) => volume.hit(ray, start_distance, end_distance, rng).is_some()
+        }
+    }
+
     pub fn bounding_box(&self) -> Option<AABB> {
         match self {
             Primitive::Plane(plane) => plane.bounding_box(),

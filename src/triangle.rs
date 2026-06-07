@@ -200,6 +200,10 @@ impl TriangleMesh {
         self.accelerator.hit(ray, position_min, position_max, rng)
     }
 
+    pub fn hits_anything(&self, ray: &Ray, position_min: f32, position_max: f32, rng: &mut Pcg64Mcg) -> bool {
+        self.accelerator.hits_anything(ray, position_min, position_max, rng)
+    }
+
     pub fn bounding_box(&self) -> Option<AABB> {
         self.accelerator.bounding_box()
     }

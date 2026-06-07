@@ -1,2 +1,5 @@
 [env]
 OIDN_DIR = { value = "vendor/oidn", relative = true, force = true }
+
+[build]
+rustflags = ["-C", "target-cpu=native"]

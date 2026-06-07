@@ -26,7 +26,7 @@ pub fn stormtrooper_scene(width: Option<usize>, height: Option<usize>) -> Scene 
     let focus_distance = 4.0;
     let focal_length = (sensor_height / 2.0) / (fov_radians / 2.0).tan();
     let world_scale = 0.001;
-    let f_stop = 1.0;
+    let f_stop = 0.7;
 
     let camera = Camera::new(
             origin,
