@@ -154,6 +154,11 @@ fn map_mtl_to_material(material: &tobj::Material, base_directory: &std::path::Pa
     let d  = material.dissolve.unwrap_or(1.0);
     let illum = material.illumination_model.unwrap_or(2);
 
+    // emissive material may have any illum # so we need to handle it first
+    if ke.iter().sum::<f32>() > f32::EPSILON {
+        return Emissive::new(Color::new(ke[0], ke[1], ke[2]).into()).into();
+    }
+
     // mapping Ns to a lower roughness range by using powf(13.5)
     let roughness = (1.0 - ns / 1000.0).powf(13.5).clamp(0.025, 1.0);
 
@@ -176,10 +181,6 @@ fn map_mtl_to_material(material: &tobj::Material, base_directory: &std::path::Pa
     if matches!(illum, 4..=7) || d < 0.99 {
         let absorption = Color::new(kd[0], kd[1], kd[2]).into();
         return Refractive::new(absorption, ni).into();
-    }
-
-    if ke.iter().sum::<f32>() > f32::EPSILON {
-        return Emissive::new(Color::new(ke[0], ke[1], ke[2]).into()).into();
     }
 
     // illum 2 or if illum is not provided, default to Plastic
