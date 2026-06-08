@@ -23,7 +23,7 @@ rand_pcg = "0.10.2"
 rayon = "1.12.0"
 strum = { version = "0.28", features = ["derive"] }
 wide = "1.3.0"
-tobj = { git = "https://github.com/mandeep/tobj.git", branch = "add-emissive-attribute"}
+tobj = "4.0.4"
 
 
 [profile.dev]

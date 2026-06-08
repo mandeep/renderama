@@ -900,8 +900,9 @@ dependencies = [
 
 [[package]]
 name = "tobj"
-version = "4.0.3"
-source = "git+https://github.com/mandeep/tobj.git?branch=add-emissive-attribute#30bf3c32fcbc037505b038210e97a94d24546316"
+version = "4.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2da83817ac7401436633efc35c19edae9f326fa741fae775a1caa406de9db07c"
 dependencies = [
  "ahash",
 ]

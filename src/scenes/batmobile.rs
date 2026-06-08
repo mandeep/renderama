@@ -1,5 +1,4 @@
 use std::f32;
-use std::f32::consts::PI;
 use std::sync::Arc;
 
 use glam::Vec3A;
@@ -19,18 +18,15 @@ use mat;
 
 
 pub fn batmobile_scene(width: Option<usize>, height: Option<usize>) -> Scene {
-    let origin = Vec3A::new(-8.0, 2.0, 6.0);
-    let lookat = Vec3A::new(0.0, 0.0, 1.0);
+    let origin = Vec3A::new(-2.0, 0.5, 1.5);
+    let lookat = Vec3A::new(0.0, 0.0, 0.25);
     let view = Vec3A::new(0.0, 1.0, 0.0);
-    let old_fov = 18.0;
     let (aspect_width, aspect_height) = (width.unwrap_or(1920) as f32, height.unwrap_or(1080) as f32);
     let sensor_height = 24.0;
-    let fov_radians = old_fov * PI / 180.0;
-    let focal_length = (sensor_height / 2.0) / (fov_radians / 2.0).tan();
-    let old_aperture = 0.01;
+    let focal_length = 74.0;
     let world_scale = 0.001;
-    let f_stop = (focal_length * world_scale) / old_aperture;
-    let focus_distance = (lookat - origin).length();
+    let f_stop = 2.8;
+    let focus_distance = 2.25;
 
     let camera = Camera::new(
         origin,
@@ -55,7 +51,7 @@ pub fn batmobile_scene(width: Option<usize>, height: Option<usize>) -> Scene {
 
     let translation = Vec3A::new(0.0, 0.0, 0.0);
     let rotation = Vec3A::new(0.0, 0.0, 0.0);
-    let scale = Vec3A::splat(1.0);
+    let scale = Vec3A::splat(0.25);
 
     for mesh in meshes {
         let transformed = TransformedMesh::new(
@@ -69,7 +65,7 @@ pub fn batmobile_scene(width: Option<usize>, height: Option<usize>) -> Scene {
 
     let grey = mat!(materials, Diffuse::new(Color::new(0.05, 0.05, 0.07).into(), 0.0));
     // floor plane
-    objects.push(Plane::new(Axis::XZ, Bounds2D::new(-1000.0..1000.0, -1000.0..1000.0), -1.6, grey).into_primitive());
+    objects.push(Plane::new(Axis::XZ, Bounds2D::new(-1000.0..1000.0, -1000.0..1000.0), -0.4, grey).into_primitive());
 
     let bvh = BVH::new(&mut objects);
 
