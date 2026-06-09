@@ -16,7 +16,7 @@ use crate::rectangle::Rectangle;
 use crate::scene::{Scene, SceneBuilder};
 use crate::sphere::Sphere;
 use crate::texture::{Color, ImageTexture};
-use crate::transformations::{MotionMesh, TransformedMesh};
+use crate::transformations::TransformedMesh;
 use crate::volume::Volume;
 
 use crate::mat;
@@ -73,8 +73,12 @@ pub fn spheres_in_box_scene(width: Option<usize>, height: Option<usize>, rng: &m
 
     objects.push(Primitive::ReverseOrientation(Arc::new(Plane::new(Axis::XZ, Bounds2D::new(123.0..423.0, 147.0..412.0), 554.0, big_light).into())));
 
-    let moving_sphere = Sphere::new(Vec3A::new(0.0, 0.0, 0.0), 1.0, red).into();
-    let motion_mesh = MotionMesh::new(Vec3A::new(400.0, 400.0, 200.0), Vec3A::new(430.0, 400.0, 200.0), Vec3A::ZERO, Vec3A::ZERO, Vec3A::splat(50.0), Vec3A::splat(50.0), frame_duration, shutter_speed, moving_sphere);
+    let sphere = Sphere::new(Vec3A::new(0.0, 0.0, 0.0), 1.0, red).into();
+    let transformed_sphere = TransformedMesh::new(Vec3A::new(400.0, 400.0, 200.0), Vec3A::ZERO, Vec3A::splat(50.0), sphere);
+    let motion_mesh = transformed_sphere.into_motion()
+        .with_translation(Vec3A::new(430.0, 400.0, 200.0))
+        .with_time_range(frame_duration, shutter_speed)
+        .build();
     objects.push(motion_mesh.into());
 
     let refr_idx = mat!(materials, Refractive::new(Color::new(1.0, 1.0, 1.0).into(), 1.5));

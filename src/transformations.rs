@@ -31,60 +31,6 @@ pub struct TransformedMesh {
     primitive: Arc<Primitive>,
 }
 
-/// Transform the local space AABB into world space with the given transform matrix.
-fn transform_aabb(bbox: &AABB, transform: &Mat4) -> AABB {
-    let min = bbox.minimum;
-    let max = bbox.maximum;
-
-    // after a rotation or non-uniform transform, the old min and max are
-    // no longer relevant, so we have to compute a new min and max for the bbox
-    // by testing all eight vertices.
-    let corners = [
-        Vec3::new(min.x, min.y, min.z),
-        Vec3::new(max.x, min.y, min.z),
-        Vec3::new(min.x, max.y, min.z),
-        Vec3::new(max.x, max.y, min.z),
-        Vec3::new(min.x, min.y, max.z),
-        Vec3::new(max.x, min.y, max.z),
-        Vec3::new(min.x, max.y, max.z),
-        Vec3::new(max.x, max.y, max.z),
-    ];
-    
-    // first select the first corner as min and max
-    let first = transform.transform_point3(corners[0]);
-    let mut new_min = first;
-    let mut new_max = first;
-    
-    // iterate through the rest of the corners and find the new min and max
-    for i in 1..8 {
-        let p = transform.transform_point3(corners[i]);
-        new_min = new_min.min(p);
-        new_max = new_max.max(p);
-    }
-    
-    AABB::from(new_min.into(), new_max.into())
-}
-
-/// Build a transform matrix from the given vectors.
-///
-/// translate: the translation vector
-/// rotation: the rotation vector with each axis represented by angles (in degrees)
-/// scale: the scale vector
-fn build_transform_matrix(translate: Vec3A, rotation: Vec3A, scale: Vec3A) -> Mat4 {
-    let scale_matrix = Mat4::from_scale(scale.into());
-
-    // build rotation matrices for each rotation axis
-    let rotation_x = Mat4::from_rotation_x(rotation.x.to_radians());
-    let rotation_y = Mat4::from_rotation_y(rotation.y.to_radians());
-    let rotation_z = Mat4::from_rotation_z(rotation.z.to_radians());
-    let translate_matrix = Mat4::from_translation(translate.into());
-
-    // remember that matrix multiplication applies from right to left
-    // so first we apply scale; then rotation x, rotation y, rotation z;
-    // and finally the translation matrix
-    translate_matrix * rotation_z * rotation_y * rotation_x * scale_matrix
-}
-
 impl TransformedMesh {
     /// Create a new TransformedMesh.
     ///
@@ -190,6 +136,12 @@ impl TransformedMesh {
     /// Return the world space bounding box of the TransformedMesh
     pub fn bounding_box(&self) -> Option<AABB> {
         Some(self.bbox)
+    }
+
+    /// Convert this TransformedMesh into a MotionMeshBuilder to start the
+    /// process to build the mesh into a MotionMesh.
+    pub fn into_motion(self) -> MotionMeshBuilder {
+        MotionMeshBuilder::new(self)
     }
 }
 
@@ -323,6 +275,129 @@ impl MotionMesh {
     pub fn bounding_box(&self) -> Option<AABB> {
         Some(self.bbox)
     }
+}
+
+/// A builder that is used to create a MotionMesh
+pub struct MotionMeshBuilder {
+    translate0: Vec3A, translate1: Vec3A,
+    rotation0: Vec3A, rotation1: Vec3A,
+    scale0: Vec3A, scale1: Vec3A,
+    time0: f32, time1: f32,
+    primitive: Primitive,
+}
+
+impl MotionMeshBuilder {
+    /// Start the MotionMesh build process for the given TransformedMesh
+    pub fn new(mesh: TransformedMesh) -> Self {
+        let (scale, rotation, translate) = mesh.forward_transform.to_scale_rotation_translation();
+
+        // since we multiplied Z * Y * X in build_transform, we need to reverse that here
+        let (rotation_z, rotation_y, rotation_x) = rotation.to_euler(glam::EulerRot::ZYX);
+        let rotation = Vec3A::new(rotation_x.to_degrees(), rotation_y.to_degrees(), rotation_z.to_degrees());
+
+        let primitive = Arc::unwrap_or_clone(mesh.primitive);
+
+        Self {
+            translate0: Vec3A::from(translate), translate1: Vec3A::from(translate),
+            rotation0: rotation, rotation1: rotation,
+            scale0: Vec3A::from(scale), scale1: Vec3A::from(scale),
+            time0: 0.0, time1: 1.0,
+            primitive,
+        }
+    }
+
+    /// Transform the TransformedMesh from it's static translation in world space to the
+    /// given translation.
+    pub fn with_translation(mut self, translation: Vec3A) -> Self {
+        self.translate1 = translation;
+        self
+    }
+
+    /// Transform the TransformedMesh from it's static rotation in world space to the
+    /// given rotation.
+    pub fn with_rotation(mut self, rotation: Vec3A) -> Self {
+        self.rotation1 = rotation;
+        self
+    }
+
+    /// Transform the TransformedMesh from it's static scale in world space to the
+    /// given scale.
+    pub fn with_scale(mut self, scale: Vec3A) -> Self {
+        self.scale1 = scale;
+        self
+    }
+
+    /// Define the time range for the MotionMesh
+    pub fn with_time_range(mut self, time0: f32, time1: f32) -> Self {
+        self.time0 = time0;
+        self.time1 = time1;
+        self
+    }
+
+    /// Build the MotionMeshBuilder into a MotionMesh
+    pub fn build(self) -> MotionMesh {
+        MotionMesh::new(
+            self.translate0, self.translate1,
+            self.rotation0, self.rotation1,
+            self.scale0, self.scale1,
+            self.time0, self.time1,
+            self.primitive
+        )
+    }
+}
+
+/// Transform the local space AABB into world space with the given transform matrix.
+fn transform_aabb(bbox: &AABB, transform: &Mat4) -> AABB {
+    let min = bbox.minimum;
+    let max = bbox.maximum;
+
+    // after a rotation or non-uniform transform, the old min and max are
+    // no longer relevant, so we have to compute a new min and max for the bbox
+    // by testing all eight vertices.
+    let corners = [
+        Vec3::new(min.x, min.y, min.z),
+        Vec3::new(max.x, min.y, min.z),
+        Vec3::new(min.x, max.y, min.z),
+        Vec3::new(max.x, max.y, min.z),
+        Vec3::new(min.x, min.y, max.z),
+        Vec3::new(max.x, min.y, max.z),
+        Vec3::new(min.x, max.y, max.z),
+        Vec3::new(max.x, max.y, max.z),
+    ];
+
+    // first select the first corner as min and max
+    let first = transform.transform_point3(corners[0]);
+    let mut new_min = first;
+    let mut new_max = first;
+
+    // iterate through the rest of the corners and find the new min and max
+    for i in 1..8 {
+        let p = transform.transform_point3(corners[i]);
+        new_min = new_min.min(p);
+        new_max = new_max.max(p);
+    }
+
+    AABB::from(new_min.into(), new_max.into())
+}
+
+/// Build a transform matrix from the given vectors.
+///
+/// translate: the translation vector
+/// rotation: the rotation vector with each axis represented by angles (in degrees)
+/// scale: the scale vector
+fn build_transform_matrix(translate: Vec3A, rotation: Vec3A, scale: Vec3A) -> Mat4 {
+    let scale_matrix = Mat4::from_scale(scale.into());
+
+    // build rotation matrices for each rotation axis
+    let rotation_x = Mat4::from_rotation_x(rotation.x.to_radians());
+    let rotation_y = Mat4::from_rotation_y(rotation.y.to_radians());
+    let rotation_z = Mat4::from_rotation_z(rotation.z.to_radians());
+    let translate_matrix = Mat4::from_translation(translate.into());
+
+    // remember that matrix multiplication applies from right to left
+    // so first we apply scale; then rotation x, rotation y, rotation z;
+    // and finally the translation matrix
+    translate_matrix * rotation_z * rotation_y * rotation_x * scale_matrix
 }
 
 
