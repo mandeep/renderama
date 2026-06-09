@@ -2,7 +2,7 @@ use clap::ValueEnum;
 use rand_pcg::Pcg64Mcg;
 use strum::{Display, IntoStaticStr};
 
-use scene::Scene;
+use crate::scene::Scene;
 
 mod batmobile;
 mod cornell_box_boxes;

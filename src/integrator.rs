@@ -5,14 +5,14 @@ use glam::Vec3A;
 use rand::RngExt;
 use rand_pcg::Pcg64Mcg;
 
-use basis::OrthonormalBasis;
-use results::{HitResult, ScatterResult};
-use lights::Light;
-use materials::Material;
-use pdf::power_heuristic;
-use ray::{find_offset_point, Ray};
-use sampling::cosine_sample_hemisphere;
-use scene::Scene;
+use crate::basis::OrthonormalBasis;
+use crate::lights::Light;
+use crate::materials::Material;
+use crate::pdf::power_heuristic;
+use crate::ray::{find_offset_point, Ray};
+use crate::results::{HitResult, ScatterResult};
+use crate::sampling::cosine_sample_hemisphere;
+use crate::scene::Scene;
 
 /// Integrator houses all of the possible integrators one can use
 /// to render a scene.

@@ -1,9 +1,9 @@
-use atmosphere::Atmosphere;
-use bvh::BVH;
-use camera::Camera;
-use environment::EnvironmentMap;
-use lights::Light;
-use materials::Material;
+use crate::atmosphere::Atmosphere;
+use crate::bvh::BVH;
+use crate::camera::Camera;
+use crate::environment::EnvironmentMap;
+use crate::lights::Light;
+use crate::materials::Material;
 
 /// Scene contains all the items necessary for the integrator to start a render
 pub struct Scene {

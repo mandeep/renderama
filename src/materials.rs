@@ -5,13 +5,13 @@ use glam::Vec3A;
 use rand::RngExt;
 use rand_pcg::Pcg64Mcg;
 
-use basis::OrthonormalBasis;
-use results::{HitResult, ScatterResult};
-use ggx::{ggx_distribution, ggx_height_correlated_geometry};
-use pdf::PDF;
-use ray::{find_offset_point, Ray};
-use sampling::pick_sphere_point;
-use texture::Texture;
+use crate::basis::OrthonormalBasis;
+use crate::ggx::{ggx_distribution, ggx_height_correlated_geometry};
+use crate::pdf::PDF;
+use crate::ray::{find_offset_point, Ray};
+use crate::results::{HitResult, ScatterResult};
+use crate::sampling::pick_sphere_point;
+use crate::texture::Texture;
 
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

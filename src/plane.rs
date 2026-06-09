@@ -5,11 +5,11 @@ use glam::Vec3A;
 use rand_pcg::Pcg64Mcg;
 use rand::RngExt;
 
-use aabb::AABB;
-use results::HitResult;
-use primitive::Primitive;
-use materials::MaterialId;
-use ray::Ray;
+use crate::aabb::AABB;
+use crate::primitive::Primitive;
+use crate::materials::MaterialId;
+use crate::ray::Ray;
+use crate::results::HitResult;
 
 #[derive(Clone)]
 /// The three axes a plane can be created on
@@ -262,8 +262,8 @@ impl Plane {
 mod tests {
     use super::*;
     use glam::Vec3A;
-    use materials::MaterialId;
-    use ray::Ray;
+    use crate::materials::MaterialId;
+    use crate::ray::Ray;
 
     #[test]
     fn test_plane_hit() {

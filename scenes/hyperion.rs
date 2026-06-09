@@ -4,21 +4,21 @@ use std::sync::Arc;
 
 use glam::{Vec2, Vec3A};
 
-use bvh::BVH;
-use camera::Camera;
-use environment::EnvironmentMap;
-use materials::{Diffuse, Material, Plastic, Reflective, Refractive, Volumetric};
-use plane::{Axis, Bounds2D, Plane};
-use primitive::Primitive;
-use rectangle::Rectangle;
-use scene::{Scene, SceneBuilder};
-use sphere::Sphere;
-use texture::{Color, ImageTexture};
-use transformations::TransformedMesh;
-use triangle::TriangleMesh;
-use volume::Volume;
+use crate::bvh::BVH;
+use crate::camera::Camera;
+use crate::environment::EnvironmentMap;
+use crate::materials::{Diffuse, Material, Plastic, Reflective, Refractive, Volumetric};
+use crate::plane::{Axis, Bounds2D, Plane};
+use crate::primitive::Primitive;
+use crate::rectangle::Rectangle;
+use crate::scene::{Scene, SceneBuilder};
+use crate::sphere::Sphere;
+use crate::texture::{Color, ImageTexture};
+use crate::transformations::TransformedMesh;
+use crate::triangle::TriangleMesh;
+use crate::volume::Volume;
 
-use mat;
+use crate::mat;
 
 
 pub fn hyperion_scene(width: Option<usize>, height: Option<usize>) -> Scene {

@@ -2,7 +2,7 @@ use std::f32;
 
 use glam::Vec3A;
 
-use ray::Ray;
+use crate::ray::Ray;
 
 #[derive(Clone, Copy)]
 /// Axis-aligned bounding boxes are used to subdivide objects in the

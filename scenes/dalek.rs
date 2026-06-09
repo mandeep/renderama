@@ -2,15 +2,15 @@ use std::f32;
 
 use glam::Vec3A;
 
-use bvh::BVH;
-use camera::Camera;
-use environment::EnvironmentMap;
-use io;
-use materials::{Material, Plastic};
-use primitive::Primitive;
-use scene::{Scene, SceneBuilder};
-use texture::Color;
-use transformations::TransformedMesh;
+use crate::bvh::BVH;
+use crate::camera::Camera;
+use crate::environment::EnvironmentMap;
+use crate::io;
+use crate::materials::{Material, Plastic};
+use crate::primitive::Primitive;
+use crate::scene::{Scene, SceneBuilder};
+use crate::texture::Color;
+use crate::transformations::TransformedMesh;
 
 
 pub fn dalek_scene(width: Option<usize>, height: Option<usize>) -> Scene {

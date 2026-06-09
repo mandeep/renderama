@@ -3,17 +3,17 @@ use std::f32::consts::PI;
 
 use glam::Vec3A;
 
-use bvh::BVH;
-use camera::Camera;
-use environment::EnvironmentMap;
-use materials::{Diffuse, Reflective, Refractive, Material, Plastic, Volumetric};
-use primitive::Primitive;
-use scene::{Scene, SceneBuilder};
-use sphere::Sphere;
-use texture::Color;
-use volume::Volume;
+use crate::bvh::BVH;
+use crate::camera::Camera;
+use crate::environment::EnvironmentMap;
+use crate::materials::{Diffuse, Reflective, Refractive, Material, Plastic, Volumetric};
+use crate::primitive::Primitive;
+use crate::scene::{Scene, SceneBuilder};
+use crate::sphere::Sphere;
+use crate::texture::Color;
+use crate::volume::Volume;
 
-use mat;
+use crate::mat;
 
 
 pub fn three_spheres_scene(width: Option<usize>, height: Option<usize>) -> Scene {

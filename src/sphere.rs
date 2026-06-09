@@ -3,12 +3,12 @@ use std::f32::consts::PI;
 use glam::Vec3A;
 use rand_pcg::Pcg64Mcg;
 
-use aabb::AABB;
-use basis::OrthonormalBasis;
-use results::HitResult;
-use materials::MaterialId;
-use ray::Ray;
-use sampling::{uniform_sample_cone, uniform_sample_sphere};
+use crate::aabb::AABB;
+use crate::basis::OrthonormalBasis;
+use crate::materials::MaterialId;
+use crate::ray::Ray;
+use crate::results::HitResult;
+use crate::sampling::{uniform_sample_cone, uniform_sample_sphere};
 
 
 /// Retrieve the spherical UV coordinates with the given normal
@@ -156,8 +156,8 @@ impl Sphere {
 mod tests {
     use super::*;
     use glam::Vec3A;
-    use materials::MaterialId;
-    use ray::Ray;
+    use crate::materials::MaterialId;
+    use crate::ray::Ray;
 
     #[test]
     fn test_sphere_hit() {

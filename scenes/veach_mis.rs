@@ -2,18 +2,18 @@ use std::f32::consts::PI;
 
 use glam::Vec3A;
 
-use bvh::BVH;
-use camera::Camera;
-use lights::Light;
-use materials::{Diffuse, Emissive, Material, Reflective};
-use plane::{Axis, Bounds2D, Plane};
-use rectangle::Rectangle;
-use scene::{Scene, SceneBuilder};
-use sphere::Sphere;
-use texture::Color;
-use transformations::TransformedMesh;
+use crate::bvh::BVH;
+use crate::camera::Camera;
+use crate::lights::Light;
+use crate::materials::{Diffuse, Emissive, Material, Reflective};
+use crate::plane::{Axis, Bounds2D, Plane};
+use crate::rectangle::Rectangle;
+use crate::scene::{Scene, SceneBuilder};
+use crate::sphere::Sphere;
+use crate::texture::Color;
+use crate::transformations::TransformedMesh;
 
-use mat;
+use crate::mat;
 
 
 pub fn veach_mis_scene(width: Option<usize>, height: Option<usize>) -> Scene {

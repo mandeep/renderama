@@ -10,10 +10,10 @@ use glam::Vec3A;
 use rand_pcg::Pcg64Mcg;
 use wide::f32x4;
 
-use aabb::AABB;
-use results::HitResult;
-use primitive::Primitive;
-use ray::Ray;
+use crate::aabb::AABB;
+use crate::primitive::Primitive;
+use crate::ray::Ray;
+use crate::results::HitResult;
 
 
 // 16 is used as the number of buckets as it's a common number in BVH builds
@@ -564,9 +564,9 @@ mod tests {
     use rand_pcg::Pcg64Mcg;
     use rand::SeedableRng;
 
-    use materials::MaterialId;
-    use ray::Ray;
-    use sphere::Sphere;
+    use crate::materials::MaterialId;
+    use crate::ray::Ray;
+    use crate::sphere::Sphere;
 
     fn get_rng() -> Pcg64Mcg {
         Pcg64Mcg::seed_from_u64(0)

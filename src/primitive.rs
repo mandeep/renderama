@@ -2,15 +2,15 @@ use std::sync::Arc;
 
 use rand_pcg::Pcg64Mcg;
 
-use aabb::AABB;
-use results::HitResult;
-use plane::Plane;
-use ray::Ray;
-use rectangle::Rectangle;
-use sphere::Sphere;
-use triangle::{Triangle, TriangleMesh};
-use transformations::{MotionMesh, TransformedMesh};
-use volume::Volume;
+use crate::aabb::AABB;
+use crate::plane::Plane;
+use crate::ray::Ray;
+use crate::rectangle::Rectangle;
+use crate::results::HitResult;
+use crate::sphere::Sphere;
+use crate::triangle::{Triangle, TriangleMesh};
+use crate::transformations::{MotionMesh, TransformedMesh};
+use crate::volume::Volume;
 
 
 #[derive(Clone)]
@@ -121,7 +121,7 @@ impl_from_boxed_for_primitive! {
 
 #[cfg(test)]
 mod tests {
-    use materials::MaterialId;
+    use crate::materials::MaterialId;
     use super::*;
     use glam::Vec3A;
     use rand::{rng, SeedableRng};

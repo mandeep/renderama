@@ -2,8 +2,8 @@ use glam::{Vec2, Vec3A};
 use rand_pcg::Pcg64Mcg;
 use rand::RngExt;
 
-use ray::Ray;
-use sampling::pick_disk_point;
+use crate::ray::Ray;
+use crate::sampling::pick_disk_point;
 
 pub struct Camera {
     pub top_left_corner: Vec3A,

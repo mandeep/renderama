@@ -1,45 +1,3 @@
-extern crate chrono;
-extern crate clap;
-extern crate glam;
-extern crate image;
-extern crate pbr;
-extern crate rand;
-extern crate rand_distr;
-extern crate rand_pcg;
-extern crate rayon;
-extern crate strum;
-extern crate tobj;
-extern crate wide;
-
-mod aabb;
-mod atmosphere;
-mod basis;
-mod bvh;
-mod camera;
-mod denoise;
-mod environment;
-pub mod ggx;
-mod integrator;
-pub mod io;
-mod lights;
-pub mod materials;
-pub mod pdf;
-mod plane;
-mod primitive;
-mod ray;
-mod rectangle;
-mod results;
-pub mod sampling;
-mod scene;
-pub mod scenes;
-mod sphere;
-mod texture;
-pub mod tone;
-pub mod transformations;
-mod triangle;
-pub mod utils;
-mod volume;
-
 use std::f32;
 use std::path::Path;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -56,13 +14,13 @@ use rand::{rng, RngExt, SeedableRng};
 use rand_pcg::Pcg64Mcg;
 use rayon::prelude::*;
 
-use integrator::Integrator;
-use scenes::Scenes;
-use scene::Scene;
-use utils::*;
+use renderama::integrator::Integrator;
+use renderama::scenes::Scenes;
+use renderama::scene::Scene;
+use renderama::utils::*;
 
 #[cfg(feature = "denoise")]
-use denoise::denoise;
+use renderama::denoise::denoise;
 
 #[derive(Parser)]
 #[command(name = "Renderama", version, about)]
@@ -182,7 +140,7 @@ fn main() {
 
     println!("[{}] Finished rendering in {}. Render saved to {}.",
             Local::now().format("%H:%M:%S"),
-            utils::format_time(rendering_time.elapsed()),
+            format_time(rendering_time.elapsed()),
             &filepath,
             );
 
@@ -206,7 +164,7 @@ fn main() {
 
         println!("[{}] Finished denoising in {}. Render saved to {}.",
                  Local::now().format("%H:%M:%S"),
-                 utils::format_time(denoising_time.elapsed()),
+                 format_time(denoising_time.elapsed()),
                  &denoised_filepath,
                 );
     }

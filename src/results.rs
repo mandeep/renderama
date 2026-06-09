@@ -1,8 +1,8 @@
 use glam::Vec3A;
 
-use materials::MaterialId;
-use pdf::PDF;
-use ray::Ray;
+use crate::materials::MaterialId;
+use crate::pdf::PDF;
+use crate::ray::Ray;
 
 
 /// HitResult contains all of the information that tells us how a
@@ -89,7 +89,7 @@ impl ScatterResult {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use materials::MaterialId;
+    use crate::materials::MaterialId;
 
     #[test]
     fn test_normals_direction() {

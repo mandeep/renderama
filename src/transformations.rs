@@ -4,11 +4,11 @@ use std::sync::Arc;
 use glam::{Mat4, Vec3A, Vec3};
 use rand_pcg::Pcg64Mcg;
 
-use aabb::AABB;
-use primitive::Primitive;
-use ray::Ray;
-use results::HitResult;
-use triangle::TriangleMesh;
+use crate::aabb::AABB;
+use crate::primitive::Primitive;
+use crate::ray::Ray;
+use crate::results::HitResult;
+use crate::triangle::TriangleMesh;
 
 /// TransformedMesh provides a way to transform a mesh.
 ///
@@ -330,10 +330,10 @@ impl MotionMesh {
 mod tests {
     use super::*;
     use glam::{Vec3A, Vec3};
-    use materials::MaterialId;
+    use crate::materials::MaterialId;
     use rand::SeedableRng;
-use ray::Ray;
-    use sphere::Sphere;
+use crate::ray::Ray;
+    use crate::sphere::Sphere;
 
     fn get_rng() -> Pcg64Mcg {
         Pcg64Mcg::seed_from_u64(0)

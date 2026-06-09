@@ -3,17 +3,17 @@ use std::f32::consts::PI;
 
 use glam::{Vec2, Vec3A};
 
-use bvh::BVH;
-use camera::Camera;
-use lights::Light;
-use materials::{Diffuse, Emissive, Plastic, Refractive, Material};
-use plane::{Axis, Bounds2D, Plane};
-use scene::{Scene, SceneBuilder};
-use texture::{Color, ImageTexture};
-use transformations::TransformedMesh;
-use triangle::TriangleMesh;
+use crate::bvh::BVH;
+use crate::camera::Camera;
+use crate::lights::Light;
+use crate::materials::{Diffuse, Emissive, Plastic, Refractive, Material};
+use crate::plane::{Axis, Bounds2D, Plane};
+use crate::scene::{Scene, SceneBuilder};
+use crate::texture::{Color, ImageTexture};
+use crate::transformations::TransformedMesh;
+use crate::triangle::TriangleMesh;
 
-use mat;
+use crate::mat;
 
 pub fn cornell_box_object_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let origin = Vec3A::new(278.0, 278.0, -800.0);

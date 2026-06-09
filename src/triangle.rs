@@ -4,12 +4,12 @@ use glam::{Vec2, Vec3A};
 use rand_pcg::Pcg64Mcg;
 use tobj;
 
-use aabb::AABB;
-use bvh::BVH;
-use results::HitResult;
-use materials::MaterialId;
-use primitive::Primitive;
-use ray::Ray;
+use crate::aabb::AABB;
+use crate::bvh::BVH;
+use crate::materials::MaterialId;
+use crate::primitive::Primitive;
+use crate::ray::Ray;
+use crate::results::HitResult;
 
 #[derive(Clone)]
 pub struct Triangle {
@@ -214,8 +214,8 @@ impl TriangleMesh {
 mod tests {
     use super::*;
     use glam::{Vec2, Vec3A};
-    use materials::MaterialId;
-    use ray::Ray;
+    use crate::materials::MaterialId;
+    use crate::ray::Ray;
 
     fn create_test_triangle() -> Triangle {
         Triangle::new(

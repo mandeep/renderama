@@ -3,10 +3,10 @@ use std::sync::Arc;
 use glam::Vec3A;
 use rand_pcg::Pcg64Mcg;
 
-use primitive::Primitive;
-use plane::Plane;
-use ray::Ray;
-use sphere::Sphere;
+use crate::primitive::Primitive;
+use crate::plane::Plane;
+use crate::ray::Ray;
+use crate::sphere::Sphere;
 
 #[derive(Clone)]
 /// Enum that holds all primitives that can be used as a Light

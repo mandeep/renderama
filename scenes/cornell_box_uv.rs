@@ -3,17 +3,17 @@ use std::f32::consts::PI;
 
 use glam::{Vec2, Vec3A};
 
-use bvh::BVH;
-use camera::Camera;
-use lights::Light;
-use materials::{Diffuse, Emissive, Material};
-use plane::{Axis, Bounds2D, Plane};
-use rectangle::Rectangle;
-use scene::{Scene, SceneBuilder};
-use texture::{Color, ImageTexture};
-use transformations::TransformedMesh;
+use crate::bvh::BVH;
+use crate::camera::Camera;
+use crate::lights::Light;
+use crate::materials::{Diffuse, Emissive, Material};
+use crate::plane::{Axis, Bounds2D, Plane};
+use crate::rectangle::Rectangle;
+use crate::scene::{Scene, SceneBuilder};
+use crate::texture::{Color, ImageTexture};
+use crate::transformations::TransformedMesh;
 
-use mat;
+use crate::mat;
 
 /// UV Checker images
 /// https://subscription.packtpub.com/book/web-development/9781803233871/17/ch17lvl1sec79/custom-uv-modeling-in-blender

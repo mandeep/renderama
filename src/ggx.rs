@@ -27,7 +27,7 @@ use glam::Vec3A;
 use rand::RngExt;
 use rand_pcg::Pcg64Mcg;
 
-use basis::OrthonormalBasis;
+use crate::basis::OrthonormalBasis;
 
 
 /// G1 term of the Smith masking function used in GGX.

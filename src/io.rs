@@ -3,11 +3,11 @@ use std::collections::HashMap;
 use glam::{Vec2, Vec3A};
 use tobj;
 
-use lights::Light;
-use materials::{Diffuse, Emissive, Material, MaterialId, Plastic, Reflective, Refractive};
-use sphere::Sphere;
-use texture::{Color, ImageTexture};
-use triangle::{Triangle, TriangleMesh};
+use crate::lights::Light;
+use crate::materials::{Diffuse, Emissive, Material, MaterialId, Plastic, Reflective, Refractive};
+use crate::sphere::Sphere;
+use crate::texture::{Color, ImageTexture};
+use crate::triangle::{Triangle, TriangleMesh};
 
 
 /// Load an obj file with its related mtl file.

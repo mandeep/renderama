@@ -5,11 +5,11 @@ use glam::Vec3A;
 use rand::RngExt;
 use rand_pcg::Pcg64Mcg;
 
-use aabb::AABB;
-use results::HitResult;
-use primitive::Primitive;
-use materials::MaterialId;
-use ray::Ray;
+use crate::aabb::AABB;
+use crate::primitive::Primitive;
+use crate::materials::MaterialId;
+use crate::ray::Ray;
+use crate::results::HitResult;
 
 #[derive(Clone)]
 pub struct Volume {

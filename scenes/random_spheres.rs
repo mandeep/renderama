@@ -5,15 +5,15 @@ use glam::Vec3A;
 use rand::RngExt;
 use rand_pcg::Pcg64Mcg;
 
-use bvh::BVH;
-use camera::Camera;
-use environment::EnvironmentMap;
-use materials::{Diffuse, Reflective, Refractive, Material};
-use scene::{Scene, SceneBuilder};
-use sphere::Sphere;
-use texture::Color;
+use crate::bvh::BVH;
+use crate::camera::Camera;
+use crate::environment::EnvironmentMap;
+use crate::materials::{Diffuse, Reflective, Refractive, Material};
+use crate::scene::{Scene, SceneBuilder};
+use crate::sphere::Sphere;
+use crate::texture::Color;
 
-use mat;
+use crate::mat;
 
 pub fn random_spheres_scene(width: Option<usize>, height: Option<usize>, rng: &mut Pcg64Mcg) -> Scene {
     let origin = Vec3A::new(13.0, 2.0, 3.0);

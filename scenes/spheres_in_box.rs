@@ -6,20 +6,20 @@ use glam::{Vec2, Vec3A};
 use rand::RngExt;
 use rand_pcg::Pcg64Mcg;
 
-use bvh::BVH;
-use camera::Camera;
-use primitive::{Primitive};
-use lights::Light;
-use materials::{Diffuse, Emissive, Material, Reflective, Refractive, Volumetric};
-use plane::{Axis, Bounds2D, Plane};
-use rectangle::Rectangle;
-use scene::{Scene, SceneBuilder};
-use sphere::Sphere;
-use texture::{Color, ImageTexture};
-use transformations::{MotionMesh, TransformedMesh};
-use volume::Volume;
+use crate::bvh::BVH;
+use crate::camera::Camera;
+use crate::primitive::{Primitive};
+use crate::lights::Light;
+use crate::materials::{Diffuse, Emissive, Material, Reflective, Refractive, Volumetric};
+use crate::plane::{Axis, Bounds2D, Plane};
+use crate::rectangle::Rectangle;
+use crate::scene::{Scene, SceneBuilder};
+use crate::sphere::Sphere;
+use crate::texture::{Color, ImageTexture};
+use crate::transformations::{MotionMesh, TransformedMesh};
+use crate::volume::Volume;
 
-use mat;
+use crate::mat;
 
 
 pub fn spheres_in_box_scene(width: Option<usize>, height: Option<usize>, rng: &mut Pcg64Mcg) -> Scene {

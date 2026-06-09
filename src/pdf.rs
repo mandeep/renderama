@@ -4,10 +4,10 @@ use glam::Vec3A;
 use rand::RngExt;
 use rand_pcg::Pcg64Mcg;
 
-use basis::OrthonormalBasis;
-use ggx::{ggx_distribution, ggx_g1_masking, ggx_sample_vndf};
-use materials::reflect;
-use sampling::{cosine_sample_hemisphere, pick_sphere_point};
+use crate::basis::OrthonormalBasis;
+use crate::ggx::{ggx_distribution, ggx_g1_masking, ggx_sample_vndf};
+use crate::materials::reflect;
+use crate::sampling::{cosine_sample_hemisphere, pick_sphere_point};
 
 
 /// The balance heuristic weighs samples by their relative PDF contribution.
