@@ -8,6 +8,7 @@ use aabb::AABB;
 use primitive::Primitive;
 use ray::Ray;
 use results::HitResult;
+use triangle::TriangleMesh;
 
 /// TransformedMesh provides a way to transform a mesh.
 ///
@@ -64,13 +65,23 @@ fn transform_aabb(bbox: &AABB, transform: &Mat4) -> AABB {
     AABB::from(new_min.into(), new_max.into())
 }
 
+/// Build a transform matrix from the given vectors.
+///
+/// translate: the translation vector
+/// rotation: the rotation vector with each axis represented by angles (in degrees)
+/// scale: the scale vector
 fn build_transform_matrix(translate: Vec3A, rotation: Vec3A, scale: Vec3A) -> Mat4 {
     let scale_matrix = Mat4::from_scale(scale.into());
+
+    // build rotation matrices for each rotation axis
     let rotation_x = Mat4::from_rotation_x(rotation.x.to_radians());
     let rotation_y = Mat4::from_rotation_y(rotation.y.to_radians());
     let rotation_z = Mat4::from_rotation_z(rotation.z.to_radians());
     let translate_matrix = Mat4::from_translation(translate.into());
 
+    // remember that matrix multiplication applies from right to left
+    // so first we apply scale; then rotation x, rotation y, rotation z;
+    // and finally the translation matrix
     translate_matrix * rotation_z * rotation_y * rotation_x * scale_matrix
 }
 
@@ -87,19 +98,8 @@ impl TransformedMesh {
         scale: Vec3A,
         primitive: Primitive,
     ) -> TransformedMesh {
-        let scale_matrix = Mat4::from_scale(scale.into());
+        let forward_transform = build_transform_matrix(translate, rotation, scale);
 
-        // build rotation matrices for each rotation axis
-        let rotation_x = Mat4::from_rotation_x(rotation.x.to_radians());
-        let rotation_y = Mat4::from_rotation_y(rotation.y.to_radians());
-        let rotation_z = Mat4::from_rotation_z(rotation.z.to_radians());
-
-        let translate_matrix = Mat4::from_translation(translate.into());
-
-        // remember that matrix multiplication applies from right to left
-        // so first we apply scale; then rotation x, rotation y, rotation z;
-        // and finally the translation matrix 
-        let forward_transform = translate_matrix * rotation_z * rotation_y * rotation_x * scale_matrix;
         // the inverse transform is needed for converting back from world space to local space
         let inverse_transform = forward_transform.inverse();
 
@@ -109,6 +109,27 @@ impl TransformedMesh {
 
         let primitive = Arc::new(primitive);
         
+        TransformedMesh {
+            inverse_transform,
+            forward_transform,
+            normal_transform: inverse_transform.transpose(),
+            bbox,
+            primitive,
+        }
+    }
+
+    /// Create a TransformedMesh from the given matrix and primitive.
+    ///
+    /// forward_transform: a homogeneous matrix
+    /// primitive: the primitive to transform
+    pub fn from_matrix(forward_transform: Mat4, primitive: Primitive) -> TransformedMesh {
+        let inverse_transform = forward_transform.inverse();
+
+        let local_bbox = primitive.bounding_box().unwrap();
+        let bbox = transform_aabb(&local_bbox, &forward_transform);
+
+        let primitive = Arc::new(primitive);
+
         TransformedMesh {
             inverse_transform,
             forward_transform,
@@ -148,6 +169,9 @@ impl TransformedMesh {
         }
     }
 
+    /// Determine if the given ray hits anything inside the mesh
+    ///
+    /// Used in the BVH for early completion.
     pub fn hits_anything(&self, ray: &Ray, start_distance: f32, end_distance: f32, rng: &mut Pcg64Mcg) -> bool {
         let local_origin = self.inverse_transform.transform_point3(ray.origin.into());
         let local_direction = self.inverse_transform.transform_vector3(ray.direction.into());
@@ -166,6 +190,27 @@ impl TransformedMesh {
     /// Return the world space bounding box of the TransformedMesh
     pub fn bounding_box(&self) -> Option<AABB> {
         Some(self.bbox)
+    }
+}
+
+impl From<Primitive> for TransformedMesh {
+    /// Create a TransformedMesh from a Primitive
+    fn from(primitive: Primitive) -> Self {
+        TransformedMesh::new(
+            Vec3A::ZERO,
+            Vec3A::ZERO,
+            Vec3A::ONE,
+            primitive,
+        )
+    }
+}
+
+impl From<TriangleMesh> for TransformedMesh {
+    /// Create a TransformedMesh directly from a TriangleMesh
+    fn from(mesh: TriangleMesh) -> Self {
+        let primitive = Primitive::from(mesh);
+
+        TransformedMesh::from(primitive)
     }
 }
 

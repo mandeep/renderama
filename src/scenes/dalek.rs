@@ -44,17 +44,8 @@ pub fn dalek_scene(width: Option<usize>, height: Option<usize>) -> Scene {
 
     let (meshes, lights) = io::load_obj("extras/models/dalek_sec.obj", &mut materials, None, default_material);
 
-    let translation = Vec3A::new(0.0, 0.0, 0.0);
-    let rotation = Vec3A::new(0.0, 0.0, 0.0);
-    let scale = Vec3A::splat(1.0);
-
     for mesh in meshes {
-        let transformed = TransformedMesh::new(
-            translation, 
-            rotation, 
-            scale, 
-            mesh.into()
-        );
+        let transformed = TransformedMesh::from(mesh);
         objects.push(transformed.into());
     }
 
