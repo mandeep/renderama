@@ -17,7 +17,7 @@ pub fn dalek_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let origin = Vec3A::new(-2.0, 2.5, 3.0);
     let lookat = Vec3A::new(0.0, 1.0, 0.0);
     let view = Vec3A::new(0.0, 1.0, 0.0);
-    let (aspect_width, aspect_height) = (width.unwrap_or(2048) as f32, height.unwrap_or(2048) as f32);
+    let (aspect_width, aspect_height) = (width.unwrap_or(1600) as f32, height.unwrap_or(1600) as f32);
     let sensor_height = 56.0;
     let focal_length = 150.0;
     let world_scale = 0.001;
