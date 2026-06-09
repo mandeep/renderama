@@ -10,6 +10,7 @@ mod cornell_box_bunny;
 mod cornell_box_dragon;
 mod cornell_box_objects;
 mod cornell_box_uv;
+mod dalek;
 mod energy_conservation;
 mod hyperion;
 mod random_spheres;
@@ -26,6 +27,7 @@ pub use self::cornell_box_bunny::*;
 pub use self::cornell_box_dragon::*;
 pub use self::cornell_box_objects::*;
 pub use self::cornell_box_uv::*;
+pub use self::dalek::*;
 pub use self::energy_conservation::*;
 pub use self::hyperion::*;
 pub use self::random_spheres::*;
@@ -47,6 +49,7 @@ pub enum Scenes {
     CornellBoxDragon,
     CornellBoxObjects,
     CornellBoxUV,
+    Dalek,
     EnergyConservation,
     Hyperion,
     RandomSpheres,
@@ -67,6 +70,7 @@ impl Scenes {
             Scenes::CornellBoxDragon => cornell_box_dragon_scene(width, height),
             Scenes::CornellBoxObjects => cornell_box_object_scene(width, height),
             Scenes::CornellBoxUV => cornell_box_uv_scene(width, height),
+            Scenes::Dalek => dalek_scene(width, height),
             Scenes::EnergyConservation => energy_conservation_scene(width, height),
             Scenes::Hyperion => hyperion_scene(width, height),
             Scenes::RandomSpheres => random_spheres_scene(width, height, rng),
