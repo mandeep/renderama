@@ -7,5 +7,6 @@ Renderama is a path tracer in progress based off of Peter Shirley's
 ![Stormtrooper](renders/stormtrooper.png)
 ![Batmobile](renders/batmobile.png)
 ![Dalek Sec](renders/dalek.png)
+![Backrooms](renders/backrooms.png)
 ![Hyperion](renders/hyperion.png)
 ![Veach MIS Scene](renders/veach_mis.png)

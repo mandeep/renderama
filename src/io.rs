@@ -153,10 +153,18 @@ fn map_mtl_to_material(material: &tobj::Material, base_directory: &std::path::Pa
     let ni = material.optical_density.unwrap_or(1.5);
     let d  = material.dissolve.unwrap_or(1.0);
     let illum = material.illumination_model.unwrap_or(2);
+    let map_ke = material.unknown_param.get("map_Ke");
 
     // emissive material may have any illum # so we need to handle it first
-    if ke.iter().sum::<f32>() > f32::EPSILON {
-        return Emissive::new(Color::new(ke[0], ke[1], ke[2]).into()).into();
+    if ke.iter().sum::<f32>() > f32::EPSILON || map_ke.is_some() {
+        let albedo = if let Some(path) = map_ke {
+            let full_path = base_directory.join(path);
+            ImageTexture::new(full_path.to_str().unwrap(), Vec2::ONE).into()
+        } else {
+            Color::new(ke[0], ke[1], ke[2]).into()
+        };
+
+        return Emissive::new(albedo).into();
     }
 
     // mapping Ns to a lower roughness range by using powf(13.5)

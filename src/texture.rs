@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use glam::{Vec2, Vec3A};
 use image::DynamicImage;
 
@@ -8,6 +10,7 @@ use image::DynamicImage;
 pub enum Texture {
     Color(Color),
     ImageTexture(ImageTexture),
+    IntensityTexture(IntensityTexture),
 }
 
 impl Texture {
@@ -15,6 +18,7 @@ impl Texture {
         match self {
             Texture::Color(texture) => texture.sample_texture(u, v, w),
             Texture::ImageTexture(texture) => texture.sample_texture(u, v, w),
+            Texture::IntensityTexture(texture) => texture.sample_texture(u, v, w),
         }
     }
 }
@@ -92,5 +96,27 @@ impl ImageTexture {
         let linear_b = (b as f32 / 255.0).powf(2.2);
 
         Vec3A::new(linear_r, linear_g, linear_b)
+    }
+}
+
+#[derive(Clone)]
+pub struct IntensityTexture {
+    texture: Arc<Texture>,
+    intensity: f32,
+}
+
+impl IntensityTexture {
+    pub fn new(texture: impl Into<Texture>, intensity: f32) -> IntensityTexture {
+        IntensityTexture { texture: Arc::new(texture.into()), intensity }
+    }
+
+    pub fn sample_texture(&self, u: f32, v: f32, p: &Vec3A) -> Vec3A {
+        self.texture.sample_texture(u, v, p) * self.intensity
+    }
+}
+
+impl From<IntensityTexture> for Texture {
+    fn from(texture: IntensityTexture) -> Self {
+        Texture::IntensityTexture(texture)
     }
 }
