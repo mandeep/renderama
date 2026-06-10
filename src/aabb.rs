@@ -44,7 +44,12 @@ impl AABB {
     /// Perform an intersection test with an AABB
     ///
     /// References:
-    /// https://medium.com/@bromanz/another-view-on-the-classic-ray-aabb-intersection-algorithm-for-bvh-traversal-41125138b525
+    /// Another View on the Classic Ray-AABB Intersection Algorithm for BVH Traversal
+    /// Roman Wiche
+    /// https://archive.is/iS2Hc
+    ///
+    /// A Ray-Box Intersection Algorithm and Efficient Dynamic Voxel Rendering
+    /// Alexander Majercik
     /// https://jcgt.org/published/0007/03/04/
     pub fn hit(&self, ray: &Ray, _position_min: f32, _position_max: f32) -> bool {
         let t0 = (self.minimum - ray.origin) * ray.inverse_direction;
