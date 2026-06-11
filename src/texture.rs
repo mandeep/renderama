@@ -16,7 +16,7 @@ pub enum Texture {
 impl Texture {
     pub fn sample_texture(&self, u: f32, v: f32, w: &Vec3A) -> Vec3A {
         match self {
-            Texture::Color(texture) => texture.sample_texture(u, v, w),
+            Texture::Color(texture) => texture.sample_texture(),
             Texture::ImageTexture(texture) => texture.sample_texture(u, v, w),
             Texture::IntensityTexture(texture) => texture.sample_texture(u, v, w),
         }
@@ -52,8 +52,12 @@ impl Color {
         Color { color: Vec3A::new(r, g, b) }
     }
 
+    pub fn splat(value: f32) -> Color {
+        Color { color: Vec3A::splat(value) }
+    }
+
     /// Returning the albedo instead of sampling with u and v
-    pub fn sample_texture(&self, _u: f32, _v: f32, _p: &Vec3A) -> Vec3A {
+    pub fn sample_texture(&self) -> Vec3A {
         self.color
     }
 }
@@ -118,5 +122,20 @@ impl IntensityTexture {
 impl From<IntensityTexture> for Texture {
     fn from(texture: IntensityTexture) -> Self {
         Texture::IntensityTexture(texture)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_splat() {
+        let color = Color::splat(0.375);
+        let sample = color.sample_texture();
+
+        assert_eq!(sample.x, 0.375);
+        assert_eq!(sample.y, 0.375);
+        assert_eq!(sample.z, 0.375);
     }
 }
