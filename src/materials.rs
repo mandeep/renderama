@@ -135,8 +135,8 @@ impl Diffuse {
     ///
     /// albedo is a Vec3A of the RGB values assigned to the material
     /// where each value is a float between 0.0 and 1.0.
-    pub fn new(albedo: Texture, sigma: f32) -> Diffuse {
-        let albedo = Arc::new(albedo);
+    pub fn new(albedo: impl Into<Texture>, sigma: f32) -> Diffuse {
+        let albedo = Arc::new(albedo.into());
         let constant = PI + sigma * (3.0 * PI - 4.0) / 6.0;
         let alpha = 1.0 / constant;
         let beta = sigma / constant;
@@ -288,8 +288,8 @@ impl Reflective {
     /// for the fuzziness of the reflections due to the size of the primitive.
     ///
     /// Generally, the larger the primitive, the fuzzier the reflections will be.
-    pub fn new(albedo: Texture, roughness: f32) -> Reflective {
-        let albedo = Arc::new(albedo);
+    pub fn new(albedo: impl Into<Texture>, roughness: f32) -> Reflective {
+        let albedo = Arc::new(albedo.into());
         Reflective { albedo, roughness: roughness * roughness }
     }
 }
@@ -383,8 +383,8 @@ impl Refractive {
     /// albedo is a Vec3A of the RGB values assigned to the material
     /// where each value is a float between 0.0 and 1.0.
     /// index determines how much of the light is refracted when entering the material.
-    pub fn new(albedo: Texture, index: f32) -> Refractive {
-        let albedo = Arc::new(albedo);
+    pub fn new(albedo: impl Into<Texture>, index: f32) -> Refractive {
+        let albedo = Arc::new(albedo.into());
         Refractive { refractive_index: index, absorption: albedo }
     }
 
@@ -447,8 +447,8 @@ pub struct Emissive {
 
 impl Emissive {
     /// Create a new Emissive material with the given Texture.
-    pub fn new(emissive_texture: Texture) -> Emissive {
-        let emissive_texture = Arc::new(emissive_texture);
+    pub fn new(emissive_texture: impl Into<Texture>) -> Emissive {
+        let emissive_texture = Arc::new(emissive_texture.into());
         Emissive { emissive_texture }
     }
 
@@ -479,8 +479,8 @@ pub struct Volumetric {
 
 impl Volumetric {
     /// Create a new Volumetric material with the given Texture
-    pub fn new(albedo: Texture) -> Volumetric {
-        let albedo = Arc::new(albedo);
+    pub fn new(albedo: impl Into<Texture>) -> Volumetric {
+        let albedo = Arc::new(albedo.into());
         Volumetric { albedo }
     }
 
@@ -508,8 +508,8 @@ impl Plastic {
     /// albedo is the Texture to use for the material.
     /// roughness handles the amount of microfacets on the surface
     /// ior determines the refractiveness of the material
-    pub fn new(albedo: Texture, roughness: f32, ior: f32) -> Plastic {
-        let albedo = Arc::new(albedo);
+    pub fn new(albedo: impl Into<Texture>, roughness: f32, ior: f32) -> Plastic {
+        let albedo = Arc::new(albedo.into());
         Plastic { albedo, roughness: roughness * roughness, ior }
     }
 

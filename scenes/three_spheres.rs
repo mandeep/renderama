@@ -6,6 +6,7 @@ use glam::Vec3A;
 use crate::bvh::BVH;
 use crate::camera::Camera;
 use crate::environment::EnvironmentMap;
+use crate::extensions::PushInto;
 use crate::materials::{Diffuse, Reflective, Refractive, Material, Plastic, Volumetric};
 use crate::primitive::Primitive;
 use crate::scene::{Scene, SceneBuilder};
@@ -46,27 +47,27 @@ pub fn three_spheres_scene(width: Option<usize>, height: Option<usize>) -> Scene
     let mut objects: Vec<Primitive> = Vec::new();
     let mut materials: Vec<Material> = Vec::new();
 
-    let refr_idx = mat!(materials, Refractive::new(Color::new(1.0, 1.0, 1.0).into(), 1.5));
-    let vol_idx = mat!(materials, Volumetric::new(Color::new(0.0, 0.4, 0.9).into()));
+    let refr_idx = mat!(materials, Refractive::new(Color::new(1.0, 1.0, 1.0), 1.5));
+    let vol_idx = mat!(materials, Volumetric::new(Color::new(0.0, 0.4, 0.9)));
 
-    let boundary: Primitive = Sphere::new(Vec3A::new(0.6, 0.0, -1.0), 0.5, refr_idx).into();
+    let boundary = Sphere::new(Vec3A::new(0.6, 0.0, -1.0), 0.5, refr_idx);
     let cloned_boundary = boundary.clone();
 
-    objects.push(boundary);
-    objects.push(Volume::new(4.0, cloned_boundary, vol_idx).into());
+    objects.push_into(boundary);
+    objects.push_into(Volume::new(4.0, cloned_boundary, vol_idx));
 
-    let metal_idx = mat!(materials, Reflective::new(Color::new(0.93, 0.93, 0.93).into(), 0.0));
-    objects.push(Sphere::new(Vec3A::new(-0.6, 0.0, -1.0), 0.5, metal_idx).into());
+    let metal_idx = mat!(materials, Reflective::new(Color::new(0.93, 0.93, 0.93), 0.0));
+    objects.push_into(Sphere::new(Vec3A::new(-0.6, 0.0, -1.0), 0.5, metal_idx));
 
-    let plastic_idx = mat!(materials, Plastic::new(Color::new(0.34, 0.57, 1.0).into(), 0.10, 1.5));
-    objects.push(Sphere::new(Vec3A::new(0.0, 0.0, -2.0), 0.5, plastic_idx).into());
+    let plastic_idx = mat!(materials, Plastic::new(Color::new(0.34, 0.57, 1.0), 0.10, 1.5));
+    objects.push_into(Sphere::new(Vec3A::new(0.0, 0.0, -2.0), 0.5, plastic_idx));
 
-    let floor_idx = mat!(materials, Diffuse::new(Color::new(0.5, 0.5, 0.52).into(), 0.0));
-    objects.push(Sphere::new(Vec3A::new(0.0, -100.5, -1.0), 100.0, floor_idx).into());
+    let floor_idx = mat!(materials, Diffuse::new(Color::new(0.5, 0.5, 0.52), 0.0));
+    objects.push_into(Sphere::new(Vec3A::new(0.0, -100.5, -1.0), 100.0, floor_idx));
 
     let bvh = BVH::new(&mut objects);
 
-    let environment = EnvironmentMap::new("extras/textures/dusk_1_puresky.exr", 1.0).into();
+    let environment = EnvironmentMap::new("extras/textures/dusk_1_puresky.exr", 1.0);
 
     SceneBuilder::new("Three Spheres")
         .with_accelerator(bvh)

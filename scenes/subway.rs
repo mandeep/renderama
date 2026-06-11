@@ -6,6 +6,7 @@ use glam::Vec3A;
 use crate::bvh::BVH;
 use crate::camera::Camera;
 use crate::environment::EnvironmentMap;
+use crate::extensions::PushInto;
 use crate::io;
 use crate::materials::{Material, Plastic};
 use crate::primitive::Primitive;
@@ -44,7 +45,7 @@ pub fn subway_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let mut objects: Vec<Primitive> = Vec::new();
     let mut materials: Vec<Material> = Vec::new();
 
-    let default_material = Plastic::new(Color::new(0.9, 0.9, 0.9).into(), 0.025, 1.49).into();
+    let default_material = Plastic::new(Color::new(0.9, 0.9, 0.9), 0.025, 1.49);
 
     let (meshes, lights) = io::load_obj("extras/models/subway/subway.obj", &mut materials, None, default_material);
 
@@ -59,12 +60,12 @@ pub fn subway_scene(width: Option<usize>, height: Option<usize>) -> Scene {
             scale, 
             Primitive::TriangleMesh(Arc::new(mesh))
         );
-        objects.push(transformed.into());
+        objects.push_into(transformed);
     }
 
     let bvh = BVH::new(&mut objects);
 
-    let environment = EnvironmentMap::new("extras/textures/dusk_1_puresky.exr", 1.0).into();
+    let environment = EnvironmentMap::new("extras/textures/dusk_1_puresky.exr", 1.0);
 
     SceneBuilder::new("Subway Train Interior")
         .with_accelerator(bvh)

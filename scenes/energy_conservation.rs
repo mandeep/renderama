@@ -5,6 +5,7 @@ use glam::Vec3A;
 
 use crate::bvh::BVH;
 use crate::camera::Camera;
+use crate::extensions::PushInto;
 use crate::lights::Light;
 use crate::materials::{Emissive, Material, Reflective};
 use crate::plane::{Axis, Bounds2D, Plane};
@@ -52,15 +53,15 @@ pub fn energy_conservation_scene(width: Option<usize>, height: Option<usize>) ->
         let roughness = i as f32 * 0.10;
         let x_pos = start_x + (i as f32 * spacing);
 
-        let mat_id = mat!(materials, Reflective::new(Color::new(1.0, 1.0, 1.0).into(), roughness));
-        objects.push(Sphere::new(Vec3A::new(x_pos, 278.0, 278.0), radius, mat_id).into());
+        let mat_id = mat!(materials, Reflective::new(Color::new(1.0, 1.0, 1.0), roughness));
+        objects.push_into(Sphere::new(Vec3A::new(x_pos, 278.0, 278.0), radius, mat_id));
     }
 
     let bvh = BVH::new(&mut objects);
 
-    let light_material = mat!(materials, Emissive::new(Color::new(50.0, 50.0, 50.0).into()));
+    let light_material = mat!(materials, Emissive::new(Color::new(50.0, 50.0, 50.0)));
     let light_plane = Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 600.0, light_material);
-    let light = vec![Light::new(light_plane.into(), Vec3A::new(50.0, 50.0, 50.0))];
+    let light = vec![Light::new(light_plane, Vec3A::new(50.0, 50.0, 50.0))];
 
     SceneBuilder::new("Energy Conservation Test")
         .with_accelerator(bvh)

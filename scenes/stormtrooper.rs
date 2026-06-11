@@ -7,6 +7,7 @@ use glam::Vec3A;
 use crate::bvh::BVH;
 use crate::camera::Camera;
 use crate::environment::EnvironmentMap;
+use crate::extensions::PushInto;
 use crate::io;
 use crate::materials::{Material, Plastic};
 use crate::primitive::Primitive;
@@ -51,15 +52,15 @@ pub fn stormtrooper_scene(width: Option<usize>, height: Option<usize>) -> Scene 
 
     // overrides.insert(
     //     "white".to_string(), 
-    //     Plastic::new(Color::new(0.9, 0.9, 0.9).into(), 1.0, 1.49).into()
+    //     Plastic::new(Color::new(0.9, 0.9, 0.9), 1.0, 1.49)
     // );
 
     // overrides.insert(
     //     "Material.001".to_string(), 
-    //     Plastic::new(Color::new(0.01, 0.01, 0.01).into(), 1.0, 1.49).into()
+    //     Plastic::new(Color::new(0.01, 0.01, 0.01), 1.0, 1.49)
     // );
 
-    let default_material = Plastic::new(Color::new(0.9, 0.9, 0.9).into(), 0.025, 1.49).into();
+    let default_material = Plastic::new(Color::new(0.9, 0.9, 0.9), 0.025, 1.49);
 
     let (meshes, _) = io::load_obj("extras/models/stormtrooper.obj", &mut materials, None, default_material);
 
@@ -74,12 +75,12 @@ pub fn stormtrooper_scene(width: Option<usize>, height: Option<usize>) -> Scene 
             scale, 
             Primitive::TriangleMesh(Arc::new(mesh))
         );
-        objects.push(transformed.into());
+        objects.push_into(transformed);
     }
 
     let bvh = BVH::new(&mut objects);
 
-    let environment = EnvironmentMap::new("extras/textures/car_studio_lighting.exr", 0.7).into();
+    let environment = EnvironmentMap::new("extras/textures/car_studio_lighting.exr", 0.7);
 
     SceneBuilder::new("Stormtrooper")
         .with_accelerator(bvh)

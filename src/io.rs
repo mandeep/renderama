@@ -6,7 +6,7 @@ use tobj;
 use crate::lights::Light;
 use crate::materials::{Diffuse, Emissive, Material, MaterialId, Plastic, Reflective, Refractive};
 use crate::sphere::Sphere;
-use crate::texture::{Color, ImageTexture};
+use crate::texture::{Color, ImageTexture, Texture};
 use crate::triangle::{Triangle, TriangleMesh};
 
 
@@ -17,7 +17,7 @@ pub fn load_obj(
     filepath: &str,
     materials: &mut Vec<Material>,
     material_overrides: Option<HashMap<String, Material>>,
-    default_material: Material,
+    default_material: impl Into<Material>,
 ) -> (Vec<TriangleMesh>, Vec<Light>) {
     let base_directory = std::path::Path::new(filepath)
         .parent()
@@ -36,7 +36,7 @@ pub fn load_obj(
     let mut material_map: Vec<MaterialId> = Vec::new();
 
     let default_id = MaterialId::new(materials.len() as u32);
-    materials.push(default_material.clone());
+    materials.push(default_material.into().clone());
 
     if let Ok(obj_materials) = obj_material_list {
         for material in obj_materials {
@@ -130,7 +130,7 @@ pub fn load_obj(
                 .map(|&p| (p - centroid).length())
                 .fold(0.0_f32, f32::max);
             let sphere = Sphere::new(centroid, radius, current_mat_id);
-            let light = Light::new(sphere.into(), intensity);
+            let light = Light::new(sphere, intensity);
             lights.push(light);
         }
 
@@ -157,7 +157,7 @@ fn map_mtl_to_material(material: &tobj::Material, base_directory: &std::path::Pa
 
     // emissive material may have any illum # so we need to handle it first
     if ke.iter().sum::<f32>() > f32::EPSILON || map_ke.is_some() {
-        let albedo = if let Some(path) = map_ke {
+        let albedo: Texture = if let Some(path) = map_ke {
             let full_path = base_directory.join(path);
             ImageTexture::new(full_path.to_str().unwrap(), Vec2::ONE).into()
         } else {
@@ -170,7 +170,7 @@ fn map_mtl_to_material(material: &tobj::Material, base_directory: &std::path::Pa
     // mapping Ns to a lower roughness range by using powf(13.5)
     let roughness = (1.0 - ns / 1000.0).powf(13.5).clamp(0.025, 1.0);
 
-    let albedo = if let Some(path) = &material.diffuse_texture {
+    let albedo: Texture = if let Some(path) = &material.diffuse_texture {
         let full_path = base_directory.join(path);
         ImageTexture::new(full_path.to_str().unwrap(), Vec2::ONE).into()
     } else {
@@ -182,12 +182,12 @@ fn map_mtl_to_material(material: &tobj::Material, base_directory: &std::path::Pa
     }
 
     if illum == 3 {
-        let albedo = Color::new(ks[0], ks[1], ks[2]).into();
+        let albedo = Color::new(ks[0], ks[1], ks[2]);
         return Reflective::new(albedo, roughness).into();
     }
 
     if matches!(illum, 4..=7) || d < 0.99 {
-        let absorption = Color::new(kd[0], kd[1], kd[2]).into();
+        let absorption = Color::new(kd[0], kd[1], kd[2]);
         return Refractive::new(absorption, ni).into();
     }
 

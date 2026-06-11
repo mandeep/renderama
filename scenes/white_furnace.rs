@@ -6,6 +6,7 @@ use glam::Vec3A;
 use crate::atmosphere::Atmosphere;
 use crate::bvh::BVH;
 use crate::camera::Camera;
+use crate::extensions::PushInto;
 use crate::materials::{Material, Reflective};
 use crate::scene::{Scene, SceneBuilder};
 use crate::sphere::Sphere;
@@ -51,9 +52,9 @@ pub fn white_furnace_scene(width: Option<usize>, height: Option<usize>) -> Scene
         let roughness = i as f32 * 0.10 + 0.001; // add 0.001 so that we are testing the NEE path for roughness 0.0
         let x_pos = start_x + (i as f32 * spacing);
         
-        let mat_id = mat!(materials, Reflective::new(Color::new(1.0, 1.0, 1.0).into(), roughness));
+        let mat_id = mat!(materials, Reflective::new(Color::new(1.0, 1.0, 1.0), roughness));
         
-        objects.push(Sphere::new(Vec3A::new(x_pos, 278.0, 278.0), radius, mat_id).into());
+        objects.push_into(Sphere::new(Vec3A::new(x_pos, 278.0, 278.0), radius, mat_id));
     }
 
     let bvh = BVH::new(&mut objects);

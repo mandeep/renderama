@@ -42,8 +42,9 @@ impl TransformedMesh {
         translate: Vec3A,
         rotation: Vec3A,
         scale: Vec3A,
-        primitive: Primitive,
+        primitive: impl Into<Primitive>,
     ) -> TransformedMesh {
+        let primitive = primitive.into();
         let forward_transform = build_transform_matrix(translate, rotation, scale);
 
         // the inverse transform is needed for converting back from world space to local space
@@ -53,7 +54,7 @@ impl TransformedMesh {
         let local_bbox = primitive.bounding_box().unwrap();
         let bbox = transform_aabb(&local_bbox, &forward_transform);
 
-        let primitive = Arc::new(primitive);
+        let primitive = Arc::new(primitive.into());
         
         TransformedMesh {
             inverse_transform,
@@ -423,7 +424,7 @@ use crate::ray::Ray;
             Vec3A::new(5.0, 0.0, 0.0),
             Vec3A::ZERO,
             Vec3A::ONE,
-            sphere.into(),
+            sphere,
         );
 
         let ray = Ray::new(Vec3A::new(0.0, 0.0, 0.0), Vec3A::new(1.0, 0.0, 0.0), 0.0);
@@ -445,7 +446,7 @@ use crate::ray::Ray;
             Vec3A::ZERO,
             Vec3A::ZERO,
             Vec3A::new(2.0, 2.0, 2.0),
-            sphere.into(),
+            sphere,
         );
 
         let ray = Ray::new(Vec3A::new(-5.0, 0.0, 0.0), Vec3A::new(1.0, 0.0, 0.0), 0.0);

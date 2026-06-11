@@ -6,6 +6,7 @@ use glam::Vec3A;
 use crate::bvh::BVH;
 use crate::camera::Camera;
 use crate::environment::EnvironmentMap;
+use crate::extensions::PushInto;
 use crate::io;
 use crate::materials::{Material, Diffuse, Plastic};
 use crate::plane::{Axis, Bounds2D, Plane};
@@ -45,7 +46,7 @@ pub fn batmobile_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let mut objects: Vec<Primitive> = Vec::new();
     let mut materials: Vec<Material> = Vec::new();
 
-    let default_material = Plastic::new(Color::new(0.9, 0.9, 0.9).into(), 0.01, 1.49).into();
+    let default_material = Plastic::new(Color::new(0.9, 0.9, 0.9), 0.01, 1.49);
 
     let (meshes, _) = io::load_obj("extras/models/batmobile.obj", &mut materials, None, default_material);
 
@@ -60,16 +61,16 @@ pub fn batmobile_scene(width: Option<usize>, height: Option<usize>) -> Scene {
             scale, 
             Primitive::TriangleMesh(Arc::new(mesh))
         );
-        objects.push(transformed.into());
+        objects.push_into(transformed);
     }
 
-    let grey = mat!(materials, Diffuse::new(Color::new(0.05, 0.05, 0.07).into(), 0.0));
+    let grey = mat!(materials, Diffuse::new(Color::new(0.05, 0.05, 0.07), 0.0));
     // floor plane
-    objects.push(Plane::new(Axis::XZ, Bounds2D::new(-1000.0..1000.0, -1000.0..1000.0), -0.4, grey).into_primitive());
+    objects.push_into(Plane::new(Axis::XZ, Bounds2D::new(-1000.0..1000.0, -1000.0..1000.0), -0.4, grey));
 
     let bvh = BVH::new(&mut objects);
 
-    let environment = EnvironmentMap::new("extras/textures/pure_sky_05.exr", 1.0).into();
+    let environment = EnvironmentMap::new("extras/textures/pure_sky_05.exr", 1.0);
 
     SceneBuilder::new("Batmobile")
         .with_accelerator(bvh)

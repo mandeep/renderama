@@ -19,8 +19,8 @@ pub struct Volume {
 }
 
 impl Volume {
-    pub fn new(density: f32, boundary: Primitive, material_id: MaterialId) -> Volume {
-        let boundary = Arc::new(boundary);
+    pub fn new(density: f32, boundary: impl Into<Primitive>, material_id: MaterialId) -> Volume {
+        let boundary = Arc::new(boundary.into());
         Volume { density, boundary, material_id }
     }
 

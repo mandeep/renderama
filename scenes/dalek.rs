@@ -5,6 +5,7 @@ use glam::Vec3A;
 use crate::bvh::BVH;
 use crate::camera::Camera;
 use crate::environment::EnvironmentMap;
+use crate::extensions::PushInto;
 use crate::io;
 use crate::materials::{Material, Plastic};
 use crate::primitive::Primitive;
@@ -40,13 +41,13 @@ pub fn dalek_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let mut objects: Vec<Primitive> = Vec::new();
     let mut materials: Vec<Material> = Vec::new();
 
-    let default_material = Plastic::new(Color::new(1.0, 0.0, 0.0).into(), 1.0, 1.49).into();
+    let default_material = Plastic::new(Color::new(1.0, 0.0, 0.0), 1.0, 1.49);
 
     let (meshes, lights) = io::load_obj("extras/models/dalek_sec.obj", &mut materials, None, default_material);
 
     for mesh in meshes {
         let transformed = TransformedMesh::from(mesh);
-        objects.push(transformed.into());
+        objects.push_into(transformed);
     }
 
     let bvh = BVH::new(&mut objects);

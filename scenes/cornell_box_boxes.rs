@@ -5,6 +5,7 @@ use glam::Vec3A;
 
 use crate::bvh::BVH;
 use crate::camera::Camera;
+use crate::extensions::PushInto;
 use crate::lights::Light;
 use crate::materials::{Diffuse, Emissive, Material};
 use crate::plane::{Axis, Bounds2D, Plane};
@@ -45,31 +46,31 @@ pub fn cornell_box_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let mut materials: Vec<Material> = Vec::new();
 
     let roughness = 0.0;
-    let red_id = mat!(materials, Diffuse::new(Color::new(0.65, 0.05, 0.05).into(), roughness));
-    let green_id = mat!(materials, Diffuse::new(Color::new(0.12, 0.45, 0.15).into(), roughness));
-    let white_id = mat!(materials, Diffuse::new(Color::new(0.73, 0.73, 0.73).into(), roughness));
-    let light_material = mat!(materials, Emissive::new(Color::new(25.0, 18.0, 10.0).into()));
+    let red_id = mat!(materials, Diffuse::new(Color::new(0.65, 0.05, 0.05), roughness));
+    let green_id = mat!(materials, Diffuse::new(Color::new(0.12, 0.45, 0.15), roughness));
+    let white_id = mat!(materials, Diffuse::new(Color::new(0.73, 0.73, 0.73), roughness));
+    let light_material = mat!(materials, Emissive::new(Color::new(25.0, 18.0, 10.0)));
 
     // add the walls of the cornell box to the world
-    objects.push(Plane::new(Axis::YZ, Bounds2D::new(0.0..555.0, 0.0..555.0), 555.0, red_id).into_reversed());
-    objects.push(Plane::new(Axis::YZ, Bounds2D::new(0.0..555.0, 0.0..555.0), 0.0, green_id).into_primitive());
-    objects.push(Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 554.0, light_material).into_reversed());
-    objects.push(Plane::new(Axis::XZ, Bounds2D::new(0.0..555.0, 0.0..555.0), 555.0, white_id).into_reversed());
-    objects.push(Plane::new(Axis::XZ, Bounds2D::new(0.0..555.0, 0.0..555.0), 0.0, white_id).into_primitive());
-    objects.push(Plane::new(Axis::XY, Bounds2D::new(0.0..555.0, 0.0..555.0), 555.0, white_id).into_reversed());
+    objects.push_into(Plane::new(Axis::YZ, Bounds2D::new(0.0..555.0, 0.0..555.0), 555.0, red_id).into_reversed());
+    objects.push_into(Plane::new(Axis::YZ, Bounds2D::new(0.0..555.0, 0.0..555.0), 0.0, green_id));
+    objects.push_into(Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 554.0, light_material).into_reversed());
+    objects.push_into(Plane::new(Axis::XZ, Bounds2D::new(0.0..555.0, 0.0..555.0), 555.0, white_id).into_reversed());
+    objects.push_into(Plane::new(Axis::XZ, Bounds2D::new(0.0..555.0, 0.0..555.0), 0.0, white_id));
+    objects.push_into(Plane::new(Axis::XY, Bounds2D::new(0.0..555.0, 0.0..555.0), 555.0, white_id).into_reversed());
 
     // add the boxes of the cornell box to the world
     let p0 = Vec3A::new(0.0, 0.0, 0.0);
     let p1 = Vec3A::new(165.0, 165.0, 165.0);
     let p2 = Vec3A::new(165.0, 330.0, 165.0);
 
-    objects.push(TransformedMesh::new(Vec3A::new(130.0, 0.0, 65.0), Vec3A::new(0.0, -18.0, 0.0), Vec3A::splat(1.0), Rectangle::new(p0, p1, white_id).into()).into());
-    objects.push(TransformedMesh::new(Vec3A::new(265.0, 0.0, 295.0), Vec3A::new(0.0, 15.0, 0.0), Vec3A::splat(1.0), Rectangle::new(p0, p2, white_id).into()).into());
+    objects.push_into(TransformedMesh::new(Vec3A::new(130.0, 0.0, 65.0), Vec3A::new(0.0, -18.0, 0.0), Vec3A::splat(1.0), Rectangle::new(p0, p1, white_id)));
+    objects.push_into(TransformedMesh::new(Vec3A::new(265.0, 0.0, 295.0), Vec3A::new(0.0, 15.0, 0.0), Vec3A::splat(1.0), Rectangle::new(p0, p2, white_id)));
 
     let bvh = BVH::new(&mut objects);
 
     let light_shape = Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 554.0, white_id);
-    let lights = vec![Light::new(light_shape.into(), Vec3A::new(25.0, 18.0, 10.0))];
+    let lights = vec![Light::new(light_shape, Vec3A::new(25.0, 18.0, 10.0))];
 
     SceneBuilder::new("Cornell Box with Boxes")
         .with_accelerator(bvh)

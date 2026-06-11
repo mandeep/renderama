@@ -74,11 +74,6 @@ impl Plane {
         Plane { axis, bounds, offset, material_id }
     }
 
-    /// Convert the Plane into a Primitive for when adding to accelerators
-    pub fn into_primitive(self) -> Primitive {
-        Primitive::Plane(self)
-    }
-
     /// Convert the Plane into a Plane with its normal flipped so that
     /// the plane can be used in the opposite orientation
     pub fn into_reversed(self) -> Primitive {

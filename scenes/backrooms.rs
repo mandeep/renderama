@@ -5,6 +5,7 @@ use glam::{Vec2, Vec3A};
 
 use crate::bvh::BVH;
 use crate::camera::Camera;
+use crate::extensions::{InsertInto, PushInto};
 use crate::io;
 use crate::materials::{Material, Diffuse, Emissive};
 use crate::primitive::Primitive;
@@ -41,16 +42,16 @@ pub fn backrooms_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let mut materials: Vec<Material> = Vec::new();
 
     let mut material_overrides: HashMap<String, Material> = HashMap::new();
-    material_overrides.insert("NewCarpet".to_string(), Emissive::new(IntensityTexture::new(ImageTexture::new("extras/models/backrooms/NewCarpet_baseColor.png", Vec2::splat(1.0)), 10.0).into()).into());
-    material_overrides.insert("CeilingTile".to_string(), Emissive::new(IntensityTexture::new(ImageTexture::new("extras/models/backrooms/CeilingTile_baseColor.png", Vec2::splat(1.0)), 10.0).into()).into());
+    material_overrides.insert_into("NewCarpet", Emissive::new(IntensityTexture::new(ImageTexture::new("extras/models/backrooms/NewCarpet_baseColor.png", Vec2::splat(1.0)), 10.0)));
+    material_overrides.insert_into("CeilingTile", Emissive::new(IntensityTexture::new(ImageTexture::new("extras/models/backrooms/CeilingTile_baseColor.png", Vec2::splat(1.0)), 10.0)));
 
-    let default_material = Diffuse::new(Color::new(0.9, 0.9, 0.9).into(), 0.1).into();
+    let default_material = Diffuse::new(Color::new(0.9, 0.9, 0.9), 0.1);
 
     let (meshes, lights) = io::load_obj("extras/models/backrooms/backrooms.obj", &mut materials, Some(material_overrides), default_material);
 
     for mesh in meshes {
         let transformed = TransformedMesh::from(mesh);
-        objects.push(transformed.into());
+        objects.push_into(transformed);
     }
 
     let bvh = BVH::new(&mut objects);

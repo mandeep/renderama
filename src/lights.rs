@@ -59,8 +59,8 @@ impl From<Primitive> for LightPrimitive {
 
 impl Light {
     /// Create a new Light from the given primtive and intensity.
-    pub fn new(primitive: LightPrimitive, intensity: Vec3A) -> Light {
-        Light { primitive, intensity }
+    pub fn new(primitive: impl Into<LightPrimitive>, intensity: Vec3A) -> Light {
+        Light { primitive: primitive.into(), intensity }
     }
 
     /// Dispatch the weight evaluation to the primitive.

@@ -2,6 +2,7 @@ use glam::Vec3A;
 use rand_pcg::Pcg64Mcg;
 
 use crate::aabb::AABB;
+use crate::extensions::PushInto;
 use crate::primitive::Primitive;
 use crate::materials::MaterialId;
 use crate::plane::{Axis, Bounds2D, Plane};
@@ -39,11 +40,11 @@ impl Rectangle {
         let xz_bounds = Bounds2D::new(p0.x..p1.x, p0.z..p1.z);
         let yz_bounds = Bounds2D::new(p0.y..p1.y, p0.z..p1.z);
 
-        primitives.push(Plane::new(Axis::XY, xy_bounds, p1.z, material_id).into_primitive());
+        primitives.push_into(Plane::new(Axis::XY, xy_bounds, p1.z, material_id));
         primitives.push(Plane::new(Axis::XY, xy_bounds, p0.z, material_id).into_reversed());
-        primitives.push(Plane::new(Axis::XZ, xz_bounds, p1.y, material_id).into_primitive());
+        primitives.push_into(Plane::new(Axis::XZ, xz_bounds, p1.y, material_id));
         primitives.push(Plane::new(Axis::XZ, xz_bounds, p0.y, material_id).into_reversed());
-        primitives.push(Plane::new(Axis::YZ, yz_bounds, p1.x, material_id).into_primitive());
+        primitives.push_into(Plane::new(Axis::YZ, yz_bounds, p1.x, material_id));
         primitives.push(Plane::new(Axis::YZ, yz_bounds, p0.x, material_id).into_reversed());
 
         Rectangle { p0, p1, primitives }

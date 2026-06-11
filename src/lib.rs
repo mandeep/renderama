@@ -5,6 +5,7 @@ pub mod bvh;
 pub mod camera;
 pub mod denoise;
 pub mod environment;
+pub mod extensions;
 pub mod ggx;
 pub mod integrator;
 pub mod io;
