@@ -11,12 +11,14 @@ from skimage.metrics import structural_similarity as ssim
 
 RENDER_SCENES = [
     # scene name, number of samples, and resolution to render with
+    ("backrooms", 64, (960, 540)),
     ("batmobile", 64, (960, 540)),
     ("cornell_box_dragon", 128, (512, 512)),
     ("cornell_box_boxes", 64, (512, 512)),
     ("cornell_box_bunny", 128, (512, 512)),
     ("cornell_box_objects", 128, (512, 512)),
     ("cornell_box_uv", 128, (512, 512)),
+    ("dalek", 64, (512, 512)),
     ("energy_conservation", 64, (2048, 512)),
     ("hyperion", 128, (960, 540)),
     ("random_spheres", 128, (1024, 512)),
