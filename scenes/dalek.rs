@@ -10,7 +10,7 @@ use crate::io;
 use crate::materials::{Material, Plastic};
 use crate::primitive::Primitive;
 use crate::scene::{Scene, SceneBuilder};
-use crate::texture::Color;
+use crate::texture::{Color, Texture};
 use crate::transformations::TransformedMesh;
 
 
@@ -40,10 +40,12 @@ pub fn dalek_scene(width: Option<usize>, height: Option<usize>) -> Scene {
 
     let mut objects: Vec<Primitive> = Vec::new();
     let mut materials: Vec<Material> = Vec::new();
+    let mut textures: Vec<Texture> = Vec::new();
 
-    let default_material = Plastic::new(Color::new(1.0, 0.0, 0.0), 1.0, 1.49);
+    let default_texture = Color::new(1.0, 0.0, 0.0);
+    let default_material = Plastic::new(1.0, 1.49);
 
-    let (meshes, lights) = io::load_obj("extras/models/dalek_sec.obj", &mut materials, None, default_material);
+    let (meshes, lights) = io::load_obj("extras/models/dalek_sec.obj", &mut materials, &mut textures, None, default_material, default_texture);
 
     for mesh in meshes {
         let transformed = TransformedMesh::from(mesh);
@@ -57,7 +59,7 @@ pub fn dalek_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     SceneBuilder::new("Dalek Sec")
         .with_accelerator(bvh)
         .with_camera(camera)
-        .with_materials(materials)
+        .with_materials(materials, textures)
         .with_environment(environment)
         .with_lights(lights)
         .build()

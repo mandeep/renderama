@@ -12,9 +12,9 @@ use crate::extensions::PushInto;
 use crate::materials::{Diffuse, Reflective, Refractive, Material};
 use crate::scene::{Scene, SceneBuilder};
 use crate::sphere::Sphere;
-use crate::texture::Color;
+use crate::texture::{Color, Texture};
 
-use crate::mat;
+use crate::{mat, tex};
 
 pub fn random_spheres_scene(width: Option<usize>, height: Option<usize>, rng: &mut Pcg64Mcg) -> Scene {
     let origin = Vec3A::new(13.0, 2.0, 3.0);
@@ -45,15 +45,18 @@ pub fn random_spheres_scene(width: Option<usize>, height: Option<usize>, rng: &m
 
     let mut objects = Vec::new();
     let mut materials: Vec<Material> = Vec::new();
+    let mut textures: Vec<Texture> = Vec::new();
 
     let environment = EnvironmentMap::new("extras/textures/pure_sky_qwantani.exr", 1.0);
 
-    let floor_idx = mat!(materials, Diffuse::new(Color::new(0.5, 0.5, 0.5), 0.0));
-    let refr_idx = mat!(materials, Refractive::new(Color::new(1.0, 1.0, 1.0), 1.5));
+    let floor_id = tex!(textures, Color::new(0.5, 0.5, 0.5));
+    let floor_idx = mat!(materials, Diffuse::new(0.0));
+    let refr_id = tex!(textures, Color::new(1.0, 1.0, 1.0));
+    let refr_idx = mat!(materials, Refractive::new(1.5));
 
     objects.push_into(Sphere::new(Vec3A::new(0.0, -1000.0, 0.0),
                           1000.0,
-                          floor_idx));
+                          floor_idx, floor_id));
 
     let red_center = Vec3A::new(-2.0, 1.0, 0.0);
     let glass_center = Vec3A::new(0.0, 1.0, 0.0);
@@ -84,49 +87,50 @@ pub fn random_spheres_scene(width: Option<usize>, height: Option<usize>, rng: &m
                     rng.random::<f32>() * rng.random::<f32>(),
                     rng.random::<f32>() * rng.random::<f32>(),
                     rng.random::<f32>() * rng.random::<f32>());
-                    // let roughness = rand::distributions::Uniform::new(0.0, 1.0);
-                    let random_idx = mat!(materials, Diffuse::new(material, 0.0));
-                    objects.push_into(Sphere::new(center, 0.2, random_idx));
+                let random_id = tex!(textures, material);
+                let random_idx = mat!(materials, Diffuse::new(0.0));
+                objects.push_into(Sphere::new(center, 0.2, random_idx, random_id));
             } else if material < 0.95 {
-                let material = Reflective::new(Color::new(
+                let random_id = tex!(textures, Color::new(
                     0.5 * (1.0 * rng.random::<f32>()),
                     0.5 * (1.0 * rng.random::<f32>()),
-                    0.5 * (1.0 * rng.random::<f32>())),
-                    0.5 * rng.random::<f32>());
-                    let random_idx = mat!(materials, material);
-                    objects.push_into(
-                        Sphere::new(center, 0.2, random_idx));
+                    0.5 * (1.0 * rng.random::<f32>())));
+                let random_idx = mat!(materials, Reflective::new(0.5 * rng.random::<f32>()));
+                objects.push_into(
+                    Sphere::new(center, 0.2, random_idx, random_id));
             } else {
-                    objects.push_into(Sphere::new(center, 0.2, refr_idx));
-                    objects.push_into(Sphere::new(center, -0.19, refr_idx));
+                    objects.push_into(Sphere::new(center, 0.2, refr_idx, refr_id));
+                    objects.push_into(Sphere::new(center, -0.19, refr_idx, refr_id));
             }
         }
     }
 
-    let red_idx = mat!(materials, Diffuse::new(Color::new(0.75, 0.25, 0.25), 0.0));
+    let red_id = tex!(textures, Color::new(0.75, 0.25, 0.25));
+    let red_idx = mat!(materials, Diffuse::new(0.0));
     objects.push_into(Sphere::new(Vec3A::new(-2.0, 1.0, 0.0),
                           1.0,
-                          red_idx));
+                          red_idx, red_id));
 
     objects.push_into(Sphere::new(Vec3A::new(0.0, 1.0, 0.0),
                           1.0,
-                          refr_idx));
+                          refr_idx, refr_id));
 
     objects.push_into(Sphere::new(Vec3A::new(0.0, 1.0, 0.0),
                           -0.99,
-                          refr_idx));
+                          refr_idx, refr_id));
 
-    let refl_idx = mat!(materials, Reflective::new(Color::new(0.5, 0.5, 0.5), 0.065));
+    let refl_id = tex!(textures, Color::new(0.5, 0.5, 0.5));
+    let refl_idx = mat!(materials, Reflective::new(0.065));
     objects.push_into(Sphere::new(Vec3A::new(2.0, 1.0, 0.0),
                           1.0,
-                          refl_idx));
+                          refl_idx, refl_id));
 
     let bvh = BVH::new(&mut objects);
 
     SceneBuilder::new("Random Spheres")
         .with_accelerator(bvh)
         .with_camera(camera)
-        .with_materials(materials)
+        .with_materials(materials, textures)
         .with_environment(environment)
         .build()
         .expect("Failed to build Random Spheres scene")

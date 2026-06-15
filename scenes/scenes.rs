@@ -4,7 +4,6 @@ use strum::{Display, IntoStaticStr};
 
 use crate::scene::Scene;
 
-mod backrooms;
 mod batmobile;
 mod cornell_box_boxes;
 mod cornell_box_bunny;
@@ -22,7 +21,6 @@ mod three_spheres;
 mod veach_mis;
 mod white_furnace;
 
-pub use self::backrooms::*;
 pub use self::batmobile::*;
 pub use self::cornell_box_boxes::*;
 pub use self::cornell_box_bunny::*;
@@ -45,7 +43,6 @@ pub use self::white_furnace::*;
 #[value(rename_all = "snake_case")]
 #[strum(serialize_all = "snake_case")]
 pub enum Scenes {
-    Backrooms,
     Batmobile,
     CornellBoxBoxes,
     CornellBoxBunny,
@@ -67,7 +64,6 @@ pub enum Scenes {
 impl Scenes {
     pub fn load(&self, width: Option<usize>, height: Option<usize>, rng: &mut Pcg64Mcg) -> Scene {
         match self {
-            Scenes::Backrooms => backrooms_scene(width, height),
             Scenes::Batmobile => batmobile_scene(width, height),
             Scenes::CornellBoxBoxes => cornell_box_scene(width, height),
             Scenes::CornellBoxBunny => cornell_box_bunny_scene(width, height),

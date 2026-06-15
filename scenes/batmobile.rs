@@ -12,10 +12,11 @@ use crate::materials::{Material, Diffuse, Plastic};
 use crate::plane::{Axis, Bounds2D, Plane};
 use crate::primitive::Primitive;
 use crate::scene::{Scene, SceneBuilder};
-use crate::texture::Color;
+use crate::texture::{Color, Texture};
 use crate::transformations::TransformedMesh;
 
 use crate::mat;
+use crate::tex;
 
 
 pub fn batmobile_scene(width: Option<usize>, height: Option<usize>) -> Scene {
@@ -45,10 +46,12 @@ pub fn batmobile_scene(width: Option<usize>, height: Option<usize>) -> Scene {
 
     let mut objects: Vec<Primitive> = Vec::new();
     let mut materials: Vec<Material> = Vec::new();
+    let mut textures: Vec<Texture> = Vec::new();
 
-    let default_material = Plastic::new(Color::new(0.9, 0.9, 0.9), 0.01, 1.49);
+    let default_texture = Color::new(0.9, 0.9, 0.9);
+    let default_material = Plastic::new(0.01, 1.49);
 
-    let (meshes, _) = io::load_obj("extras/models/batmobile.obj", &mut materials, None, default_material);
+    let (meshes, _) = io::load_obj("extras/models/batmobile.obj", &mut materials, &mut textures, None, default_material, default_texture);
 
     let translation = Vec3A::new(0.0, 0.0, 0.0);
     let rotation = Vec3A::new(0.0, 0.0, 0.0);
@@ -64,9 +67,10 @@ pub fn batmobile_scene(width: Option<usize>, height: Option<usize>) -> Scene {
         objects.push_into(transformed);
     }
 
-    let grey = mat!(materials, Diffuse::new(Color::new(0.05, 0.05, 0.07), 0.0));
+    let grey_id = tex!(textures, Color::new(0.05, 0.05, 0.07));
+    let grey = mat!(materials, Diffuse::new(0.0));
     // floor plane
-    objects.push_into(Plane::new(Axis::XZ, Bounds2D::new(-1000.0..1000.0, -1000.0..1000.0), -0.4, grey));
+    objects.push_into(Plane::new(Axis::XZ, Bounds2D::new(-1000.0..1000.0, -1000.0..1000.0), -0.4, grey, grey_id));
 
     let bvh = BVH::new(&mut objects);
 
@@ -75,7 +79,7 @@ pub fn batmobile_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     SceneBuilder::new("Batmobile")
         .with_accelerator(bvh)
         .with_camera(camera)
-        .with_materials(materials)
+        .with_materials(materials, textures)
         .with_environment(environment)
         .build()
         .expect("Failed to build Batmobile scene")

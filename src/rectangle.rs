@@ -8,6 +8,7 @@ use crate::materials::MaterialId;
 use crate::plane::{Axis, Bounds2D, Plane};
 use crate::ray::Ray;
 use crate::results::HitResult;
+use crate::texture::TextureId;
 
 
 #[derive(Clone)]
@@ -34,18 +35,18 @@ impl Rectangle {
     /// at both z = 0.0 and z = 300.0, an XZ plane with x in [0.0, 300.0] and z in [0.0, 300.0]
     /// at both y = 0.0 and y = 200.0, and a YZ plane with y in [0.0, 200.0] and z in
     /// [0.0, 300.0] at x = 0.0 and x = 100.0.
-    pub fn new(p0: Vec3A, p1: Vec3A, material_id: MaterialId) -> Rectangle {
+    pub fn new(p0: Vec3A, p1: Vec3A, material_id: MaterialId, texture_id: TextureId) -> Rectangle {
         let mut primitives: Vec<Primitive> = Vec::new();
         let xy_bounds = Bounds2D::new(p0.x..p1.x, p0.y..p1.y);
         let xz_bounds = Bounds2D::new(p0.x..p1.x, p0.z..p1.z);
         let yz_bounds = Bounds2D::new(p0.y..p1.y, p0.z..p1.z);
 
-        primitives.push_into(Plane::new(Axis::XY, xy_bounds, p1.z, material_id));
-        primitives.push(Plane::new(Axis::XY, xy_bounds, p0.z, material_id).into_reversed());
-        primitives.push_into(Plane::new(Axis::XZ, xz_bounds, p1.y, material_id));
-        primitives.push(Plane::new(Axis::XZ, xz_bounds, p0.y, material_id).into_reversed());
-        primitives.push_into(Plane::new(Axis::YZ, yz_bounds, p1.x, material_id));
-        primitives.push(Plane::new(Axis::YZ, yz_bounds, p0.x, material_id).into_reversed());
+        primitives.push_into(Plane::new(Axis::XY, xy_bounds, p1.z, material_id, texture_id));
+        primitives.push(Plane::new(Axis::XY, xy_bounds, p0.z, material_id, texture_id).into_reversed());
+        primitives.push_into(Plane::new(Axis::XZ, xz_bounds, p1.y, material_id, texture_id));
+        primitives.push(Plane::new(Axis::XZ, xz_bounds, p0.y, material_id, texture_id).into_reversed());
+        primitives.push_into(Plane::new(Axis::YZ, yz_bounds, p1.x, material_id, texture_id));
+        primitives.push(Plane::new(Axis::YZ, yz_bounds, p0.x, material_id, texture_id).into_reversed());
 
         Rectangle { p0, p1, primitives }
     }
@@ -75,7 +76,7 @@ mod tests {
         let p0 = Vec3A::new(0.0, 0.0, 0.0);
         let p1 = Vec3A::new(100.0, 200.0, 300.0);
         let mat_idx = MaterialId(0);
-        let rectangle = Rectangle::new(p0, p1, mat_idx);
+        let rectangle = Rectangle::new(p0, p1, mat_idx, TextureId(0));
 
         assert_eq!(rectangle.p0, p0);
         assert_eq!(rectangle.p1, p1);
@@ -87,7 +88,7 @@ mod tests {
         let p0 = Vec3A::new(0.0, 0.0, 0.0);
         let p1 = Vec3A::new(2.0, 3.0, 5.0);
         let mat_idx = MaterialId(0);
-        let rectangle = Rectangle::new(p0, p1, mat_idx);
+        let rectangle = Rectangle::new(p0, p1, mat_idx, TextureId(0));
 
         let aabb = rectangle.bounding_box().unwrap();
         assert_eq!(aabb.minimum, p0);
@@ -101,7 +102,7 @@ mod tests {
         let p0 = Vec3A::ZERO;
         let p1 = Vec3A::ONE;
         let mat_idx = MaterialId(0);
-        let rectangle = Rectangle::new(p0, p1, mat_idx);
+        let rectangle = Rectangle::new(p0, p1, mat_idx, TextureId(0));
         let mut rng = Pcg64Mcg::seed_from_u64(0);
 
         let ray = Ray::new(Vec3A::new(0.0, 0.0, 5.0), Vec3A::new(0.0, 0.0, -1.0), 0.0);
@@ -115,7 +116,7 @@ mod tests {
         let p0 = Vec3A::ZERO;
         let p1 = Vec3A::ONE;
         let mat_idx = MaterialId(0);
-        let rectangle = Rectangle::new(p0, p1, mat_idx);
+        let rectangle = Rectangle::new(p0, p1, mat_idx, TextureId(0));
         let mut rng = Pcg64Mcg::seed_from_u64(0);
 
         let ray = Ray::new(Vec3A::new(0.0, 0.0, 5.0), Vec3A::new(0.0, 0.0, 1.0), 0.0);

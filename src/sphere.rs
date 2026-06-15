@@ -9,6 +9,7 @@ use crate::materials::MaterialId;
 use crate::ray::Ray;
 use crate::results::HitResult;
 use crate::sampling::{uniform_sample_cone, uniform_sample_sphere};
+use crate::texture::TextureId;
 
 
 /// Retrieve the spherical UV coordinates with the given normal
@@ -26,6 +27,7 @@ pub struct Sphere {
     pub center: Vec3A,
     pub radius: f32,
     pub material_id: MaterialId,
+    pub texture_id: TextureId,
 }
 
 impl Sphere {
@@ -33,9 +35,9 @@ impl Sphere {
     ///
     /// center is the point in world space where the sphere resides with diameter
     /// of 2 * radius using the material at the material_id index.
-    pub fn new(center: Vec3A, radius: f32, material_id: MaterialId) -> Sphere {
+    pub fn new(center: Vec3A, radius: f32, material_id: MaterialId, texture_id: TextureId) -> Sphere {
 
-        Sphere { center, radius, material_id }
+        Sphere { center, radius, material_id, texture_id }
     }
 
     /// Determine if the given ray intersects with a point on the sphere
@@ -70,7 +72,7 @@ impl Sphere {
             let point = ray.point_at_parameter(root);
             let normal = (point - self.center) / self.radius;
             let (u, v) = get_sphere_uv(&normal);
-            return Some(HitResult::new(root, u, v, point, normal, normal, self.material_id));
+            return Some(HitResult::new(root, u, v, point, normal, normal, self.material_id, self.texture_id));
         }
         None
     }
@@ -161,7 +163,7 @@ mod tests {
 
     #[test]
     fn test_sphere_hit() {
-        let sphere = Sphere::new(Vec3A::new(0.0, 0.0, 5.0), 1.0, MaterialId(0));
+        let sphere = Sphere::new(Vec3A::new(0.0, 0.0, 5.0), 1.0, MaterialId(0), TextureId(0));
         let ray = Ray::new(Vec3A::ZERO, Vec3A::new(0.0, 0.0, 1.0), 0.0);
 
         let hit = sphere.hit(&ray, 1e-4, 100.0);
@@ -173,7 +175,7 @@ mod tests {
 
     #[test]
     fn test_sphere_miss() {
-        let sphere = Sphere::new(Vec3A::new(0.0, 0.0, -5.0), 1.0, MaterialId(0));
+        let sphere = Sphere::new(Vec3A::new(0.0, 0.0, -5.0), 1.0, MaterialId(0), TextureId(0));
         let ray = Ray::new(Vec3A::ZERO, Vec3A::new(0.0, 0.0, 1.0), 0.0);
 
         let hit = sphere.hit(&ray, 1e-4, 100.0);
@@ -182,7 +184,7 @@ mod tests {
 
     #[test]
     fn test_sphere_hit_inside_out() {
-        let sphere = Sphere::new(Vec3A::ZERO, 2.0, MaterialId(0));
+        let sphere = Sphere::new(Vec3A::ZERO, 2.0, MaterialId(0), TextureId(0));
         let ray = Ray::new(Vec3A::ZERO, Vec3A::new(0.0, 1.0, 0.0), 0.0);
 
         let hit = sphere.hit(&ray, 1e-4, 100.0);
@@ -194,7 +196,7 @@ mod tests {
 
     #[test]
     fn test_bounding_box() {
-        let sphere = Sphere::new(Vec3A::new(2.0, 2.0, 2.0), 3.0, MaterialId(0));
+        let sphere = Sphere::new(Vec3A::new(2.0, 2.0, 2.0), 3.0, MaterialId(0), TextureId(0));
         let bbox = sphere.bounding_box().unwrap();
 
         assert_eq!(bbox.minimum, Vec3A::new(-1.0, -1.0, -1.0));
@@ -203,7 +205,7 @@ mod tests {
 
     #[test]
     fn test_sampling_weight_miss_returns_zero() {
-        let sphere = Sphere::new(Vec3A::new(0.0, 0.0, 5.0), 1.0, MaterialId(0));
+        let sphere = Sphere::new(Vec3A::new(0.0, 0.0, 5.0), 1.0, MaterialId(0), TextureId(0));
         let ray = Ray::new(Vec3A::ZERO, Vec3A::new(0.0, 0.0, -1.0), 0.0);
 
         let weight = sphere.evaluate_sampling_weight(&ray);

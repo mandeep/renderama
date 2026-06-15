@@ -110,7 +110,7 @@ impl TransformedMesh {
             let geometric_normal = self.normal_transform.transform_vector3(hit.geometric_normal.into()).normalize().into();
             let shading_normal = self.normal_transform.transform_vector3(hit.shading_normal.into()).normalize().into();
 
-            Some(HitResult::new(parameter, hit.u, hit.v, point, geometric_normal, shading_normal, hit.material_id))
+            Some(HitResult::new(parameter, hit.u, hit.v, point, geometric_normal, shading_normal, hit.material_id, hit.texture_id))
         } else {
             None
         }
@@ -239,7 +239,7 @@ impl MotionMesh {
             let geometric_normal = normal_transform.transform_vector3(hit.geometric_normal.into()).normalize().into();
             let shading_normal = normal_transform.transform_vector3(hit.shading_normal.into()).normalize().into();
 
-            Some(HitResult::new(parameter, hit.u, hit.v, point, geometric_normal, shading_normal, hit.material_id))
+            Some(HitResult::new(parameter, hit.u, hit.v, point, geometric_normal, shading_normal, hit.material_id, hit.texture_id))
         } else {
             None
         }
@@ -408,8 +408,9 @@ mod tests {
     use glam::{Vec3A, Vec3};
     use crate::materials::MaterialId;
     use rand::SeedableRng;
-use crate::ray::Ray;
+    use crate::ray::Ray;
     use crate::sphere::Sphere;
+    use crate::texture::TextureId;
 
     fn get_rng() -> Pcg64Mcg {
         Pcg64Mcg::seed_from_u64(0)
@@ -417,7 +418,7 @@ use crate::ray::Ray;
 
     #[test]
     fn test_translation_hit() {
-        let sphere = Sphere::new(Vec3A::ZERO, 1.0, MaterialId(0));
+        let sphere = Sphere::new(Vec3A::ZERO, 1.0, MaterialId(0), TextureId(0));
         let mut rng = get_rng();
 
         let transformed = TransformedMesh::new(
@@ -439,7 +440,7 @@ use crate::ray::Ray;
 
     #[test]
     fn test_scaling_hit() {
-        let sphere = Sphere::new(Vec3A::ZERO, 1.0, MaterialId(0));
+        let sphere = Sphere::new(Vec3A::ZERO, 1.0, MaterialId(0), TextureId(0));
         let mut rng = get_rng();
 
         let transformed = TransformedMesh::new(

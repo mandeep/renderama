@@ -1,8 +1,34 @@
-use std::sync::Arc;
-
 use glam::{Vec2, Vec3A};
 use image::DynamicImage;
 
+#[derive(Clone, Copy)]
+/// TextureId is used to index into the textures Vec that is instantiated
+/// at scene creation.
+///
+/// Keeping track of the index instead of the actual texture
+/// saves from allocating memory unnecessarily.
+pub struct TextureId(pub u32);
+
+impl TextureId {
+    /// Create a new TextureId with material at index
+    pub fn new(index: u32) -> TextureId {
+        TextureId(index)
+    }
+
+    /// Retrieve the TextureId as a usize for indexing purposes
+    pub fn index(self) -> usize {
+        self.0 as usize
+    }
+}
+
+#[macro_export]
+macro_rules! tex {
+    ($vec:expr, $texture:expr) => {{
+        let id = $crate::texture::TextureId::new($vec.len() as u32);
+        $vec.push($texture.into());
+        id
+    }};
+}
 
 #[derive(Clone)]
 /// Housing items here such as Color and ImageTexture allows us to pass
@@ -10,7 +36,6 @@ use image::DynamicImage;
 pub enum Texture {
     Color(Color),
     ImageTexture(ImageTexture),
-    IntensityTexture(IntensityTexture),
 }
 
 impl Texture {
@@ -18,7 +43,6 @@ impl Texture {
         match self {
             Texture::Color(texture) => texture.sample_texture(),
             Texture::ImageTexture(texture) => texture.sample_texture(u, v, w),
-            Texture::IntensityTexture(texture) => texture.sample_texture(u, v, w),
         }
     }
 }
@@ -100,28 +124,6 @@ impl ImageTexture {
         let linear_b = (b as f32 / 255.0).powf(2.2);
 
         Vec3A::new(linear_r, linear_g, linear_b)
-    }
-}
-
-#[derive(Clone)]
-pub struct IntensityTexture {
-    texture: Arc<Texture>,
-    intensity: f32,
-}
-
-impl IntensityTexture {
-    pub fn new(texture: impl Into<Texture>, intensity: f32) -> IntensityTexture {
-        IntensityTexture { texture: Arc::new(texture.into()), intensity }
-    }
-
-    pub fn sample_texture(&self, u: f32, v: f32, p: &Vec3A) -> Vec3A {
-        self.texture.sample_texture(u, v, p) * self.intensity
-    }
-}
-
-impl From<IntensityTexture> for Texture {
-    fn from(texture: IntensityTexture) -> Self {
-        Texture::IntensityTexture(texture)
     }
 }
 

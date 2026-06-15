@@ -10,11 +10,11 @@ use crate::lights::Light;
 use crate::materials::{Diffuse, Emissive, Plastic, Material};
 use crate::plane::{Axis, Bounds2D, Plane};
 use crate::scene::{Scene, SceneBuilder};
-use crate::texture::Color;
+use crate::texture::{Color, Texture};
 use crate::transformations::TransformedMesh;
 use crate::triangle::TriangleMesh;
 
-use crate::mat;
+use crate::{mat, tex};
 
 pub fn cornell_box_dragon_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let origin = Vec3A::new(278.0, 278.0, -800.0);
@@ -44,34 +44,40 @@ pub fn cornell_box_dragon_scene(width: Option<usize>, height: Option<usize>) -> 
 
     let mut objects = Vec::new();
     let mut materials: Vec<Material> = Vec::new();
+    let mut textures: Vec<Texture> = Vec::new();
 
     let roughness = 0.0;
-    let red_id = mat!(materials, Diffuse::new(Color::new(0.65, 0.05, 0.05), roughness));
-    let green_id = mat!(materials, Diffuse::new(Color::new(0.12, 0.45, 0.15), roughness));
-    let white_id = mat!(materials, Diffuse::new(Color::new(0.73, 0.73, 0.73), roughness));
-    let light_material = mat!(materials, Emissive::new(Color::new(20.0, 20.0, 20.0)));
+    let red = tex!(textures, Color::new(0.65, 0.05, 0.05));
+    let green = tex!(textures, Color::new(0.12, 0.45, 0.15));
+    let white = tex!(textures, Color::new(0.73, 0.73, 0.73));
+    let light_id = tex!(textures, Color::new(20.0, 20.0, 20.0));
+    let red_id = mat!(materials, Diffuse::new(roughness));
+    let green_id = mat!(materials, Diffuse::new(roughness));
+    let white_id = mat!(materials, Diffuse::new(roughness));
+    let light_material = mat!(materials, Emissive::new());
 
     // add the walls of the cornell box to the world
-    objects.push_into(Plane::new(Axis::YZ, Bounds2D::new(0.0..555.0, 0.0..555.0), 555.0, red_id).into_reversed());
-    objects.push_into(Plane::new(Axis::YZ, Bounds2D::new(0.0..555.0, 0.0..555.0), 0.0, green_id));
-    objects.push_into(Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 554.0, light_material).into_reversed());
-    objects.push_into(Plane::new(Axis::XZ, Bounds2D::new(0.0..555.0, 0.0..555.0), 555.0, white_id).into_reversed());
-    objects.push_into(Plane::new(Axis::XZ, Bounds2D::new(0.0..555.0, 0.0..555.0), 0.0, white_id));
-    objects.push_into(Plane::new(Axis::XY, Bounds2D::new(0.0..555.0, 0.0..555.0), 555.0, white_id).into_reversed());
+    objects.push_into(Plane::new(Axis::YZ, Bounds2D::new(0.0..555.0, 0.0..555.0), 555.0, red_id, red).into_reversed());
+    objects.push_into(Plane::new(Axis::YZ, Bounds2D::new(0.0..555.0, 0.0..555.0), 0.0, green_id, green));
+    objects.push_into(Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 554.0, light_material, light_id).into_reversed());
+    objects.push_into(Plane::new(Axis::XZ, Bounds2D::new(0.0..555.0, 0.0..555.0), 555.0, white_id, white).into_reversed());
+    objects.push_into(Plane::new(Axis::XZ, Bounds2D::new(0.0..555.0, 0.0..555.0), 0.0, white_id, white));
+    objects.push_into(Plane::new(Axis::XY, Bounds2D::new(0.0..555.0, 0.0..555.0), 555.0, white_id, white).into_reversed());
 
-    let dragon_material = mat!(materials, Plastic::new(Color::new(0.0, 0.06, 0.18), 0.15, 1.5));
-    let dragon = TriangleMesh::from("extras/models/dragon.obj", dragon_material);
+    let dragon_texture = tex!(textures, Color::new(0.0, 0.06, 0.18));
+    let dragon_material = mat!(materials, Plastic::new(0.15, 1.5));
+    let dragon = TriangleMesh::from("extras/models/dragon.obj", dragon_material, dragon_texture);
     objects.push_into(TransformedMesh::new(Vec3A::new(283.0, 114.0, 268.0), Vec3A::new(0.0, -60.0, 0.0), Vec3A::splat(425.0), dragon));
 
     let bvh = BVH::new(&mut objects);
 
-    let light_shape = Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 554.0, white_id);
+    let light_shape = Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 554.0, white_id, white);
     let light = vec![Light::new(light_shape, Vec3A::new(25.0, 25.0, 25.0))];
 
     SceneBuilder::new("Cornell Box with Dragon")
         .with_accelerator(bvh)
         .with_camera(camera)
-        .with_materials(materials)
+        .with_materials(materials, textures)
         .with_lights(light)
         .build()
         .expect("Failed to build Cornell Box Dragon scene")

@@ -1,5 +1,4 @@
 use std::f32::consts::PI;
-use std::sync::Arc;
 
 use glam::Vec3A;
 use rand::RngExt;
@@ -14,7 +13,7 @@ use crate::sampling::pick_sphere_point;
 use crate::texture::Texture;
 
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy)]
 /// MaterialId is used to index into the materials Vec that is instantiated
 /// at scene creation.
 ///
@@ -80,21 +79,21 @@ macro_rules! mat {
 
 impl Material {
     /// Generate the ScatterResult that tells the integrator how the material responds to sampling
-    pub fn generate_response(&self, ray: &Ray, hit: &HitResult, rng: &mut Pcg64Mcg) -> Option<ScatterResult> {
+    pub fn generate_response(&self, ray: &Ray, hit: &HitResult, textures: &[Texture], rng: &mut Pcg64Mcg) -> Option<ScatterResult> {
         match self {
-            Material::Diffuse(m) => m.generate_response(ray, hit, rng),
+            Material::Diffuse(m) => m.generate_response(ray, hit, textures),
             Material::Emissive(m) => m.generate_response(ray, hit, rng),
-            Material::Plastic(m) => m.generate_response(ray, hit, rng),
-            Material::Reflective(m) => m.generate_response(ray, hit, rng),
-            Material::Refractive(m) => m.generate_response(ray, hit, rng),
-            Material::Volumetric(m) => m.generate_response(ray, hit, rng),
+            Material::Plastic(m) => m.generate_response(ray, hit),
+            Material::Reflective(m) => m.generate_response(ray, hit, textures),
+            Material::Refractive(m) => m.generate_response(ray, hit, textures, rng),
+            Material::Volumetric(m) => m.generate_response(ray, hit, textures, rng),
         }
     }
 
     /// Evaluate the albedo of the emissive material
-    pub fn evaluate_emission(&self, ray: &Ray, hit: &HitResult) -> Vec3A {
+    pub fn evaluate_emission(&self, ray: &Ray, hit: &HitResult, textures: &[Texture]) -> Vec3A {
         match self {
-            Material::Emissive(m) => m.evaluate_emission(ray, hit),
+            Material::Emissive(m) => m.evaluate_emission(ray, hit, textures),
             Material::Diffuse(_)
             | Material::Plastic(_)
             | Material::Reflective(_)
@@ -104,12 +103,12 @@ impl Material {
     }
 
     /// Compute the manner in which the material reflects/absorbs light
-    pub fn compute_reflectance(&self, ray: &Ray, hit: &HitResult, scattered: &Ray) -> Vec3A {
+    pub fn compute_reflectance(&self, ray: &Ray, scattered: &Ray, hit: &HitResult, textures: &[Texture]) -> Vec3A {
         match self {
             Material::Diffuse(m) => m.compute_reflectance(ray, hit, scattered),
             Material::Emissive(_) => Vec3A::ZERO,
-            Material::Plastic(m) => m.compute_reflectance(ray, hit, scattered),
-            Material::Reflective(m) => m.compute_reflectance(ray, hit, scattered),
+            Material::Plastic(m) => m.compute_reflectance(ray, scattered, hit, textures),
+            Material::Reflective(m) => m.compute_reflectance(ray, scattered, hit, textures),
             Material::Refractive(_) => Vec3A::ZERO,
             Material::Volumetric(_) => Vec3A::splat(1.0 / (4.0 * PI)),
         }
@@ -125,7 +124,6 @@ impl Material {
 /// Michael Oren, Shree K. Nayaer
 /// https://dl.acm.org/doi/abs/10.1145/192161.192213
 pub struct Diffuse {
-    pub albedo: Arc<Texture>,
     alpha: f32,
     beta: f32,
 }
@@ -135,23 +133,22 @@ impl Diffuse {
     ///
     /// albedo is a Vec3A of the RGB values assigned to the material
     /// where each value is a float between 0.0 and 1.0.
-    pub fn new(albedo: impl Into<Texture>, sigma: f32) -> Diffuse {
-        let albedo = Arc::new(albedo.into());
+    pub fn new(sigma: f32) -> Diffuse {
         let constant = PI + sigma * (3.0 * PI - 4.0) / 6.0;
         let alpha = 1.0 / constant;
         let beta = sigma / constant;
 
-        Diffuse { albedo, alpha, beta }
+        Diffuse { alpha, beta }
     }
 
     /// The contribution of this Diffuse material is just its albedo. The pdf is
     /// cosine-weighted. While the scattered ray is returned here, the direction is
     /// actually calculated in the integrator by the cosine pdf.
-    fn generate_response(&self, ray: &Ray, result: &HitResult, _rng: &mut Pcg64Mcg) -> Option<ScatterResult> {
+    fn generate_response(&self, ray: &Ray, result: &HitResult, textures: &[Texture]) -> Option<ScatterResult> {
         // ray.direction is passed here because the integrator generates
         // an offset point itself for the Diffuse material
         let scattered = Ray::new(result.point, ray.direction, ray.time);
-        let contribution = self.albedo.sample_texture(result.u, result.v, &result.point);
+        let contribution = textures[result.texture_id.index()].sample_texture(result.u, result.v, &result.point);
         let pdf = PDF::Cosine { uvw: OrthonormalBasis::new(&result.shading_normal) };
         Some(ScatterResult::new(scattered, contribution, pdf, false, false))
     }
@@ -276,7 +273,6 @@ fn fresnel_coefficient(cos_theta_i: f32, eta_i: f32, eta_t: f32) -> f32 {
 /// albedo is the color of the material and roughness is the amount of fuzziness.
 #[derive(Clone)]
 pub struct Reflective {
-    pub albedo: Arc<Texture>,
     pub roughness: f32,
 }
 
@@ -288,16 +284,15 @@ impl Reflective {
     /// for the fuzziness of the reflections due to the size of the primitive.
     ///
     /// Generally, the larger the primitive, the fuzzier the reflections will be.
-    pub fn new(albedo: impl Into<Texture>, roughness: f32) -> Reflective {
-        let albedo = Arc::new(albedo.into());
-        Reflective { albedo, roughness: roughness * roughness }
+    pub fn new(roughness: f32) -> Reflective {
+        Reflective { roughness: roughness * roughness }
     }
 }
 
 impl Reflective {
     /// Use the incoming ray and geometric/shading normal at the hit point to
     /// generate the response of the material.
-    fn generate_response(&self, ray: &Ray, result: &HitResult, _rng: &mut Pcg64Mcg) -> Option<ScatterResult> {
+    fn generate_response(&self, ray: &Ray, result: &HitResult, textures: &[Texture]) -> Option<ScatterResult> {
         // if the dot product between the ray direction and normals are less than 0
         // then the ray hit the surface from the outside, otherwise it hit the
         // surface from the inside
@@ -307,7 +302,7 @@ impl Reflective {
         let reflected = reflect(ray.direction, shading_normal);
         let scattered_ray = Ray::new(offset_point, reflected, ray.time);
 
-        let f0 = self.albedo.sample_texture(result.u, result.v, &result.point);
+        let f0 = textures[result.texture_id.index()].sample_texture(result.u, result.v, &result.point);
         let cos_theta_i = (-ray.direction).dot(shading_normal).max(0.0);
         let fresnel = schlick_from_f0(cos_theta_i, f0);
 
@@ -327,7 +322,7 @@ impl Reflective {
     ///
     /// References:
     /// https://learnopengl.com/PBR/Theory
-    fn compute_reflectance(&self, ray: &Ray, result: &HitResult, scattered: &Ray) -> Vec3A {
+    fn compute_reflectance(&self, ray: &Ray, scattered: &Ray, result: &HitResult, textures: &[Texture]) -> Vec3A {
         if self.roughness == 0.0 { return Vec3A::ZERO; }
 
         let wi = -ray.direction;
@@ -352,7 +347,7 @@ impl Reflective {
             return Vec3A::ZERO;
         }
 
-        let f0 = self.albedo.sample_texture(result.u, result.v, &result.point);
+        let f0 = textures[result.texture_id.index()].sample_texture(result.u, result.v, &result.point);
 
         let v_dot_h = wi.dot(h);
         let l_dot_h = wo.dot(h);
@@ -374,7 +369,6 @@ impl Reflective {
 #[derive(Clone)]
 pub struct Refractive {
     pub refractive_index: f32,
-    pub absorption: Arc<Texture>,
 }
 
 impl Refractive {
@@ -383,9 +377,8 @@ impl Refractive {
     /// albedo is a Vec3A of the RGB values assigned to the material
     /// where each value is a float between 0.0 and 1.0.
     /// index determines how much of the light is refracted when entering the material.
-    pub fn new(albedo: impl Into<Texture>, index: f32) -> Refractive {
-        let albedo = Arc::new(albedo.into());
-        Refractive { refractive_index: index, absorption: albedo }
+    pub fn new(index: f32) -> Refractive {
+        Refractive { refractive_index: index }
     }
 
     /// Generate the ScatterResult that tells the integrator how the Refractive
@@ -395,7 +388,7 @@ impl Refractive {
     /// See Peter Shirley's Ray Tracing in One Weekend for an overview of refractive
     /// scattering and Section 10.3.2 in Mathematical and Computer Programming
     /// Techniques for Computer Graphics by Peter Comininos.
-    fn generate_response(&self, ray: &Ray, result: &HitResult, rng: &mut Pcg64Mcg) -> Option<ScatterResult> {
+    fn generate_response(&self, ray: &Ray, result: &HitResult, textures: &[Texture], rng: &mut Pcg64Mcg) -> Option<ScatterResult> {
         // cache this result since it's used many times in this method
         let geometric_incident: f32 = ray.direction.dot(result.geometric_normal);
         let entering = geometric_incident < 0.0;
@@ -420,7 +413,7 @@ impl Refractive {
         let attenuation = if entering {
             Vec3A::ONE
         } else {
-            self.absorption.sample_texture(result.u, result.v, &result.point)
+            textures[result.texture_id.index()].sample_texture(result.u, result.v, &result.point)
         };
 
         let pdf = PDF::Delta;
@@ -441,15 +434,12 @@ impl Refractive {
 /// Emissive material is used to determine albedo of light sources.
 /// It does not control the light source's intensity.
 #[derive(Clone)]
-pub struct Emissive {
-    pub emissive_texture: Arc<Texture>,
-}
+pub struct Emissive {}
 
 impl Emissive {
     /// Create a new Emissive material with the given Texture.
-    pub fn new(emissive_texture: impl Into<Texture>) -> Emissive {
-        let emissive_texture = Arc::new(emissive_texture.into());
-        Emissive { emissive_texture }
+    pub fn new() -> Emissive {
+        Emissive { }
     }
 
     /// The Light type and primitives handle actual light physics so this material
@@ -460,9 +450,9 @@ impl Emissive {
 
     /// Sample the texture of the material if the ray hits the surface
     /// from the front.
-    fn evaluate_emission(&self, ray: &Ray, hit: &HitResult) -> Vec3A {
+    fn evaluate_emission(&self, ray: &Ray, hit: &HitResult, textures: &[Texture]) -> Vec3A {
         if hit.shading_normal.dot(ray.direction) < 0.0 {
-            self.emissive_texture.sample_texture(hit.u, hit.v, &hit.point)
+            textures[hit.texture_id.index()].sample_texture(hit.u, hit.v, &hit.point)
         } else {
             Vec3A::ZERO
         }
@@ -474,20 +464,18 @@ impl Emissive {
 /// can also be used to simulate subsurface scattering.
 #[derive(Clone)]
 pub struct Volumetric {
-    pub albedo: Arc<Texture>,
 }
 
 impl Volumetric {
     /// Create a new Volumetric material with the given Texture
-    pub fn new(albedo: impl Into<Texture>) -> Volumetric {
-        let albedo = Arc::new(albedo.into());
-        Volumetric { albedo }
+    pub fn new() -> Volumetric {
+        Volumetric { }
     }
 
     /// Volumetric materials generate a uniform response when hit no matter the ray's direction
-    fn generate_response(&self, ray: &Ray, result: &HitResult, rng: &mut Pcg64Mcg) -> Option<ScatterResult> {
+    fn generate_response(&self, ray: &Ray, result: &HitResult, textures: &[Texture], rng: &mut Pcg64Mcg) -> Option<ScatterResult> {
         let scattered = Ray::new(result.point, pick_sphere_point(rng), ray.time);
-        let contribution = self.albedo.sample_texture(result.u, result.v, &result.point);
+        let contribution = textures[result.texture_id.index()].sample_texture(result.u, result.v, &result.point);
         let pdf = PDF::Uniform;
         Some(ScatterResult::new(scattered, contribution, pdf, false, false))
     }
@@ -497,7 +485,6 @@ impl Volumetric {
 /// returned based on random probability.
 #[derive(Clone)]
 pub struct Plastic {
-    pub albedo: Arc<Texture>,
     pub roughness: f32,
     pub ior: f32,
 }
@@ -508,14 +495,13 @@ impl Plastic {
     /// albedo is the Texture to use for the material.
     /// roughness handles the amount of microfacets on the surface
     /// ior determines the refractiveness of the material
-    pub fn new(albedo: impl Into<Texture>, roughness: f32, ior: f32) -> Plastic {
-        let albedo = Arc::new(albedo.into());
-        Plastic { albedo, roughness: roughness * roughness, ior }
+    pub fn new(roughness: f32, ior: f32) -> Plastic {
+        Plastic { roughness: roughness * roughness, ior }
     }
 
     /// Generate either a specular or diffuse response to a surface hit, dependent
     /// on a random reflect probability.
-    fn generate_response(&self, ray: &Ray, result: &HitResult, _rng: &mut Pcg64Mcg) -> Option<ScatterResult> {
+    fn generate_response(&self, ray: &Ray, result: &HitResult) -> Option<ScatterResult> {
         let (geometric_normal, shading_normal) = result.face_forward_normals(&ray.direction);
 
         let cos_theta_i = (-ray.direction).dot(result.shading_normal).max(0.0);
@@ -538,7 +524,7 @@ impl Plastic {
     }
 
     /// Compute how the Plastic material handles reflectance.
-    fn compute_reflectance(&self, ray: &Ray, result: &HitResult, scattered: &Ray) -> Vec3A {
+    fn compute_reflectance(&self, ray: &Ray, scattered: &Ray, result: &HitResult, textures: &[Texture]) -> Vec3A {
         let wi = -ray.direction;
         let wo = scattered.direction;
         let n = result.shading_normal;
@@ -567,7 +553,7 @@ impl Plastic {
         let r = (1.0 - self.ior) / (1.0 + self.ior);
         let f0 = r * r;
         let macro_fresnel = f0 + (1.0 - f0) * (1.0 - cos_i).powi(5);
-        let albedo = self.albedo.sample_texture(result.u, result.v, &result.point);
+        let albedo = textures[result.texture_id.index()].sample_texture(result.u, result.v, &result.point);
         let diffuse = albedo * (1.0 - macro_fresnel) * cos_o / PI;
 
         specular + diffuse

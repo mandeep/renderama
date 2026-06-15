@@ -3,6 +3,7 @@ use glam::Vec3A;
 use crate::materials::MaterialId;
 use crate::pdf::PDF;
 use crate::ray::Ray;
+use crate::texture::TextureId;
 
 
 /// HitResult contains all of the information that tells us how a
@@ -22,6 +23,7 @@ pub struct HitResult {
     pub geometric_normal: Vec3A,
     pub shading_normal: Vec3A,
     pub material_id: MaterialId,
+    pub texture_id: TextureId,
 }
 
 impl HitResult {
@@ -32,9 +34,11 @@ impl HitResult {
                point: Vec3A,
                geometric_normal: Vec3A,
                shading_normal: Vec3A,
-               material_id: MaterialId)
+               material_id: MaterialId,
+               texture_id: TextureId,
+            )
                -> HitResult {
-        HitResult { parameter, u, v, point, geometric_normal, shading_normal, material_id }
+        HitResult { parameter, u, v, point, geometric_normal, shading_normal, material_id, texture_id }
     }
 
     /// Orients both the geometric and shading normals to face against the incoming ray
@@ -101,6 +105,7 @@ mod tests {
             Vec3A::new(0.0, 0.0, 1.0),
             Vec3A::new(0.0, 0.0, 1.0),
             MaterialId(0),
+            TextureId(0),
         );
 
         let incoming_direction = Vec3A::new(0.0, 0.0, -1.0);

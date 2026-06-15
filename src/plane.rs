@@ -10,6 +10,7 @@ use crate::primitive::Primitive;
 use crate::materials::MaterialId;
 use crate::ray::Ray;
 use crate::results::HitResult;
+use crate::texture::TextureId;
 
 #[derive(Clone)]
 /// The three axes a plane can be created on
@@ -59,6 +60,7 @@ pub struct Plane {
     bounds: Bounds2D,
     offset: f32,
     material_id: MaterialId,
+    texture_id: TextureId,
 }
 
 impl Plane {
@@ -70,8 +72,8 @@ impl Plane {
     /// This creates a plane on the YZ axis that sits at 555.0 on the X axis. The first
     /// range shows 0.0 to 555.0 on the Y axis and the second range shows 0.0 to 555.0 on
     /// the Z axis.
-    pub fn new(axis: Axis, bounds: Bounds2D, offset: f32, material_id: MaterialId) -> Plane {
-        Plane { axis, bounds, offset, material_id }
+    pub fn new(axis: Axis, bounds: Bounds2D, offset: f32, material_id: MaterialId, texture_id: TextureId) -> Plane {
+        Plane { axis, bounds, offset, material_id, texture_id }
     }
 
     /// Convert the Plane into a Plane with its normal flipped so that
@@ -114,7 +116,9 @@ impl Plane {
                                             ray.point_at_parameter(t),
                                             normal,
                                             normal,
-                                            self.material_id);
+                                            self.material_id,
+                                            self.texture_id
+                                        );
 
                 Some(result)
             }
@@ -150,7 +154,9 @@ impl Plane {
                                             ray.point_at_parameter(t),
                                             normal,
                                             normal,
-                                            self.material_id);
+                                            self.material_id,
+                                            self.texture_id
+                                        );
 
                 Some(result)
             }
@@ -185,7 +191,9 @@ impl Plane {
                                             ray.point_at_parameter(t),
                                             normal,
                                             normal,
-                                            self.material_id);
+                                            self.material_id,
+                                            self.texture_id
+                                        );
 
                 Some(result)
             }
@@ -263,7 +271,7 @@ mod tests {
     #[test]
     fn test_plane_hit() {
         let bounds = Bounds2D::new(-1.0..1.0, -1.0..1.0);
-        let plane = Plane::new(Axis::XY, bounds, 5.0, MaterialId(0));
+        let plane = Plane::new(Axis::XY, bounds, 5.0, MaterialId(0), TextureId(0));
 
         let ray = Ray::new(Vec3A::new(0.0, 0.0, 0.0), Vec3A::new(0.0, 0.0, 1.0), 0.0);
 
@@ -278,7 +286,7 @@ mod tests {
     #[test]
     fn test_plane_miss() {
         let bounds = Bounds2D::new(-1.0..1.0, -1.0..1.0);
-        let plane = Plane::new(Axis::XY, bounds, 5.0, MaterialId(0));
+        let plane = Plane::new(Axis::XY, bounds, 5.0, MaterialId(0), TextureId(0));
 
         let ray = Ray::new(Vec3A::new(2.0, 2.0, 0.0), Vec3A::new(0.0, 0.0, 1.0), 0.0);
 
@@ -289,7 +297,7 @@ mod tests {
     #[test]
     fn test_plane_hit_parallel_ray_returns_none() {
         let bounds = Bounds2D::new(-1.0..1.0, -1.0..1.0);
-        let plane = Plane::new(Axis::XY, bounds, 0.0, MaterialId(0));
+        let plane = Plane::new(Axis::XY, bounds, 0.0, MaterialId(0), TextureId(0));
 
         let ray = Ray::new(Vec3A::new(0.0, 0.0, 0.0), Vec3A::new(1.0, 0.0, 0.0), 0.0);
 
@@ -300,7 +308,7 @@ mod tests {
     #[test]
     fn test_evaluate_sampling_weight_front_facing() {
         let bounds = Bounds2D::new(-1.0..1.0, -1.0..1.0);
-        let plane = Plane::new(Axis::XY, bounds, 5.0, MaterialId(0));
+        let plane = Plane::new(Axis::XY, bounds, 5.0, MaterialId(0), TextureId(0));
 
         let ray = Ray::new(Vec3A::new(0.0, 0.0, 0.0), Vec3A::new(0.0, 0.0, 1.0), 0.0);
 
@@ -311,7 +319,7 @@ mod tests {
     #[test]
     fn test_evaluate_sampling_weight_back_facing() {
         let bounds = Bounds2D::new(-1.0..1.0, -1.0..1.0);
-        let plane = Plane::new(Axis::XY, bounds, 5.0, MaterialId(0));
+        let plane = Plane::new(Axis::XY, bounds, 5.0, MaterialId(0), TextureId(0));
 
         let ray = Ray::new(Vec3A::new(0.0, 0.0, 10.0), Vec3A::new(0.0, 0.0, -1.0), 0.0);
 

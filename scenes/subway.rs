@@ -11,7 +11,7 @@ use crate::io;
 use crate::materials::{Material, Plastic};
 use crate::primitive::Primitive;
 use crate::scene::{Scene, SceneBuilder};
-use crate::texture::Color;
+use crate::texture::{Color, Texture};
 use crate::transformations::TransformedMesh;
 
 
@@ -44,10 +44,12 @@ pub fn subway_scene(width: Option<usize>, height: Option<usize>) -> Scene {
 
     let mut objects: Vec<Primitive> = Vec::new();
     let mut materials: Vec<Material> = Vec::new();
+    let mut textures: Vec<Texture> = Vec::new();
 
-    let default_material = Plastic::new(Color::new(0.9, 0.9, 0.9), 0.025, 1.49);
+    let default_texture = Color::new(0.9, 0.9, 0.9);
+    let default_material = Plastic::new(0.025, 1.49);
 
-    let (meshes, lights) = io::load_obj("extras/models/subway/subway.obj", &mut materials, None, default_material);
+    let (meshes, lights) = io::load_obj("extras/models/subway/subway.obj", &mut materials, &mut textures, None, default_material, default_texture);
 
     let translation = Vec3A::new(0.0, 0.0, 0.0);
     let rotation = Vec3A::new(0.0, 0.0, 0.0);
@@ -70,7 +72,7 @@ pub fn subway_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     SceneBuilder::new("Subway Train Interior")
         .with_accelerator(bvh)
         .with_camera(camera)
-        .with_materials(materials)
+        .with_materials(materials, textures)
         .with_environment(environment)
         .with_lights(lights)
         .build()

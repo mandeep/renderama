@@ -12,7 +12,7 @@ use crate::io;
 use crate::materials::{Material, Plastic};
 use crate::primitive::Primitive;
 use crate::scene::{Scene, SceneBuilder};
-use crate::texture::Color;
+use crate::texture::{Color, Texture};
 use crate::transformations::TransformedMesh;
 
 
@@ -44,6 +44,7 @@ pub fn stormtrooper_scene(width: Option<usize>, height: Option<usize>) -> Scene 
 
     let mut objects: Vec<Primitive> = Vec::new();
     let mut materials: Vec<Material> = Vec::new();
+    let mut textures: Vec<Texture> = Vec::new();
 
     // an example of material overrides for the obj loader
     // Some(overrides) would be passed into the io::load_obj constructor
@@ -60,9 +61,10 @@ pub fn stormtrooper_scene(width: Option<usize>, height: Option<usize>) -> Scene 
     //     Plastic::new(Color::new(0.01, 0.01, 0.01), 1.0, 1.49)
     // );
 
-    let default_material = Plastic::new(Color::new(0.9, 0.9, 0.9), 0.025, 1.49);
+    let default_texture = Color::new(0.9, 0.9, 0.9);
+    let default_material = Plastic::new(0.025, 1.49);
 
-    let (meshes, _) = io::load_obj("extras/models/stormtrooper.obj", &mut materials, None, default_material);
+    let (meshes, _) = io::load_obj("extras/models/stormtrooper.obj", &mut materials, &mut textures, None, default_material, default_texture);
 
     let translation = Vec3A::new(0.0, 0.0, 0.0);
     let rotation = Vec3A::new(0.0, 0.0, 0.0);
@@ -85,7 +87,7 @@ pub fn stormtrooper_scene(width: Option<usize>, height: Option<usize>) -> Scene 
     SceneBuilder::new("Stormtrooper")
         .with_accelerator(bvh)
         .with_camera(camera)
-        .with_materials(materials)
+        .with_materials(materials, textures)
         .with_environment(environment)
         .build()
         .expect("Failed to build Stormtrooper scene")
