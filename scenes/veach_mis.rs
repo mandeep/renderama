@@ -108,8 +108,8 @@ pub fn veach_mis_scene(width: Option<usize>, height: Option<usize>) -> Scene {
         (0.0, 0.20,   6.5),
         (-2.0, 0.50, 4.0)
     ];
-    for (x, r, intensity) in sphere_lights {
-        let tex = tex!(textures, Color::new(intensity, intensity, intensity));
+    for (x, r, _) in sphere_lights {
+        let tex = tex!(textures, Color::new(1.0, 1.0, 1.0));
         let mat = mat!(materials, Emissive::new());
         objects.push_into(Sphere::new(
             Vec3A::new(x, light_y, light_z),
