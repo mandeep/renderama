@@ -56,7 +56,7 @@ impl Primitive {
             Primitive::Plane(plane) => plane.hit(ray, start_distance, end_distance).is_some(),
             Primitive::Rectangle(rectangle) => rectangle.hit(ray, start_distance, end_distance, rng).is_some(),
             Primitive::Sphere(sphere) => sphere.hit(ray, start_distance, end_distance).is_some(),
-            Primitive::Triangle(triangle) => triangle.hit(ray, start_distance, end_distance).is_some(),
+            Primitive::Triangle(triangle) => triangle.hits_anything(ray, start_distance, end_distance),
             Primitive::TriangleMesh(mesh) => mesh.hits_anything(ray, start_distance, end_distance, rng),
             Primitive::ReverseOrientation(primitive) => primitive.hit(ray, start_distance, end_distance, rng).is_some(),
             Primitive::TransformedMesh(mesh) => mesh.hits_anything(ray, start_distance, end_distance, rng),

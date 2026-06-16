@@ -109,6 +109,37 @@ impl Triangle {
                     )
     }
 
+    /// Same method as hit except does not compute normals and uvs.
+    pub fn hits_anything(&self, ray: &Ray, position_min: f32, position_max: f32) -> bool {
+        let edge1 = self.v1 - self.v0;
+        let edge2 = self.v2 - self.v0;
+
+        let pvec = ray.direction.cross(edge2);
+        let determinant = edge1.dot(pvec);
+
+        if determinant.abs() < 1e-8 {
+            return false;
+        }
+
+        let inverse_determinant = 1.0 / determinant;
+
+        let tvec = ray.origin - self.v0;
+        let u = tvec.dot(pvec) * inverse_determinant;
+        if u < 0.0 || u > 1.0 {
+            return false;
+        }
+
+        let qvec = tvec.cross(edge1);
+        let v = ray.direction.dot(qvec) * inverse_determinant;
+        if v < 0.0 || u + v > 1.0 {
+            return false;
+        }
+
+        let t = edge2.dot(qvec) * inverse_determinant;
+
+        t >= position_min && t <= position_max
+    }
+
     /// Create a bounding box around the triangle
     ///
     /// The bounding box is created using the minimum
