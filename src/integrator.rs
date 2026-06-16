@@ -119,7 +119,8 @@ pub fn render_beauty(mut ray: Ray, scene: &Scene, rng: &mut Pcg64Mcg) -> Vec3A {
 
         let Some(scatter_result) = material.generate_response(&ray, &hit_result, &scene.textures, rng) else { break };
 
-        if scatter_result.specular {
+        let pre_weighted = scatter_result.sampling_strategy.is_delta();
+        if pre_weighted {
             throughput *= scatter_result.contribution;
             ray = scatter_result.scattered_ray;
             previous_bounce = PreviousBounce::Specular;
@@ -307,7 +308,8 @@ fn prepare_next_ray(
 
     // if we're using a material with pre-weighted ggx vndf
     // then no need to compute the reflectance and weight
-    let throughput = if scatter_result.pre_weighted {
+    let pre_weighted = scatter_result.sampling_strategy.is_delta();
+    let throughput = if pre_weighted {
         scatter_result.contribution
     } else {
         (reflectance * scatter_result.contribution) / material_weight

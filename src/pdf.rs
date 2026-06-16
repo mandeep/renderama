@@ -1,5 +1,6 @@
 use std::f32::consts::PI;
 
+use derive_more::IsVariant;
 use glam::Vec3A;
 use rand::RngExt;
 use rand_pcg::Pcg64Mcg;
@@ -30,6 +31,11 @@ pub fn power_heuristic(f_pdf: f32, g_pdf: f32) -> f32 {
 
 /// PDF enum houses the different ways we can sample directions
 /// to determine how likely a ray is to be sampled in that direction.
+///
+/// Deriving the IsVariant trait creates methods for each member of the enum
+/// that allows for member checking, e.g. is_delta() is created and can be used
+/// to check whether a sampling_strategy is a Delta distribution.
+#[derive(IsVariant)]
 pub enum PDF {
     Cosine { uvw: OrthonormalBasis },
     Composite { uvw: OrthonormalBasis, wi: Vec3A, normal: Vec3A, alpha: f32, specular_weight: f32 },

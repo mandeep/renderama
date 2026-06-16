@@ -150,7 +150,7 @@ impl Diffuse {
         let scattered = Ray::new(result.point, ray.direction, ray.time);
         let contribution = textures[result.texture_id.index()].sample_texture(result.u, result.v, &result.point);
         let pdf = PDF::Cosine { uvw: OrthonormalBasis::new(&result.shading_normal) };
-        Some(ScatterResult::new(scattered, contribution, pdf, false, false))
+        Some(ScatterResult::new(scattered, contribution, pdf))
     }
 
     /// Reflect light according to the Oren-Nayar model
@@ -309,12 +309,12 @@ impl Reflective {
         if self.roughness == 0.0 {
             // handle this as a pre-weighted specular material and skip NEE.
             let pdf = PDF::Delta;
-            Some(ScatterResult::new(scattered_ray, fresnel, pdf, true, true))
+            Some(ScatterResult::new(scattered_ray, fresnel, pdf))
         } else {
             // for roughness in [0.0, 0.05], fireflies will appear in high
             // luminance scenes, however these can be denoised just fine.
             let pdf = PDF::GGX { wi: -ray.direction, normal: shading_normal, alpha: self.roughness };
-            Some(ScatterResult::new(scattered_ray, Vec3A::ONE, pdf, false, false))
+            Some(ScatterResult::new(scattered_ray, Vec3A::ONE, pdf))
         }
     }
 
@@ -422,11 +422,11 @@ impl Refractive {
             let reflected: Vec3A = reflect(ray.direction, shading_normal);
             let offset_point = find_offset_point(result.point, geometric_normal);
             let scattered_ray = Ray::new(offset_point, reflected, ray.time);
-            Some(ScatterResult::new(scattered_ray, attenuation, pdf, true, true))
+            Some(ScatterResult::new(scattered_ray, attenuation, pdf))
         } else {
             let offset_point = find_offset_point(result.point, -geometric_normal);
             let scattered_ray = Ray::new(offset_point, refracted.unwrap(), ray.time);
-            Some(ScatterResult::new(scattered_ray, attenuation, pdf, true, true))
+            Some(ScatterResult::new(scattered_ray, attenuation, pdf))
         }
     }
 }
@@ -477,7 +477,7 @@ impl Volumetric {
         let scattered = Ray::new(result.point, pick_sphere_point(rng), ray.time);
         let contribution = textures[result.texture_id.index()].sample_texture(result.u, result.v, &result.point);
         let pdf = PDF::Uniform;
-        Some(ScatterResult::new(scattered, contribution, pdf, false, false))
+        Some(ScatterResult::new(scattered, contribution, pdf))
     }
 }
 
@@ -520,7 +520,7 @@ impl Plastic {
             specular_weight: fresnel,
         };
 
-        Some(ScatterResult::new(scattered_ray, Vec3A::ONE, pdf, false, false))
+        Some(ScatterResult::new(scattered_ray, Vec3A::ONE, pdf))
     }
 
     /// Compute how the Plastic material handles reflectance.

@@ -4,3 +4,8 @@ lockfile-baseline = "ignore"
 
 [registry]
 global-min-publish-age = "30 days"
+
+
+[[allow.package]]
+crate = "tobj"
+min-publish-age = "0"
