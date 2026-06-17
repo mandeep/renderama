@@ -6,8 +6,10 @@ use tobj;
 use crate::lights::Light;
 use crate::materials::{Diffuse, Emissive, Material, MaterialId, Plastic, Reflective, Refractive};
 use crate::sphere::Sphere;
-use crate::texture::{Color, ImageTexture, Texture, TextureId};
+use crate::texture::{Color, ImageTexture, Texture};
 use crate::triangle::{Triangle, TriangleMesh};
+
+use crate::tex;
 
 
 /// Load an obj file with its related mtl file.
@@ -17,9 +19,8 @@ pub fn load_obj(
     filepath: &str,
     materials: &mut Vec<Material>,
     textures: &mut Vec<Texture>,
-    material_overrides: Option<HashMap<String, (Material, Texture)>>,
+    material_overrides: Option<HashMap<String, Material>>,
     default_material: impl Into<Material>,
-    default_texture: impl Into<Texture>,
 ) -> (Vec<TriangleMesh>, Vec<Light>) {
     let base_directory = std::path::Path::new(filepath)
         .parent()
@@ -35,32 +36,28 @@ pub fn load_obj(
     let (models, obj_material_list) =
         tobj::load_obj(filepath, &load_options).expect("Failed to load OBJ");
 
-    let mut material_map: Vec<(MaterialId, TextureId)> = Vec::new();
+    let mut material_map: Vec<MaterialId> = Vec::new();
 
     let default_mat_id = MaterialId::new(materials.len() as u32);
     materials.push(default_material.into().clone());
-    let default_tex_id = TextureId::new(textures.len() as u32);
-    textures.push(default_texture.into());
 
     if let Ok(obj_materials) = obj_material_list {
         for material in obj_materials {
-            let (new_material, new_texture) = match &material_overrides {
+            let new_material = match &material_overrides {
                 Some(overrides) => {
-                    if let Some((override_material, override_texture)) = overrides.get(&material.name) {
-                        (override_material.clone(), override_texture.clone())
+                    if let Some(override_material) = overrides.get(&material.name) {
+                        override_material.clone()
                     } else{
-                        map_mtl_to_material(&material, base_directory)
+                        map_mtl_to_material(&material, textures, base_directory)
                     }
                 },
-                None => map_mtl_to_material(&material, base_directory),
+                None => map_mtl_to_material(&material, textures, base_directory),
             };
 
             let mat_id = MaterialId::new(materials.len() as u32);
             materials.push(new_material);
-            let texture_id = TextureId::new(textures.len() as u32);
-            textures.push(new_texture);
 
-            material_map.push((mat_id, texture_id));
+            material_map.push(mat_id);
         }
     }
 
@@ -70,9 +67,9 @@ pub fn load_obj(
     for model in models {
         let mesh = &model.mesh;
 
-        let (current_mat_id, current_tex_id) = match mesh.material_id {
+        let current_mat_id = match mesh.material_id {
             Some(id) if id < material_map.len() => material_map[id],
-            _ => (default_mat_id, default_tex_id),
+            _ => default_mat_id,
         };
 
         
@@ -121,22 +118,22 @@ pub fn load_obj(
             let (n0, n1, n2) = (normals[a], normals[b], normals[c]);
             let (uv0, uv1, uv2) = (uvs[a], uvs[b], uvs[c]);
 
-            let triangle = Triangle::new(v0, v1, v2, n0, n1, n2, uv0, uv1, uv2, current_mat_id, current_tex_id);
+            let triangle = Triangle::new(v0, v1, v2, n0, n1, n2, uv0, uv1, uv2, current_mat_id);
             triangles.push(triangle);
         }
 
         // currently adding a sphere light for any emissive material since it
         // seems like a decent fallback. will need to revisit if this is the best
         // approach later.
-        if let Material::Emissive(_) = &materials[current_mat_id.index()] {
-            let intensity = &textures[current_tex_id.index()]
+        if let Material::Emissive(material) = &materials[current_mat_id.index()] {
+            let intensity = &textures[material.emissive_color.index()]
                 .sample_texture(0.0, 0.0, &Vec3A::ZERO);
             let centroid = positions.iter().fold(Vec3A::ZERO, |a, &b| a + b)
                            / positions.len() as f32;
             let radius = positions.iter()
                 .map(|&p| (p - centroid).length())
                 .fold(0.0_f32, f32::max);
-            let sphere = Sphere::new(centroid, radius, current_mat_id, current_tex_id);
+            let sphere = Sphere::new(centroid, radius, current_mat_id);
             let light = Light::new(sphere, *intensity);
             lights.push(light);
         }
@@ -152,7 +149,7 @@ pub fn load_obj(
 /// References:
 /// https://en.wikipedia.org/wiki/Wavefront_.obj_file
 /// https://steamcommunity.com/sharedfiles/filedetails/?l=brazilian&id=2005695630
-fn map_mtl_to_material(material: &tobj::Material, base_directory: &std::path::Path) -> (Material, Texture) {
+fn map_mtl_to_material(material: &tobj::Material, textures: &mut Vec<Texture>, base_directory: &std::path::Path) -> Material {
     let kd = material.diffuse.unwrap_or([0.8, 0.8, 0.8]);
     let ks = material.specular.unwrap_or([0.0, 0.0, 0.0]);
     let ke = material.emissive.unwrap_or([0.0, 0.0, 0.0]);
@@ -164,14 +161,16 @@ fn map_mtl_to_material(material: &tobj::Material, base_directory: &std::path::Pa
 
     // emissive material may have any illum # so we need to handle it first
     if ke.iter().sum::<f32>() > f32::EPSILON || map_ke.is_some() {
-        let albedo: Texture = if let Some(path) = map_ke {
+        let emissive_color: Texture = if let Some(path) = map_ke {
             let full_path = base_directory.join(path);
             ImageTexture::new(full_path.to_str().unwrap(), Vec2::ONE).into()
         } else {
             Color::new(ke[0], ke[1], ke[2]).into()
         };
 
-        return (Emissive::new().into(), albedo);
+        let emissive_texture_id = tex!(textures, emissive_color);
+
+        return Emissive::new(emissive_texture_id).into();
     }
 
     // mapping Ns to a lower roughness range by using powf(13.5)
@@ -184,20 +183,22 @@ fn map_mtl_to_material(material: &tobj::Material, base_directory: &std::path::Pa
         Color::new(kd[0], kd[1], kd[2]).into()
     };
 
+    let albedo_texture_id = tex!(textures, albedo);
+
     if illum <= 1 {
-        return (Diffuse::new(roughness).into(), albedo);
+        return Diffuse::new(albedo_texture_id, roughness).into();
     }
 
     if illum == 3 {
-        let albedo = Color::new(ks[0], ks[1], ks[2]);
-        return (Reflective::new(roughness).into(), albedo.into());
+        let f0 = Color::new(ks[0], ks[1], ks[2]);
+        let f0_texture_id = tex!(textures, f0);
+        return Reflective::new(f0_texture_id, roughness).into();
     }
 
     if matches!(illum, 4..=7) || d < 0.99 {
-        let absorption = Color::new(kd[0], kd[1], kd[2]);
-        return (Refractive::new(ni).into(), absorption.into());
+        return Refractive::new(albedo_texture_id, ni).into();
     }
 
     // illum 2 or if illum is not provided, default to Plastic
-    (Plastic::new(roughness, ni).into(), albedo)
+    Plastic::new(albedo_texture_id, roughness, ni).into()
 }

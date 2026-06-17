@@ -15,6 +15,8 @@ use crate::scene::{Scene, SceneBuilder};
 use crate::texture::{Color, Texture};
 use crate::transformations::TransformedMesh;
 
+use crate::tex;
+
 
 pub fn stormtrooper_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let origin = Vec3A::new(0.25, -0.5, 5.5);
@@ -61,10 +63,10 @@ pub fn stormtrooper_scene(width: Option<usize>, height: Option<usize>) -> Scene 
     //     Plastic::new(Color::new(0.01, 0.01, 0.01), 1.0, 1.49)
     // );
 
-    let default_texture = Color::new(0.9, 0.9, 0.9);
-    let default_material = Plastic::new(0.025, 1.49);
+    let default_texture = tex!(textures, Color::new(0.9, 0.9, 0.9));
+    let default_material = Plastic::new(default_texture, 0.025, 1.49);
 
-    let (meshes, _) = io::load_obj("extras/models/stormtrooper.obj", &mut materials, &mut textures, None, default_material, default_texture);
+    let (meshes, _) = io::load_obj("extras/models/stormtrooper.obj", &mut materials, &mut textures, None, default_material);
 
     let translation = Vec3A::new(0.0, 0.0, 0.0);
     let rotation = Vec3A::new(0.0, 0.0, 0.0);

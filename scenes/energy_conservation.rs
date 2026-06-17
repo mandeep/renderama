@@ -55,15 +55,15 @@ pub fn energy_conservation_scene(width: Option<usize>, height: Option<usize>) ->
         let x_pos = start_x + (i as f32 * spacing);
 
         let tex_id = tex!(textures, Color::new(1.0, 1.0, 1.0));
-        let mat_id = mat!(materials, Reflective::new(roughness));
-        objects.push_into(Sphere::new(Vec3A::new(x_pos, 278.0, 278.0), radius, mat_id, tex_id));
+        let mat_id = mat!(materials, Reflective::new(tex_id, roughness));
+        objects.push_into(Sphere::new(Vec3A::new(x_pos, 278.0, 278.0), radius, mat_id));
     }
 
     let bvh = BVH::new(&mut objects);
 
     let light_texture = tex!(textures, Color::new(50.0, 50.0, 50.0));
-    let light_material = mat!(materials, Emissive::new());
-    let light_plane = Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 600.0, light_material, light_texture);
+    let light_material = mat!(materials, Emissive::new(light_texture));
+    let light_plane = Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 600.0, light_material);
     let light = vec![Light::new(light_plane, Vec3A::new(50.0, 50.0, 50.0))];
 
     SceneBuilder::new("Energy Conservation Test")

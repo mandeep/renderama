@@ -10,7 +10,6 @@ use crate::materials::MaterialId;
 use crate::primitive::Primitive;
 use crate::ray::Ray;
 use crate::results::HitResult;
-use crate::texture::TextureId;
 
 #[derive(Clone)]
 pub struct Triangle {
@@ -24,7 +23,6 @@ pub struct Triangle {
     uv1: Vec2,
     uv2: Vec2,
     material_id: MaterialId,
-    texture_id: TextureId,
 }
 
 #[derive(Clone)]
@@ -39,9 +37,9 @@ impl Triangle {
     pub fn new(v0: Vec3A, v1: Vec3A, v2: Vec3A,
                n0: Vec3A, n1: Vec3A, n2: Vec3A,
                uv0: Vec2, uv1: Vec2, uv2: Vec2,
-               material_id: MaterialId, texture_id: TextureId) -> Triangle {
+               material_id: MaterialId) -> Triangle {
 
-        Triangle { v0, v1, v2, n0, n1, n2, uv0, uv1, uv2, material_id, texture_id }
+        Triangle { v0, v1, v2, n0, n1, n2, uv0, uv1, uv2, material_id }
     }
 
     pub fn minimum(&self) -> Vec3A {
@@ -104,7 +102,6 @@ impl Triangle {
                             geometric_normal,
                             shading_normal,
                             self.material_id,
-                            self.texture_id,
                         )
                     )
     }
@@ -161,7 +158,7 @@ impl TriangleMesh {
         TriangleMesh { accelerator }
     }
 
-    pub fn from(filepath: &str, material_id: MaterialId, texture_id: TextureId) -> TriangleMesh {
+    pub fn from(filepath: &str, material_id: MaterialId) -> TriangleMesh {
         let load_options = tobj::LoadOptions {
             single_index: true,
             triangulate: true,
@@ -224,7 +221,7 @@ impl TriangleMesh {
                 let (n0, n1, n2) = (normals[a], normals[b], normals[c]);
                 let (uv0, uv1, uv2) = (uvs[a], uvs[b], uvs[c]);
 
-                let triangle = Triangle::new(v0, v1, v2, n0, n1, n2, uv0, uv1, uv2, material_id, texture_id);
+                let triangle = Triangle::new(v0, v1, v2, n0, n1, n2, uv0, uv1, uv2, material_id);
                 triangles.push(triangle);
             }
         }
@@ -261,7 +258,6 @@ mod tests {
             Vec3A::Z, Vec3A::Z, Vec3A::Z,
             Vec2::ZERO, Vec2::X, Vec2::Y,
             MaterialId(0),
-            TextureId(0),
         )
     }
 

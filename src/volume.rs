@@ -10,20 +10,18 @@ use crate::primitive::Primitive;
 use crate::materials::MaterialId;
 use crate::ray::Ray;
 use crate::results::HitResult;
-use crate::texture::TextureId;
 
 #[derive(Clone)]
 pub struct Volume {
     density: f32,
     boundary: Arc<Primitive>,
     material_id: MaterialId,
-    texture_id: TextureId,
 }
 
 impl Volume {
-    pub fn new(density: f32, boundary: impl Into<Primitive>, material_id: MaterialId, texture_id: TextureId) -> Volume {
+    pub fn new(density: f32, boundary: impl Into<Primitive>, material_id: MaterialId) -> Volume {
         let boundary = Arc::new(boundary.into());
-        Volume { density, boundary, material_id, texture_id }
+        Volume { density, boundary, material_id }
     }
 
     pub fn hit(&self, ray: &Ray, start_distance: f32, end_distance: f32, rng: &mut Pcg64Mcg) -> Option<HitResult> {
@@ -49,7 +47,7 @@ impl Volume {
                  // regardless of surface orientation
                 let normal = Vec3A::new(1.0, 0.0, 0.0);
                 return Some(
-                    HitResult::new(parameter, 0.0, 0.0, point, normal, normal, self.material_id, self.texture_id)
+                    HitResult::new(parameter, 0.0, 0.0, point, normal, normal, self.material_id)
                 );
             }
         }

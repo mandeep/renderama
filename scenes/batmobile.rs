@@ -48,10 +48,10 @@ pub fn batmobile_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let mut materials: Vec<Material> = Vec::new();
     let mut textures: Vec<Texture> = Vec::new();
 
-    let default_texture = Color::new(0.9, 0.9, 0.9);
-    let default_material = Plastic::new(0.01, 1.49);
+    let default_texture = tex!(textures, Color::new(0.9, 0.9, 0.9));
+    let default_material = Plastic::new(default_texture, 0.01, 1.49);
 
-    let (meshes, _) = io::load_obj("extras/models/batmobile.obj", &mut materials, &mut textures, None, default_material, default_texture);
+    let (meshes, _) = io::load_obj("extras/models/batmobile.obj", &mut materials, &mut textures, None, default_material);
 
     let translation = Vec3A::new(0.0, 0.0, 0.0);
     let rotation = Vec3A::new(0.0, 0.0, 0.0);
@@ -68,9 +68,9 @@ pub fn batmobile_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     }
 
     let grey_id = tex!(textures, Color::new(0.05, 0.05, 0.07));
-    let grey = mat!(materials, Diffuse::new(0.0));
+    let grey = mat!(materials, Diffuse::new(grey_id, 0.0));
     // floor plane
-    objects.push_into(Plane::new(Axis::XZ, Bounds2D::new(-1000.0..1000.0, -1000.0..1000.0), -0.4, grey, grey_id));
+    objects.push_into(Plane::new(Axis::XZ, Bounds2D::new(-1000.0..1000.0, -1000.0..1000.0), -0.4, grey));
 
     let bvh = BVH::new(&mut objects);
 

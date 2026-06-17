@@ -10,7 +10,7 @@ use crate::pdf::PDF;
 use crate::ray::{find_offset_point, Ray};
 use crate::results::{HitResult, ScatterResult};
 use crate::sampling::pick_sphere_point;
-use crate::texture::Texture;
+use crate::texture::{Texture, TextureId};
 
 
 #[derive(Clone, Copy)]
@@ -115,6 +115,29 @@ impl Material {
     }
 }
 
+#[derive(Clone, Copy)]
+pub struct TextureMap {
+    pub color: TextureId,
+    pub roughness: Option<TextureId>,
+    pub normal: Option<TextureId>,
+}
+
+impl TextureMap {
+    pub fn new(color: TextureId) -> Self {
+        Self { color, roughness: None, normal: None }
+    }
+
+    pub fn with_roughness(mut self, roughness: TextureId) -> Self {
+        self.roughness = Some(roughness);
+        self
+    }
+
+    pub fn with_normal(mut self, normal: TextureId) -> Self {
+        self.normal = Some(normal);
+        self
+    }
+}
+
 
 #[derive(Clone)]
 /// Diffuse material as specified by the Oren-Nayar model
@@ -126,6 +149,7 @@ impl Material {
 pub struct Diffuse {
     alpha: f32,
     beta: f32,
+    texture_map: TextureMap
 }
 
 impl Diffuse {
@@ -133,12 +157,14 @@ impl Diffuse {
     ///
     /// albedo is a Vec3A of the RGB values assigned to the material
     /// where each value is a float between 0.0 and 1.0.
-    pub fn new(sigma: f32) -> Diffuse {
+    pub fn new(albedo: TextureId, sigma: f32) -> Diffuse {
         let constant = PI + sigma * (3.0 * PI - 4.0) / 6.0;
         let alpha = 1.0 / constant;
         let beta = sigma / constant;
 
-        Diffuse { alpha, beta }
+        let texture_map = TextureMap::new(albedo);
+
+        Diffuse { alpha, beta, texture_map }
     }
 
     /// The contribution of this Diffuse material is just its albedo. The pdf is
@@ -148,7 +174,7 @@ impl Diffuse {
         // ray.direction is passed here because the integrator generates
         // an offset point itself for the Diffuse material
         let scattered = Ray::new(result.point, ray.direction, ray.time);
-        let contribution = textures[result.texture_id.index()].sample_texture(result.u, result.v, &result.point);
+        let contribution = textures[self.texture_map.color.index()].sample_texture(result.u, result.v, &result.point);
         let pdf = PDF::Cosine { uvw: OrthonormalBasis::new(&result.shading_normal) };
         Some(ScatterResult::new(scattered, contribution, pdf))
     }
@@ -274,6 +300,7 @@ fn fresnel_coefficient(cos_theta_i: f32, eta_i: f32, eta_t: f32) -> f32 {
 #[derive(Clone)]
 pub struct Reflective {
     pub roughness: f32,
+    pub texture_map: TextureMap
 }
 
 impl Reflective {
@@ -284,8 +311,9 @@ impl Reflective {
     /// for the fuzziness of the reflections due to the size of the primitive.
     ///
     /// Generally, the larger the primitive, the fuzzier the reflections will be.
-    pub fn new(roughness: f32) -> Reflective {
-        Reflective { roughness: roughness * roughness }
+    pub fn new(albedo: TextureId, roughness: f32) -> Reflective {
+        let texture_map = TextureMap::new(albedo);
+        Reflective { roughness: roughness * roughness, texture_map }
     }
 }
 
@@ -302,7 +330,7 @@ impl Reflective {
         let reflected = reflect(ray.direction, shading_normal);
         let scattered_ray = Ray::new(offset_point, reflected, ray.time);
 
-        let f0 = textures[result.texture_id.index()].sample_texture(result.u, result.v, &result.point);
+        let f0 = textures[self.texture_map.color.index()].sample_texture(result.u, result.v, &result.point);
         let cos_theta_i = (-ray.direction).dot(shading_normal).max(0.0);
         let fresnel = schlick_from_f0(cos_theta_i, f0);
 
@@ -347,7 +375,7 @@ impl Reflective {
             return Vec3A::ZERO;
         }
 
-        let f0 = textures[result.texture_id.index()].sample_texture(result.u, result.v, &result.point);
+        let f0 = textures[self.texture_map.color.index()].sample_texture(result.u, result.v, &result.point);
 
         let v_dot_h = wi.dot(h);
         let l_dot_h = wo.dot(h);
@@ -369,6 +397,7 @@ impl Reflective {
 #[derive(Clone)]
 pub struct Refractive {
     pub refractive_index: f32,
+    pub texture_map: TextureMap
 }
 
 impl Refractive {
@@ -377,8 +406,9 @@ impl Refractive {
     /// albedo is a Vec3A of the RGB values assigned to the material
     /// where each value is a float between 0.0 and 1.0.
     /// index determines how much of the light is refracted when entering the material.
-    pub fn new(index: f32) -> Refractive {
-        Refractive { refractive_index: index }
+    pub fn new(absorption: TextureId, index: f32) -> Refractive {
+        let texture_map = TextureMap::new(absorption);
+        Refractive { refractive_index: index, texture_map }
     }
 
     /// Generate the ScatterResult that tells the integrator how the Refractive
@@ -413,7 +443,7 @@ impl Refractive {
         let attenuation = if entering {
             Vec3A::ONE
         } else {
-            textures[result.texture_id.index()].sample_texture(result.u, result.v, &result.point)
+            textures[self.texture_map.color.index()].sample_texture(result.u, result.v, &result.point)
         };
 
         let pdf = PDF::Delta;
@@ -434,12 +464,14 @@ impl Refractive {
 /// Emissive material is used to determine albedo of light sources.
 /// It does not control the light source's intensity.
 #[derive(Clone)]
-pub struct Emissive {}
+pub struct Emissive {
+    pub emissive_color: TextureId
+}
 
 impl Emissive {
     /// Create a new Emissive material with the given Texture.
-    pub fn new() -> Emissive {
-        Emissive { }
+    pub fn new(emissive_color: TextureId) -> Emissive {
+        Emissive {emissive_color }
     }
 
     /// The Light type and primitives handle actual light physics so this material
@@ -452,7 +484,7 @@ impl Emissive {
     /// from the front.
     fn evaluate_emission(&self, ray: &Ray, hit: &HitResult, textures: &[Texture]) -> Vec3A {
         if hit.shading_normal.dot(ray.direction) < 0.0 {
-            textures[hit.texture_id.index()].sample_texture(hit.u, hit.v, &hit.point)
+            textures[self.emissive_color.index()].sample_texture(hit.u, hit.v, &hit.point)
         } else {
             Vec3A::ZERO
         }
@@ -464,18 +496,19 @@ impl Emissive {
 /// can also be used to simulate subsurface scattering.
 #[derive(Clone)]
 pub struct Volumetric {
+    albedo: TextureId
 }
 
 impl Volumetric {
     /// Create a new Volumetric material with the given Texture
-    pub fn new() -> Volumetric {
-        Volumetric { }
+    pub fn new(albedo: TextureId) -> Volumetric {
+        Volumetric { albedo }
     }
 
     /// Volumetric materials generate a uniform response when hit no matter the ray's direction
     fn generate_response(&self, ray: &Ray, result: &HitResult, textures: &[Texture], rng: &mut Pcg64Mcg) -> Option<ScatterResult> {
         let scattered = Ray::new(result.point, pick_sphere_point(rng), ray.time);
-        let contribution = textures[result.texture_id.index()].sample_texture(result.u, result.v, &result.point);
+        let contribution = textures[self.albedo.index()].sample_texture(result.u, result.v, &result.point);
         let pdf = PDF::Uniform;
         Some(ScatterResult::new(scattered, contribution, pdf))
     }
@@ -487,6 +520,7 @@ impl Volumetric {
 pub struct Plastic {
     pub roughness: f32,
     pub ior: f32,
+    pub texture_map: TextureMap
 }
 
 impl Plastic {
@@ -495,8 +529,9 @@ impl Plastic {
     /// albedo is the Texture to use for the material.
     /// roughness handles the amount of microfacets on the surface
     /// ior determines the refractiveness of the material
-    pub fn new(roughness: f32, ior: f32) -> Plastic {
-        Plastic { roughness: roughness * roughness, ior }
+    pub fn new(albedo: TextureId, roughness: f32, ior: f32) -> Plastic {
+        let texture_map = TextureMap::new(albedo);
+        Plastic { roughness: roughness * roughness, ior, texture_map }
     }
 
     /// Generate either a specular or diffuse response to a surface hit, dependent
@@ -553,7 +588,7 @@ impl Plastic {
         let r = (1.0 - self.ior) / (1.0 + self.ior);
         let f0 = r * r;
         let macro_fresnel = f0 + (1.0 - f0) * (1.0 - cos_i).powi(5);
-        let albedo = textures[result.texture_id.index()].sample_texture(result.u, result.v, &result.point);
+        let albedo = textures[self.texture_map.color.index()].sample_texture(result.u, result.v, &result.point);
         let diffuse = albedo * (1.0 - macro_fresnel) * cos_o / PI;
 
         specular + diffuse

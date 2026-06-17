@@ -567,7 +567,6 @@ mod tests {
     use crate::materials::MaterialId;
     use crate::ray::Ray;
     use crate::sphere::Sphere;
-    use crate::texture::TextureId;
 
     fn get_rng() -> Pcg64Mcg {
         Pcg64Mcg::seed_from_u64(0)
@@ -577,14 +576,10 @@ mod tests {
         MaterialId(0)
     }
 
-    fn get_tex() -> TextureId {
-        TextureId(0)
-    }
-
     #[test]
     fn test_bvh_single_object_hit() {
         let mut rng = get_rng();
-        let sphere = Sphere::new(Vec3A::new(0.0, 0.0, -10.0), 2.0, get_mat(), get_tex());
+        let sphere = Sphere::new(Vec3A::new(0.0, 0.0, -10.0), 2.0, get_mat());
         let mut world = vec![sphere.into()];
         let bvh = BVH::new(&mut world);
 
@@ -598,7 +593,7 @@ mod tests {
     #[test]
     fn test_bvh_single_object_miss() {
         let mut rng = get_rng();
-        let sphere = Sphere::new(Vec3A::new(0.0, 0.0, -10.0), 2.0, get_mat(), get_tex());
+        let sphere = Sphere::new(Vec3A::new(0.0, 0.0, -10.0), 2.0, get_mat());
         let mut world = vec![sphere.into()];
         let bvh = BVH::new(&mut world);
 
@@ -612,8 +607,8 @@ mod tests {
     fn test_bvh_closest_hit_priority() {
         let mut rng = get_rng();
 
-        let sphere_front = Sphere::new(Vec3A::new(0.0, 0.0, -10.0), 2.0, get_mat(), get_tex());
-        let sphere_back = Sphere::new(Vec3A::new(0.0, 0.0, -15.0), 4.0, get_mat(), get_tex());
+        let sphere_front = Sphere::new(Vec3A::new(0.0, 0.0, -10.0), 2.0, get_mat());
+        let sphere_back = Sphere::new(Vec3A::new(0.0, 0.0, -15.0), 4.0, get_mat());
 
         let mut world = vec![sphere_back.into(), sphere_front.into()];
         let bvh = BVH::new(&mut world);
@@ -628,8 +623,8 @@ mod tests {
     #[test]
     fn test_bvh_hits_anything_early_exit() {
         let mut rng = get_rng();
-        let sphere1 = Sphere::new(Vec3A::new(-10.0, 0.0, -10.0), 2.0, get_mat(), get_tex());
-        let sphere2 = Sphere::new(Vec3A::new(10.0, 0.0, -10.0), 2.0, get_mat(), get_tex());
+        let sphere1 = Sphere::new(Vec3A::new(-10.0, 0.0, -10.0), 2.0, get_mat());
+        let sphere2 = Sphere::new(Vec3A::new(10.0, 0.0, -10.0), 2.0, get_mat());
         let mut world = vec![sphere1.into(), sphere2.into()];
         let bvh = BVH::new(&mut world);
 
@@ -643,7 +638,7 @@ mod tests {
     #[test]
     fn test_bvh_distance_bounds() {
         let mut rng = get_rng();
-        let sphere = Sphere::new(Vec3A::new(0.0, 0.0, 10.0), 1.0, get_mat(), get_tex());
+        let sphere = Sphere::new(Vec3A::new(0.0, 0.0, 10.0), 1.0, get_mat());
         let mut world = vec![sphere.into()];
         let bvh = BVH::new(&mut world);
 

@@ -69,47 +69,47 @@ pub fn hyperion_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let cream_id = tex!(textures, Color::new(1.0, 0.904, 0.725));
 
 
-    let floor_idx = mat!(materials, Diffuse::new(0.0));
-    let glass_idx = mat!(materials, Refractive::new(1.5));
-    let metal_idx = mat!(materials, Reflective::new(0.2));
-    let dark_metal_idx = mat!(materials, Reflective::new(0.10));
-    let platform_idx = mat!(materials, Diffuse::new(0.0));
-    let orange_idx = mat!(materials, Plastic::new(0.15, 1.5));
-    let orange_rough_idx = mat!(materials, Plastic::new(0.25, 1.5));
-    let marble_vol_idx = mat!(materials, Volumetric::new());
-    let cricket_idx = mat!(materials, Plastic::new(0.30, 1.5));
-    let pingpong_idx = mat!(materials, Plastic::new(0.35, 1.45));
-    let white_idx = mat!(materials, Plastic::new(0.1, 1.45));
-    let cream_idx = mat!(materials, Plastic::new(1.0, 1.45));
+    let floor_idx = mat!(materials, Diffuse::new(floor_id, 0.0));
+    let glass_idx = mat!(materials, Refractive::new(glass_id, 1.5));
+    let metal_idx = mat!(materials, Reflective::new(metal_id, 0.2));
+    let dark_metal_idx = mat!(materials, Reflective::new(dark_metal_id, 0.10));
+    let platform_idx = mat!(materials, Diffuse::new(platform_id, 0.0));
+    let orange_idx = mat!(materials, Plastic::new(orange_id, 0.15, 1.5));
+    let orange_rough_idx = mat!(materials, Plastic::new(orange_rough_id, 0.25, 1.5));
+    let marble_vol_idx = mat!(materials, Volumetric::new(marble_vol_id));
+    let cricket_idx = mat!(materials, Plastic::new(cricket_id, 0.30, 1.5));
+    let pingpong_idx = mat!(materials, Plastic::new(pingpong_id, 0.35, 1.45));
+    let white_idx = mat!(materials, Plastic::new(white_id, 0.1, 1.45));
+    let cream_idx = mat!(materials, Plastic::new(cream_id, 1.0, 1.45));
 
-    let floor_plane = Plane::new(Axis::XZ, Bounds2D::new(-50.0..50.0, -50.0..50.0), 0.0, floor_idx, floor_id);
-    let platform = Rectangle::new(Vec3A::new(-3.5, 0.0, -4.0), Vec3A::new(3.5, 0.2, 0.5), platform_idx, platform_id);
-    let glass_sphere = Sphere::new(Vec3A::new(2.1, 0.60, -1.0), 0.4, glass_idx, glass_id);
-    let orange_sphere = Sphere::new(Vec3A::new(1.0, 0.55, -2.0), 0.35, orange_idx, orange_id);
-    let metal_sphere = Sphere::new(Vec3A::new(-2.25, 0.65, -1.2), 0.45, dark_metal_idx, dark_metal_id);
-    let large_marble = Sphere::new(Vec3A::new(0.35, 0.325, 0.0), 0.125, glass_idx, glass_id);
-    let small_marble = Sphere::new(Vec3A::new(-0.35, 0.30, 0.0), 0.10, glass_idx, glass_id);
-    let large_marble_volume = Volume::new(15.0, large_marble.clone(), marble_vol_idx, marble_vol_id);
-    let small_marble_volume = Volume::new(15.0, small_marble.clone(), marble_vol_idx, marble_vol_id);
-    let orange_sphere_small = Sphere::new(Vec3A::new(-1.5, 0.35, -2.0), 0.15, orange_rough_idx, orange_rough_id);
+    let floor_plane = Plane::new(Axis::XZ, Bounds2D::new(-50.0..50.0, -50.0..50.0), 0.0, floor_idx);
+    let platform = Rectangle::new(Vec3A::new(-3.5, 0.0, -4.0), Vec3A::new(3.5, 0.2, 0.5), platform_idx);
+    let glass_sphere = Sphere::new(Vec3A::new(2.1, 0.60, -1.0), 0.4, glass_idx);
+    let orange_sphere = Sphere::new(Vec3A::new(1.0, 0.55, -2.0), 0.35, orange_idx);
+    let metal_sphere = Sphere::new(Vec3A::new(-2.25, 0.65, -1.2), 0.45, dark_metal_idx);
+    let large_marble = Sphere::new(Vec3A::new(0.35, 0.325, 0.0), 0.125, glass_idx);
+    let small_marble = Sphere::new(Vec3A::new(-0.35, 0.30, 0.0), 0.10, glass_idx);
+    let large_marble_volume = Volume::new(15.0, large_marble.clone(), marble_vol_idx);
+    let small_marble_volume = Volume::new(15.0, small_marble.clone(), marble_vol_idx);
+    let orange_sphere_small = Sphere::new(Vec3A::new(-1.5, 0.35, -2.0), 0.15, orange_rough_idx);
 
-    let ring_mesh = Arc::new(TriangleMesh::from("extras/models/ring.obj", metal_idx, metal_id));
+    let ring_mesh = Arc::new(TriangleMesh::from("extras/models/ring.obj", metal_idx));
     let ring_left = TransformedMesh::new(Vec3A::new(-0.5, 0.20, -1.25), Vec3A::new(0.0, 0.0, 0.0), Vec3A::new(0.15, 0.17, 0.15), Primitive::TriangleMesh(Arc::clone(&ring_mesh)));
     let ring_center = TransformedMesh::new(Vec3A::new(0.20, 0.20, -0.80), Vec3A::new(0.0, 45.0, 0.0), Vec3A::new(0.15, 0.17, 0.15), Primitive::TriangleMesh(Arc::clone(&ring_mesh)));
     let ring_right = TransformedMesh::new(Vec3A::new(0.375, 0.25, -1.0), Vec3A::new(-15.0, 0.0, -10.0), Vec3A::new(0.15, 0.17, 0.15), Primitive::TriangleMesh(Arc::clone(&ring_mesh)));
 
-    let cricket_ball_mesh = TriangleMesh::from("extras/models/cricket_ball_no_stitch.obj", cricket_idx, cricket_id);
-    let cricket_ball_stitch_bottom_mesh = TriangleMesh::from("extras/models/cricket_ball_stitch_bottom.obj", cream_idx, cream_id);
-    let cricket_ball_stitch_top_mesh = TriangleMesh::from("extras/models/cricket_ball_stitch_top.obj", cream_idx, cream_id);
+    let cricket_ball_mesh = TriangleMesh::from("extras/models/cricket_ball_no_stitch.obj", cricket_idx);
+    let cricket_ball_stitch_bottom_mesh = TriangleMesh::from("extras/models/cricket_ball_stitch_bottom.obj", cream_idx);
+    let cricket_ball_stitch_top_mesh = TriangleMesh::from("extras/models/cricket_ball_stitch_top.obj", cream_idx);
     let (translation, rotation, scale) = (Vec3A::new(-0.6, 0.70, -2.5), Vec3A::new(-30.0, 0.0, 15.0), Vec3A::splat(1.75));
     let cricked_ball = TransformedMesh::new(translation, rotation, scale, cricket_ball_mesh);
     let cricked_ball_stitch_bottom = TransformedMesh::new(translation, rotation, scale, cricket_ball_stitch_bottom_mesh);
     let cricked_ball_stitch_top = TransformedMesh::new(translation, rotation, scale, cricket_ball_stitch_top_mesh);
 
-    let pingpong_mesh = TriangleMesh::from("extras/models/pingpong.obj", pingpong_idx, pingpong_id);
+    let pingpong_mesh = TriangleMesh::from("extras/models/pingpong.obj", pingpong_idx);
     let pingpong_sphere = TransformedMesh::new(Vec3A::new(-1.25, 0.475, -0.3), Vec3A::new(0.0, 0.0, 90.0), Vec3A::splat(0.28), pingpong_mesh);
 
-    let golf_ball_mesh = TriangleMesh::from("extras/models/golf_ball.obj", white_idx, white_id);
+    let golf_ball_mesh = TriangleMesh::from("extras/models/golf_ball.obj", white_idx);
     let golf_ball = TransformedMesh::new(Vec3A::new(1.70, 0.67, -0.35), Vec3A::new(-30.0, 0.0, 15.0), Vec3A::splat(0.23), golf_ball_mesh);
 
 

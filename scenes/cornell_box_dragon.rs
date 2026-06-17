@@ -51,27 +51,27 @@ pub fn cornell_box_dragon_scene(width: Option<usize>, height: Option<usize>) -> 
     let green = tex!(textures, Color::new(0.12, 0.45, 0.15));
     let white = tex!(textures, Color::new(0.73, 0.73, 0.73));
     let light_id = tex!(textures, Color::new(20.0, 20.0, 20.0));
-    let red_id = mat!(materials, Diffuse::new(roughness));
-    let green_id = mat!(materials, Diffuse::new(roughness));
-    let white_id = mat!(materials, Diffuse::new(roughness));
-    let light_material = mat!(materials, Emissive::new());
+    let red_id = mat!(materials, Diffuse::new(red, roughness));
+    let green_id = mat!(materials, Diffuse::new(green, roughness));
+    let white_id = mat!(materials, Diffuse::new(white, roughness));
+    let light_material = mat!(materials, Emissive::new(light_id));
 
     // add the walls of the cornell box to the world
-    objects.push_into(Plane::new(Axis::YZ, Bounds2D::new(0.0..555.0, 0.0..555.0), 555.0, red_id, red).into_reversed());
-    objects.push_into(Plane::new(Axis::YZ, Bounds2D::new(0.0..555.0, 0.0..555.0), 0.0, green_id, green));
-    objects.push_into(Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 554.0, light_material, light_id).into_reversed());
-    objects.push_into(Plane::new(Axis::XZ, Bounds2D::new(0.0..555.0, 0.0..555.0), 555.0, white_id, white).into_reversed());
-    objects.push_into(Plane::new(Axis::XZ, Bounds2D::new(0.0..555.0, 0.0..555.0), 0.0, white_id, white));
-    objects.push_into(Plane::new(Axis::XY, Bounds2D::new(0.0..555.0, 0.0..555.0), 555.0, white_id, white).into_reversed());
+    objects.push_into(Plane::new(Axis::YZ, Bounds2D::new(0.0..555.0, 0.0..555.0), 555.0, red_id).into_reversed());
+    objects.push_into(Plane::new(Axis::YZ, Bounds2D::new(0.0..555.0, 0.0..555.0), 0.0, green_id));
+    objects.push_into(Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 554.0, light_material).into_reversed());
+    objects.push_into(Plane::new(Axis::XZ, Bounds2D::new(0.0..555.0, 0.0..555.0), 555.0, white_id).into_reversed());
+    objects.push_into(Plane::new(Axis::XZ, Bounds2D::new(0.0..555.0, 0.0..555.0), 0.0, white_id));
+    objects.push_into(Plane::new(Axis::XY, Bounds2D::new(0.0..555.0, 0.0..555.0), 555.0, white_id).into_reversed());
 
     let dragon_texture = tex!(textures, Color::new(0.0, 0.06, 0.18));
-    let dragon_material = mat!(materials, Plastic::new(0.15, 1.5));
-    let dragon = TriangleMesh::from("extras/models/dragon.obj", dragon_material, dragon_texture);
+    let dragon_material = mat!(materials, Plastic::new(dragon_texture, 0.15, 1.5));
+    let dragon = TriangleMesh::from("extras/models/dragon.obj", dragon_material);
     objects.push_into(TransformedMesh::new(Vec3A::new(283.0, 114.0, 268.0), Vec3A::new(0.0, -60.0, 0.0), Vec3A::splat(425.0), dragon));
 
     let bvh = BVH::new(&mut objects);
 
-    let light_shape = Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 554.0, white_id, white);
+    let light_shape = Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 554.0, white_id);
     let light = vec![Light::new(light_shape, Vec3A::new(25.0, 25.0, 25.0))];
 
     SceneBuilder::new("Cornell Box with Dragon")

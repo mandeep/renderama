@@ -122,7 +122,6 @@ impl_from_boxed_for_primitive! {
 #[cfg(test)]
 mod tests {
     use crate::materials::MaterialId;
-    use crate::texture::TextureId;
     use super::*;
     use glam::Vec3A;
     use rand::{rng, SeedableRng};
@@ -132,7 +131,7 @@ mod tests {
     fn test_primitive_from_impl() {
         let mut rng = Pcg64Mcg::from_rng(&mut rng());
         let material = MaterialId::new(0);
-        let sphere: Sphere = Sphere::new(Vec3A::ZERO, 1.0, material, TextureId(0));
+        let sphere: Sphere = Sphere::new(Vec3A::ZERO, 1.0, material);
         let primitive: Primitive = sphere.into();
         let ray = Ray::new(Vec3A::new(0.0, 0.0, -1.0), Vec3A::new(0.0, 0.0, 1.0), 0.0);
         let hit_result = primitive.hit(&ray, 0.0, f32::INFINITY, &mut rng);

@@ -49,27 +49,27 @@ pub fn three_spheres_scene(width: Option<usize>, height: Option<usize>) -> Scene
     let mut textures: Vec<Texture> = Vec::new();
 
     let refr_id = tex!(textures, Color::new(1.0, 1.0, 1.0));
-    let refr_idx = mat!(materials, Refractive::new(1.5));
+    let refr_idx = mat!(materials, Refractive::new(refr_id, 1.5));
     let vol_id = tex!(textures, Color::new(0.0, 0.4, 0.9));
-    let vol_idx = mat!(materials, Volumetric::new());
+    let vol_idx = mat!(materials, Volumetric::new(vol_id));
 
-    let boundary = Sphere::new(Vec3A::new(0.6, 0.0, -1.0), 0.5, refr_idx, refr_id);
+    let boundary = Sphere::new(Vec3A::new(0.6, 0.0, -1.0), 0.5, refr_idx);
     let cloned_boundary = boundary.clone();
 
     objects.push_into(boundary);
-    objects.push_into(Volume::new(4.0, cloned_boundary, vol_idx, vol_id));
+    objects.push_into(Volume::new(4.0, cloned_boundary, vol_idx));
 
     let metal_id = tex!(textures, Color::new(0.93, 0.93, 0.93));
-    let metal_idx = mat!(materials, Reflective::new(0.0));
-    objects.push_into(Sphere::new(Vec3A::new(-0.6, 0.0, -1.0), 0.5, metal_idx, metal_id));
+    let metal_idx = mat!(materials, Reflective::new(metal_id, 0.0));
+    objects.push_into(Sphere::new(Vec3A::new(-0.6, 0.0, -1.0), 0.5, metal_idx));
 
     let plastic_id = tex!(textures, Color::new(0.34, 0.57, 1.0));
-    let plastic_idx = mat!(materials, Plastic::new(0.10, 1.5));
-    objects.push_into(Sphere::new(Vec3A::new(0.0, 0.0, -2.0), 0.5, plastic_idx, plastic_id));
+    let plastic_idx = mat!(materials, Plastic::new(plastic_id, 0.10, 1.5));
+    objects.push_into(Sphere::new(Vec3A::new(0.0, 0.0, -2.0), 0.5, plastic_idx));
 
     let floor_id = tex!(textures, Color::new(0.5, 0.5, 0.52));
-    let floor_idx = mat!(materials, Diffuse::new(0.0));
-    objects.push_into(Sphere::new(Vec3A::new(0.0, -100.5, -1.0), 100.0, floor_idx, floor_id));
+    let floor_idx = mat!(materials, Diffuse::new(floor_id, 0.0));
+    objects.push_into(Sphere::new(Vec3A::new(0.0, -100.5, -1.0), 100.0, floor_idx));
 
     let bvh = BVH::new(&mut objects);
 

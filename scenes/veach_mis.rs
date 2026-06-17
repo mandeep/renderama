@@ -48,17 +48,17 @@ pub fn veach_mis_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let mut textures: Vec<Texture> = Vec::new();
 
     let grey_id = tex!(textures, Color::new(0.99, 0.99, 0.99));
-    let grey = mat!(materials, Diffuse::new(0.0));
+    let grey = mat!(materials, Diffuse::new(grey_id, 0.0));
 
     // floor
-    objects.push_into(Plane::new(Axis::XZ, Bounds2D::new(-20.0..20.0, -5.0..25.0), 0.0, grey, grey_id));
+    objects.push_into(Plane::new(Axis::XZ, Bounds2D::new(-20.0..20.0, -5.0..25.0), 0.0, grey));
 
     // back wall
-    objects.push_into(Plane::new(Axis::XY, Bounds2D::new(-20.0..20.0, 0.0..15.0), 12.0, grey, grey_id).into_reversed());
+    objects.push_into(Plane::new(Axis::XY, Bounds2D::new(-20.0..20.0, 0.0..15.0), 12.0, grey).into_reversed());
 
     // side walls, not sure if they do anything in this scene
-    objects.push_into(Plane::new(Axis::YZ, Bounds2D::new( 0.0..15.0, -5.0..25.0),-20.0, grey, grey_id));
-    objects.push_into(Plane::new(Axis::YZ, Bounds2D::new( 0.0..15.0, -5.0..25.0), 20.0, grey, grey_id).into_reversed());
+    objects.push_into(Plane::new(Axis::YZ, Bounds2D::new( 0.0..15.0, -5.0..25.0),-20.0, grey));
+    objects.push_into(Plane::new(Axis::YZ, Bounds2D::new( 0.0..15.0, -5.0..25.0), 20.0, grey).into_reversed());
 
     let silver = tex!(textures, Color::new(0.75, 0.75, 0.75));
 
@@ -83,11 +83,11 @@ pub fn veach_mis_scene(width: Option<usize>, height: Option<usize>) -> Scene {
 
         let center_pos = cursor + (direction * (plate_length * 0.5));
 
-        let mat_id = mat!(materials, Reflective::new(fuzz));
+        let mat_id = mat!(materials, Reflective::new(silver, fuzz));
         let rot = Vec3A::new(tilt_deg, 0.0, 0.0);
         let base = Rectangle::new(
             Vec3A::new(-2.25, 0.1, -visual_length / 2.0),
-            Vec3A::new(2.25, 0.125, visual_length / 2.0), mat_id, silver
+            Vec3A::new(2.25, 0.125, visual_length / 2.0), mat_id
         );
 
         objects.push_into(TransformedMesh::new(center_pos, rot, Vec3A::ONE, base));
@@ -110,17 +110,17 @@ pub fn veach_mis_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     ];
     for (x, r, _) in sphere_lights {
         let tex = tex!(textures, Color::new(1.0, 1.0, 1.0));
-        let mat = mat!(materials, Emissive::new());
+        let mat = mat!(materials, Emissive::new(tex));
         objects.push_into(Sphere::new(
             Vec3A::new(x, light_y, light_z),
-            r, mat, tex
+            r, mat
         ));
     }
 
     // added two plane lights on each side wall just in case
     let fill_intensity = 0.005;
     let fill_tex = tex!(textures, Color::new(fill_intensity, fill_intensity, fill_intensity));
-    let fill_mat = mat!(materials, Emissive::new());
+    let fill_mat = mat!(materials, Emissive::new(fill_tex));
     let fill_color = Vec3A::splat(fill_intensity);
 
     let left_light_primitive = Plane::new(
@@ -128,7 +128,6 @@ pub fn veach_mis_scene(width: Option<usize>, height: Option<usize>) -> Scene {
         Bounds2D::new(0.0..10.0, -5.0..20.0), 
         -19.5,
         fill_mat,
-        fill_tex
     );
     objects.push_into(left_light_primitive.clone());
 
@@ -137,7 +136,6 @@ pub fn veach_mis_scene(width: Option<usize>, height: Option<usize>) -> Scene {
         Bounds2D::new(0.0..10.0, -5.0..20.0), 
         19.5,
         fill_mat,
-        fill_tex
     ).into_reversed();
     objects.push_into(right_light_primitive.clone());
 
@@ -145,7 +143,7 @@ pub fn veach_mis_scene(width: Option<usize>, height: Option<usize>) -> Scene {
 
     let mut light_sources: Vec<Light> = sphere_lights.iter().map(|&(x, r, intensity)| {
         Light::new(
-            Sphere::new(Vec3A::new(x, light_y, light_z), r, grey, grey_id),
+            Sphere::new(Vec3A::new(x, light_y, light_z), r, grey),
             Vec3A::splat(intensity),
         )
     }).collect();

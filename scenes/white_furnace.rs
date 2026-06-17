@@ -54,9 +54,9 @@ pub fn white_furnace_scene(width: Option<usize>, height: Option<usize>) -> Scene
         let x_pos = start_x + (i as f32 * spacing);
 
         let tex_id = tex!(textures, Color::new(1.0, 1.0, 1.0));
-        let mat_id = mat!(materials, Reflective::new(roughness));
+        let mat_id = mat!(materials, Reflective::new(tex_id, roughness));
         
-        objects.push_into(Sphere::new(Vec3A::new(x_pos, 278.0, 278.0), radius, mat_id, tex_id));
+        objects.push_into(Sphere::new(Vec3A::new(x_pos, 278.0, 278.0), radius, mat_id));
     }
 
     let bvh = BVH::new(&mut objects);

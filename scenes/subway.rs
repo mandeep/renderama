@@ -14,6 +14,8 @@ use crate::scene::{Scene, SceneBuilder};
 use crate::texture::{Color, Texture};
 use crate::transformations::TransformedMesh;
 
+use crate::tex;
+
 
 pub fn subway_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let origin = Vec3A::new(-0.25, 1.0, 4.0);
@@ -46,10 +48,10 @@ pub fn subway_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let mut materials: Vec<Material> = Vec::new();
     let mut textures: Vec<Texture> = Vec::new();
 
-    let default_texture = Color::new(0.9, 0.9, 0.9);
-    let default_material = Plastic::new(0.025, 1.49);
+    let default_texture = tex!(textures, Color::new(0.9, 0.9, 0.9));
+    let default_material = Plastic::new(default_texture, 0.025, 1.49);
 
-    let (meshes, lights) = io::load_obj("extras/models/subway/subway.obj", &mut materials, &mut textures, None, default_material, default_texture);
+    let (meshes, lights) = io::load_obj("extras/models/subway/subway.obj", &mut materials, &mut textures, None, default_material);
 
     let translation = Vec3A::new(0.0, 0.0, 0.0);
     let rotation = Vec3A::new(0.0, 0.0, 0.0);
