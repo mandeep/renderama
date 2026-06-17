@@ -74,11 +74,11 @@ pub fn hyperion_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let metal_idx = mat!(materials, Reflective::new(metal_id, 0.2));
     let dark_metal_idx = mat!(materials, Reflective::new(dark_metal_id, 0.10));
     let platform_idx = mat!(materials, Diffuse::new(platform_id, 0.0));
-    let orange_idx = mat!(materials, Plastic::new(orange_id, 0.15, 1.5));
+    let orange_idx = mat!(materials, Plastic::new(orange_id, 0.25, 1.5));
     let orange_rough_idx = mat!(materials, Plastic::new(orange_rough_id, 0.25, 1.5));
     let marble_vol_idx = mat!(materials, Volumetric::new(marble_vol_id));
     let cricket_idx = mat!(materials, Plastic::new(cricket_id, 0.30, 1.5));
-    let pingpong_idx = mat!(materials, Plastic::new(pingpong_id, 0.35, 1.45));
+    let pingpong_idx = mat!(materials, Plastic::new(pingpong_id, 0.60, 1.45).with_subsurface(0.40));
     let white_idx = mat!(materials, Plastic::new(white_id, 0.1, 1.45));
     let cream_idx = mat!(materials, Plastic::new(cream_id, 1.0, 1.45));
 

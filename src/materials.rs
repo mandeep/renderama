@@ -520,6 +520,7 @@ impl Volumetric {
 pub struct Plastic {
     pub roughness: f32,
     pub ior: f32,
+    pub subsurface: f32,
     pub texture_map: TextureMap
 }
 
@@ -531,7 +532,13 @@ impl Plastic {
     /// ior determines the refractiveness of the material
     pub fn new(albedo: TextureId, roughness: f32, ior: f32) -> Plastic {
         let texture_map = TextureMap::new(albedo);
-        Plastic { roughness: roughness * roughness, ior, texture_map }
+        let subsurface = 0.0;
+        Plastic { roughness: roughness * roughness, ior, subsurface, texture_map }
+    }
+
+    pub fn with_subsurface(mut self, subsurface: f32) -> Self {
+        self.subsurface = subsurface;
+        self
     }
 
     /// Generate either a specular or diffuse response to a surface hit, dependent
@@ -585,11 +592,29 @@ impl Plastic {
         let g = ggx_height_correlated_geometry(cos_i, cos_o, self.roughness);
         let specular = Vec3A::splat(micro_fresnel * d * g / (4.0 * cos_i));
 
-        let r = (1.0 - self.ior) / (1.0 + self.ior);
-        let f0 = r * r;
-        let macro_fresnel = f0 + (1.0 - f0) * (1.0 - cos_i).powi(5);
+        // the macro fresnel term creates too dark shadows at grazing angles so
+        // we use Burley's roughness model to account for that with a highlight.
+        // Reference: pg 14 of Burley's 2012 Disney BRDF paper
+        // https://media.disneyanimation.com/uploads/production/publication_asset/48/asset/s2012_pbs_disney_brdf_notes_v3.pdf
+        let f_d90 = 0.5 + 2.0 * self.roughness * v_dot_h * v_dot_h;
+
+        let f_i = 1.0 + (f_d90 - 1.0) * (1.0 - cos_i).powi(5);
+        let f_o = 1.0 + (f_d90 - 1.0) * (1.0 - cos_o).powi(5);
+        let base_diffuse = f_i * f_o;
+
+        // since we added the Disney BRDF diffuse term might as well
+        // add the subsurface approximation term as well.
+        // Later will need to implement a proper subsurface scattering random walk.
+        // Reference: https://cseweb.ucsd.edu/~tzli/cse272/wi2023/homework1.pdf
+        let f_ss90 = self.roughness * v_dot_h * v_dot_h;
+        let ss_i = 1.0 + (f_ss90 - 1.0) * (1.0 - cos_i).powi(5);
+        let ss_o = 1.0 + (f_ss90 - 1.0) * (1.0 - cos_o).powi(5);
+        let subsurface_approximation = 1.25 * (ss_i * ss_o * (1.0 / (cos_i + cos_o) - 0.5) + 0.5);
+
+        let blended_diffuse = (1.0 - self.subsurface) * base_diffuse + self.subsurface * subsurface_approximation;
+
         let albedo = textures[self.texture_map.color.index()].sample_texture(result.u, result.v, &result.point);
-        let diffuse = albedo * (1.0 - macro_fresnel) * cos_o / PI;
+        let diffuse = albedo * (blended_diffuse * cos_o / PI);
 
         specular + diffuse
     }
