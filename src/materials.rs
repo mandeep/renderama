@@ -105,7 +105,7 @@ impl Material {
     /// Compute the manner in which the material reflects/absorbs light
     pub fn compute_reflectance(&self, ray: &Ray, scattered: &Ray, hit: &HitResult, textures: &[Texture]) -> Vec3A {
         match self {
-            Material::Diffuse(m) => m.compute_reflectance(ray, hit, scattered),
+            Material::Diffuse(m) => m.compute_reflectance(ray, scattered, hit),
             Material::Emissive(_) => Vec3A::ZERO,
             Material::Plastic(m) => m.compute_reflectance(ray, scattered, hit, textures),
             Material::Reflective(m) => m.compute_reflectance(ray, scattered, hit, textures),
@@ -187,14 +187,14 @@ impl Diffuse {
     /// https://mimosa-pudica.net/improved-oren-nayar.html
     ///
     /// https://developer.blender.org/diffusion/C/browse/master/src/kernel/closure/bsdf_oren_nayar.h
-    fn compute_reflectance(&self, wo: &Ray, result: &HitResult, wi: &Ray) -> Vec3A {
-        let l = wi.direction;
-        let v = -wo.direction;
+    fn compute_reflectance(&self, ray: &Ray, scattered: &Ray, result: &HitResult) -> Vec3A {
+        let wi = -ray.direction;
+        let wo = scattered.direction;
         let n = result.shading_normal;
 
-        let nl = n.dot(l).max(0.0);
-        let nv = n.dot(v).max(0.0);
-        let lv = l.dot(v);
+        let nl = n.dot(wo).max(0.0);
+        let nv = n.dot(wi).max(0.0);
+        let lv = wo.dot(wi);
 
         let s = lv - nl * nv;
         let t = if s > 0.0 { nl.max(nv) } else { 1.0 };
