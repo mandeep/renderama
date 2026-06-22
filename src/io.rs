@@ -4,9 +4,9 @@ use glam::{Vec2, Vec3A};
 use tobj;
 
 use crate::lights::Light;
-use crate::materials::{Diffuse, Emissive, Material, MaterialId, Plastic, Reflective, Refractive};
+use crate::materials::{Diffuse, Emissive, Material, MaterialId, Plastic, Reflective, Refractive, TextureMap};
 use crate::sphere::Sphere;
-use crate::texture::{Color, ImageTexture, Texture};
+use crate::texture::{Color, ImageTexture, ImageTextureMap, Texture};
 use crate::triangle::{Triangle, TriangleMesh};
 
 use crate::tex;
@@ -158,6 +158,9 @@ fn map_mtl_to_material(material: &tobj::Material, textures: &mut Vec<Texture>, b
     let d  = material.dissolve.unwrap_or(1.0);
     let illum = material.illumination_model.unwrap_or(2);
     let map_ke = material.unknown_param.get("map_Ke");
+    let map_bump = &material.normal_texture;
+    let map_ns = &material.shininess_texture;
+    let map_pm = material.unknown_param.get("map_Pm");
 
     // emissive material may have any illum # so we need to handle it first
     if ke.iter().sum::<f32>() > f32::EPSILON || map_ke.is_some() {
@@ -199,6 +202,32 @@ fn map_mtl_to_material(material: &tobj::Material, textures: &mut Vec<Texture>, b
         return Refractive::new(albedo_texture_id, ni).into();
     }
 
+    let mut texture_map = TextureMap::new(albedo_texture_id);
+
+    if map_bump.is_some() {
+        let normal_path = map_bump.as_ref().unwrap();
+        let full_path = base_directory.join(normal_path);
+        let normal_map_texture: Texture = ImageTextureMap::new(full_path.to_str().unwrap(), Vec2::ONE).into();
+        let normal_map_id = tex!(textures, normal_map_texture);
+        texture_map = texture_map.with_normal(normal_map_id);
+    }
+
+    if map_ns.is_some() {
+        let roughness_path = map_ns.as_ref().unwrap();
+        let full_path = base_directory.join(roughness_path);
+        let roughness_map_texture: Texture = ImageTextureMap::new(full_path.to_str().unwrap(), Vec2::ONE).into();
+        let roughness_map_id = tex!(textures, roughness_map_texture);
+        texture_map = texture_map.with_roughness(roughness_map_id);
+    }
+
+    if map_pm.is_some() {
+        let metallic_roughness_path = map_pm.as_ref().unwrap();
+        let full_path = base_directory.join(metallic_roughness_path);
+        let metallic_roughness_map_texture: Texture = ImageTextureMap::new(full_path.to_str().unwrap(), Vec2::ONE).into();
+        let metallic_roughness_map_id = tex!(textures, metallic_roughness_map_texture);
+        texture_map = texture_map.with_metallic_roughness(metallic_roughness_map_id);
+    }
+
     // illum 2 or if illum is not provided, default to Plastic
-    Plastic::new(albedo_texture_id, roughness, ni).into()
+    Plastic::new(albedo_texture_id, roughness, ni).with_textures(texture_map).into()
 }

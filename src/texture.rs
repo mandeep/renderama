@@ -36,6 +36,7 @@ macro_rules! tex {
 pub enum Texture {
     Color(Color),
     ImageTexture(ImageTexture),
+    ImageTextureMap(ImageTextureMap)
 }
 
 impl Texture {
@@ -43,6 +44,7 @@ impl Texture {
         match self {
             Texture::Color(texture) => texture.sample_texture(),
             Texture::ImageTexture(texture) => texture.sample_texture(u, v, w),
+            Texture::ImageTextureMap(texture) => texture.sample_texture(u, v, w),
         }
     }
 }
@@ -61,7 +63,8 @@ macro_rules! impl_from_texture {
 
 impl_from_texture!(
     Color => Color,
-    ImageTexture => ImageTexture
+    ImageTexture => ImageTexture,
+    ImageTextureMap => ImageTextureMap
 );
 
 #[derive(Copy, Clone)]
@@ -122,10 +125,48 @@ impl ImageTexture {
         let linear_r = (r as f32 / 255.0).powf(2.2);
         let linear_g = (g as f32 / 255.0).powf(2.2);
         let linear_b = (b as f32 / 255.0).powf(2.2);
-
         Vec3A::new(linear_r, linear_g, linear_b)
+
     }
 }
+
+#[derive(Clone)]
+/// ImageTexture is a struct for textures loaded from file
+pub struct ImageTextureMap {
+    im: image::RgbImage,
+    scale: Vec2,
+}
+
+/// Create a new texture from the given data and image dimensions
+impl ImageTextureMap {
+    pub fn new(filename: &str, scale: Vec2) -> ImageTextureMap {
+        let img = image::open(filename).unwrap_or_else(|e| {
+            eprintln!("Failed to open texture '{}': {}", filename, e);
+            DynamicImage::new_rgb8(1, 1)
+        });
+        ImageTextureMap { im: img.to_rgb8(), scale }
+    }
+
+    /// Determine which pixel to retrieve from the image by
+    /// converting pixel coordinates to UV coordinates
+    pub fn sample_texture(&self, u: f32, v: f32, _p: &Vec3A) -> Vec3A {
+        // need to use rem_euclid to properly wrap negative uv coordinates
+        // https://doc.rust-lang.org/std/primitive.f32.html#method.rem_euclid
+        let inverted_v = 1.0 - v;
+        let u_scaled = (u * self.scale.x).rem_euclid(1.0);
+        let v_scaled = (inverted_v * self.scale.y).rem_euclid(1.0);
+
+        let i = 0.0f32.max((u_scaled * self.im.width() as f32).min(self.im.width() as f32 - 1.0));
+        let j = 0.0f32.max((v_scaled * self.im.height() as f32).min(self.im.height() as f32 - 1.0));
+
+        let image::Rgb([r, g, b]) = *self.im.get_pixel(i as u32, j as u32);
+
+        Vec3A::new(r as f32 / 255.0, g as f32 / 255.0, b as f32 / 255.0)
+
+    }
+}
+
+
 
 #[cfg(test)]
 mod tests {

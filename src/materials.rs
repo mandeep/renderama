@@ -83,7 +83,7 @@ impl Material {
         match self {
             Material::Diffuse(m) => m.generate_response(ray, hit, textures),
             Material::Emissive(m) => m.generate_response(ray, hit, rng),
-            Material::Plastic(m) => m.generate_response(ray, hit),
+            Material::Plastic(m) => m.generate_response(ray, hit, textures),
             Material::Reflective(m) => m.generate_response(ray, hit, textures),
             Material::Refractive(m) => m.generate_response(ray, hit, textures, rng),
             Material::Volumetric(m) => m.generate_response(ray, hit, textures, rng),
@@ -119,16 +119,28 @@ impl Material {
 pub struct TextureMap {
     pub color: TextureId,
     pub roughness: Option<TextureId>,
+    pub metallic: Option<TextureId>,
     pub normal: Option<TextureId>,
+    pub metallic_roughness: Option<TextureId>
 }
 
 impl TextureMap {
     pub fn new(color: TextureId) -> Self {
-        Self { color, roughness: None, normal: None }
+        Self { color, roughness: None, metallic: None, normal: None, metallic_roughness: None}
     }
 
     pub fn with_roughness(mut self, roughness: TextureId) -> Self {
         self.roughness = Some(roughness);
+        self
+    }
+
+    pub fn with_metallic(mut self, metallic: TextureId) -> Self {
+        self.metallic = Some(metallic);
+        self
+    }
+
+    pub fn with_metallic_roughness(mut self, metallic_roughness: TextureId) -> Self {
+        self.metallic_roughness = Some(metallic_roughness);
         self
     }
 
@@ -533,7 +545,7 @@ impl Plastic {
     pub fn new(albedo: TextureId, roughness: f32, ior: f32) -> Plastic {
         let texture_map = TextureMap::new(albedo);
         let subsurface = 0.0;
-        Plastic { roughness: roughness * roughness, ior, subsurface, texture_map }
+        Plastic { roughness, ior, subsurface, texture_map }
     }
 
     pub fn with_subsurface(mut self, subsurface: f32) -> Self {
@@ -541,10 +553,44 @@ impl Plastic {
         self
     }
 
+    pub fn with_textures(mut self, texture_map: TextureMap) -> Self {
+        self.texture_map = texture_map;
+        self
+    }
+
+    /// Evaluates the normal map to perturb the shading normal.
+    ///
+    /// This might work for now, but later will need to add tangent
+    /// and bitangent vectors to primitives' hit results.
+    fn get_mapped_normal(&self, result: &HitResult, shading_normal: Vec3A, textures: &[Texture]) -> Vec3A {
+        if let Some(normal_map) = self.texture_map.normal {
+            let normal_map_texture = &textures[normal_map.index()];
+            let normap_map_value = normal_map_texture.sample_texture(result.u, result.v, &result.point);
+
+            let tangent_normal = normap_map_value * 2.0 - Vec3A::ONE;
+
+            let uvw = OrthonormalBasis::new(&result.shading_normal);
+            uvw.local(&tangent_normal).normalize()
+        } else {
+            shading_normal
+        }
+    }
+
     /// Generate either a specular or diffuse response to a surface hit, dependent
     /// on a random reflect probability.
-    fn generate_response(&self, ray: &Ray, result: &HitResult) -> Option<ScatterResult> {
-        let (geometric_normal, shading_normal) = result.face_forward_normals(&ray.direction);
+    fn generate_response(&self, ray: &Ray, result: &HitResult, textures: &[Texture]) -> Option<ScatterResult> {
+        let (geometric_normal, base_shading_normal) = result.face_forward_normals(&ray.direction);
+        let shading_normal = self.get_mapped_normal(result, base_shading_normal, textures);
+
+        let roughness = if let Some(roughness_id) = self.texture_map.roughness {
+            let roughness_map_texture = &textures[roughness_id.index()];
+            let roughness_map_value = roughness_map_texture.sample_texture(result.u, result.v, &result.point);
+            roughness_map_value.y // handling metallic roughness map
+        } else {
+            self.roughness
+        };
+
+        let alpha = (roughness * roughness).max(0.0);
 
         let cos_theta_i = (-ray.direction).dot(result.shading_normal).max(0.0);
         let r = (1.0 - self.ior) / (1.0 + self.ior);
@@ -558,7 +604,7 @@ impl Plastic {
             uvw: OrthonormalBasis::new(&shading_normal),
             wi: -ray.direction,
             normal: shading_normal,
-            alpha: self.roughness,
+            alpha,
             specular_weight: fresnel,
         };
 
@@ -569,7 +615,7 @@ impl Plastic {
     fn compute_reflectance(&self, ray: &Ray, scattered: &Ray, result: &HitResult, textures: &[Texture]) -> Vec3A {
         let wi = -ray.direction;
         let wo = scattered.direction;
-        let n = result.shading_normal;
+        let n = self.get_mapped_normal(result, result.shading_normal, textures);
 
         let cos_i = n.dot(wi);
         let cos_o = n.dot(wo);
@@ -588,15 +634,29 @@ impl Plastic {
         let v_dot_h = wi.dot(h).max(0.0);
         let micro_fresnel = schlick_from_ior(v_dot_h, self.ior);
 
-        let d = ggx_distribution(cos_h, self.roughness);
-        let g = ggx_height_correlated_geometry(cos_i, cos_o, self.roughness);
+        let roughness = if let Some(roughness_id) = self.texture_map.roughness {
+            let roughness_map_texture = &textures[roughness_id.index()];
+            let roughness_map_value = roughness_map_texture.sample_texture(result.u, result.v, &result.point);
+            roughness_map_value.x
+        } else if let Some(roughness_id) = self.texture_map.metallic_roughness {
+            let roughness_map_texture = &textures[roughness_id.index()];
+            let roughness_map_value = roughness_map_texture.sample_texture(result.u, result.v, &result.point);
+            roughness_map_value.y // handling metallic roughness map
+        } else {
+            self.roughness
+        };
+
+        let alpha = (roughness * roughness).max(0.0);
+
+        let d = ggx_distribution(cos_h, alpha);
+        let g = ggx_height_correlated_geometry(cos_i, cos_o, alpha);
         let specular = Vec3A::splat(micro_fresnel * d * g / (4.0 * cos_i));
 
         // the macro fresnel term creates too dark shadows at grazing angles so
         // we use Burley's roughness model to account for that with a highlight.
         // Reference: pg 14 of Burley's 2012 Disney BRDF paper
         // https://media.disneyanimation.com/uploads/production/publication_asset/48/asset/s2012_pbs_disney_brdf_notes_v3.pdf
-        let f_d90 = 0.5 + 2.0 * self.roughness * v_dot_h * v_dot_h;
+        let f_d90 = 0.5 + 2.0 * alpha * v_dot_h * v_dot_h;
 
         let f_i = 1.0 + (f_d90 - 1.0) * (1.0 - cos_i).powi(5);
         let f_o = 1.0 + (f_d90 - 1.0) * (1.0 - cos_o).powi(5);
@@ -606,7 +666,7 @@ impl Plastic {
         // add the subsurface approximation term as well.
         // Later will need to implement a proper subsurface scattering random walk.
         // Reference: https://cseweb.ucsd.edu/~tzli/cse272/wi2023/homework1.pdf
-        let f_ss90 = self.roughness * v_dot_h * v_dot_h;
+        let f_ss90 = alpha * v_dot_h * v_dot_h;
         let ss_i = 1.0 + (f_ss90 - 1.0) * (1.0 - cos_i).powi(5);
         let ss_o = 1.0 + (f_ss90 - 1.0) * (1.0 - cos_o).powi(5);
         let subsurface_approximation = 1.25 * (ss_i * ss_o * (1.0 / (cos_i + cos_o) - 0.5) + 0.5);
