@@ -38,5 +38,15 @@ anoopjadhav, https://sketchfab.com/anoopjadhav
 https://sketchfab.com/3d-models/pokeball-loader-0066d4c4e8a0487592c785c4688b2e71
 CC-BY 4.0
 
+Gameboy Classic
+Bram Verheyen, https://sketchfab.com/BramVerheyen
+https://sketchfab.com/3d-models/gameboy-classic-854c46e14ce24779ad64ae74cb9b9089
+CC BY-NC 4.0
+
+Honda S800
+Yakpower, https://sketchfab.com/Alexios_Apokaukos
+https://sketchfab.com/3d-models/honda-s800-fa6c6113f1e34d9baaff80b5b586a25d
+CC-BY 4.0
+
 The Stanford 3D Scanning Repository
 https://graphics.stanford.edu/data/3Dscanrep/

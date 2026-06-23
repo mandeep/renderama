@@ -19,6 +19,8 @@ RENDER_SCENES = [
     ("cornell_box_uv", 128, (512, 512)),
     ("dalek", 64, (512, 512)),
     ("energy_conservation", 64, (2048, 512)),
+    ("gameboy", 64, (512, 512)),
+    ("honda", 64, (960, 540)),
     ("hyperion", 128, (960, 540)),
     ("random_spheres", 128, (1024, 512)),
     ("spheres_in_box", 128, (512, 512)),

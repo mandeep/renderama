@@ -1,0 +1,382 @@
+# Blender 5.1.1 MTL File: 'None'
+# www.blender.org
+
+newmtl EXT_GRILLE
+Ns 100.000130
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 3
+map_Kd EXT_GRILLE_baseColor.png
+
+newmtl EXT_badges
+Ns 1000.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 3
+
+newmtl EXT_badges_plate
+Ns 1000.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 3
+map_Kd EXT_badges_plate_baseColor.png
+
+newmtl EXT_headlight_glass
+Ns 511.291870
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd EXT_headlight_glass_baseColor.png
+
+newmtl EXT_hubcaps
+Ns 1000.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 3
+map_Kd EXT_hubcaps_baseColor.png
+
+newmtl EXT_paint
+Ns 847.450806
+Ka 0.104545 0.104545 0.104545
+Kd 0.568452 0.000000 0.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 3
+
+newmtl EXT_rim_plastic
+Ns 200.000381
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 3
+map_Kd EXT_hubcaps_baseColor.png
+
+newmtl EXT_rubber
+Ns 9.885500
+Ka 1.000000 1.000000 1.000000
+Kd 0.000000 0.000000 0.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+
+newmtl FLAT_TOP_FABRIC_MAT
+Ns 0.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd FLAT_TOP_FABRIC_MAT_baseColor.png
+map_Pm FLAT_TOP_FABRIC_MAT_metallicRoughness.png
+map_Bump FLAT_TOP_FABRIC_MAT_normal.png
+
+newmtl INT_GOLD_mat
+Ns 500.000305
+Ka 0.472727 0.472727 0.472727
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+illum 3
+map_Kd INT_GOLD_mat_baseColor.png
+map_d INT_GOLD_mat_baseColor.png
+
+newmtl INT_LEATHER_mat
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.000000 0.000000 0.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Pm INT_LEATHER_mat_metallicRoughness.png
+map_Bump INT_LEATHER_mat_normal.png
+
+newmtl INT_SEATBELTS
+Ns 1000.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 3
+map_Kd INT_SEATBELTS_baseColor.png
+
+newmtl INT_aluminium
+Ns 1000.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 3
+map_Kd INT_aluminium_baseColor.png
+
+newmtl INT_black_paint
+Ns 443.935272
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 3
+map_Kd INT_black_paint_baseColor.png
+
+newmtl INT_carpet_border
+Ns 296.349121
+Ka 1.000000 1.000000 1.000000
+Kd 0.049995 0.049995 0.049995
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 3
+
+newmtl INT_carpet_mat
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd INT_carpet_mat_baseColor.png
+map_Bump INT_carpet_mat_normal.png
+map_Pm INT_carpet_mat_metallicRoughness.png
+
+newmtl INT_chrome
+Ns 550.000244
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 3
+map_Kd INT_chrome_baseColor.png
+
+newmtl INT_dashboard
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.067254 0.067254 0.067254
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Pm INT_dashboard_metallicRoughness.png
+
+newmtl INT_dashpanel
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd INT_dashpanel_baseColor.png
+map_Pm INT_dashpanel_metallicRoughness.png
+
+newmtl INT_decals_BL
+Ns 600.000488
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 3
+map_Kd INT_lights_baseColor.png
+
+newmtl INT_lights
+Ns 1000.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 3
+map_Kd INT_lights_baseColor.png
+
+newmtl INT_plastic
+Ns 0.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd INT_plastic_baseColor.png
+
+newmtl INT_windshield
+Ns 1000.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+illum 4
+map_Kd INT_windshield_baseColor.png
+map_d INT_windshield_baseColor.png
+
+newmtl STW_wood
+Ns 159.999985
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd STW_wood_baseColor.png
+
+newmtl chrome_mat
+Ns 828.272888
+Ka 1.000000 1.000000 1.000000
+Kd 0.717716 0.689157 0.689157
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 3
+
+newmtl exhausts_stock
+Ns 200.000381
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 3
+map_Kd exhausts_stock_baseColor.png
+
+newmtl hedlights_ON
+Ns 0.000000
+Ka 1.000000 1.000000 1.000000
+Kd 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 3
+
+newmtl image_gauge_faces
+Ns 0.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+illum 2
+map_Kd image_gauge_faces_baseColor.png
+map_d image_gauge_faces_baseColor.png
+
+newmtl kchain_gloss
+Ns 200.000381
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 3
+map_Kd kchain_leather_baseColor.png
+
+newmtl kchain_leather
+Ns 500.000305
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 3
+map_Kd kchain_leather_baseColor.png
+
+newmtl kchain_plastic
+Ns 300.000488
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 3
+map_Kd kchain_leather_baseColor.png
+
+newmtl mirrors_mat
+Ns 1000.000000
+Ka 1.000000 1.000000 1.000000
+Kd 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 3
+
+newmtl plastic_reflective
+Ns 799.999634
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+illum 3
+map_Kd plastic_reflective_baseColor.png
+map_d plastic_reflective_baseColor.png
+
+newmtl rimsblur
+Ns 1000.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+illum 3
+map_Kd rimsblur_baseColor.png
+map_d rimsblur_baseColor.png
+
+newmtl sidesteps
+Ns 600.000488
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 3
+map_Kd sidesteps_baseColor.png
+
+newmtl tires_mat
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd tires_mat_baseColor.png
+map_Bump tires_mat_normal.png
+map_Pm tires_mat_metallicRoughness.png
+
+newmtl underbody
+Ns 0.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 3
+map_Kd underbody_baseColor.png

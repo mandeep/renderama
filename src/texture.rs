@@ -40,11 +40,11 @@ pub enum Texture {
 }
 
 impl Texture {
-    pub fn sample_texture(&self, u: f32, v: f32, w: &Vec3A) -> Vec3A {
+    pub fn sample_texture(&self, u: f32, v: f32) -> Vec3A {
         match self {
             Texture::Color(texture) => texture.sample_texture(),
-            Texture::ImageTexture(texture) => texture.sample_texture(u, v, w),
-            Texture::ImageTextureMap(texture) => texture.sample_texture(u, v, w),
+            Texture::ImageTexture(texture) => texture.sample_texture(u, v),
+            Texture::ImageTextureMap(texture) => texture.sample_texture(u, v),
         }
     }
 }
@@ -108,7 +108,7 @@ impl ImageTexture {
 
     /// Determine which pixel to retrieve from the image by
     /// converting pixel coordinates to UV coordinates
-    pub fn sample_texture(&self, u: f32, v: f32, _p: &Vec3A) -> Vec3A {
+    pub fn sample_texture(&self, u: f32, v: f32) -> Vec3A {
         // need to use rem_euclid to properly wrap negative uv coordinates
         // https://doc.rust-lang.org/std/primitive.f32.html#method.rem_euclid
         let inverted_v = 1.0 - v;
@@ -149,7 +149,7 @@ impl ImageTextureMap {
 
     /// Determine which pixel to retrieve from the image by
     /// converting pixel coordinates to UV coordinates
-    pub fn sample_texture(&self, u: f32, v: f32, _p: &Vec3A) -> Vec3A {
+    pub fn sample_texture(&self, u: f32, v: f32) -> Vec3A {
         // need to use rem_euclid to properly wrap negative uv coordinates
         // https://doc.rust-lang.org/std/primitive.f32.html#method.rem_euclid
         let inverted_v = 1.0 - v;
@@ -165,7 +165,6 @@ impl ImageTextureMap {
 
     }
 }
-
 
 
 #[cfg(test)]

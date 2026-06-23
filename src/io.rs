@@ -126,8 +126,7 @@ pub fn load_obj(
         // seems like a decent fallback. will need to revisit if this is the best
         // approach later.
         if let Material::Emissive(material) = &materials[current_mat_id.index()] {
-            let intensity = &textures[material.emissive_color.index()]
-                .sample_texture(0.0, 0.0, &Vec3A::ZERO);
+            let intensity = &textures[material.emissive_color.index()].sample_texture(0.0, 0.0);
             let centroid = positions.iter().fold(Vec3A::ZERO, |a, &b| a + b)
                            / positions.len() as f32;
             let radius = positions.iter()
@@ -149,9 +148,10 @@ pub fn load_obj(
 /// References:
 /// https://en.wikipedia.org/wiki/Wavefront_.obj_file
 /// https://steamcommunity.com/sharedfiles/filedetails/?l=brazilian&id=2005695630
+/// https://docs.omniverse.nvidia.com/usd/latest/technical_reference/conceptual_data_mapping/obj-usd-concept-mapping.html
 fn map_mtl_to_material(material: &tobj::Material, textures: &mut Vec<Texture>, base_directory: &std::path::Path) -> Material {
     let kd = material.diffuse.unwrap_or([0.8, 0.8, 0.8]);
-    let ks = material.specular.unwrap_or([0.0, 0.0, 0.0]);
+    let _ks = material.specular.unwrap_or([0.0, 0.0, 0.0]);
     let ke = material.emissive.unwrap_or([0.0, 0.0, 0.0]);
     let ns = material.shininess.unwrap_or(0.0);
     let ni = material.optical_density.unwrap_or(1.5);
@@ -166,6 +166,7 @@ fn map_mtl_to_material(material: &tobj::Material, textures: &mut Vec<Texture>, b
     if ke.iter().sum::<f32>() > f32::EPSILON || map_ke.is_some() {
         let emissive_color: Texture = if let Some(path) = map_ke {
             let full_path = base_directory.join(path);
+            // emissive texture map should be converted from srgb to linear
             ImageTexture::new(full_path.to_str().unwrap(), Vec2::ONE).into()
         } else {
             Color::new(ke[0], ke[1], ke[2]).into()
@@ -187,20 +188,6 @@ fn map_mtl_to_material(material: &tobj::Material, textures: &mut Vec<Texture>, b
     };
 
     let albedo_texture_id = tex!(textures, albedo);
-
-    if illum <= 1 {
-        return Diffuse::new(albedo_texture_id, roughness).into();
-    }
-
-    if illum == 3 {
-        let f0 = Color::new(ks[0], ks[1], ks[2]);
-        let f0_texture_id = tex!(textures, f0);
-        return Reflective::new(f0_texture_id, roughness).into();
-    }
-
-    if matches!(illum, 4..=7) || d < 0.99 {
-        return Refractive::new(albedo_texture_id, ni).into();
-    }
 
     let mut texture_map = TextureMap::new(albedo_texture_id);
 
@@ -226,6 +213,18 @@ fn map_mtl_to_material(material: &tobj::Material, textures: &mut Vec<Texture>, b
         let metallic_roughness_map_texture: Texture = ImageTextureMap::new(full_path.to_str().unwrap(), Vec2::ONE).into();
         let metallic_roughness_map_id = tex!(textures, metallic_roughness_map_texture);
         texture_map = texture_map.with_metallic_roughness(metallic_roughness_map_id);
+    }
+
+    if illum <= 1 {
+        return Diffuse::new(albedo_texture_id, roughness).into();
+    }
+
+    if illum == 3 {
+        return Reflective::new(albedo_texture_id, roughness).into();
+    }
+
+    if matches!(illum, 4..=7) || d < 0.99 {
+        return Refractive::new(albedo_texture_id, ni).into();
     }
 
     // illum 2 or if illum is not provided, default to Plastic

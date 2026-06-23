@@ -45,6 +45,17 @@ pub fn linear_to_srgb(linear_f32: f32) -> u8 {
     clamp_rgb(gamma_corrected * 255.0) as u8
 }
 
+/// Convert from sRGB color space to linear color space
+///
+/// May be necessary for MTL files that list their colors
+/// in sRGB color space.
+pub fn srgb_to_linear(color: f32) -> f32 {
+    if color <= 0.04045 {
+        color / 12.92
+    } else {
+        ((color + 0.055) / 1.055).powf(2.4)
+    }
+}
 
 /// Check if a computed color contains any NaNs or infinites
 pub fn de_nan(color: &Vec3A) -> Vec3A {
