@@ -114,7 +114,7 @@ pub fn render_beauty(mut ray: Ray, scene: &Scene, rng: &mut Pcg64Mcg) -> Vec3A {
         let material = &scene.materials[hit_result.material_id.index()];
 
         color += evaluate_emission(
-            &ray, &hit_result, &material, &scene.textures, &previous_bounce, &scene.lights, &throughput
+            &ray, &hit_result, &material, &scene.textures, &previous_bounce, &scene.lights, &throughput, rng
         );
 
         let Some(scatter_result) = material.generate_response(&ray, &hit_result, &scene.textures, rng) else { break };
@@ -198,6 +198,7 @@ fn evaluate_emission(
     previous_bounce: &PreviousBounce,
     lights: &[Light],
     throughput: &Vec3A,
+    rng: &mut Pcg64Mcg
 ) -> Vec3A {
     let mut color = Vec3A::ZERO;
 
@@ -208,11 +209,14 @@ fn evaluate_emission(
                 color += throughput * emission;
             }
             PreviousBounce::Diffuse(previous_weight) => {
+                // currently iterating through every light and summing their sampling weights,
+                // instead the hit result should carry the light_id of the hit and use
+                // its sampling weight. this would be O(1) vs current complexity of O(n).
                 let light_weight: f32 = lights.iter()
-                        .map(|light| light.evaluate_sampling_weight(ray))
+                        .map(|light| light.evaluate_sampling_weight(ray, rng))
                         .sum();
-                    let weight = power_heuristic(*previous_weight, light_weight);
-                    color += throughput * weight * emission;
+                let weight = power_heuristic(*previous_weight, light_weight);
+                color += throughput * weight * emission;
             }
         }
     }
@@ -252,7 +256,7 @@ fn evaluate_direct_lighting(
         let end_distance = light_source.calculate_distance_from(light_distance);
 
         if !scene.accelerator.hits_anything(&shadow_ray, 1e-3, end_distance, rng) {
-            let light_weight = light_source.evaluate_sampling_weight(&shadow_ray);
+            let light_weight = light_source.evaluate_sampling_weight(&shadow_ray, rng);
             if light_weight > 1e-7 {
                 let reflectance = material.compute_reflectance(&ray, &shadow_ray, &hit_result, &scene.textures);
                 let material_weight = scatter_result.sampling_strategy.calculate_probability(light_direction);

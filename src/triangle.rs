@@ -11,7 +11,7 @@ use crate::primitive::Primitive;
 use crate::ray::Ray;
 use crate::results::HitResult;
 
-#[derive(Clone)]
+#[derive(Copy, Clone)]
 pub struct Triangle {
     v0: Vec3A,
     v1: Vec3A,
@@ -48,6 +48,14 @@ impl Triangle {
 
     pub fn maximum(&self) -> Vec3A {
         self.v0.max(self.v1.max(self.v2))
+    }
+
+    pub fn area(&self) -> f32 {
+        0.5 * (self.v1 - self.v0).cross(self.v2 - self.v0).length()
+    }
+
+    pub fn interpolate_position(&self, point: Vec3A) -> Vec3A {
+        point.x * self.v0 + point.y * self.v1 + point.z * self.v2
     }
 
     /// Determine whether or not a ray hits the triangle

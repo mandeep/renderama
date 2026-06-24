@@ -95,8 +95,7 @@ pub fn hyperion_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let ring_right = TransformedMesh::new(Vec3A::new(0.375, 0.25, -1.0), Vec3A::new(-15.0, 0.0, -10.0), Vec3A::new(0.15, 0.17, 0.15), Primitive::TriangleMesh(Arc::clone(&ring_mesh)));
 
     let (translation, rotation, scale) = (Vec3A::new(-0.6, 0.65, -2.5), Vec3A::new(-30.0, 0.0, 15.0), Vec3A::splat(0.25));
-    let default_material = Diffuse::new(white_id, 1.0);
-    let (meshes, _) = load_obj("extras/models/pokeball.obj", &mut materials, &mut textures, None, default_material);
+    let (meshes, _) = load_obj("extras/models/pokeball.obj", &mut materials, &mut textures);
     for mesh in meshes {
         let transformed_mesh = TransformedMesh::new(translation, rotation, scale, mesh);
         objects.push_into(transformed_mesh);

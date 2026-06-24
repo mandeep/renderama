@@ -2,7 +2,6 @@
 [![Random Spheres on Ground with Clouds](random_spheres_clouds.png)](random_spheres_clouds.png)
 [![Three Spheres](three_spheres.png)](three_spheres.png)
 [![Spheres in a Box with Fog](spheres_in_box.png)](spheres_in_box.png)
-[![Subway](subway.png)](subway.png)
 [![Cornell Box](cornell_box_uv.png)](cornell_box_uv.png)
 [![Cornell Box with Dragon model](cornell_box_dragon.png)](cornell_box_dragon.png)
 [![Cornell Box with Bunny model](cornell_box_bunny.png)](cornell_box_bunny.png)

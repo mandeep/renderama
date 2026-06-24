@@ -7,14 +7,11 @@ use crate::camera::Camera;
 use crate::environment::EnvironmentMap;
 use crate::extensions::PushInto;
 use crate::io;
-use crate::materials::{Material, Plastic};
+use crate::materials::Material;
 use crate::primitive::Primitive;
 use crate::scene::{Scene, SceneBuilder};
-use crate::texture::{Color, Texture};
+use crate::texture::Texture;
 use crate::transformations::TransformedMesh;
-
-use crate::tex;
-
 
 pub fn dalek_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let origin = Vec3A::new(-2.0, 2.5, 3.0);
@@ -44,10 +41,7 @@ pub fn dalek_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let mut materials: Vec<Material> = Vec::new();
     let mut textures: Vec<Texture> = Vec::new();
 
-    let default_texture = tex!(textures, Color::new(1.0, 0.0, 0.0));
-    let default_material = Plastic::new(default_texture, 1.0, 1.49);
-
-    let (meshes, lights) = io::load_obj("extras/models/dalek_sec.obj", &mut materials, &mut textures, None, default_material);
+    let (meshes, _) = io::load_obj("extras/models/dalek_sec.obj", &mut materials, &mut textures);
 
     for mesh in meshes {
         let transformed = TransformedMesh::from(mesh);
@@ -63,7 +57,6 @@ pub fn dalek_scene(width: Option<usize>, height: Option<usize>) -> Scene {
         .with_camera(camera)
         .with_materials(materials, textures)
         .with_environment(environment)
-        .with_lights(lights)
         .build()
         .expect("Failed to build Dalek Sec scene")
 }

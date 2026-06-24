@@ -3,24 +3,60 @@ use std::collections::HashMap;
 use glam::{Vec2, Vec3A};
 use tobj;
 
-use crate::lights::Light;
+use crate::lights::{MeshLight, Light};
 use crate::materials::{Diffuse, Emissive, Material, MaterialId, Plastic, Reflective, Refractive, TextureMap};
-use crate::sphere::Sphere;
 use crate::texture::{Color, ImageTexture, ImageTextureMap, Texture};
 use crate::triangle::{Triangle, TriangleMesh};
 
 use crate::tex;
 
+/// Options to be used for load_obj so that we can keep the API clean
+pub struct LoadObjOptions {
+    pub emissive_scale: f32,
+    pub material_overrides: Option<HashMap<String, Material>>,
+    pub default_material: Option<Material>,
+}
+
+impl LoadObjOptions {
+    pub fn new() -> LoadObjOptions {
+        LoadObjOptions::default()
+    }
+
+    pub fn with_emissive_scale(mut self, scale: f32) -> Self {
+        self.emissive_scale = scale;
+        self
+    }
+
+    pub fn with_overrides(mut self, overrides: Option<HashMap<String, Material>>) -> Self {
+        self.material_overrides = overrides;
+        self
+    }
+
+    pub fn with_material(mut self, material: Option<Material>) -> Self {
+        self.default_material = material;
+        self
+    }
+}
+
+impl Default for LoadObjOptions {
+    fn default() -> LoadObjOptions {
+        LoadObjOptions { emissive_scale: 1.0, material_overrides: None, default_material: None}
+    }
+}
+
+/// Load an obj file with default options.
+pub fn load_obj(filepath: &str, materials: &mut Vec<Material>, textures: &mut Vec<Texture>) -> (Vec<TriangleMesh>, Vec<Light>) {
+    load_obj_with_options(filepath, materials, textures, LoadObjOptions::default())
+}
 
 /// Load an obj file with its related mtl file.
 ///
 /// Moved the following code from the TriangleMesh::from method.
-pub fn load_obj(
+pub fn load_obj_with_options(
     filepath: &str,
     materials: &mut Vec<Material>,
     textures: &mut Vec<Texture>,
-    material_overrides: Option<HashMap<String, Material>>,
-    default_material: impl Into<Material>,
+    options: LoadObjOptions,
 ) -> (Vec<TriangleMesh>, Vec<Light>) {
     let base_directory = std::path::Path::new(filepath)
         .parent()
@@ -38,12 +74,16 @@ pub fn load_obj(
 
     let mut material_map: Vec<MaterialId> = Vec::new();
 
-    let default_mat_id = MaterialId::new(materials.len() as u32);
-    materials.push(default_material.into().clone());
+    let default_material_id = MaterialId::new(materials.len() as u32);
+    let default_material = options.default_material.unwrap_or({
+        let texture_id = tex!(textures, Color::new(0.8, 0.8, 0.8));
+        Diffuse::new(texture_id, 1.0).into()
+    });
+    materials.push(default_material);
 
     if let Ok(obj_materials) = obj_material_list {
         for material in obj_materials {
-            let new_material = match &material_overrides {
+            let new_material = match &options.material_overrides {
                 Some(overrides) => {
                     if let Some(override_material) = overrides.get(&material.name) {
                         override_material.clone()
@@ -56,7 +96,6 @@ pub fn load_obj(
 
             let mat_id = MaterialId::new(materials.len() as u32);
             materials.push(new_material);
-
             material_map.push(mat_id);
         }
     }
@@ -67,12 +106,11 @@ pub fn load_obj(
     for model in models {
         let mesh = &model.mesh;
 
-        let current_mat_id = match mesh.material_id {
+        let current_material_id = match mesh.material_id {
             Some(id) if id < material_map.len() => material_map[id],
-            _ => default_mat_id,
+            _ => default_material_id,
         };
 
-        
         let positions: Vec<Vec3A> = mesh.positions
                                         .chunks(3)
                                         .map(|i| Vec3A::new(i[0], i[1], i[2]))
@@ -110,6 +148,8 @@ pub fn load_obj(
         };
 
         let mut triangles: Vec<Triangle> = Vec::with_capacity(mesh.indices.len() / 3);
+        let mut light_triangles: Vec<Triangle> = Vec::new();
+
         for i in 0..mesh.indices.len() / 3 {
             let (a, b, c) = (mesh.indices[3 * i] as usize,
                                 mesh.indices[3 * i + 1] as usize,
@@ -118,23 +158,22 @@ pub fn load_obj(
             let (n0, n1, n2) = (normals[a], normals[b], normals[c]);
             let (uv0, uv1, uv2) = (uvs[a], uvs[b], uvs[c]);
 
-            let triangle = Triangle::new(v0, v1, v2, n0, n1, n2, uv0, uv1, uv2, current_mat_id);
+            let triangle = Triangle::new(v0, v1, v2, n0, n1, n2, uv0, uv1, uv2, current_material_id);
+
+            if matches!(&materials[current_material_id.index()], Material::Emissive(_)) {
+                light_triangles.push(triangle);
+            }
+
             triangles.push(triangle);
         }
 
-        // currently adding a sphere light for any emissive material since it
-        // seems like a decent fallback. will need to revisit if this is the best
-        // approach later.
-        if let Material::Emissive(material) = &materials[current_mat_id.index()] {
-            let intensity = &textures[material.emissive_color.index()].sample_texture(0.0, 0.0);
-            let centroid = positions.iter().fold(Vec3A::ZERO, |a, &b| a + b)
-                           / positions.len() as f32;
-            let radius = positions.iter()
-                .map(|&p| (p - centroid).length())
-                .fold(0.0_f32, f32::max);
-            let sphere = Sphere::new(centroid, radius, current_mat_id);
-            let light = Light::new(sphere, *intensity);
-            lights.push(light);
+        if let Material::Emissive(material) = &materials[current_material_id.index()] {
+            if !light_triangles.is_empty() {
+                let emissive_scale = options.emissive_scale;
+                let intensity = textures[material.emissive_color.index()].sample_texture(0.5, 0.5) * emissive_scale;
+                let mesh_light = MeshLight::new(light_triangles);
+                lights.push(Light::new(mesh_light, intensity));
+            }
         }
 
         meshes.push(TriangleMesh::new(triangles));
@@ -178,6 +217,14 @@ fn map_mtl_to_material(material: &tobj::Material, textures: &mut Vec<Texture>, b
     }
 
     // mapping Ns to a lower roughness range by using powf(13.5)
+    // 0	1.0
+    // 10	0.873
+    // 25	0.711
+    // 50	0.500
+    // 100	0.241
+    // 150	0.112
+    // 200	0.049
+    // 300	0.008
     let roughness = (1.0 - ns / 1000.0).powf(13.5).clamp(0.025, 1.0);
 
     let albedo: Texture = if let Some(path) = &material.diffuse_texture {

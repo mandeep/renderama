@@ -7,8 +7,8 @@ use crate::bvh::BVH;
 use crate::camera::Camera;
 use crate::environment::EnvironmentMap;
 use crate::extensions::PushInto;
-use crate::io;
-use crate::materials::{Material, Diffuse, Plastic};
+use crate::io::load_obj;
+use crate::materials::{Material, Diffuse};
 use crate::plane::{Axis, Bounds2D, Plane};
 use crate::primitive::Primitive;
 use crate::scene::{Scene, SceneBuilder};
@@ -48,10 +48,7 @@ pub fn batmobile_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let mut materials: Vec<Material> = Vec::new();
     let mut textures: Vec<Texture> = Vec::new();
 
-    let default_texture = tex!(textures, Color::new(0.9, 0.9, 0.9));
-    let default_material = Plastic::new(default_texture, 0.01, 1.49);
-
-    let (meshes, _) = io::load_obj("extras/models/batmobile.obj", &mut materials, &mut textures, None, default_material);
+    let (meshes, _) = load_obj("extras/models/batmobile.obj", &mut materials, &mut textures);
 
     let translation = Vec3A::new(0.0, 0.0, 0.0);
     let rotation = Vec3A::new(0.0, 0.0, 0.0);

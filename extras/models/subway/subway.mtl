@@ -20,6 +20,7 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.500000
 d 1.000000
 illum 2
+map_Pm Door__0_metallicRoughness.png
 
 newmtl bench
 Ns 250.000000
@@ -30,7 +31,8 @@ Ni 1.500000
 d 1.000000
 illum 2
 map_Kd bench_baseColor.png
-map_Bump -bm 1.000000 bench_normal.png
+map_Bump bench_normal.png
+map_Pm bench_metallicRoughness.png
 
 newmtl bench_under
 Ns 250.000000
@@ -73,7 +75,7 @@ d 1.000000
 illum 2
 
 newmtl floor
-Ns 250.000000
+Ns 100.000000
 Ka 1.000000 1.000000 1.000000
 Ks 0.500000 0.500000 0.500000
 Ke 0.000000 0.000000 0.000000
@@ -97,7 +99,7 @@ Ns 1000.000000
 Ka 1.000000 1.000000 1.000000
 Kd 1.000000 1.000000 1.000000
 Ks 0.500000 0.500000 0.500000
-Ke 1.0 1.0 1.000000
+Ke 1.000000 1.000000 1.000000
 Ni 1.500000
 d 1.000000
 illum 2
@@ -151,4 +153,5 @@ Ni 1.500000
 d 1.000000
 illum 2
 map_Kd walls_baseColor.png
-map_Bump -bm 1.000000 walls_normal.png
+map_Bump walls_normal.png
+map_Pm walls_metallicRoughness.png

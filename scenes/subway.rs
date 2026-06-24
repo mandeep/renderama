@@ -7,15 +7,12 @@ use crate::bvh::BVH;
 use crate::camera::Camera;
 use crate::environment::EnvironmentMap;
 use crate::extensions::PushInto;
-use crate::io;
-use crate::materials::{Material, Plastic};
+use crate::io::{LoadObjOptions, load_obj_with_options};
+use crate::materials::Material;
 use crate::primitive::Primitive;
 use crate::scene::{Scene, SceneBuilder};
-use crate::texture::{Color, Texture};
+use crate::texture::Texture;
 use crate::transformations::TransformedMesh;
-
-use crate::tex;
-
 
 pub fn subway_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let origin = Vec3A::new(-0.25, 1.0, 4.0);
@@ -23,12 +20,9 @@ pub fn subway_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let view = Vec3A::new(0.0, 1.0, 0.0);
     let (aspect_width, aspect_height) = (width.unwrap_or(1920) as f32, height.unwrap_or(1080) as f32);
     let sensor_height = 24.0;
-    let old_fov = 22.0;
-    let fov_radians = old_fov * std::f32::consts::PI / 180.0;
-    let focal_length = (sensor_height / 2.0) / (fov_radians / 2.0).tan();
-    let old_aperture = 0.01;
+    let focal_length = 61.73; // 61.73 is the calculation from the old 22.0 fov prior to camera change
     let world_scale = 0.001;
-    let f_stop = (focal_length * world_scale) / old_aperture;
+    let f_stop = 8.0;
     let focus_distance = (lookat - origin).length();
 
     let camera = Camera::new(
@@ -48,10 +42,8 @@ pub fn subway_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let mut materials: Vec<Material> = Vec::new();
     let mut textures: Vec<Texture> = Vec::new();
 
-    let default_texture = tex!(textures, Color::new(0.9, 0.9, 0.9));
-    let default_material = Plastic::new(default_texture, 0.025, 1.49);
-
-    let (meshes, lights) = io::load_obj("extras/models/subway/subway.obj", &mut materials, &mut textures, None, default_material);
+    let obj_options = LoadObjOptions::new().with_emissive_scale(10.0);
+    let (meshes, lights) = load_obj_with_options("extras/models/subway/subway.obj", &mut materials, &mut textures, obj_options);
 
     let translation = Vec3A::new(0.0, 0.0, 0.0);
     let rotation = Vec3A::new(0.0, 0.0, 0.0);

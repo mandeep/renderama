@@ -121,6 +121,30 @@ pub fn uniform_sample_cone(cos_theta_max: f32, rng: &mut Pcg64Mcg) -> Vec3A {
     Vec3A::new(sin_theta * cos_phi, sin_theta * sin_phi, cos_theta)
 }
 
+/// Sample barycentric coordinates uniformly over a triangle.
+///
+/// Returns weights (b0, b1, b2) such that
+/// the sampled point = b0 * v0 + b1 * v1 + b2 * v2.
+///
+/// References:
+/// https://pbr-book.org/4ed/Shapes/Triangle_Meshes#SampleUniformTriangle
+pub fn uniform_sample_triangle(rng: &mut Pcg64Mcg) -> Vec3A {
+    let r1 = rng.random::<f32>();
+    let r2 = rng.random::<f32>();
+
+    let (b0, b1) = if r1 < r2 {
+        let b0 = r1 / 2.0;
+        let b1 = r2 - b0;
+        (b0, b1)
+    } else {
+        let b1 = r2 / 2.0;
+        let b0 = r1 - b1;
+        (b0, b1)
+    };
+
+    Vec3A::new(b0, b1, 1.0 - b0 - b1)
+}
+
 
 #[cfg(test)]
 mod tests {

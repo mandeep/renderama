@@ -6,7 +6,7 @@ use crate::bvh::BVH;
 use crate::camera::Camera;
 use crate::environment::EnvironmentMap;
 use crate::extensions::PushInto;
-use crate::io;
+use crate::io::load_obj;
 use crate::materials::{Material, Plastic};
 use crate::plane::{Axis, Bounds2D, Plane};
 use crate::primitive::Primitive;
@@ -45,10 +45,7 @@ pub fn gameboy_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let mut materials: Vec<Material> = Vec::new();
     let mut textures: Vec<Texture> = Vec::new();
 
-    let default_texture = tex!(textures, Color::new(1.0, 0.0, 0.0));
-    let default_material = Plastic::new(default_texture, 1.0, 1.49);
-
-    let (meshes, lights) = io::load_obj("extras/models/gameboy/gameboy.obj", &mut materials, &mut textures, None, default_material);
+    let (meshes, _) = load_obj("extras/models/gameboy/gameboy.obj", &mut materials, &mut textures);
 
     let (translation, rotation, scale) = (Vec3A::ZERO, Vec3A::new(0.0, -50.0, 0.0), Vec3A::ONE);
     for mesh in meshes {
@@ -70,7 +67,6 @@ pub fn gameboy_scene(width: Option<usize>, height: Option<usize>) -> Scene {
         .with_camera(camera)
         .with_materials(materials, textures)
         .with_environment(environment)
-        .with_lights(lights)
         .build()
         .expect("Failed to build Gameboy scene")
 }
