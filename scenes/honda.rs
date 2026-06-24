@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::f32;
 use std::sync::Arc;
 
@@ -7,8 +8,8 @@ use crate::bvh::BVH;
 use crate::camera::Camera;
 use crate::environment::EnvironmentMap;
 use crate::extensions::PushInto;
-use crate::io::load_obj;
-use crate::materials::{Material, Diffuse};
+use crate::io::{LoadObjOptions, load_obj_with_options};
+use crate::materials::{Material, Diffuse, Plastic};
 use crate::plane::{Axis, Bounds2D, Plane};
 use crate::primitive::Primitive;
 use crate::scene::{Scene, SceneBuilder};
@@ -48,7 +49,13 @@ pub fn honda_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let mut materials: Vec<Material> = Vec::new();
     let mut textures: Vec<Texture> = Vec::new();
 
-    let (meshes, _) = load_obj("extras/models/honda/honda.obj", &mut materials, &mut textures);
+    let mut material_overrides: HashMap<String, Material> = HashMap::new();
+    let car_paint_id = tex!(textures, Color::new(0.568452, 0.0, 0.0));
+    let car_paint_material = Plastic::new(car_paint_id, 0.025, 1.5);
+    material_overrides.insert("EXT_paint".to_string(), car_paint_material.into());
+    let obj_options = LoadObjOptions::new().with_overrides(Some(material_overrides));
+
+    let (meshes, _) = load_obj_with_options("extras/models/honda/honda.obj", &mut materials, &mut textures, obj_options);
 
     let translation = Vec3A::new(0.0, 0.0, 0.0);
     let rotation = Vec3A::new(0.0, 0.0, 0.0);
