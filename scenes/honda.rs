@@ -44,16 +44,16 @@ pub fn honda_scene(width: Option<usize>, height: Option<usize>) -> Scene {
         0.0, 0.0,
     );
 
-
     let mut objects: Vec<Primitive> = Vec::new();
     let mut materials: Vec<Material> = Vec::new();
     let mut textures: Vec<Texture> = Vec::new();
 
     let mut material_overrides: HashMap<String, Material> = HashMap::new();
     let car_paint_id = tex!(textures, Color::new(0.568452, 0.0, 0.0));
-    let car_paint_material = Plastic::new(car_paint_id, 0.025, 1.5);
+    let car_paint_material = Plastic::new(car_paint_id, 0.04, 1.5).with_clearcoat(0.6, 0.025);
     material_overrides.insert("EXT_paint".to_string(), car_paint_material.into());
-    let obj_options = LoadObjOptions::new().with_overrides(Some(material_overrides));
+    let obj_options = LoadObjOptions::new()
+        .with_overrides(Some(material_overrides));
 
     let (meshes, _) = load_obj_with_options("extras/models/honda/honda.obj", &mut materials, &mut textures, obj_options);
 

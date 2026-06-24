@@ -38,7 +38,15 @@ pub fn power_heuristic(f_pdf: f32, g_pdf: f32) -> f32 {
 #[derive(IsVariant)]
 pub enum PDF {
     Cosine { uvw: OrthonormalBasis },
-    Composite { uvw: OrthonormalBasis, wi: Vec3A, normal: Vec3A, alpha: f32, specular_weight: f32 },
+    Composite {
+        uvw: OrthonormalBasis,
+        wi: Vec3A,
+        normal: Vec3A,
+        alpha: f32,
+        specular_weight: f32,
+        clearcoat_alpha: f32,
+        clearcoat_weight: f32,
+    },
     Delta,
     GGX { wi: Vec3A, normal: Vec3A, alpha: f32 },
     Uniform,
@@ -52,11 +60,13 @@ impl PDF {
                 let cosine = direction.dot(uvw.w());
                 if cosine > 0.0 { cosine / PI } else { 0.0 }
             },
-            PDF::Composite { uvw, wi, normal, alpha, specular_weight } => {
+            PDF::Composite { uvw, wi, normal, alpha, specular_weight, clearcoat_alpha, clearcoat_weight } => {
                 let diffuse_pdf = PDF::Cosine { uvw: *uvw }.calculate_probability(direction);
                 let specular_pdf = PDF::GGX { wi: *wi, normal: *normal, alpha: *alpha }.calculate_probability(direction);
+                let clearcoat_pdf = PDF::GGX { wi: *wi, normal: *normal, alpha: *clearcoat_alpha }.calculate_probability(direction);
 
-                (*specular_weight * specular_pdf) + ((1.0 - *specular_weight) * diffuse_pdf)
+                let diffuse_weight = (1.0 - *specular_weight - *clearcoat_weight).max(0.0);
+                (*clearcoat_weight * clearcoat_pdf) + (*specular_weight * specular_pdf) + (diffuse_weight * diffuse_pdf)
             }
             PDF::Delta => panic!("Delta PDF has no meaningful probability."),
             PDF::GGX { wi, normal, alpha } => {
@@ -88,12 +98,15 @@ impl PDF {
             PDF::Cosine { uvw } => {
                 uvw.local(&cosine_sample_hemisphere(rng))
             },
-            PDF::Composite { uvw, wi, normal, alpha, specular_weight } => {
-                if rng.random::<f32>() < *specular_weight {
-                    PDF::GGX { wi: *wi, normal: *normal, alpha: *alpha }.pick_direction(rng)
-                } else {
-                    PDF::Cosine { uvw: *uvw }.pick_direction(rng)
-                }
+            PDF::Composite { uvw, wi, normal, alpha, specular_weight, clearcoat_alpha, clearcoat_weight } => {
+                let u = rng.random::<f32>();
+                    if u < *clearcoat_weight {
+                        PDF::GGX { wi: *wi, normal: *normal, alpha: *clearcoat_alpha }.pick_direction(rng)
+                    } else if u < *clearcoat_weight + *specular_weight {
+                        PDF::GGX { wi: *wi, normal: *normal, alpha: *alpha }.pick_direction(rng)
+                    } else {
+                        PDF::Cosine { uvw: *uvw }.pick_direction(rng)
+                    }
             }
             PDF::Delta => panic!("Delta PDF should never be sampled directly."),
             PDF::GGX { wi, normal, alpha } => {

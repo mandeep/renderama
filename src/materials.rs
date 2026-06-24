@@ -536,6 +536,8 @@ pub struct Plastic {
     pub roughness: f32,
     pub ior: f32,
     pub subsurface: f32,
+    pub clearcoat: f32,
+    pub clearcoat_roughness: f32,
     pub texture_map: TextureMap
 }
 
@@ -548,11 +550,19 @@ impl Plastic {
     pub fn new(albedo: TextureId, roughness: f32, ior: f32) -> Plastic {
         let texture_map = TextureMap::new(albedo);
         let subsurface = 0.0;
-        Plastic { roughness, ior, subsurface, texture_map }
+        let clearcoat = 0.0;
+        let clearcoat_roughness = 0.025;
+        Plastic { roughness, ior, subsurface, clearcoat, clearcoat_roughness, texture_map }
     }
 
     pub fn with_subsurface(mut self, subsurface: f32) -> Self {
         self.subsurface = subsurface;
+        self
+    }
+
+    pub fn with_clearcoat(mut self, clearcoat: f32, clearcoat_roughness: f32) -> Self {
+        self.clearcoat = clearcoat.clamp(0.0, 1.0);
+        self.clearcoat_roughness = clearcoat_roughness.clamp(0.025, 1.0);
         self
     }
 
@@ -578,30 +588,41 @@ impl Plastic {
         }
     }
 
-    /// Generate either a specular or diffuse response to a surface hit, dependent
-    /// on a random reflect probability.
-    fn generate_response(&self, ray: &Ray, result: &HitResult, textures: &[Texture]) -> Option<ScatterResult> {
-        let (geometric_normal, base_shading_normal) = result.face_forward_normals(&ray.direction);
-        let shading_normal = self.get_mapped_normal(result, base_shading_normal, textures);
-
-        let roughness = if let Some(roughness_id) = self.texture_map.roughness {
+    fn sample_roughness(&self, result: &HitResult, textures: &[Texture]) -> f32 {
+        if let Some(roughness_id) = self.texture_map.roughness {
             let roughness_map_texture = &textures[roughness_id.index()];
             let roughness_map_value = roughness_map_texture.sample_texture(result.u, result.v);
             roughness_map_value.x
         } else if let Some(roughness_id) = self.texture_map.metallic_roughness {
             let roughness_map_texture = &textures[roughness_id.index()];
             let roughness_map_value = roughness_map_texture.sample_texture(result.u, result.v);
-            roughness_map_value.y // handling metallic roughness map
+            roughness_map_value.y
         } else {
             self.roughness
-        };
+        }
+    }
 
+    /// Generate either a specular or diffuse response to a surface hit, dependent
+    /// on a random reflect probability.
+    fn generate_response(&self, ray: &Ray, result: &HitResult, textures: &[Texture]) -> Option<ScatterResult> {
+        let (geometric_normal, base_shading_normal) = result.face_forward_normals(&ray.direction);
+        let shading_normal = self.get_mapped_normal(result, base_shading_normal, textures);
+
+        let roughness = self.sample_roughness(result, textures);
         let alpha = (roughness * roughness).max(0.0);
 
+        // purposely keeping this as result.shading_normal instead of shading_normal
+        // as the shadows look better
         let cos_theta_i = (-ray.direction).dot(result.shading_normal).max(0.0);
         let r = (1.0 - self.ior) / (1.0 + self.ior);
         let f0 = r * r;
         let fresnel = f0 + (1.0 - f0) * (1.0 - cos_theta_i).powi(5);
+
+        let clearcoat_weight = self.clearcoat * fresnel;
+        let clearcoat_alpha = (self.clearcoat_roughness * self.clearcoat_roughness).max(0.0);
+
+        let remaining = 1.0 - clearcoat_weight;
+        let specular_weight = remaining * fresnel;
 
         let offset_point = find_offset_point(result.point, geometric_normal);
         let scattered_ray = Ray::new(offset_point, ray.direction, ray.time);
@@ -611,7 +632,9 @@ impl Plastic {
             wi: -ray.direction,
             normal: shading_normal,
             alpha,
-            specular_weight: fresnel,
+            clearcoat_alpha,
+            specular_weight,
+            clearcoat_weight,
         };
 
         Some(ScatterResult::new(scattered_ray, Vec3A::ONE, pdf))
@@ -640,23 +663,27 @@ impl Plastic {
         let v_dot_h = wi.dot(h).max(0.0);
         let micro_fresnel = schlick_from_ior(v_dot_h, self.ior);
 
-        let roughness = if let Some(roughness_id) = self.texture_map.roughness {
-            let roughness_map_texture = &textures[roughness_id.index()];
-            let roughness_map_value = roughness_map_texture.sample_texture(result.u, result.v);
-            roughness_map_value.x
-        } else if let Some(roughness_id) = self.texture_map.metallic_roughness {
-            let roughness_map_texture = &textures[roughness_id.index()];
-            let roughness_map_value = roughness_map_texture.sample_texture(result.u, result.v);
-            roughness_map_value.y // handling metallic roughness map
-        } else {
-            self.roughness
-        };
-
+        let roughness = self.sample_roughness(result, textures);
         let alpha = (roughness * roughness).max(0.0);
 
         let d = ggx_distribution(cos_h, alpha);
         let g = ggx_height_correlated_geometry(cos_i, cos_o, alpha);
         let specular = Vec3A::splat(micro_fresnel * d * g / (4.0 * cos_i));
+
+        let (clearcoat, coat_transmittance) = if self.clearcoat > 0.0 {
+            let clearcoat_fresnel = schlick_from_ior(v_dot_h, self.ior);
+            let clearcoat_alpha = (self.clearcoat_roughness * self.clearcoat_roughness).max(0.0);
+            let clearcoat_d = ggx_distribution(cos_h, clearcoat_alpha);
+            let clearcoat_g = ggx_height_correlated_geometry(cos_i, cos_o, clearcoat_alpha);
+            let clearcoat_term = Vec3A::splat(self.clearcoat * clearcoat_fresnel * clearcoat_d * clearcoat_g / (4.0 * cos_i));
+
+            let blocked = self.clearcoat * clearcoat_fresnel;
+            (clearcoat_term, 1.0 - blocked)
+        } else {
+            (Vec3A::ZERO, 1.0)
+        };
+
+        let specular = specular * coat_transmittance;
 
         // the macro fresnel term creates too dark shadows at grazing angles so
         // we use Burley's roughness model to account for that with a highlight.
@@ -680,8 +707,8 @@ impl Plastic {
         let blended_diffuse = (1.0 - self.subsurface) * base_diffuse + self.subsurface * subsurface_approximation;
 
         let albedo = textures[self.texture_map.color.index()].sample_texture(result.u, result.v);
-        let diffuse = albedo * (blended_diffuse * cos_o / PI);
+        let diffuse = albedo * (blended_diffuse * cos_o / PI) * coat_transmittance;
 
-        specular + diffuse
+        specular + diffuse + clearcoat
     }
 }
