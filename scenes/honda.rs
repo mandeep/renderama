@@ -7,7 +7,7 @@ use glam::Vec3A;
 use crate::bvh::BVH;
 use crate::camera::Camera;
 use crate::environment::EnvironmentMap;
-use crate::extensions::PushInto;
+use crate::extensions::{InsertInto, PushInto};
 use crate::io::{LoadObjOptions, load_obj_with_options};
 use crate::materials::{Material, Diffuse, Plastic};
 use crate::plane::{Axis, Bounds2D, Plane};
@@ -51,7 +51,7 @@ pub fn honda_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let mut material_overrides: HashMap<String, Material> = HashMap::new();
     let car_paint_id = tex!(textures, Color::new(0.568452, 0.0, 0.0));
     let car_paint_material = Plastic::new(car_paint_id, 0.04, 1.5).with_clearcoat(0.6, 0.025);
-    material_overrides.insert("EXT_paint".to_string(), car_paint_material.into());
+    material_overrides.insert_into("EXT_paint", car_paint_material);
     let obj_options = LoadObjOptions::new()
         .with_overrides(Some(material_overrides));
 
