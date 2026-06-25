@@ -609,7 +609,7 @@ impl Plastic {
         let shading_normal = self.get_mapped_normal(result, base_shading_normal, textures);
 
         let roughness = self.sample_roughness(result, textures);
-        let alpha = (roughness * roughness).max(0.0);
+        let alpha = (roughness * roughness).max(1e-3);
 
         // purposely keeping this as result.shading_normal instead of shading_normal
         // as the shadows look better
@@ -619,7 +619,7 @@ impl Plastic {
         let fresnel = f0 + (1.0 - f0) * (1.0 - cos_theta_i).powi(5);
 
         let clearcoat_weight = self.clearcoat * fresnel;
-        let clearcoat_alpha = (self.clearcoat_roughness * self.clearcoat_roughness).max(0.0);
+        let clearcoat_alpha = (self.clearcoat_roughness * self.clearcoat_roughness).max(1e-3);
 
         let remaining = 1.0 - clearcoat_weight;
         let specular_weight = remaining * fresnel;
@@ -664,7 +664,7 @@ impl Plastic {
         let micro_fresnel = schlick_from_ior(v_dot_h, self.ior);
 
         let roughness = self.sample_roughness(result, textures);
-        let alpha = (roughness * roughness).max(0.0);
+        let alpha = (roughness * roughness).max(1e-3);
 
         let d = ggx_distribution(cos_h, alpha);
         let g = ggx_height_correlated_geometry(cos_i, cos_o, alpha);
@@ -672,7 +672,7 @@ impl Plastic {
 
         let (clearcoat, coat_transmittance) = if self.clearcoat > 0.0 {
             let clearcoat_fresnel = schlick_from_ior(v_dot_h, self.ior);
-            let clearcoat_alpha = (self.clearcoat_roughness * self.clearcoat_roughness).max(0.0);
+            let clearcoat_alpha = (self.clearcoat_roughness * self.clearcoat_roughness).max(1e-3);
             let clearcoat_d = ggx_distribution(cos_h, clearcoat_alpha);
             let clearcoat_g = ggx_height_correlated_geometry(cos_i, cos_o, clearcoat_alpha);
             let clearcoat_term = Vec3A::splat(self.clearcoat * clearcoat_fresnel * clearcoat_d * clearcoat_g / (4.0 * cos_i));

@@ -61,6 +61,7 @@ pub fn ggx_g1_masking(cosine_view: f32, alpha: f32) -> f32 {
 /// References:
 /// https://pharr.org/matt/blog/images/average-irregularity-representation-of-a-rough-surface-for-ray-reflection.pdf
 pub fn ggx_distribution(half_vector: f32, alpha: f32) -> f32 {
+    let alpha = alpha.max(1e-3);
     let a2 = alpha * alpha;
     let denominator = half_vector * half_vector * (a2 - 1.0) + 1.0;
     a2 / (PI * denominator * denominator)
