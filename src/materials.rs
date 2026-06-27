@@ -644,6 +644,11 @@ impl Plastic {
     fn compute_reflectance(&self, ray: &Ray, scattered: &Ray, result: &HitResult, textures: &[Texture]) -> Vec3A {
         let wi = -ray.direction;
         let wo = scattered.direction;
+
+        if result.geometric_normal.dot(wi) <= 0.0 || result.geometric_normal.dot(wo) <= 0.0 {
+            return Vec3A::ZERO;
+        }
+
         let n = self.get_mapped_normal(result, result.shading_normal, textures);
 
         let cos_i = n.dot(wi);
