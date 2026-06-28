@@ -368,9 +368,10 @@ impl Reflective {
     fn compute_reflectance(&self, ray: &Ray, scattered: &Ray, result: &HitResult, textures: &[Texture]) -> Vec3A {
         if self.roughness == 0.0 { return Vec3A::ZERO; }
 
+        let (_, shading_normal) = result.face_forward_normals(&ray.direction);
         let wi = -ray.direction;
         let wo = scattered.direction;
-        let n = result.shading_normal;
+        let n = shading_normal;
 
         let cos_i = n.dot(wi);
         let cos_o = n.dot(wo);
@@ -611,12 +612,10 @@ impl Plastic {
         let roughness = self.sample_roughness(result, textures);
         let alpha = (roughness * roughness).max(1e-3);
 
-        // purposely keeping this as result.shading_normal instead of shading_normal
-        // as the shadows look better
-        let cos_theta_i = (-ray.direction).dot(result.shading_normal).max(0.0);
+        let cos_i = (-ray.direction).dot(shading_normal).max(0.0);
         let r = (1.0 - self.ior) / (1.0 + self.ior);
         let f0 = r * r;
-        let fresnel = f0 + (1.0 - f0) * (1.0 - cos_theta_i).powi(5);
+        let fresnel = f0 + (1.0 - f0) * (1.0 - cos_i).powi(5);
 
         let clearcoat_weight = self.clearcoat * fresnel;
         let clearcoat_alpha = (self.clearcoat_roughness * self.clearcoat_roughness).max(1e-3);
@@ -645,11 +644,12 @@ impl Plastic {
         let wi = -ray.direction;
         let wo = scattered.direction;
 
-        if result.geometric_normal.dot(wi) <= 0.0 || result.geometric_normal.dot(wo) <= 0.0 {
+        let (geometric_normal, shading_normal) = result.face_forward_normals(&ray.direction);
+        if geometric_normal.dot(wi) <= 0.0 || geometric_normal.dot(wo) <= 0.0 {
             return Vec3A::ZERO;
         }
 
-        let n = self.get_mapped_normal(result, result.shading_normal, textures);
+        let n = self.get_mapped_normal(result, shading_normal, textures);
 
         let cos_i = n.dot(wi);
         let cos_o = n.dot(wo);
