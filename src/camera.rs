@@ -76,12 +76,8 @@ impl Camera {
         frame_start_time: f32,
         shutter_speed: f32,
     ) -> Camera {
-        let rotation_matrix = Mat3A::from_euler(
-            EulerRot::XYZEx,
-            rotation.x.to_radians(),
-            rotation.y.to_radians(),
-            rotation.z.to_radians(),
-        );
+        let rotation = rotation.map(|angle| angle.to_radians());
+        let rotation_matrix = Mat3A::from_euler(EulerRot::XYZEx, rotation.x, rotation.y, rotation.z);
 
         let u = rotation_matrix.x_axis;
         let v = rotation_matrix.y_axis;
