@@ -1,4 +1,4 @@
-use glam::{Vec2, Vec3A};
+use glam::{EulerRot, Mat3A, Vec2, Vec3A};
 use rand_pcg::Pcg64Mcg;
 use rand::RngExt;
 
@@ -47,6 +47,72 @@ impl Camera {
         frame_start_time: f32,
         shutter_speed: f32,
         ) -> Camera {
+            let w: Vec3A = (origin - lookat).normalize(); // points away from scene
+            let u: Vec3A = view.cross(w).normalize(); // points to the right
+            let v: Vec3A = w.cross(u); // points up
+
+            Camera::from_basis(
+                origin, u, v, w,
+                focal_length, f_stop, sensor_height, focus_distance,
+                world_scale, resolution, frame_start_time, shutter_speed,
+            )
+    }
+
+    /// Create a new camera with which to see the world!
+    ///
+    /// This differs from the other new method in that it is built using
+    /// a rotation vector (Euler angles in degrees) rather than a lookat
+    /// vector. This approach is more intuitive when rotating a camera
+    /// to achieve final frame.
+    pub fn new_from_rotation(
+        location: Vec3A,
+        rotation: Vec3A,
+        focal_length: f32,
+        f_stop: f32,
+        sensor_height: f32,
+        focus_distance: f32,
+        world_scale: f32,
+        resolution: (f32, f32),
+        frame_start_time: f32,
+        shutter_speed: f32,
+    ) -> Camera {
+        let rotation_matrix = Mat3A::from_euler(
+            EulerRot::XYZEx,
+            rotation.x.to_radians(),
+            rotation.y.to_radians(),
+            rotation.z.to_radians(),
+        );
+
+        let u = rotation_matrix.x_axis;
+        let v = rotation_matrix.y_axis;
+        let w = rotation_matrix.z_axis;
+
+        Camera::from_basis(
+            location, u, v, w,
+            focal_length, f_stop, sensor_height, focus_distance,
+            world_scale, resolution, frame_start_time, shutter_speed,
+        )
+    }
+
+    /// Build a camera basis given origin, u, v, and w.
+    ///
+    /// The code in this method was once housed in the new()
+    /// method, however it was moved into a separate private method
+    /// so that any additional methods can use it.
+    fn from_basis(
+        origin: Vec3A,
+        u: Vec3A,
+        v: Vec3A,
+        w: Vec3A,
+        focal_length: f32,
+        f_stop: f32,
+        sensor_height: f32,
+        focus_distance: f32,
+        world_scale: f32,
+        resolution: (f32, f32),
+        frame_start_time: f32,
+        shutter_speed: f32,
+    ) -> Camera {
         let lens_diameter = focal_length / f_stop;
         let lens_radius = (lens_diameter * world_scale) / 2.0;
 
@@ -55,10 +121,6 @@ impl Camera {
         let sensor_width = sensor_height * (resolution.0 / resolution.1);
         let half_height = (sensor_height / 2.0) / focal_length;
         let half_width = (sensor_width / 2.0) / focal_length;
-
-        let w: Vec3A = (origin - lookat).normalize(); // points away from scene
-        let u: Vec3A = view.cross(w).normalize(); // points to the right
-        let v: Vec3A = w.cross(u); // points up
 
         // right-handed coordinate system where +X is to the right,
         // +Y is up, and +Z travels out of the screen
