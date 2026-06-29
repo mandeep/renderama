@@ -29,6 +29,18 @@ use rand_pcg::Pcg64Mcg;
 
 use crate::basis::OrthonormalBasis;
 
+/// Minimum alpha value to prevent NaNs and fireflies caused by
+/// dividing by a number near zero. 1e-3 used here as it's what
+/// pbrt uses and through testing provides the best results.
+pub const MIN_ALPHA: f32 = 1e-3;
+
+/// Convert perceptual roughness into the alpha parameter used by GGX functions
+///
+/// References:
+/// https://pbr-book.org/4ed/Reflection_Models/Roughness_Using_Microfacet_Theory#EffectivelySmooth
+pub fn roughness_to_alpha(roughness: f32) -> f32 {
+    (roughness * roughness).max(MIN_ALPHA)
+}
 
 /// G1 term of the Smith masking function used in GGX.
 ///
@@ -61,7 +73,6 @@ pub fn ggx_g1_masking(cosine_view: f32, alpha: f32) -> f32 {
 /// References:
 /// https://pharr.org/matt/blog/images/average-irregularity-representation-of-a-rough-surface-for-ray-reflection.pdf
 pub fn ggx_distribution(half_vector: f32, alpha: f32) -> f32 {
-    let alpha = alpha.max(1e-3);
     let a2 = alpha * alpha;
     let denominator = half_vector * half_vector * (a2 - 1.0) + 1.0;
     a2 / (PI * denominator * denominator)

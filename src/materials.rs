@@ -5,7 +5,7 @@ use rand::RngExt;
 use rand_pcg::Pcg64Mcg;
 
 use crate::basis::OrthonormalBasis;
-use crate::ggx::{ggx_distribution, ggx_height_correlated_geometry};
+use crate::ggx::{ggx_distribution, ggx_height_correlated_geometry, roughness_to_alpha};
 use crate::pdf::PDF;
 use crate::ray::{find_offset_point, Ray};
 use crate::results::{HitResult, ScatterResult};
@@ -328,11 +328,13 @@ impl Reflective {
     ///
     /// Generally, the larger the primitive, the fuzzier the reflections will be.
     pub fn new(albedo: TextureId, roughness: f32) -> Reflective {
-        Reflective { albedo, roughness: roughness * roughness }
+        Reflective { albedo, roughness }
     }
-}
 
-impl Reflective {
+    fn is_perfect_mirror(&self) -> bool {
+        self.roughness == 0.0
+    }
+
     /// Use the incoming ray and geometric/shading normal at the hit point to
     /// generate the response of the material.
     fn generate_response(&self, ray: &Ray, result: &HitResult, textures: &[Texture]) -> Option<ScatterResult> {
@@ -349,14 +351,15 @@ impl Reflective {
         let cos_theta_i = (-ray.direction).dot(shading_normal).max(0.0);
         let fresnel = schlick_from_f0(cos_theta_i, f0);
 
-        if self.roughness == 0.0 {
+        if self.is_perfect_mirror() {
             // handle this as a pre-weighted specular material and skip NEE.
             let pdf = PDF::Delta;
             Some(ScatterResult::new(scattered_ray, fresnel, pdf))
         } else {
             // for roughness in [0.0, 0.05], fireflies will appear in high
             // luminance scenes, however these can be denoised just fine.
-            let pdf = PDF::GGX { wi: -ray.direction, normal: shading_normal, alpha: self.roughness };
+            let alpha = roughness_to_alpha(self.roughness);
+            let pdf = PDF::GGX { wi: -ray.direction, normal: shading_normal, alpha };
             Some(ScatterResult::new(scattered_ray, Vec3A::ONE, pdf))
         }
     }
@@ -366,7 +369,9 @@ impl Reflective {
     /// References:
     /// https://learnopengl.com/PBR/Theory
     fn compute_reflectance(&self, ray: &Ray, scattered: &Ray, result: &HitResult, textures: &[Texture]) -> Vec3A {
-        if self.roughness == 0.0 { return Vec3A::ZERO; }
+        if self.is_perfect_mirror() {
+            return Vec3A::ZERO;
+        }
 
         let (_, shading_normal) = result.face_forward_normals(&ray.direction);
         let wi = -ray.direction;
@@ -401,9 +406,11 @@ impl Reflective {
             return Vec3A::ZERO;
         }
 
+        let alpha = roughness_to_alpha(self.roughness);
+
         let f = schlick_from_f0(v_dot_h, f0);
-        let d = ggx_distribution(cos_h, self.roughness);
-        let g = ggx_height_correlated_geometry(cos_i, cos_o, self.roughness);
+        let d = ggx_distribution(cos_h, alpha);
+        let g = ggx_height_correlated_geometry(cos_i, cos_o, alpha);
 
         (f * d * g) / (4.0 * cos_i)
     }
@@ -562,8 +569,8 @@ impl Plastic {
     }
 
     pub fn with_clearcoat(mut self, clearcoat: f32, clearcoat_roughness: f32) -> Self {
-        self.clearcoat = clearcoat.clamp(0.0, 1.0);
-        self.clearcoat_roughness = clearcoat_roughness.clamp(0.025, 1.0);
+        self.clearcoat = clearcoat;
+        self.clearcoat_roughness = clearcoat_roughness;
         self
     }
 
@@ -610,7 +617,7 @@ impl Plastic {
         let shading_normal = self.get_mapped_normal(result, base_shading_normal, textures);
 
         let roughness = self.sample_roughness(result, textures);
-        let alpha = (roughness * roughness).max(1e-3);
+        let alpha = roughness_to_alpha(roughness);
 
         let cos_i = (-ray.direction).dot(shading_normal).max(0.0);
         let r = (1.0 - self.ior) / (1.0 + self.ior);
@@ -618,7 +625,7 @@ impl Plastic {
         let fresnel = f0 + (1.0 - f0) * (1.0 - cos_i).powi(5);
 
         let clearcoat_weight = self.clearcoat * fresnel;
-        let clearcoat_alpha = (self.clearcoat_roughness * self.clearcoat_roughness).max(1e-3);
+        let clearcoat_alpha = roughness_to_alpha(self.clearcoat_roughness);
 
         let remaining = 1.0 - clearcoat_weight;
         let specular_weight = remaining * fresnel;
@@ -669,7 +676,7 @@ impl Plastic {
         let micro_fresnel = schlick_from_ior(v_dot_h, self.ior);
 
         let roughness = self.sample_roughness(result, textures);
-        let alpha = (roughness * roughness).max(1e-3);
+        let alpha = roughness_to_alpha(roughness);
 
         let d = ggx_distribution(cos_h, alpha);
         let g = ggx_height_correlated_geometry(cos_i, cos_o, alpha);
@@ -677,7 +684,7 @@ impl Plastic {
 
         let (clearcoat, coat_transmittance) = if self.clearcoat > 0.0 {
             let clearcoat_fresnel = schlick_from_ior(v_dot_h, self.ior);
-            let clearcoat_alpha = (self.clearcoat_roughness * self.clearcoat_roughness).max(1e-3);
+            let clearcoat_alpha = roughness_to_alpha(self.clearcoat_roughness);
             let clearcoat_d = ggx_distribution(cos_h, clearcoat_alpha);
             let clearcoat_g = ggx_height_correlated_geometry(cos_i, cos_o, clearcoat_alpha);
             let clearcoat_term = Vec3A::splat(self.clearcoat * clearcoat_fresnel * clearcoat_d * clearcoat_g / (4.0 * cos_i));
