@@ -1,4 +1,4 @@
-[![Stormtrooper](stormtrooper_blender.png)](stormtrooper_blender.png)
+[![Stormtrooper](stormtrooper.png)](stormtrooper.png)
 [![Random Spheres on Ground](random_spheres.png)](random_spheres.png)
 [![Random Spheres on Ground with Clouds](random_spheres_clouds.png)](random_spheres_clouds.png)
 [![Three Spheres](three_spheres.png)](three_spheres.png)
