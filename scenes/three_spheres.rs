@@ -1,10 +1,7 @@
-use std::f32;
-use std::f32::consts::PI;
-
 use glam::Vec3A;
 
 use crate::bvh::BVH;
-use crate::camera::Camera;
+use crate::camera::{Camera, CameraOptions};
 use crate::environment::EnvironmentMap;
 use crate::extensions::PushInto;
 use crate::materials::{Diffuse, Reflective, Refractive, Material, Plastic, Volumetric};
@@ -20,29 +17,16 @@ use crate::{mat, tex};
 pub fn three_spheres_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let origin = Vec3A::new(0.0, 3.0, 5.0);
     let lookat = Vec3A::new(0.0, 0.0, -1.5);
-    let view = Vec3A::new(0.0, 1.0, 0.0);
-    let old_fov = 20.0;
-    let (aspect_width, aspect_height) = (width.unwrap_or(2048) as f32, height.unwrap_or(1024) as f32);
-    let sensor_height = 24.0;
-    let fov_radians = old_fov * PI / 180.0;
-    let focal_length = (sensor_height / 2.0) / (fov_radians / 2.0).tan();
-    let old_aperture = 0.01;
-    let world_scale = 0.001;
-    let f_stop = (focal_length * world_scale) / old_aperture;
-    let focus_distance = (lookat - origin).length();
+    let fov = 20.0;
+    let f_stop = 6.8055387; // calculated from old aperture code
 
-    let camera = Camera::new(
-        origin,
-        lookat,
-        view,
-        focal_length,
-        f_stop,
-        sensor_height,
-        focus_distance,
-        world_scale,
-        (aspect_width, aspect_height),
-        0.0, 0.0,
-    );
+    let camera_options = CameraOptions::new()
+        .with_origin(origin)
+        .with_lookat(lookat)
+        .with_fov(fov)
+        .with_fstop(f_stop)
+        .with_resolution(width.unwrap_or(2048), height.unwrap_or(1024));
+    let camera = Camera::new(&camera_options);
 
     let mut objects: Vec<Primitive> = Vec::new();
     let mut materials: Vec<Material> = Vec::new();

@@ -1,10 +1,9 @@
-use std::f32;
 use std::sync::Arc;
 
 use glam::Vec3A;
 
 use crate::bvh::BVH;
-use crate::camera::Camera;
+use crate::camera::{Camera, CameraOptions};
 use crate::environment::EnvironmentMap;
 use crate::extensions::PushInto;
 use crate::io::load_obj;
@@ -22,26 +21,18 @@ use crate::tex;
 pub fn batmobile_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let origin = Vec3A::new(-2.0, 0.5, 1.5);
     let lookat = Vec3A::new(0.0, 0.0, 0.25);
-    let view = Vec3A::new(0.0, 1.0, 0.0);
-    let (aspect_width, aspect_height) = (width.unwrap_or(1920) as f32, height.unwrap_or(1080) as f32);
-    let sensor_height = 24.0;
     let focal_length = 74.0;
-    let world_scale = 0.001;
     let f_stop = 2.8;
     let focus_distance = 2.25;
 
-    let camera = Camera::new(
-        origin,
-        lookat,
-        view,
-        focal_length,
-        f_stop,
-        sensor_height,
-        focus_distance,
-        world_scale,
-        (aspect_width, aspect_height),
-        0.0, 0.0,
-    );
+    let camera_options = CameraOptions::new()
+        .with_origin(origin)
+        .with_lookat(lookat)
+        .with_focal_length(focal_length)
+        .with_fstop(f_stop)
+        .with_focus_distance(focus_distance)
+        .with_resolution(width.unwrap_or(1920), height.unwrap_or(1080));
+    let camera = Camera::new(&camera_options);
 
 
     let mut objects: Vec<Primitive> = Vec::new();

@@ -1,12 +1,9 @@
-use std::f32;
-use std::f32::consts::PI;
-
 use glam::Vec3A;
 use rand::RngExt;
 use rand_pcg::Pcg64Mcg;
 
 use crate::bvh::BVH;
-use crate::camera::Camera;
+use crate::camera::{Camera, CameraOptions};
 use crate::environment::EnvironmentMap;
 use crate::extensions::PushInto;
 use crate::materials::{Diffuse, Reflective, Refractive, Material};
@@ -19,29 +16,18 @@ use crate::{mat, tex};
 pub fn random_spheres_scene(width: Option<usize>, height: Option<usize>, rng: &mut Pcg64Mcg) -> Scene {
     let origin = Vec3A::new(13.0, 2.0, 3.0);
     let lookat = Vec3A::new(0.0, 0.0, 0.0);
-    let view = Vec3A::new(0.0, 1.0, 0.0);
-    let (aspect_width, aspect_height) = (width.unwrap_or(2048) as f32, height.unwrap_or(1024) as f32);
-    let sensor_height = 24.0;
-    let old_fov = 20.0;
-    let fov_radians = old_fov * PI / 180.0;
-    let focal_length = (sensor_height / 2.0) / (fov_radians / 2.0).tan();
-    let old_aperture = 0.1;
-    let world_scale = 0.001;
-    let f_stop = (focal_length * world_scale) / old_aperture;
+    let fov = 20.0;
+    let f_stop = 0.680553853511810302734375; // calculated from old aperture code
     let focus_distance = 10.0;
 
-    let camera = Camera::new(
-        origin,
-        lookat,
-        view,
-        focal_length,
-        f_stop,
-        sensor_height,
-        focus_distance,
-        world_scale,
-        (aspect_width, aspect_height),
-        0.0, 0.0,
-    );
+    let camera_options = CameraOptions::new()
+        .with_origin(origin)
+        .with_lookat(lookat)
+        .with_fov(fov)
+        .with_focus_distance(focus_distance)
+        .with_fstop(f_stop)
+        .with_resolution(width.unwrap_or(2048), height.unwrap_or(1024));
+    let camera = Camera::new(&camera_options);
 
     let mut objects = Vec::new();
     let mut materials: Vec<Material> = Vec::new();

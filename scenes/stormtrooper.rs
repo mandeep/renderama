@@ -1,11 +1,9 @@
-use std::f32;
-use std::f32::consts::PI;
 use std::sync::Arc;
 
 use glam::Vec3A;
 
 use crate::bvh::BVH;
-use crate::camera::Camera;
+use crate::camera::{Camera, CameraOptions};
 use crate::environment::EnvironmentMap;
 use crate::extensions::PushInto;
 use crate::io::load_obj;
@@ -18,28 +16,18 @@ use crate::transformations::TransformedMesh;
 pub fn stormtrooper_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let origin = Vec3A::new(0.25, -0.5, 5.5);
     let lookat = Vec3A::new(0.0, 0.0, -2.0);
-    let view = Vec3A::new(0.0, 1.0, 0.0);
-    let old_fov = 22.0;
-    let fov_radians = old_fov * PI / 180.0;
-    let (aspect_width, aspect_height) = (width.unwrap_or(1920) as f32, height.unwrap_or(1080) as f32);
-    let sensor_height = 24.0;
+    let fov = 22.0;
     let focus_distance = 4.0;
-    let focal_length = (sensor_height / 2.0) / (fov_radians / 2.0).tan();
-    let world_scale = 0.001;
     let f_stop = 0.7;
 
-    let camera = Camera::new(
-            origin,
-            lookat,
-            view,
-            focal_length,
-            f_stop,
-            sensor_height,
-            focus_distance,
-            world_scale,
-            (aspect_width, aspect_height),
-            0.0, 0.0,
-        );
+    let camera_options = CameraOptions::new()
+        .with_origin(origin)
+        .with_lookat(lookat)
+        .with_fov(fov)
+        .with_focus_distance(focus_distance)
+        .with_fstop(f_stop)
+        .with_resolution(width.unwrap_or(1920), height.unwrap_or(1080));
+    let camera = Camera::new(&camera_options);
 
     let mut objects: Vec<Primitive> = Vec::new();
     let mut materials: Vec<Material> = Vec::new();

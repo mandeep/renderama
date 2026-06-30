@@ -1,9 +1,134 @@
+use std::f32::consts::PI;
+
 use glam::{EulerRot, Mat3A, Vec2, Vec3A};
 use rand_pcg::Pcg64Mcg;
 use rand::RngExt;
 
 use crate::ray::Ray;
 use crate::sampling::pick_disk_point;
+
+pub enum CameraOrientation {
+    LookAt { lookat: Vec3A, view: Vec3A },
+    Rotation(Vec3A),
+}
+
+impl CameraOrientation {
+    pub fn look_at(lookat: Vec3A) -> Self {
+        CameraOrientation::LookAt { lookat, view: Vec3A::new(0.0, 1.0, 0.0) }
+    }
+
+    pub fn look_at_with_view(lookat: Vec3A, view: Vec3A) -> Self {
+        CameraOrientation::LookAt { lookat, view }
+    }
+
+    pub fn rotation(rotation: Vec3A) -> Self {
+        CameraOrientation::Rotation(rotation)
+    }
+}
+
+pub struct CameraOptions {
+    pub origin: Vec3A,
+    pub orientation: Option<CameraOrientation>,
+    pub focal_length: f32,
+    pub f_stop: f32,
+    pub sensor_height: f32,
+    pub focus_distance: Option<f32>,
+    pub world_scale: f32,
+    pub resolution: (f32, f32),
+    pub frame_start_time: f32,
+    pub shutter_speed: f32,
+}
+
+impl CameraOptions {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn with_origin(mut self, origin: Vec3A) -> Self {
+        self.origin = origin;
+        self
+    }
+
+    pub fn with_rotation(mut self, rotation: Vec3A) -> Self {
+        self.orientation = Some(CameraOrientation::rotation(rotation));
+        self
+    }
+
+    pub fn with_lookat(mut self, lookat: Vec3A) -> Self {
+        self.orientation = Some(CameraOrientation::look_at(lookat));
+        self
+    }
+
+    pub fn with_lookat_and_view(mut self, lookat: Vec3A, view: Vec3A) -> Self {
+        self.orientation = Some(CameraOrientation::look_at_with_view(lookat, view));
+        self
+    }
+
+    pub fn with_sensor_height(mut self, sensor_height: f32) -> Self {
+        self.sensor_height = sensor_height;
+        self
+    }
+
+    pub fn with_focal_length(mut self, focal_length: f32) -> Self {
+        self.focal_length = focal_length;
+        self
+    }
+
+    pub fn with_fov(mut self, fov: f32) -> Self {
+        let fov_radians = fov * PI / 180.0; // using manual calculation here so that tests remain the same
+        self.focal_length = (self.sensor_height / 2.0) / (fov_radians / 2.0).tan();
+        self
+    }
+
+    pub fn with_fstop(mut self, f_stop: f32) -> Self {
+        self.f_stop = f_stop;
+        self
+    }
+
+    pub fn with_focus_distance(mut self, focus_distance: f32) -> Self {
+        self.focus_distance = Some(focus_distance);
+        self
+    }
+
+    pub fn with_frame_duration(mut self, frame_duration: f32) -> Self {
+        self.frame_start_time = frame_duration;
+        self
+    }
+
+    pub fn with_shutter_speed(mut self, shutter_speed: f32) -> Self {
+        self.shutter_speed = shutter_speed;
+        self
+    }
+
+    pub fn with_world_scale(mut self, world_scale: f32) -> Self {
+        self.world_scale = world_scale;
+        self
+    }
+
+    pub fn with_resolution(mut self, width: usize, height: usize) -> Self {
+        self.resolution = (width as f32, height as f32);
+        self
+    }
+}
+
+impl Default for CameraOptions {
+    fn default() -> Self {
+        let origin = Vec3A::ZERO;
+
+        CameraOptions {
+            origin,
+            orientation: None,
+            focal_length: 50.0,
+            f_stop: f32::INFINITY,
+            sensor_height: 24.0,
+            focus_distance: None,
+            world_scale: 0.001,
+            resolution: (1920.0, 1080.0),
+            frame_start_time: 0.0,
+            shutter_speed: 0.0
+        }
+    }
+}
 
 pub struct Camera {
     pub top_left_corner: Vec3A,
@@ -34,59 +159,41 @@ impl Camera {
     /// References:
     /// https://pbr-book.org/4ed/Cameras_and_Film
     /// https://en.wikipedia.org/wiki/F-number
-    pub fn new(
-        origin: Vec3A,
-        lookat: Vec3A,
-        view: Vec3A,
-        focal_length: f32,
-        f_stop: f32,
-        sensor_height: f32,
-        focus_distance: f32,
-        world_scale: f32,
-        resolution: (f32, f32),
-        frame_start_time: f32,
-        shutter_speed: f32,
-        ) -> Camera {
-            let w: Vec3A = (origin - lookat).normalize(); // points away from scene
-            let u: Vec3A = view.cross(w).normalize(); // points to the right
-            let v: Vec3A = w.cross(u); // points up
+    pub fn new(options: &CameraOptions) -> Camera {
+        let orientation = options.orientation.as_ref()
+            .expect("CameraOptions::orientation must be set before building a Camera");
 
-            Camera::from_basis(
-                origin, u, v, w,
-                focal_length, f_stop, sensor_height, focus_distance,
-                world_scale, resolution, frame_start_time, shutter_speed,
-            )
-    }
+        let (u, v, w) = match orientation {
+            CameraOrientation::LookAt { lookat, view } => {
+                let w: Vec3A = (options.origin - lookat).normalize(); // points away from scene
+                let u: Vec3A = view.cross(w).normalize(); // points to the right
+                let v: Vec3A = w.cross(u); // points up
 
-    /// Create a new camera with which to see the world!
-    ///
-    /// This differs from the other new method in that it is built using
-    /// a rotation vector (Euler angles in degrees) rather than a lookat
-    /// vector. This approach is more intuitive when rotating a camera
-    /// to achieve final frame.
-    pub fn new_from_rotation(
-        location: Vec3A,
-        rotation: Vec3A,
-        focal_length: f32,
-        f_stop: f32,
-        sensor_height: f32,
-        focus_distance: f32,
-        world_scale: f32,
-        resolution: (f32, f32),
-        frame_start_time: f32,
-        shutter_speed: f32,
-    ) -> Camera {
-        let rotation = rotation.map(|angle| angle.to_radians());
-        let rotation_matrix = Mat3A::from_euler(EulerRot::XYZEx, rotation.x, rotation.y, rotation.z);
+                (u, v, w)
+            },
+            CameraOrientation::Rotation(rotation) => {
+                let rotation = rotation.map(|angle| angle.to_radians());
+                let rotation_matrix = Mat3A::from_euler(EulerRot::XYZEx, rotation.x, rotation.y, rotation.z);
 
-        let u = rotation_matrix.x_axis;
-        let v = rotation_matrix.y_axis;
-        let w = rotation_matrix.z_axis;
+                let u = rotation_matrix.x_axis;
+                let v = rotation_matrix.y_axis;
+                let w = rotation_matrix.z_axis;
+
+                (u, v, w)
+            },
+        };
+
+        let focus_distance = options.focus_distance.unwrap_or_else(|| {
+            match orientation {
+                CameraOrientation::LookAt { lookat, .. } => (lookat - options.origin).length(),
+                CameraOrientation::Rotation(_) => panic!("focus_distance must be set when using the Rotation orientation."),
+            }
+        });
 
         Camera::from_basis(
-            location, u, v, w,
-            focal_length, f_stop, sensor_height, focus_distance,
-            world_scale, resolution, frame_start_time, shutter_speed,
+            options.origin, u, v, w,
+            options.focal_length, options.f_stop, options.sensor_height, focus_distance,
+            options.world_scale, options.resolution, options.frame_start_time, options.shutter_speed,
         )
     }
 
