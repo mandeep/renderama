@@ -16,8 +16,8 @@ use crate::{mat, tex};
 pub fn random_spheres_scene(width: Option<usize>, height: Option<usize>, rng: &mut Pcg64Mcg) -> Scene {
     let origin = Vec3A::new(13.0, 2.0, 3.0);
     let lookat = Vec3A::new(0.0, 0.0, 0.0);
-    let fov = 20.0;
-    let f_stop = 0.680553853511810302734375; // calculated from old aperture code
+    let fov = 39.0;
+    let f_stop = 0.7;
     let focus_distance = 10.0;
 
     let camera_options = CameraOptions::new()

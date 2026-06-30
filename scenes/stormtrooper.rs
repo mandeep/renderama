@@ -16,14 +16,14 @@ use crate::transformations::TransformedMesh;
 pub fn stormtrooper_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let origin = Vec3A::new(0.25, -0.5, 5.5);
     let lookat = Vec3A::new(0.0, 0.0, -2.0);
-    let fov = 22.0;
+    let focal_length = 52.0;
     let focus_distance = 4.0;
     let f_stop = 0.7;
 
     let camera_options = CameraOptions::new()
         .with_origin(origin)
         .with_lookat(lookat)
-        .with_fov(fov)
+        .with_focal_length(focal_length)
         .with_focus_distance(focus_distance)
         .with_fstop(f_stop)
         .with_resolution(width.unwrap_or(1920), height.unwrap_or(1080));

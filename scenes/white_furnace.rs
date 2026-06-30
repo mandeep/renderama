@@ -14,14 +14,14 @@ use crate::{mat, tex};
 pub fn white_furnace_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let origin = Vec3A::new(278.0, 278.0, -50.0);
     let lookat = Vec3A::new(278.0, 278.0, 300.0);
-    let fov = 25.0;
+    let focal_length = 20.0;
     let focus_distance = 10.0;
     let world_scale = 1.0;
 
     let camera_options = CameraOptions::new()
         .with_origin(origin)
         .with_lookat(lookat)
-        .with_fov(fov)
+        .with_focal_length(focal_length)
         .with_focus_distance(focus_distance)
         .with_world_scale(world_scale)
         .with_resolution(width.unwrap_or(2048), height.unwrap_or(512));

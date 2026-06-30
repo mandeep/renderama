@@ -1,5 +1,3 @@
-use std::f32::consts::PI;
-
 use glam::{EulerRot, Mat3A, Vec2, Vec3A};
 use rand_pcg::Pcg64Mcg;
 use rand::RngExt;
@@ -31,7 +29,8 @@ pub struct CameraOptions {
     pub orientation: Option<CameraOrientation>,
     pub focal_length: f32,
     pub f_stop: f32,
-    pub sensor_height: f32,
+    pub sensor_width: f32,
+    pub sensor_height: Option<f32>,
     pub focus_distance: Option<f32>,
     pub world_scale: f32,
     pub resolution: (f32, f32),
@@ -64,8 +63,13 @@ impl CameraOptions {
         self
     }
 
+    pub fn with_sensor_width(mut self, sensor_width: f32) -> Self {
+        self.sensor_width = sensor_width;
+        self
+    }
+
     pub fn with_sensor_height(mut self, sensor_height: f32) -> Self {
-        self.sensor_height = sensor_height;
+        self.sensor_height = Some(sensor_height);
         self
     }
 
@@ -75,8 +79,7 @@ impl CameraOptions {
     }
 
     pub fn with_fov(mut self, fov: f32) -> Self {
-        let fov_radians = fov * PI / 180.0; // using manual calculation here so that tests remain the same
-        self.focal_length = (self.sensor_height / 2.0) / (fov_radians / 2.0).tan();
+        self.focal_length = (self.sensor_width / 2.0) / (fov.to_radians() / 2.0).tan();
         self
     }
 
@@ -120,7 +123,8 @@ impl Default for CameraOptions {
             orientation: None,
             focal_length: 50.0,
             f_stop: f32::INFINITY,
-            sensor_height: 24.0,
+            sensor_width: 36.0,
+            sensor_height: None,
             focus_distance: None,
             world_scale: 0.001,
             resolution: (1920.0, 1080.0),
@@ -192,7 +196,7 @@ impl Camera {
 
         Camera::from_basis(
             options.origin, u, v, w,
-            options.focal_length, options.f_stop, options.sensor_height, focus_distance,
+            options.focal_length, options.f_stop, options.sensor_width, options.sensor_height, focus_distance,
             options.world_scale, options.resolution, options.frame_start_time, options.shutter_speed,
         )
     }
@@ -209,7 +213,8 @@ impl Camera {
         w: Vec3A,
         focal_length: f32,
         f_stop: f32,
-        sensor_height: f32,
+        sensor_width: f32,
+        sensor_height: Option<f32>,
         focus_distance: f32,
         world_scale: f32,
         resolution: (f32, f32),
@@ -221,7 +226,7 @@ impl Camera {
 
         // full frame sensor width is 36.0, calculating it here
         // but can move it to the constructor if necessary later on
-        let sensor_width = sensor_height * (resolution.0 / resolution.1);
+        let sensor_height = sensor_height.unwrap_or(sensor_width * (resolution.1 / resolution.0));
         let half_height = (sensor_height / 2.0) / focal_length;
         let half_width = (sensor_width / 2.0) / focal_length;
 

@@ -24,14 +24,12 @@ use crate::{mat, tex};
 pub fn hyperion_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let origin = Vec3A::new(0.0, 6.0, 6.0);
     let lookat = Vec3A::new(0.0, 0.0, -1.5);
-    let fov = 22.0;
-    let f_stop = 6.17346477508544921875; // calculated from old aperture code
+    let focal_length = 52.0;
 
     let camera_options = CameraOptions::new()
         .with_origin(origin)
         .with_lookat(lookat)
-        .with_fov(fov)
-        .with_fstop(f_stop)
+        .with_focal_length(focal_length)
         .with_resolution(width.unwrap_or(1920), height.unwrap_or(1080));
     let camera = Camera::new(&camera_options);
 

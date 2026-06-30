@@ -14,7 +14,7 @@ use crate::transformations::TransformedMesh;
 pub fn dalek_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let origin = Vec3A::new(-2.0, 2.5, 3.0);
     let lookat = Vec3A::new(0.0, 1.0, 0.0);
-    let sensor_height = 56.0;
+    let sensor_width = 56.0;
     let focal_length = 150.0;
     let f_stop = 8.0;
     let focus_distance = 3.5;
@@ -22,7 +22,7 @@ pub fn dalek_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let camera_options = CameraOptions::new()
         .with_origin(origin)
         .with_lookat(lookat)
-        .with_sensor_height(sensor_height)
+        .with_sensor_width(sensor_width)
         .with_focal_length(focal_length)
         .with_fstop(f_stop)
         .with_focus_distance(focus_distance)

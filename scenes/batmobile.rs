@@ -21,8 +21,8 @@ use crate::tex;
 pub fn batmobile_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let origin = Vec3A::new(-2.0, 0.5, 1.5);
     let lookat = Vec3A::new(0.0, 0.0, 0.25);
-    let focal_length = 74.0;
-    let f_stop = 2.8;
+    let focal_length = 62.0;
+    let f_stop = 2.0;
     let focus_distance = 2.25;
 
     let camera_options = CameraOptions::new()

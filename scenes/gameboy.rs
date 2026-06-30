@@ -18,7 +18,7 @@ use crate::{mat, tex};
 pub fn gameboy_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let origin = Vec3A::new(-2.0, 3.5, 9.0);
     let lookat = Vec3A::new(0.0, 1.0, 0.0);
-    let sensor_height = 56.0;
+    let sensor_width = 56.0;
     let focal_length = 150.0;
     let world_scale = 0.001;
     let f_stop = 8.0;
@@ -26,7 +26,7 @@ pub fn gameboy_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let camera_options = CameraOptions::new()
         .with_origin(origin)
         .with_lookat(lookat)
-        .with_sensor_height(sensor_height)
+        .with_sensor_width(sensor_width)
         .with_focal_length(focal_length)
         .with_fstop(f_stop)
         .with_world_scale(world_scale)

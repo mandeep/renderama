@@ -18,14 +18,14 @@ use crate::{mat, tex};
 pub fn veach_mis_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let origin = Vec3A::new(0.0, 1.2, -3.5);
     let lookat = Vec3A::new(0.0, 1.9, 7.0);
-    let fov = 35.0;
+    let focal_length = 32.0;
     let focus_distance = 10.0;
     let world_scale = 1.0;
 
     let camera_options = CameraOptions::new()
         .with_origin(origin)
         .with_lookat(lookat)
-        .with_fov(fov)
+        .with_focal_length(focal_length)
         .with_focus_distance(focus_distance)
         .with_world_scale(world_scale)
         .with_resolution(width.unwrap_or(1920), height.unwrap_or(1080));

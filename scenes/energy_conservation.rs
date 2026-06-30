@@ -15,7 +15,7 @@ use crate::{mat, tex};
 pub fn energy_conservation_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let origin = Vec3A::new(278.0, 278.0, -500.0);
     let lookat = Vec3A::new(278.0, 278.0, 300.0);
-    let fov = 10.0;
+    let fov = 40.0;
     let world_scale = 1.0;
 
     let camera_options = CameraOptions::new()
@@ -23,7 +23,7 @@ pub fn energy_conservation_scene(width: Option<usize>, height: Option<usize>) ->
         .with_lookat(lookat)
         .with_fov(fov)
         .with_world_scale(world_scale)
-        .with_resolution(width.unwrap_or(2048), height.unwrap_or(2048));
+        .with_resolution(width.unwrap_or(2048), height.unwrap_or(512));
     let camera = Camera::new(&camera_options);
 
     let mut objects = Vec::new();

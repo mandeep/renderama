@@ -20,8 +20,8 @@ use crate::tex;
 
 
 pub fn honda_scene(width: Option<usize>, height: Option<usize>) -> Scene {
-    let origin = Vec3A::new(2.5, 0.75, 4.0);
-    let lookat = Vec3A::new(-0.1, 0.225, 0.0);
+    let origin = Vec3A::new(2.5, 0.75, 4.75);
+    let lookat = Vec3A::new(-0.09, 0.25, 0.0);
     let focal_length = 135.0;
     let f_stop = 16.0;
 
