@@ -5,7 +5,7 @@ use tobj;
 
 use crate::lights::{MeshLight, Light};
 use crate::materials::{Diffuse, Emissive, Material, MaterialId, Plastic, Reflective, Refractive, TextureMap};
-use crate::texture::{Color, ImageTexture, ImageTextureMap, Texture};
+use crate::texture::{Color, ImageTexture, Texture};
 use crate::triangle::{Triangle, TriangleMesh};
 
 use crate::tex;
@@ -206,7 +206,7 @@ fn map_mtl_to_material(material: &tobj::Material, textures: &mut Vec<Texture>, b
         let emissive_color: Texture = if let Some(path) = map_ke {
             let full_path = base_directory.join(path);
             // emissive texture map should be converted from srgb to linear
-            ImageTexture::new(full_path.to_str().unwrap(), Vec2::ONE).into()
+            ImageTexture::srgb(full_path.to_str().unwrap(), Vec2::ONE).into()
         } else {
             Color::new(ke[0], ke[1], ke[2]).into()
         };
@@ -229,7 +229,7 @@ fn map_mtl_to_material(material: &tobj::Material, textures: &mut Vec<Texture>, b
 
     let albedo: Texture = if let Some(path) = &material.diffuse_texture {
         let full_path = base_directory.join(path);
-        ImageTexture::new(full_path.to_str().unwrap(), Vec2::ONE).into()
+        ImageTexture::srgb(full_path.to_str().unwrap(), Vec2::ONE).into()
     } else {
         Color::new(kd[0], kd[1], kd[2]).into()
     };
@@ -241,7 +241,7 @@ fn map_mtl_to_material(material: &tobj::Material, textures: &mut Vec<Texture>, b
     if map_bump.is_some() {
         let normal_path = map_bump.as_ref().unwrap();
         let full_path = base_directory.join(normal_path);
-        let normal_map_texture: Texture = ImageTextureMap::new(full_path.to_str().unwrap(), Vec2::ONE).into();
+        let normal_map_texture: Texture = ImageTexture::linear(full_path.to_str().unwrap(), Vec2::ONE).into();
         let normal_map_id = tex!(textures, normal_map_texture);
         texture_map = texture_map.with_normal(normal_map_id);
     }
@@ -249,7 +249,7 @@ fn map_mtl_to_material(material: &tobj::Material, textures: &mut Vec<Texture>, b
     if map_ns.is_some() {
         let roughness_path = map_ns.as_ref().unwrap();
         let full_path = base_directory.join(roughness_path);
-        let roughness_map_texture: Texture = ImageTextureMap::new(full_path.to_str().unwrap(), Vec2::ONE).into();
+        let roughness_map_texture: Texture = ImageTexture::linear(full_path.to_str().unwrap(), Vec2::ONE).into();
         let roughness_map_id = tex!(textures, roughness_map_texture);
         texture_map = texture_map.with_roughness(roughness_map_id);
     }
@@ -257,7 +257,7 @@ fn map_mtl_to_material(material: &tobj::Material, textures: &mut Vec<Texture>, b
     if map_pm.is_some() {
         let metallic_roughness_path = map_pm.as_ref().unwrap();
         let full_path = base_directory.join(metallic_roughness_path);
-        let metallic_roughness_map_texture: Texture = ImageTextureMap::new(full_path.to_str().unwrap(), Vec2::ONE).into();
+        let metallic_roughness_map_texture: Texture = ImageTexture::linear(full_path.to_str().unwrap(), Vec2::ONE).into();
         let metallic_roughness_map_id = tex!(textures, metallic_roughness_map_texture);
         texture_map = texture_map.with_metallic_roughness(metallic_roughness_map_id);
     }
