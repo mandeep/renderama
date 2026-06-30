@@ -24,6 +24,11 @@ impl CameraOrientation {
     }
 }
 
+pub enum UpAxis {
+    Y,
+    Z,
+}
+
 pub struct CameraOptions {
     pub origin: Vec3A,
     pub orientation: Option<CameraOrientation>,
@@ -36,6 +41,7 @@ pub struct CameraOptions {
     pub resolution: (f32, f32),
     pub frame_start_time: f32,
     pub shutter_speed: f32,
+    pub up_axis: UpAxis,
 }
 
 impl CameraOptions {
@@ -112,6 +118,11 @@ impl CameraOptions {
         self.resolution = (width as f32, height as f32);
         self
     }
+
+    pub fn with_up_axis(mut self, axis: UpAxis) -> Self {
+        self.up_axis = axis;
+        self
+    }
 }
 
 impl Default for CameraOptions {
@@ -129,7 +140,8 @@ impl Default for CameraOptions {
             world_scale: 0.001,
             resolution: (1920.0, 1080.0),
             frame_start_time: 0.0,
-            shutter_speed: 0.0
+            shutter_speed: 0.0,
+            up_axis: UpAxis::Y
         }
     }
 }
@@ -167,9 +179,21 @@ impl Camera {
         let orientation = options.orientation.as_ref()
             .expect("CameraOptions::orientation must be set before building a Camera");
 
+        let change_of_basis = Mat3A::from_cols(Vec3A::X, -Vec3A::Z, Vec3A::Y);
+
+        let origin = match options.up_axis {
+            UpAxis::Y => options.origin,
+            UpAxis::Z => change_of_basis * options.origin,
+        };
+
         let (u, v, w) = match orientation {
             CameraOrientation::LookAt { lookat, view } => {
-                let w: Vec3A = (options.origin - lookat).normalize(); // points away from scene
+                let (lookat, view) = match options.up_axis {
+                    UpAxis::Y => (*lookat, *view),
+                    UpAxis::Z => (change_of_basis * lookat, change_of_basis * view)
+                };
+
+                let w: Vec3A = (origin - lookat).normalize(); // points away from scene
                 let u: Vec3A = view.cross(w).normalize(); // points to the right
                 let v: Vec3A = w.cross(u); // points up
 
@@ -179,9 +203,14 @@ impl Camera {
                 let rotation = rotation.map(|angle| angle.to_radians());
                 let rotation_matrix = Mat3A::from_euler(EulerRot::XYZEx, rotation.x, rotation.y, rotation.z);
 
-                let u = rotation_matrix.x_axis;
-                let v = rotation_matrix.y_axis;
-                let w = rotation_matrix.z_axis;
+                let basis = match options.up_axis {
+                    UpAxis::Y => rotation_matrix,
+                    UpAxis::Z => change_of_basis * rotation_matrix,
+                };
+
+                let u = basis.x_axis;
+                let v = basis.y_axis;
+                let w = basis.z_axis;
 
                 (u, v, w)
             },
@@ -195,7 +224,7 @@ impl Camera {
         });
 
         Camera::from_basis(
-            options.origin, u, v, w,
+            origin, u, v, w,
             options.focal_length, options.f_stop, options.sensor_width, options.sensor_height, focus_distance,
             options.world_scale, options.resolution, options.frame_start_time, options.shutter_speed,
         )
