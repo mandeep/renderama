@@ -1,10 +1,14 @@
+use std::fs;
+
 use glam::{EulerRot, Mat3A, Vec2, Vec3A};
 use rand_pcg::Pcg64Mcg;
 use rand::RngExt;
+use serde::Deserialize;
 
 use crate::ray::Ray;
 use crate::sampling::pick_disk_point;
 
+#[derive(Copy, Clone)]
 pub enum CameraOrientation {
     LookAt { lookat: Vec3A, view: Vec3A },
     Rotation(Vec3A),
@@ -24,11 +28,13 @@ impl CameraOrientation {
     }
 }
 
+#[derive(Copy, Clone)]
 pub enum UpAxis {
     Y,
     Z,
 }
 
+#[derive(Copy, Clone)]
 pub struct CameraOptions {
     pub origin: Vec3A,
     pub orientation: Option<CameraOrientation>,
@@ -47,6 +53,43 @@ pub struct CameraOptions {
 impl CameraOptions {
     pub fn new() -> Self {
         Self::default()
+    }
+
+    pub fn from_disk(filename: impl Into<String>) -> Self {
+        let filename = filename.into();
+
+        let serialized = fs::read_to_string(&filename)
+            .expect("Failed to read Camera JSON file.");
+
+        let cameras: Vec<CameraJson> = serde_json::from_str(&serialized)
+            .expect("Failed to deserialize Camera JSON file.");
+
+        let camera = cameras.first()
+            .expect("Camera JSON file did not contain any cameras.");
+
+        let origin = Vec3A::new(camera.location[0], camera.location[1], camera.location[2]);
+
+        let rotation = Vec3A::new(
+            camera.rotation_euler_xyz_degrees[0],
+            camera.rotation_euler_xyz_degrees[1],
+            camera.rotation_euler_xyz_degrees[2],
+        );
+
+        let f_stop = if camera.dof.use_dof {
+            camera.dof.aperture_fstop
+        } else {
+            f32::INFINITY
+        };
+
+        CameraOptions::new()
+            .with_origin(origin)
+            .with_rotation(rotation)
+            .with_focal_length(camera.lens_mm)
+            .with_sensor_width(camera.sensor_width_mm)
+            .with_focus_distance(camera.dof.focus_distance)
+            .with_fstop(f_stop)
+            .with_resolution(camera.render.resolution_x, camera.render.resolution_y)
+            .with_up_axis(UpAxis::Z)
     }
 
     pub fn with_origin(mut self, origin: Vec3A) -> Self {
@@ -301,4 +344,29 @@ impl Camera {
             time
         )
     }
+}
+
+#[derive(Deserialize)]
+struct CameraJson {
+    location: [f32; 3],
+    rotation_euler_xyz_degrees: [f32; 3],
+
+    lens_mm: f32,
+    sensor_width_mm: f32,
+
+    dof: CameraDofJson,
+    render: CameraRenderJson,
+}
+
+#[derive(Deserialize)]
+struct CameraDofJson {
+    use_dof: bool,
+    focus_distance: f32,
+    aperture_fstop: f32,
+}
+
+#[derive(Deserialize)]
+struct CameraRenderJson {
+    resolution_x: usize,
+    resolution_y: usize,
 }

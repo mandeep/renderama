@@ -22,6 +22,7 @@ RENDER_SCENES = [
     ("gameboy", 64, (512, 512)),
     ("honda", 64, (960, 540)),
     ("hyperion", 128, (960, 540)),
+    ("ocean", 64, (1350, 540)),
     ("random_spheres", 128, (1024, 512)),
     ("spheres_in_box", 128, (512, 512)),
     ("stormtrooper", 64, (960, 540)),

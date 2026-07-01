@@ -8,6 +8,7 @@ Renderama is a path tracer in progress based off of Peter Shirley's
 ![Hyperion](renders/hyperion.png)
 ![Honda S800](renders/honda.png)
 ![Backrooms](renders/backrooms.png)
+![Ocean](renders/ocean.png)
 ![Gameboy](renders/gameboy.png)
 ![Subway](renders/subway.png)
 ![Batmobile](renders/batmobile.png)

@@ -34,7 +34,7 @@ https://sketchfab.com/3d-models/nsd-dalek-sec-c559d496c8354a168482cd983e1c205e
 CC-BY 4.0
 
 Pokeball
-anoopjadhav, https://sketchfab.com/anoopjadhav 
+anoopjadhav, https://sketchfab.com/anoopjadhav
 https://sketchfab.com/3d-models/pokeball-loader-0066d4c4e8a0487592c785c4688b2e71
 CC-BY 4.0
 
@@ -47,6 +47,11 @@ Honda S800
 Yakpower, https://sketchfab.com/Alexios_Apokaukos
 https://sketchfab.com/3d-models/honda-s800-fa6c6113f1e34d9baaff80b5b586a25d
 CC-BY 4.0
+
+Off the Coast
+nickbrunner, https://blendswap.com/profile/6392
+https://blendswap.com/blend/7949
+CC-BY
 
 The Stanford 3D Scanning Repository
 https://graphics.stanford.edu/data/3Dscanrep/

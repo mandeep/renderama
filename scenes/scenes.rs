@@ -15,6 +15,7 @@ mod energy_conservation;
 mod gameboy;
 mod honda;
 mod hyperion;
+mod ocean;
 mod random_spheres;
 mod spheres_in_box;
 mod stormtrooper;
@@ -34,6 +35,7 @@ pub use self::energy_conservation::*;
 pub use self::gameboy::*;
 pub use self::honda::*;
 pub use self::hyperion::*;
+pub use self::ocean::*;
 pub use self::random_spheres::*;
 pub use self::spheres_in_box::*;
 pub use self::subway::*;
@@ -58,6 +60,7 @@ pub enum Scenes {
     Gameboy,
     Honda,
     Hyperion,
+    Ocean,
     RandomSpheres,
     SpheresInBox,
     Stormtrooper,
@@ -81,6 +84,7 @@ impl Scenes {
             Scenes::Gameboy => gameboy_scene(width, height),
             Scenes::Honda => honda_scene(width, height),
             Scenes::Hyperion => hyperion_scene(width, height),
+            Scenes::Ocean => ocean_scene(width, height),
             Scenes::RandomSpheres => random_spheres_scene(width, height, rng),
             Scenes::SpheresInBox => spheres_in_box_scene(width, height, rng),
             Scenes::Stormtrooper => stormtrooper_scene(width, height),
