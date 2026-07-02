@@ -67,10 +67,11 @@ impl CameraOptions {
         let origin = Vec3A::from_array(camera.location);
         let rotation = Vec3A::from_array(camera.rotation);
 
-        let f_stop = if camera.dof.use_dof {
-            camera.dof.aperture_fstop
+        let (f_stop, focus_distance) = if camera.dof.use_dof {
+            (camera.dof.aperture_fstop, camera.dof.focus_distance)
         } else {
-            f32::INFINITY
+            // everything is in focus with infinite aperture so need to worry about focus distance
+            (f32::INFINITY, 1.0)
         };
 
         CameraOptions::new()
@@ -78,7 +79,7 @@ impl CameraOptions {
             .with_rotation(rotation)
             .with_focal_length(camera.focal_length)
             .with_sensor_width(camera.sensor_width)
-            .with_focus_distance(camera.dof.focus_distance)
+            .with_focus_distance(focus_distance)
             .with_fstop(f_stop)
             .with_resolution(camera.render.resolution_x, camera.render.resolution_y)
             .with_up_axis(UpAxis::Z)
