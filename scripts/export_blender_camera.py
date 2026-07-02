@@ -16,28 +16,15 @@ def get_camera_settings():
     location = [position for position in camera.location]
     rotation = [math.degrees(angle) for angle in camera.rotation_euler]
 
-    focal_length = camera_data.lens
-    sensor_width = camera_data.sensor_width
-
-    dof = {
-        "use_dof": camera_data.dof.use_dof,
-        "focus_distance": camera_data.dof.focus_distance,
-        "aperture_fstop": camera_data.dof.aperture_fstop,
-    }
-
-    render = {
-        "resolution_x": scene.render.resolution_x,
-        "resolution_y": scene.render.resolution_y,
-    }
-
     return {
         "name": name,
         "location": location,
         "rotation": rotation,
-        "focal_length": focal_length,
-        "sensor_width": sensor_width,
-        "dof": dof,
-        "render": render,
+        "focal_length": camera_data.lens,
+        "sensor_width": camera_data.sensor_width,
+        "focus_distance": camera_data.dof.focus_distance,
+        "aperture_fstop": camera_data.dof.aperture_fstop,
+        "resolution": [scene.render.resolution_x, scene.render.resolution_y]
     }
 
 def export_camera(output_filepath='.'):

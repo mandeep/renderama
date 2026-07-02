@@ -8,6 +8,21 @@ use serde::Deserialize;
 use crate::ray::Ray;
 use crate::sampling::pick_disk_point;
 
+
+#[derive(Deserialize)]
+struct CameraJson {
+    location: [f32; 3],
+    rotation: [f32; 3],
+
+    focal_length: f32,
+    sensor_width: f32,
+
+    focus_distance: f32,
+    aperture_fstop: f32,
+
+    resolution: [usize; 2]
+}
+
 #[derive(Copy, Clone)]
 pub enum CameraOrientation {
     LookAt { lookat: Vec3A, view: Vec3A },
@@ -67,21 +82,14 @@ impl CameraOptions {
         let origin = Vec3A::from_array(camera.location);
         let rotation = Vec3A::from_array(camera.rotation);
 
-        let (f_stop, focus_distance) = if camera.dof.use_dof {
-            (camera.dof.aperture_fstop, camera.dof.focus_distance)
-        } else {
-            // everything is in focus with infinite aperture so need to worry about focus distance
-            (f32::INFINITY, 1.0)
-        };
-
         CameraOptions::new()
             .with_origin(origin)
             .with_rotation(rotation)
             .with_focal_length(camera.focal_length)
             .with_sensor_width(camera.sensor_width)
-            .with_focus_distance(focus_distance)
-            .with_fstop(f_stop)
-            .with_resolution(camera.render.resolution_x, camera.render.resolution_y)
+            .with_focus_distance(camera.focus_distance)
+            .with_fstop(camera.aperture_fstop)
+            .with_resolution(camera.resolution[0], camera.resolution[1])
             .with_up_axis(UpAxis::Z)
     }
 
@@ -337,29 +345,4 @@ impl Camera {
             time
         )
     }
-}
-
-#[derive(Deserialize)]
-struct CameraJson {
-    location: [f32; 3],
-    rotation: [f32; 3],
-
-    focal_length: f32,
-    sensor_width: f32,
-
-    dof: CameraDofJson,
-    render: CameraRenderJson,
-}
-
-#[derive(Deserialize)]
-struct CameraDofJson {
-    use_dof: bool,
-    focus_distance: f32,
-    aperture_fstop: f32,
-}
-
-#[derive(Deserialize)]
-struct CameraRenderJson {
-    resolution_x: usize,
-    resolution_y: usize,
 }

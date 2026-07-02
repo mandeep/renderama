@@ -1,4 +1,5 @@
 {
+    "name": "Camera_Red Epic",
     "location": [
         -0.3727814555168152,
         -30.157947540283203,
@@ -11,13 +12,10 @@
     ],
     "focal_length": 30.224939346313477,
     "sensor_width": 30.0,
-    "dof": {
-        "use_dof": true,
-        "focus_distance": 45.0,
-        "aperture_fstop": 0.7556235790252686
-    },
-    "render": {
-        "resolution_x": 2700,
-        "resolution_y": 1080
-    }
+    "focus_distance": 45.0,
+    "aperture_fstop": 0.7556235790252686,
+    "resolution": [
+        2700,
+        1080
+    ]
 }
