@@ -61,14 +61,11 @@ impl CameraOptions {
         let serialized = fs::read_to_string(&filename)
             .expect("Failed to read Camera JSON file.");
 
-        let cameras: Vec<CameraJson> = serde_json::from_str(&serialized)
+        let camera: CameraJson = serde_json::from_str(&serialized)
             .expect("Failed to deserialize Camera JSON file.");
 
-        let camera = cameras.first()
-            .expect("Camera JSON file did not contain any cameras.");
-
         let origin = Vec3A::from_array(camera.location);
-        let rotation = Vec3A::from_array(camera.rotation_euler_xyz_degrees);
+        let rotation = Vec3A::from_array(camera.rotation);
 
         let f_stop = if camera.dof.use_dof {
             camera.dof.aperture_fstop
@@ -79,8 +76,8 @@ impl CameraOptions {
         CameraOptions::new()
             .with_origin(origin)
             .with_rotation(rotation)
-            .with_focal_length(camera.lens_mm)
-            .with_sensor_width(camera.sensor_width_mm)
+            .with_focal_length(camera.focal_length)
+            .with_sensor_width(camera.sensor_width)
             .with_focus_distance(camera.dof.focus_distance)
             .with_fstop(f_stop)
             .with_resolution(camera.render.resolution_x, camera.render.resolution_y)
@@ -344,10 +341,10 @@ impl Camera {
 #[derive(Deserialize)]
 struct CameraJson {
     location: [f32; 3],
-    rotation_euler_xyz_degrees: [f32; 3],
+    rotation: [f32; 3],
 
-    lens_mm: f32,
-    sensor_width_mm: f32,
+    focal_length: f32,
+    sensor_width: f32,
 
     dof: CameraDofJson,
     render: CameraRenderJson,
