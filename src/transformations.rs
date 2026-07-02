@@ -1,7 +1,7 @@
 use std::f32;
 use std::sync::Arc;
 
-use glam::{Mat4, Vec3A, Vec3};
+use glam::{EulerRot, Mat4, Vec3A, Vec3};
 use rand_pcg::Pcg64Mcg;
 
 use crate::aabb::AABB;
@@ -55,7 +55,7 @@ impl TransformedMesh {
         let bbox = transform_aabb(&local_bbox, &forward_transform);
 
         let primitive = Arc::new(primitive.into());
-        
+
         TransformedMesh {
             inverse_transform,
             forward_transform,
@@ -133,7 +133,7 @@ impl TransformedMesh {
 
         self.primitive.hits_anything(&local_ray, local_start_distance, local_end_distance, rng)
     }
-    
+
     /// Return the world space bounding box of the TransformedMesh
     pub fn bounding_box(&self) -> Option<AABB> {
         Some(self.bbox)
@@ -293,7 +293,7 @@ impl MotionMeshBuilder {
         let (scale, rotation, translate) = mesh.forward_transform.to_scale_rotation_translation();
 
         // since we multiplied Z * Y * X in build_transform, we need to reverse that here
-        let (rotation_z, rotation_y, rotation_x) = rotation.to_euler(glam::EulerRot::ZYX);
+        let (rotation_z, rotation_y, rotation_x) = rotation.to_euler(EulerRot::ZYX);
         let rotation = Vec3A::new(rotation_x.to_degrees(), rotation_y.to_degrees(), rotation_z.to_degrees());
 
         let primitive = Arc::unwrap_or_clone(mesh.primitive);

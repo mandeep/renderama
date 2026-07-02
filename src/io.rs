@@ -113,17 +113,17 @@ pub fn load_obj_with_options(
 
         let positions: Vec<Vec3A> = mesh.positions
                                         .chunks(3)
-                                        .map(|i| Vec3A::new(i[0], i[1], i[2]))
+                                        .map(|position| Vec3A::from_slice(position))
                                         .collect();
 
         let uvs: Vec<Vec2> = if !mesh.texcoords.is_empty() {
-            mesh.texcoords.chunks(2).map(|c| Vec2::new(c[0], c[1])).collect()
+            mesh.texcoords.chunks(2).map(|texture_coordinate| Vec2::from_slice(texture_coordinate)).collect()
         } else {
             vec![Vec2::ZERO; positions.len()]
         };
 
         let normals: Vec<Vec3A> = if !mesh.normals.is_empty() {
-            mesh.normals.chunks(3).map(|i| Vec3A::new(i[0], i[1], i[2])).collect()
+            mesh.normals.chunks(3).map(|normal| Vec3A::from_slice(normal)).collect()
         } else {
             let mut computed = vec![Vec3A::ZERO; positions.len()];
             for i in 0..mesh.indices.len() / 3 {

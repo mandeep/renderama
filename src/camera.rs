@@ -67,13 +67,8 @@ impl CameraOptions {
         let camera = cameras.first()
             .expect("Camera JSON file did not contain any cameras.");
 
-        let origin = Vec3A::new(camera.location[0], camera.location[1], camera.location[2]);
-
-        let rotation = Vec3A::new(
-            camera.rotation_euler_xyz_degrees[0],
-            camera.rotation_euler_xyz_degrees[1],
-            camera.rotation_euler_xyz_degrees[2],
-        );
+        let origin = Vec3A::from_array(camera.location);
+        let rotation = Vec3A::from_array(camera.rotation_euler_xyz_degrees);
 
         let f_stop = if camera.dof.use_dof {
             camera.dof.aperture_fstop

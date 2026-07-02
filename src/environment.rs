@@ -60,7 +60,7 @@ impl EnvironmentMap {
         let height = img.height() as usize;
 
         let pixels = img.pixels()
-            .map(|p| Vec3A::new(p[0], p[1], p[2]))
+            .map(|pixel| Vec3A::new(pixel[0], pixel[1], pixel[2]))
             .collect();
 
         // conditional_pdf stores the probabilities for picking a
@@ -132,7 +132,7 @@ impl EnvironmentMap {
 
         let pixel = self.pixels[j * self.width + i];
 
-        Vec3A::new(pixel[0], pixel[1], pixel[2]) * self.intensity
+        pixel * self.intensity
     }
 
     /// Compute the weight on how likely we will sample in the given direction.
