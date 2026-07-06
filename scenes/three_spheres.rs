@@ -3,12 +3,12 @@ use glam::Vec3A;
 use crate::bvh::BVH;
 use crate::camera::{Camera, CameraOptions};
 use crate::environment::EnvironmentMap;
-use crate::extensions::PushInto;
-use crate::materials::{Diffuse, Reflective, Refractive, Plastic, Volumetric};
+use crate::extensions::{AddMaterial, AddTexture, PushInto};
+use crate::materials::{Diffuse, Material, Plastic, Reflective, Refractive, Volumetric};
 use crate::primitive::Primitive;
-use crate::scene::{Scene, SceneBuilder, SceneContext};
+use crate::scene::{Scene, SceneBuilder};
 use crate::sphere::Sphere;
-use crate::texture::Color;
+use crate::texture::{Color, Texture};
 use crate::volume::Volume;
 
 
@@ -27,12 +27,13 @@ pub fn three_spheres_scene(width: Option<usize>, height: Option<usize>) -> Scene
     let camera = Camera::new(&camera_options);
 
     let mut objects: Vec<Primitive> = Vec::new();
-    let mut context = SceneContext::new();
+    let mut materials: Vec<Material> = Vec::new();
+    let mut textures: Vec<Texture> = Vec::new();
 
-    let refr_id = context.add_texture(Color::new(1.0, 1.0, 1.0));
-    let refr_idx = context.add_material(Refractive::new(refr_id, 1.5));
-    let vol_id = context.add_texture(Color::new(0.0, 0.4, 0.9));
-    let vol_idx = context.add_material(Volumetric::new(vol_id));
+    let refr_id = textures.add_texture(Color::new(1.0, 1.0, 1.0));
+    let refr_idx = materials.add_material(Refractive::new(refr_id, 1.5));
+    let vol_id = textures.add_texture(Color::new(0.0, 0.4, 0.9));
+    let vol_idx = materials.add_material(Volumetric::new(vol_id));
 
     let boundary = Sphere::new(Vec3A::new(0.6, 0.0, -1.0), 0.5, refr_idx);
     let cloned_boundary = boundary.clone();
@@ -40,16 +41,16 @@ pub fn three_spheres_scene(width: Option<usize>, height: Option<usize>) -> Scene
     objects.push_into(boundary);
     objects.push_into(Volume::new(4.0, cloned_boundary, vol_idx));
 
-    let metal_id = context.add_texture(Color::new(0.93, 0.93, 0.93));
-    let metal_idx = context.add_material(Reflective::new(metal_id, 0.0));
+    let metal_id = textures.add_texture(Color::new(0.93, 0.93, 0.93));
+    let metal_idx = materials.add_material(Reflective::new(metal_id, 0.0));
     objects.push_into(Sphere::new(Vec3A::new(-0.6, 0.0, -1.0), 0.5, metal_idx));
 
-    let plastic_id = context.add_texture(Color::new(0.34, 0.57, 1.0));
-    let plastic_idx = context.add_material(Plastic::new(plastic_id, 0.10, 1.5));
+    let plastic_id = textures.add_texture(Color::new(0.34, 0.57, 1.0));
+    let plastic_idx = materials.add_material(Plastic::new(plastic_id, 0.10, 1.5));
     objects.push_into(Sphere::new(Vec3A::new(0.0, 0.0, -2.0), 0.5, plastic_idx));
 
-    let floor_id = context.add_texture(Color::new(0.5, 0.5, 0.52));
-    let floor_idx = context.add_material(Diffuse::new(floor_id, 0.0));
+    let floor_id = textures.add_texture(Color::new(0.5, 0.5, 0.52));
+    let floor_idx = materials.add_material(Diffuse::new(floor_id, 0.0));
     objects.push_into(Sphere::new(Vec3A::new(0.0, -100.5, -1.0), 100.0, floor_idx));
 
     let bvh = BVH::new(&mut objects);
@@ -59,7 +60,7 @@ pub fn three_spheres_scene(width: Option<usize>, height: Option<usize>) -> Scene
     SceneBuilder::new("Three Spheres")
         .with_accelerator(bvh)
         .with_camera(camera)
-        .with_context(context)
+        .with_materials(materials, textures)
         .with_environment(environment)
         .build()
         .expect("Failed to build Three Spheres scene")

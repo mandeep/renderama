@@ -1,9 +1,12 @@
 use crate::bvh::BVH;
 use crate::camera::{Camera, CameraOptions};
 use crate::extensions::PushInto;
-use crate::io::{LoadObjOptions, load_obj_with_options};
+use crate::io::load_obj;
+use crate::lights::Light;
+use crate::materials::Material;
 use crate::primitive::Primitive;
-use crate::scene::{Scene, SceneBuilder, SceneContext};
+use crate::scene::{Scene, SceneBuilder};
+use crate::texture::Texture;
 use crate::transformations::TransformedMesh;
 
 pub fn ocean_scene(width: Option<usize>, height: Option<usize>) -> Scene {
@@ -16,11 +19,11 @@ pub fn ocean_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let camera = Camera::new(&camera_options);
 
     let mut objects: Vec<Primitive> = Vec::new();
-    let mut context = SceneContext::new();
+    let mut materials: Vec<Material> = Vec::new();
+    let mut textures: Vec<Texture> = Vec::new();
+    let mut lights: Vec<Light> = Vec::new();
 
-    let options = LoadObjOptions::new()
-        .with_lights(true);
-    let meshes = load_obj_with_options("extras/models/off_the_coast.obj", &mut context, options);
+    let meshes = load_obj("extras/models/off_the_coast.obj", &mut materials, &mut textures, Some(&mut lights));
 
     for mesh in meshes {
         let transformed = TransformedMesh::from(mesh);
@@ -32,7 +35,8 @@ pub fn ocean_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     SceneBuilder::new("Off The Coast")
         .with_accelerator(bvh)
         .with_camera(camera)
-        .with_context(context)
+        .with_materials(materials, textures)
+        .with_lights(lights)
         .build()
         .expect("Failed to build Off The Coast scene")
 }

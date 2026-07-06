@@ -3,13 +3,13 @@ use glam::Vec3A;
 use crate::bvh::BVH;
 use crate::camera::{Camera, CameraOptions};
 use crate::environment::EnvironmentMap;
-use crate::extensions::PushInto;
+use crate::extensions::{AddMaterial, AddTexture, PushInto};
 use crate::io::load_obj;
-use crate::materials::Plastic;
+use crate::materials::{Material, Plastic};
 use crate::plane::{Axis, Bounds2D, Plane};
 use crate::primitive::Primitive;
-use crate::scene::{Scene, SceneBuilder, SceneContext};
-use crate::texture::Color;
+use crate::scene::{Scene, SceneBuilder};
+use crate::texture::{Color, Texture};
 use crate::transformations::TransformedMesh;
 
 
@@ -32,9 +32,10 @@ pub fn gameboy_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let camera = Camera::new(&camera_options);
 
     let mut objects: Vec<Primitive> = Vec::new();
-    let mut context = SceneContext::new();
+    let mut materials: Vec<Material> = Vec::new();
+    let mut textures: Vec<Texture> = Vec::new();
 
-    let meshes = load_obj("extras/models/gameboy/gameboy.obj", &mut context);
+    let meshes = load_obj("extras/models/gameboy/gameboy.obj", &mut materials, &mut textures, None);
 
     let (translation, rotation, scale) = (Vec3A::ZERO, Vec3A::new(0.0, -50.0, 0.0), Vec3A::ONE);
     for mesh in meshes {
@@ -42,8 +43,8 @@ pub fn gameboy_scene(width: Option<usize>, height: Option<usize>) -> Scene {
         objects.push_into(transformed);
     }
 
-    let grey_id = context.add_texture(Color::new(0.796, 0.776, 0.746));
-    let grey = context.add_material(Plastic::new(grey_id, 0.75, 1.50));
+    let grey_id = textures.add_texture(Color::new(0.796, 0.776, 0.746));
+    let grey = materials.add_material(Plastic::new(grey_id, 0.75, 1.50));
     // floor plane
     objects.push_into(Plane::new(Axis::XZ, Bounds2D::new(-1000.0..1000.0, -1000.0..1000.0), -0.35, grey));
 
@@ -54,7 +55,7 @@ pub fn gameboy_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     SceneBuilder::new("Gameboy")
         .with_accelerator(bvh)
         .with_camera(camera)
-        .with_context(context)
+        .with_materials(materials, textures)
         .with_environment(environment)
         .build()
         .expect("Failed to build Gameboy scene")

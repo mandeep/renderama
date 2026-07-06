@@ -2,14 +2,15 @@ use glam::Vec3A;
 
 use crate::bvh::BVH;
 use crate::camera::{Camera, CameraOptions};
-use crate::extensions::PushInto;
+use crate::extensions::{AddLight, AddMaterial, AddTexture, PushInto};
 use crate::lights::Light;
-use crate::materials::{Diffuse, Emissive, Reflective};
+use crate::materials::{Diffuse, Emissive, Material, Reflective};
 use crate::plane::{Axis, Bounds2D, Plane};
+use crate::primitive::Primitive;
 use crate::rectangle::Rectangle;
-use crate::scene::{Scene, SceneBuilder, SceneContext};
+use crate::scene::{Scene, SceneBuilder};
 use crate::sphere::Sphere;
-use crate::texture::Color;
+use crate::texture::{Color, Texture};
 use crate::transformations::TransformedMesh;
 
 
@@ -31,11 +32,13 @@ pub fn veach_mis_scene(width: Option<usize>, height: Option<usize>) -> Scene {
         .with_resolution(width.unwrap_or(1920), height.unwrap_or(1080));
     let camera = Camera::new(&camera_options);
 
-    let mut objects = Vec::new();
-    let mut context = SceneContext::new();
+    let mut objects: Vec<Primitive> = Vec::new();
+    let mut materials: Vec<Material> = Vec::new();
+    let mut textures: Vec<Texture> = Vec::new();
+    let mut lights: Vec<Light> = Vec::new();
 
-    let grey_id = context.add_texture(Color::new(0.99, 0.99, 0.99));
-    let grey = context.add_material(Diffuse::new(grey_id, 0.0));
+    let grey_id = textures.add_texture(Color::new(0.99, 0.99, 0.99));
+    let grey = materials.add_material(Diffuse::new(grey_id, 0.0));
 
     // floor
     objects.push_into(Plane::new(Axis::XZ, Bounds2D::new(-20.0..20.0, -5.0..25.0), 0.0, grey));
@@ -47,7 +50,7 @@ pub fn veach_mis_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     objects.push_into(Plane::new(Axis::YZ, Bounds2D::new( 0.0..15.0, -5.0..25.0),-20.0, grey));
     objects.push_into(Plane::new(Axis::YZ, Bounds2D::new( 0.0..15.0, -5.0..25.0), 20.0, grey).into_reversed());
 
-    let silver = context.add_texture(Color::new(0.75, 0.75, 0.75));
+    let silver = textures.add_texture(Color::new(0.75, 0.75, 0.75));
 
     // use a cursor to place planes edge to edge
     let mut cursor = Vec3A::new(0.0, 0.15, 2.0);
@@ -70,7 +73,7 @@ pub fn veach_mis_scene(width: Option<usize>, height: Option<usize>) -> Scene {
 
         let center_pos = cursor + (direction * (plate_length * 0.5));
 
-        let mat_id = context.add_material(Reflective::new(silver, fuzz));
+        let mat_id = materials.add_material(Reflective::new(silver, fuzz));
         let rot = Vec3A::new(tilt_angle, 0.0, 0.0);
         let base = Rectangle::new(
             Vec3A::new(-2.25, 0.1, -visual_length / 2.0),
@@ -96,8 +99,8 @@ pub fn veach_mis_scene(width: Option<usize>, height: Option<usize>) -> Scene {
         (-2.0, 0.50, 4.0)
     ];
     for (light_x, roughness, _) in sphere_lights {
-        let texture_id = context.add_texture(Color::new(1.0, 1.0, 1.0));
-        let material_id = context.add_material(Emissive::new(texture_id));
+        let texture_id = textures.add_texture(Color::new(1.0, 1.0, 1.0));
+        let material_id = materials.add_material(Emissive::new(texture_id));
         objects.push_into(Sphere::new(
             Vec3A::new(light_x, light_y, light_z),
             roughness, material_id
@@ -106,8 +109,8 @@ pub fn veach_mis_scene(width: Option<usize>, height: Option<usize>) -> Scene {
 
     // added two plane lights on each side wall just in case
     let fill_intensity = 0.005;
-    let fill_tex = context.add_texture(Color::new(fill_intensity, fill_intensity, fill_intensity));
-    let fill_mat = context.add_material(Emissive::new(fill_tex));
+    let fill_tex = textures.add_texture(Color::new(fill_intensity, fill_intensity, fill_intensity));
+    let fill_mat = materials.add_material(Emissive::new(fill_tex));
     let fill_color = Vec3A::splat(fill_intensity);
 
     let left_light_primitive = Plane::new(
@@ -133,16 +136,17 @@ pub fn veach_mis_scene(width: Option<usize>, height: Option<usize>) -> Scene {
             Sphere::new(Vec3A::new(light_x, light_y, light_z), roughness, grey),
             Vec3A::splat(intensity),
         );
-        context.add_light(light);
+        lights.add_light(light);
     }
 
-    context.add_light(Light::new(left_light_primitive, fill_color));
-    context.add_light(Light::new(right_light_primitive, fill_color));
+    lights.add_light(Light::new(left_light_primitive, fill_color));
+    lights.add_light(Light::new(right_light_primitive, fill_color));
 
     SceneBuilder::new("Veach MIS")
         .with_accelerator(bvh)
         .with_camera(camera)
-        .with_context(context)
+        .with_materials(materials, textures)
+        .with_lights(lights)
         .build()
         .expect("Failed to build Veach MIS scene")
 }

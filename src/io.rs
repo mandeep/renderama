@@ -3,15 +3,14 @@ use std::collections::HashMap;
 use glam::{Vec2, Vec3A};
 use tobj;
 
+use crate::extensions::{AddLight, AddMaterial, AddTexture};
 use crate::lights::{MeshLight, Light};
 use crate::materials::{Diffuse, Emissive, Material, MaterialId, Plastic, Reflective, Refractive, TextureMap};
-use crate::scene::SceneContext;
 use crate::texture::{Color, ImageTexture, Texture};
 use crate::triangle::{Triangle, TriangleMesh};
 
 /// Options to be used for load_obj so that we can keep the API clean
 pub struct LoadObjOptions {
-    pub create_lights: bool,
     pub emissive_scale: f32,
     pub material_overrides: Option<HashMap<String, Material>>,
     pub default_material: Option<Material>,
@@ -20,11 +19,6 @@ pub struct LoadObjOptions {
 impl LoadObjOptions {
     pub fn new() -> LoadObjOptions {
         LoadObjOptions::default()
-    }
-
-    pub fn with_lights(mut self, emit: bool) -> Self {
-        self.create_lights = emit;
-        self
     }
 
     pub fn with_emissive_scale(mut self, scale: f32) -> Self {
@@ -46,7 +40,6 @@ impl LoadObjOptions {
 impl Default for LoadObjOptions {
     fn default() -> LoadObjOptions {
         LoadObjOptions {
-            create_lights: false,
             emissive_scale: 1.0,
             material_overrides: None,
             default_material: None
@@ -55,8 +48,8 @@ impl Default for LoadObjOptions {
 }
 
 /// Load an obj file with default options.
-pub fn load_obj(filepath: &str, context: &mut SceneContext) -> Vec<TriangleMesh> {
-    load_obj_with_options(filepath, context, LoadObjOptions::default())
+pub fn load_obj(filepath: &str, materials: &mut Vec<Material>, textures: &mut Vec<Texture>, lights: Option<&mut Vec<Light>>) -> Vec<TriangleMesh> {
+    load_obj_with_options(filepath, materials, textures, lights, LoadObjOptions::default())
 }
 
 /// Load an obj file with its related mtl file.
@@ -64,7 +57,9 @@ pub fn load_obj(filepath: &str, context: &mut SceneContext) -> Vec<TriangleMesh>
 /// Moved the following code from the TriangleMesh::from method.
 pub fn load_obj_with_options(
     filepath: &str,
-    context: &mut SceneContext,
+    materials: &mut Vec<Material>,
+    textures: &mut Vec<Texture>,
+    mut lights: Option<&mut Vec<Light>>,
     options: LoadObjOptions,
 ) -> Vec<TriangleMesh> {
     let base_directory = std::path::Path::new(filepath)
@@ -84,10 +79,10 @@ pub fn load_obj_with_options(
     let mut material_map: Vec<MaterialId> = Vec::new();
 
     let default_material = options.default_material.unwrap_or({
-        let texture_id = context.add_texture(Color::new(0.8, 0.8, 0.8));
+        let texture_id = textures.add_texture(Color::new(0.8, 0.8, 0.8));
         Diffuse::new(texture_id, 1.0).into()
     });
-    let default_material_id = context.add_material(default_material);
+    let default_material_id = materials.add_material(default_material);
 
     if let Ok(obj_materials) = obj_material_list {
         for material in obj_materials {
@@ -96,13 +91,13 @@ pub fn load_obj_with_options(
                     if let Some(override_material) = overrides.get(&material.name) {
                         override_material.clone()
                     } else{
-                        map_mtl_to_material(&material, context, base_directory)
+                        map_mtl_to_material(&material, textures, base_directory)
                     }
                 },
-                None => map_mtl_to_material(&material, context, base_directory),
+                None => map_mtl_to_material(&material, textures, base_directory),
             };
 
-            let mat_id = context.add_material(new_material);
+            let mat_id = materials.add_material(new_material);
             material_map.push(mat_id);
         }
     }
@@ -167,19 +162,22 @@ pub fn load_obj_with_options(
             let triangle = Triangle::new(v0, v1, v2, n0, n1, n2, uv0, uv1, uv2, current_material_id);
             triangles.push(triangle);
 
-            if options.create_lights {
-                if matches!(&context.materials[current_material_id.index()], Material::Emissive(_)) {
+            if lights.is_some() {
+                if matches!(&materials[current_material_id.index()], Material::Emissive(_)) {
                     light_triangles.push(triangle);
                 }
             }
         }
 
         if !light_triangles.is_empty() {
-            if let Material::Emissive(material) = &context.materials[current_material_id.index()] {
+            if let Material::Emissive(material) = &materials[current_material_id.index()] {
                 let emissive_scale = options.emissive_scale;
-                let intensity = context.textures[material.emissive_color.index()].sample_texture(0.5, 0.5) * emissive_scale;
+                let intensity = textures[material.emissive_color.index()].sample_texture(0.5, 0.5) * emissive_scale;
                 let mesh_light = MeshLight::new(light_triangles);
-                context.add_light(Light::new(mesh_light, intensity));
+
+                if let Some(lights) = lights.as_deref_mut() {
+                    lights.add_light(Light::new(mesh_light, intensity));
+                }
             }
         }
 
@@ -195,7 +193,7 @@ pub fn load_obj_with_options(
 /// https://en.wikipedia.org/wiki/Wavefront_.obj_file
 /// https://steamcommunity.com/sharedfiles/filedetails/?l=brazilian&id=2005695630
 /// https://docs.omniverse.nvidia.com/usd/latest/technical_reference/conceptual_data_mapping/obj-usd-concept-mapping.html
-fn map_mtl_to_material(material: &tobj::Material, context: &mut SceneContext, base_directory: &std::path::Path) -> Material {
+fn map_mtl_to_material(material: &tobj::Material, textures: &mut Vec<Texture>, base_directory: &std::path::Path) -> Material {
     let kd = material.diffuse.unwrap_or([0.8, 0.8, 0.8]);
     let _ks = material.specular.unwrap_or([0.0, 0.0, 0.0]);
     let ke = material.emissive.unwrap_or([0.0, 0.0, 0.0]);
@@ -218,7 +216,7 @@ fn map_mtl_to_material(material: &tobj::Material, context: &mut SceneContext, ba
             Color::new(ke[0], ke[1], ke[2]).into()
         };
 
-        let emissive_texture_id = context.add_texture(emissive_color);
+        let emissive_texture_id = textures.add_texture(emissive_color);
 
         return Emissive::new(emissive_texture_id).into();
     }
@@ -241,7 +239,7 @@ fn map_mtl_to_material(material: &tobj::Material, context: &mut SceneContext, ba
         Color::new(kd[0], kd[1], kd[2]).into()
     };
 
-    let albedo_texture_id = context.add_texture(albedo);
+    let albedo_texture_id = textures.add_texture(albedo);
 
     let mut texture_map = TextureMap::new(albedo_texture_id);
 
@@ -249,7 +247,7 @@ fn map_mtl_to_material(material: &tobj::Material, context: &mut SceneContext, ba
         let normal_path = map_bump.as_ref().unwrap();
         let full_path = base_directory.join(normal_path);
         let normal_map_texture: Texture = ImageTexture::linear(full_path.to_str().unwrap(), Vec2::ONE).into();
-        let normal_map_id = context.add_texture(normal_map_texture);
+        let normal_map_id = textures.add_texture(normal_map_texture);
         texture_map = texture_map.with_normal(normal_map_id);
     }
 
@@ -257,7 +255,7 @@ fn map_mtl_to_material(material: &tobj::Material, context: &mut SceneContext, ba
         let roughness_path = map_ns.as_ref().unwrap();
         let full_path = base_directory.join(roughness_path);
         let roughness_map_texture: Texture = ImageTexture::linear(full_path.to_str().unwrap(), Vec2::ONE).into();
-        let roughness_map_id = context.add_texture(roughness_map_texture);
+        let roughness_map_id = textures.add_texture(roughness_map_texture);
         texture_map = texture_map.with_roughness(roughness_map_id);
     }
 
@@ -265,7 +263,7 @@ fn map_mtl_to_material(material: &tobj::Material, context: &mut SceneContext, ba
         let metallic_roughness_path = map_pm.as_ref().unwrap();
         let full_path = base_directory.join(metallic_roughness_path);
         let metallic_roughness_map_texture: Texture = ImageTexture::linear(full_path.to_str().unwrap(), Vec2::ONE).into();
-        let metallic_roughness_map_id = context.add_texture(metallic_roughness_map_texture);
+        let metallic_roughness_map_id = textures.add_texture(metallic_roughness_map_texture);
         texture_map = texture_map.with_metallic_roughness(metallic_roughness_map_id);
     }
 
