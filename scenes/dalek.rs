@@ -5,10 +5,8 @@ use crate::camera::{Camera, CameraOptions};
 use crate::environment::EnvironmentMap;
 use crate::extensions::PushInto;
 use crate::io;
-use crate::materials::Material;
 use crate::primitive::Primitive;
-use crate::scene::{Scene, SceneBuilder};
-use crate::texture::Texture;
+use crate::scene::{Scene, SceneBuilder, SceneContext};
 use crate::transformations::TransformedMesh;
 
 pub fn dalek_scene(width: Option<usize>, height: Option<usize>) -> Scene {
@@ -30,10 +28,9 @@ pub fn dalek_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let camera = Camera::new(&camera_options);
 
     let mut objects: Vec<Primitive> = Vec::new();
-    let mut materials: Vec<Material> = Vec::new();
-    let mut textures: Vec<Texture> = Vec::new();
+    let mut context = SceneContext::new();
 
-    let (meshes, _) = io::load_obj("extras/models/dalek_sec.obj", &mut materials, &mut textures);
+    let meshes = io::load_obj("extras/models/dalek_sec.obj", &mut context);
 
     for mesh in meshes {
         let transformed = TransformedMesh::from(mesh);
@@ -47,7 +44,7 @@ pub fn dalek_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     SceneBuilder::new("Dalek Sec")
         .with_accelerator(bvh)
         .with_camera(camera)
-        .with_materials(materials, textures)
+        .with_context(context)
         .with_environment(environment)
         .build()
         .expect("Failed to build Dalek Sec scene")

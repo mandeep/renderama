@@ -7,10 +7,8 @@ use crate::camera::{Camera, CameraOptions};
 use crate::environment::EnvironmentMap;
 use crate::extensions::PushInto;
 use crate::io::{LoadObjOptions, load_obj_with_options};
-use crate::materials::Material;
 use crate::primitive::Primitive;
-use crate::scene::{Scene, SceneBuilder};
-use crate::texture::Texture;
+use crate::scene::{Scene, SceneBuilder, SceneContext};
 use crate::transformations::TransformedMesh;
 
 pub fn subway_scene(width: Option<usize>, height: Option<usize>) -> Scene {
@@ -27,11 +25,12 @@ pub fn subway_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let camera = Camera::new(&camera_options);
 
     let mut objects: Vec<Primitive> = Vec::new();
-    let mut materials: Vec<Material> = Vec::new();
-    let mut textures: Vec<Texture> = Vec::new();
+    let mut context = SceneContext::new();
 
-    let obj_options = LoadObjOptions::new().with_emissive_scale(10.0);
-    let (meshes, lights) = load_obj_with_options("extras/models/subway/subway.obj", &mut materials, &mut textures, obj_options);
+    let obj_options = LoadObjOptions::new()
+        .with_lights(true)
+        .with_emissive_scale(10.0);
+    let meshes = load_obj_with_options("extras/models/subway/subway.obj", &mut context, obj_options);
 
     let translation = Vec3A::new(0.0, 0.0, 0.0);
     let rotation = Vec3A::new(0.0, 0.0, 0.0);
@@ -39,9 +38,9 @@ pub fn subway_scene(width: Option<usize>, height: Option<usize>) -> Scene {
 
     for mesh in meshes {
         let transformed = TransformedMesh::new(
-            translation, 
-            rotation, 
-            scale, 
+            translation,
+            rotation,
+            scale,
             Primitive::TriangleMesh(Arc::new(mesh))
         );
         objects.push_into(transformed);
@@ -54,9 +53,8 @@ pub fn subway_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     SceneBuilder::new("Subway Train Interior")
         .with_accelerator(bvh)
         .with_camera(camera)
-        .with_materials(materials, textures)
+        .with_context(context)
         .with_environment(environment)
-        .with_lights(lights)
         .build()
         .expect("Failed to build Subway Train Interior scene")
 }

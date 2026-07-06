@@ -6,17 +6,14 @@ use crate::bvh::BVH;
 use crate::camera::{Camera, CameraOptions};
 use crate::extensions::PushInto;
 use crate::lights::Light;
-use crate::materials::{Diffuse, Emissive, Material, Reflective, Refractive, Volumetric};
+use crate::materials::{Diffuse, Emissive, Reflective, Refractive, Volumetric};
 use crate::plane::{Axis, Bounds2D, Plane};
 use crate::rectangle::Rectangle;
-use crate::scene::{Scene, SceneBuilder};
+use crate::scene::{Scene, SceneBuilder, SceneContext};
 use crate::sphere::Sphere;
-use crate::texture::{Color, ImageTexture, Texture};
+use crate::texture::{Color, ImageTexture};
 use crate::transformations::TransformedMesh;
 use crate::volume::Volume;
-
-use crate::{mat, tex};
-
 
 pub fn spheres_in_box_scene(width: Option<usize>, height: Option<usize>, rng: &mut Pcg64Mcg) -> Scene {
     let origin = Vec3A::new(478.0, 278.0, -600.0);
@@ -40,17 +37,16 @@ pub fn spheres_in_box_scene(width: Option<usize>, height: Option<usize>, rng: &m
     let camera = Camera::new(&camera_options);
 
     let mut objects = Vec::new();
-    let mut materials: Vec<Material> = Vec::new();
-    let mut textures: Vec<Texture> = Vec::new();
+    let mut context = SceneContext::new();
 
-    let white_id = tex!(textures, Color::new(0.73, 0.73, 0.73));
-    let white = mat!(materials, Diffuse::new(white_id, 0.0));
-    let red_id = tex!(textures, Color::new(1.0, 0.10, 0.20));
-    let red = mat!(materials, Diffuse::new(red_id, 0.0));
-    let light_id = tex!(textures, Color::new(7.0, 7.0, 7.0));
-    let big_light = mat!(materials, Emissive::new(light_id));
-    let snow_id = tex!(textures, Color::new(0.48, 0.83, 0.53));
-    let snow = mat!(materials, Diffuse::new(snow_id, 0.0));
+    let white_id = context.add_texture(Color::new(0.73, 0.73, 0.73));
+    let white = context.add_material(Diffuse::new(white_id, 0.0));
+    let red_id = context.add_texture(Color::new(1.0, 0.10, 0.20));
+    let red = context.add_material(Diffuse::new(red_id, 0.0));
+    let light_id = context.add_texture(Color::new(7.0, 7.0, 7.0));
+    let big_light = context.add_material(Emissive::new(light_id));
+    let snow_id = context.add_texture(Color::new(0.48, 0.83, 0.53));
+    let snow = context.add_material(Diffuse::new(snow_id, 0.0));
 
     let number_of_boxes = 20;
 
@@ -73,12 +69,12 @@ pub fn spheres_in_box_scene(width: Option<usize>, height: Option<usize>, rng: &m
         .build();
     objects.push_into(motion_mesh);
 
-    let refr_id = tex!(textures, Color::new(1.0, 1.0, 1.0));
-    let refr_idx = mat!(materials, Refractive::new(refr_id, 1.5));
+    let refr_id = context.add_texture(Color::new(1.0, 1.0, 1.0));
+    let refr_idx = context.add_material(Refractive::new(refr_id, 1.5));
     objects.push_into(Sphere::new(Vec3A::new(260.0, 150.0, 45.0), 50.0, refr_idx));
 
-    let refl_id = tex!(textures, Color::new(0.8, 0.8, 0.9));
-    let refl_idx = mat!(materials, Reflective::new(refl_id, 0.0));
+    let refl_id = context.add_texture(Color::new(0.8, 0.8, 0.9));
+    let refl_idx = context.add_material(Reflective::new(refl_id, 0.0));
     objects.push_into(Sphere::new(Vec3A::new(0.0, 150.0, 145.0), 50.0, refl_idx));
 
     let boundary = Sphere::new(Vec3A::new(360.0, 150.0, 145.0), 70.0, refr_idx);
@@ -86,25 +82,25 @@ pub fn spheres_in_box_scene(width: Option<usize>, height: Option<usize>, rng: &m
     let cloned_boundary = boundary.clone();
     objects.push_into(boundary);
 
-    let vol_id = tex!(textures, Color::new(0.2, 0.4, 0.9));
-    let vol_idx = mat!(materials, Volumetric::new(vol_id));
+    let vol_id = context.add_texture(Color::new(0.2, 0.4, 0.9));
+    let vol_idx = context.add_material(Volumetric::new(vol_id));
     objects.push_into(Volume::new(0.2, cloned_boundary, vol_idx));
 
     let fog = Sphere::new(Vec3A::new(0.0, 0.0, 0.0), 5000.0, refr_idx);
 
-    let fog_id = tex!(textures, Color::new(1.0, 1.0, 1.0));
-    let fog_idx = mat!(materials, Volumetric::new(fog_id));
+    let fog_id = context.add_texture(Color::new(1.0, 1.0, 1.0));
+    let fog_idx = context.add_material(Volumetric::new(fog_id));
     objects.push_into(Volume::new(0.0001, fog, fog_idx));
 
     // Image provided by NASA; details can be found here:
     // https://science.nasa.gov/earth/earth-observatory/blue-marble-next-generation/
     // The map used for this render is a Base Map with Topography and Bathymetry
-    let topo_id = tex!(textures, ImageTexture::new("extras/textures/world_topo_nasa.jpg", Vec2::splat(1.0)));
-    let topo_idx = mat!(materials, Diffuse::new(topo_id, 0.0));
+    let topo_id = context.add_texture(ImageTexture::new("extras/textures/world_topo_nasa.jpg", Vec2::splat(1.0)));
+    let topo_idx = context.add_material(Diffuse::new(topo_id, 0.0));
     objects.push_into(Sphere::new(Vec3A::new(400.0, 200.0, 400.0), 100.0, topo_idx));
 
-    let marble_id = tex!(textures, ImageTexture::new("extras/textures/marble.jpg", Vec2::splat(2.0)));
-    let marble = mat!(materials, Diffuse::new(marble_id, 0.0));
+    let marble_id = context.add_texture(ImageTexture::new("extras/textures/marble.jpg", Vec2::splat(2.0)));
+    let marble = context.add_material(Diffuse::new(marble_id, 0.0));
     objects.push_into(Sphere::new(Vec3A::new(220.0, 280.0, 300.0), 80.0, marble));
 
     let number_of_spheres = 1000;
@@ -120,13 +116,12 @@ pub fn spheres_in_box_scene(width: Option<usize>, height: Option<usize>, rng: &m
 
     let bvh = BVH::new(&mut objects);
     let light_shape = Plane::new(Axis::XZ, Bounds2D::new(123.0..423.0, 147.0..412.0), 554.0, white);
-    let light = vec![Light::new(light_shape, Vec3A::splat(7.0))];
+    context.add_light(Light::new(light_shape, Vec3A::splat(7.0)));
 
     SceneBuilder::new("Spheres in Box")
         .with_accelerator(bvh)
         .with_camera(camera)
-        .with_materials(materials, textures)
-        .with_lights(light)
+        .with_context(context)
         .build()
         .expect("Failed to build Spheres in Box scene")
 }

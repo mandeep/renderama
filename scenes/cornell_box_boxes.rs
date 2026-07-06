@@ -4,15 +4,13 @@ use crate::bvh::BVH;
 use crate::camera::{Camera, CameraOptions};
 use crate::extensions::PushInto;
 use crate::lights::Light;
-use crate::materials::{Diffuse, Emissive, Material};
+use crate::materials::{Diffuse, Emissive};
 use crate::plane::{Axis, Bounds2D, Plane};
 use crate::rectangle::Rectangle;
-use crate::scene::{Scene, SceneBuilder};
-use crate::texture::{Color, Texture};
+use crate::scene::{Scene, SceneBuilder, SceneContext};
+use crate::texture::Color;
 use crate::transformations::TransformedMesh;
 
-use crate::mat;
-use crate::tex;
 
 pub fn cornell_box_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let origin = Vec3A::new(278.0, 278.0, -800.0);
@@ -29,18 +27,17 @@ pub fn cornell_box_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let camera = Camera::new(&camera_options);
 
     let mut objects = Vec::new();
-    let mut materials: Vec<Material> = Vec::new();
-    let mut textures: Vec<Texture> = Vec::new();
+    let mut context = SceneContext::new();
 
     let roughness = 0.0;
-    let red = tex!(textures, Color::new(0.65, 0.05, 0.05));
-    let green = tex!(textures, Color::new(0.12, 0.45, 0.15));
-    let white = tex!(textures, Color::new(0.73, 0.73, 0.73));
-    let light_id = tex!(textures, Color::new(25.0, 18.0, 10.0));
-    let red_id = mat!(materials, Diffuse::new(red, roughness));
-    let green_id = mat!(materials, Diffuse::new(green, roughness));
-    let white_id = mat!(materials, Diffuse::new(white, roughness));
-    let light_material = mat!(materials, Emissive::new(light_id));
+    let red = context.add_texture(Color::new(0.65, 0.05, 0.05));
+    let green = context.add_texture(Color::new(0.12, 0.45, 0.15));
+    let white = context.add_texture(Color::new(0.73, 0.73, 0.73));
+    let light_id = context.add_texture(Color::new(25.0, 18.0, 10.0));
+    let red_id = context.add_material(Diffuse::new(red, roughness));
+    let green_id = context.add_material(Diffuse::new(green, roughness));
+    let white_id = context.add_material(Diffuse::new(white, roughness));
+    let light_material = context.add_material(Emissive::new(light_id));
 
     // add the walls of the cornell box to the world
     objects.push_into(Plane::new(Axis::YZ, Bounds2D::new(0.0..555.0, 0.0..555.0), 555.0, red_id).into_reversed());
@@ -61,13 +58,12 @@ pub fn cornell_box_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let bvh = BVH::new(&mut objects);
 
     let light_shape = Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 554.0, white_id);
-    let lights = vec![Light::new(light_shape, Vec3A::new(25.0, 18.0, 10.0))];
+    context.add_light(Light::new(light_shape, Vec3A::new(25.0, 18.0, 10.0)));
 
     SceneBuilder::new("Cornell Box with Boxes")
         .with_accelerator(bvh)
         .with_camera(camera)
-        .with_materials(materials, textures)
-        .with_lights(lights)
+        .with_context(context)
         .build()
         .expect("Failed to build Cornell Box scene")
 }

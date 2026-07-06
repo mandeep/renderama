@@ -11,12 +11,9 @@ use crate::io::{LoadObjOptions, load_obj_with_options};
 use crate::materials::{Material, Diffuse, Plastic};
 use crate::plane::{Axis, Bounds2D, Plane};
 use crate::primitive::Primitive;
-use crate::scene::{Scene, SceneBuilder};
-use crate::texture::{Color, Texture};
+use crate::scene::{Scene, SceneBuilder, SceneContext};
+use crate::texture::Color;
 use crate::transformations::TransformedMesh;
-
-use crate::mat;
-use crate::tex;
 
 
 pub fn honda_scene(width: Option<usize>, height: Option<usize>) -> Scene {
@@ -34,17 +31,16 @@ pub fn honda_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let camera = Camera::new(&camera_options);
 
     let mut objects: Vec<Primitive> = Vec::new();
-    let mut materials: Vec<Material> = Vec::new();
-    let mut textures: Vec<Texture> = Vec::new();
+    let mut context = SceneContext::new();
 
     let mut material_overrides: HashMap<String, Material> = HashMap::new();
-    let car_paint_id = tex!(textures, Color::new(0.568452, 0.0, 0.0));
+    let car_paint_id = context.add_texture(Color::new(0.568452, 0.0, 0.0));
     let car_paint_material = Plastic::new(car_paint_id, 0.04, 1.5).with_clearcoat(0.6, 0.025);
     material_overrides.insert_into("EXT_paint", car_paint_material);
     let obj_options = LoadObjOptions::new()
         .with_overrides(Some(material_overrides));
 
-    let (meshes, _) = load_obj_with_options("extras/models/honda/honda.obj", &mut materials, &mut textures, obj_options);
+    let meshes = load_obj_with_options("extras/models/honda/honda.obj", &mut context, obj_options);
 
     let translation = Vec3A::new(0.0, 0.0, 0.0);
     let rotation = Vec3A::new(0.0, 0.0, 0.0);
@@ -52,16 +48,16 @@ pub fn honda_scene(width: Option<usize>, height: Option<usize>) -> Scene {
 
     for mesh in meshes {
         let transformed = TransformedMesh::new(
-            translation, 
-            rotation, 
-            scale, 
+            translation,
+            rotation,
+            scale,
             Primitive::TriangleMesh(Arc::new(mesh))
         );
         objects.push_into(transformed);
     }
 
-    let grey_id = tex!(textures, Color::new(0.05, 0.05, 0.05));
-    let grey = mat!(materials, Diffuse::new(grey_id, 0.0));
+    let grey_id = context.add_texture(Color::new(0.05, 0.05, 0.05));
+    let grey = context.add_material(Diffuse::new(grey_id, 0.0));
     // floor plane
     objects.push_into(Plane::new(Axis::XZ, Bounds2D::new(-1000.0..1000.0, -1000.0..1000.0), 0.0, grey));
 
@@ -72,7 +68,7 @@ pub fn honda_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     SceneBuilder::new("Honda S800")
         .with_accelerator(bvh)
         .with_camera(camera)
-        .with_materials(materials, textures)
+        .with_context(context)
         .with_environment(environment)
         .build()
         .expect("Failed to build Honda S800 scene")

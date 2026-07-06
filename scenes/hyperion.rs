@@ -7,18 +7,16 @@ use crate::camera::{Camera, CameraOptions};
 use crate::environment::EnvironmentMap;
 use crate::extensions::PushInto;
 use crate::io::load_obj;
-use crate::materials::{Diffuse, Material, Plastic, Reflective, Refractive, Volumetric};
+use crate::materials::{Diffuse, Plastic, Reflective, Refractive, Volumetric};
 use crate::plane::{Axis, Bounds2D, Plane};
 use crate::primitive::Primitive;
 use crate::rectangle::Rectangle;
-use crate::scene::{Scene, SceneBuilder};
+use crate::scene::{Scene, SceneBuilder, SceneContext};
 use crate::sphere::Sphere;
-use crate::texture::{Color, Texture};
+use crate::texture::Color;
 use crate::transformations::TransformedMesh;
 use crate::triangle::TriangleMesh;
 use crate::volume::Volume;
-
-use crate::{mat, tex};
 
 
 pub fn hyperion_scene(width: Option<usize>, height: Option<usize>) -> Scene {
@@ -34,32 +32,31 @@ pub fn hyperion_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let camera = Camera::new(&camera_options);
 
     let mut objects: Vec<Primitive> = Vec::new();
-    let mut materials: Vec<Material> = Vec::new();
-    let mut textures: Vec<Texture> = Vec::new();
+    let mut context = SceneContext::new();
 
     let orange_color = Color::new(1.0, 0.32, 0.0);
     let orange_bright_color = Color::new(1.0, 0.16, 0.0);
-    let floor_id = tex!(textures, Color::new(0.63, 0.61, 0.59));
-    let glass_id = tex!(textures, Color::new(1.0, 1.0, 1.0));
-    let metal_id = tex!(textures, Color::new(0.93, 0.93, 0.93));
-    let dark_metal_id = tex!(textures, Color::new(0.757, 0.729, 0.694));
-    let platform_id = tex!(textures, Color::new(0.76, 0.74, 0.72));
-    let orange_id = tex!(textures, orange_color);
-    let orange_rough_id = tex!(textures, orange_bright_color);
-    let marble_vol_id = tex!(textures, Color::new(0.60, 0.71, 0.49));
-    let pingpong_id = tex!(textures, Color::new(0.93, 0.89, 0.85));
-    let white_id = tex!(textures, Color::new(1.0, 1.0, 1.0));
+    let floor_id = context.add_texture(Color::new(0.63, 0.61, 0.59));
+    let glass_id = context.add_texture(Color::new(1.0, 1.0, 1.0));
+    let metal_id = context.add_texture(Color::new(0.93, 0.93, 0.93));
+    let dark_metal_id = context.add_texture(Color::new(0.757, 0.729, 0.694));
+    let platform_id = context.add_texture(Color::new(0.76, 0.74, 0.72));
+    let orange_id = context.add_texture(orange_color);
+    let orange_rough_id = context.add_texture(orange_bright_color);
+    let marble_vol_id = context.add_texture(Color::new(0.60, 0.71, 0.49));
+    let pingpong_id = context.add_texture(Color::new(0.93, 0.89, 0.85));
+    let white_id = context.add_texture(Color::new(1.0, 1.0, 1.0));
 
-    let floor_idx = mat!(materials, Diffuse::new(floor_id, 0.0));
-    let glass_idx = mat!(materials, Refractive::new(glass_id, 1.5));
-    let metal_idx = mat!(materials, Reflective::new(metal_id, 0.2));
-    let dark_metal_idx = mat!(materials, Reflective::new(dark_metal_id, 0.10));
-    let platform_idx = mat!(materials, Diffuse::new(platform_id, 0.0));
-    let orange_idx = mat!(materials, Plastic::new(orange_id, 0.20, 1.5));
-    let orange_rough_idx = mat!(materials, Plastic::new(orange_rough_id, 0.25, 1.5).with_subsurface(0.80));
-    let marble_vol_idx = mat!(materials, Volumetric::new(marble_vol_id));
-    let pingpong_idx = mat!(materials, Plastic::new(pingpong_id, 0.60, 1.45).with_subsurface(0.40));
-    let white_idx = mat!(materials, Plastic::new(white_id, 0.1, 1.45));
+    let floor_idx = context.add_material(Diffuse::new(floor_id, 0.0));
+    let glass_idx = context.add_material(Refractive::new(glass_id, 1.5));
+    let metal_idx = context.add_material(Reflective::new(metal_id, 0.2));
+    let dark_metal_idx = context.add_material(Reflective::new(dark_metal_id, 0.10));
+    let platform_idx = context.add_material(Diffuse::new(platform_id, 0.0));
+    let orange_idx = context.add_material(Plastic::new(orange_id, 0.20, 1.5));
+    let orange_rough_idx = context.add_material(Plastic::new(orange_rough_id, 0.25, 1.5).with_subsurface(0.80));
+    let marble_vol_idx = context.add_material(Volumetric::new(marble_vol_id));
+    let pingpong_idx = context.add_material(Plastic::new(pingpong_id, 0.60, 1.45).with_subsurface(0.40));
+    let white_idx = context.add_material(Plastic::new(white_id, 0.1, 1.45));
 
     let floor_plane = Plane::new(Axis::XZ, Bounds2D::new(-50.0..50.0, -50.0..50.0), 0.0, floor_idx);
     let platform = Rectangle::new(Vec3A::new(-3.5, 0.0, -4.0), Vec3A::new(3.5, 0.2, 0.5), platform_idx);
@@ -78,7 +75,7 @@ pub fn hyperion_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let ring_right = TransformedMesh::new(Vec3A::new(0.375, 0.25, -1.0), Vec3A::new(-15.0, 0.0, -10.0), Vec3A::new(0.15, 0.17, 0.15), Primitive::TriangleMesh(Arc::clone(&ring_mesh)));
 
     let (translation, rotation, scale) = (Vec3A::new(-0.6, 0.65, -2.5), Vec3A::new(-30.0, 0.0, 15.0), Vec3A::splat(0.25));
-    let (meshes, _) = load_obj("extras/models/pokeball.obj", &mut materials, &mut textures);
+    let meshes = load_obj("extras/models/pokeball.obj", &mut context);
     for mesh in meshes {
         let transformed_mesh = TransformedMesh::new(translation, rotation, scale, mesh);
         objects.push_into(transformed_mesh);
@@ -113,7 +110,7 @@ pub fn hyperion_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     SceneBuilder::new("Hyperion")
         .with_accelerator(bvh)
         .with_camera(camera)
-        .with_materials(materials, textures)
+        .with_context(context)
         .with_environment(environment)
         .build()
         .expect("Failed to build Hyperion scene")

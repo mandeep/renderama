@@ -68,15 +68,6 @@ impl_from_material!(
     Volumetric => Volumetric
 );
 
-#[macro_export]
-macro_rules! mat {
-    ($vec:expr, $material:expr) => {{
-        let id = $crate::materials::MaterialId::new($vec.len() as u32);
-        $vec.push($material.into());
-        id
-    }};
-}
-
 impl Material {
     /// Generate the ScatterResult that tells the integrator how the material responds to sampling
     pub fn generate_response(&self, ray: &Ray, hit: &HitResult, textures: &[Texture], rng: &mut Pcg64Mcg) -> Option<ScatterResult> {

@@ -21,15 +21,6 @@ impl TextureId {
     }
 }
 
-#[macro_export]
-macro_rules! tex {
-    ($vec:expr, $texture:expr) => {{
-        let id = $crate::texture::TextureId::new($vec.len() as u32);
-        $vec.push($texture.into());
-        id
-    }};
-}
-
 #[derive(Clone, Copy)]
 pub enum TextureEncoding {
     Srgb,

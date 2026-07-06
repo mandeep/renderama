@@ -4,14 +4,13 @@ use crate::bvh::BVH;
 use crate::camera::{Camera, CameraOptions};
 use crate::extensions::PushInto;
 use crate::lights::Light;
-use crate::materials::{Diffuse, Emissive, Material};
+use crate::materials::{Diffuse, Emissive};
 use crate::plane::{Axis, Bounds2D, Plane};
 use crate::rectangle::Rectangle;
-use crate::scene::{Scene, SceneBuilder};
-use crate::texture::{Color, ImageTexture, Texture};
+use crate::scene::{Scene, SceneBuilder, SceneContext};
+use crate::texture::{Color, ImageTexture};
 use crate::transformations::TransformedMesh;
 
-use crate::{mat, tex};
 
 /// UV Checker images
 /// https://subscription.packtpub.com/book/web-development/9781803233871/17/ch17lvl1sec79/custom-uv-modeling-in-blender
@@ -35,16 +34,15 @@ pub fn cornell_box_uv_scene(width: Option<usize>, height: Option<usize>) -> Scen
     let camera = Camera::new(&camera_options);
 
     let mut objects = Vec::new();
-    let mut materials: Vec<Material> = Vec::new();
-    let mut textures: Vec<Texture> = Vec::new();
+    let mut context = SceneContext::new();
 
     let roughness = 0.0;
-    let texture = tex!(textures, ImageTexture::new("extras/textures/uv_checker.jpg", Vec2::splat(1.0)));
-    let texture_id = mat!(materials, Diffuse::new(texture, roughness));
-    let white = tex!(textures, Color::new(0.73, 0.73, 0.73));
-    let white_id = mat!(materials, Diffuse::new(white, roughness));
-    let light_id = tex!(textures, Color::new(1.0, 1.0, 1.0));
-    let light_material = mat!(materials, Emissive::new(light_id));
+    let texture = context.add_texture(ImageTexture::new("extras/textures/uv_checker.jpg", Vec2::splat(1.0)));
+    let texture_id = context.add_material(Diffuse::new(texture, roughness));
+    let white = context.add_texture(Color::new(0.73, 0.73, 0.73));
+    let white_id = context.add_material(Diffuse::new(white, roughness));
+    let light_id = context.add_texture(Color::new(1.0, 1.0, 1.0));
+    let light_material = context.add_material(Emissive::new(light_id));
 
     // add the walls of the cornell box to the world
     objects.push_into(Plane::new(Axis::YZ, Bounds2D::new(0.0..555.0, 0.0..555.0), 555.0, texture_id).into_reversed());
@@ -63,14 +61,14 @@ pub fn cornell_box_uv_scene(width: Option<usize>, height: Option<usize>) -> Scen
     let p2 = Vec3A::new(165.0, 330.0, 165.0);
 
     let small_scale = 165.0 / 555.0;
-    let small_box_texture = tex!(textures, ImageTexture::new("extras/textures/uv_checker.jpg", Vec2::splat(small_scale)));
-    let small_box_texture_id = mat!(materials, Diffuse::new(small_box_texture, roughness));
+    let small_box_texture = context.add_texture(ImageTexture::new("extras/textures/uv_checker.jpg", Vec2::splat(small_scale)));
+    let small_box_texture_id = context.add_material(Diffuse::new(small_box_texture, roughness));
 
     let large_scale_u = 165.0 / 555.0;
     let large_scale_v = 330.0 / 555.0;
     let large_scale = Vec2::new(large_scale_u, large_scale_v);
-    let large_box_texture = tex!(textures, ImageTexture::new("extras/textures/uv_checker.jpg", large_scale));
-    let large_box_texture_id = mat!(materials, Diffuse::new(large_box_texture, roughness));
+    let large_box_texture = context.add_texture(ImageTexture::new("extras/textures/uv_checker.jpg", large_scale));
+    let large_box_texture_id = context.add_material(Diffuse::new(large_box_texture, roughness));
 
     objects.push_into(TransformedMesh::new(Vec3A::new(130.0, 0.0, 65.0), Vec3A::new(0.0, -18.0, 0.0), Vec3A::splat(1.0), Rectangle::new(p0, p1, small_box_texture_id)));
     objects.push_into(TransformedMesh::new(Vec3A::new(265.0, 0.0, 295.0), Vec3A::new(0.0, 15.0, 0.0), Vec3A::splat(1.0), Rectangle::new(p0, p2, large_box_texture_id)));
@@ -78,21 +76,20 @@ pub fn cornell_box_uv_scene(width: Option<usize>, height: Option<usize>) -> Scen
     let light_shape = Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 554.98, light_material);
     let light_intensity = Vec3A::new(50.0, 50.0, 50.0);
 
-    let fill_light_texture = tex!(textures, Color::new(0.2, 0.2, 0.2));
-    let fill_light_material = mat!(materials, Emissive::new(fill_light_texture));
+    let fill_light_texture = context.add_texture(Color::new(0.2, 0.2, 0.2));
+    let fill_light_material = context.add_material(Emissive::new(fill_light_texture));
     let fill_light_shape = Plane::new(Axis::XY, Bounds2D::new(-1000.0..1555.0, -1000.0..1555.0), -805.0, fill_light_material);
 
     objects.push_into(fill_light_shape.clone());
 
-    let lights = vec![Light::new(light_shape, light_intensity),];
+    context.add_light(Light::new(light_shape, light_intensity));
 
     let bvh = BVH::new(&mut objects);
 
     SceneBuilder::new("Cornell Box with UVs")
         .with_accelerator(bvh)
         .with_camera(camera)
-        .with_materials(materials, textures)
-        .with_lights(lights)
+        .with_context(context)
         .build()
         .expect("Failed to build Cornell Box with UVs scene")
 }

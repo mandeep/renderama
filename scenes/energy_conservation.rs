@@ -4,13 +4,12 @@ use crate::bvh::BVH;
 use crate::camera::{Camera, CameraOptions};
 use crate::extensions::PushInto;
 use crate::lights::Light;
-use crate::materials::{Emissive, Material, Reflective};
+use crate::materials::{Emissive, Reflective};
 use crate::plane::{Axis, Bounds2D, Plane};
-use crate::scene::{Scene, SceneBuilder};
+use crate::scene::{Scene, SceneBuilder, SceneContext};
 use crate::sphere::Sphere;
-use crate::texture::{Color, Texture};
+use crate::texture::Color;
 
-use crate::{mat, tex};
 
 pub fn energy_conservation_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let origin = Vec3A::new(278.0, 278.0, -500.0);
@@ -27,8 +26,7 @@ pub fn energy_conservation_scene(width: Option<usize>, height: Option<usize>) ->
     let camera = Camera::new(&camera_options);
 
     let mut objects = Vec::new();
-    let mut materials: Vec<Material> = Vec::new();
-    let mut textures: Vec<Texture> = Vec::new();
+    let mut context = SceneContext::new();
 
     let count = 10;
     let radius = 20.0;
@@ -39,23 +37,22 @@ pub fn energy_conservation_scene(width: Option<usize>, height: Option<usize>) ->
         let roughness = i as f32 * 0.10;
         let x_pos = start_x + (i as f32 * spacing);
 
-        let tex_id = tex!(textures, Color::new(1.0, 1.0, 1.0));
-        let mat_id = mat!(materials, Reflective::new(tex_id, roughness));
+        let tex_id = context.add_texture(Color::new(1.0, 1.0, 1.0));
+        let mat_id = context.add_material(Reflective::new(tex_id, roughness));
         objects.push_into(Sphere::new(Vec3A::new(x_pos, 278.0, 278.0), radius, mat_id));
     }
 
     let bvh = BVH::new(&mut objects);
 
-    let light_texture = tex!(textures, Color::new(50.0, 50.0, 50.0));
-    let light_material = mat!(materials, Emissive::new(light_texture));
+    let light_texture = context.add_texture(Color::new(50.0, 50.0, 50.0));
+    let light_material = context.add_material(Emissive::new(light_texture));
     let light_plane = Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 600.0, light_material);
-    let light = vec![Light::new(light_plane, Vec3A::new(50.0, 50.0, 50.0))];
+    context.add_light(Light::new(light_plane, Vec3A::new(50.0, 50.0, 50.0)));
 
     SceneBuilder::new("Energy Conservation Test")
         .with_accelerator(bvh)
         .with_camera(camera)
-        .with_materials(materials, textures)
-        .with_lights(light)
+        .with_context(context)
         .build()
         .expect("Failed to build Energy Conservation Test scene")
 }

@@ -3,8 +3,8 @@ use crate::bvh::BVH;
 use crate::camera::Camera;
 use crate::environment::EnvironmentMap;
 use crate::lights::Light;
-use crate::materials::Material;
-use crate::texture::Texture;
+use crate::materials::{Material, MaterialId};
+use crate::texture::{Texture, TextureId};
 
 /// Scene contains all the items necessary for the integrator to start a render
 pub struct Scene {
@@ -22,10 +22,8 @@ pub struct Scene {
 pub struct SceneBuilder {
     name: String,
     accelerator: Option<BVH>,
-    materials: Vec<Material>,
-    textures: Vec<Texture>,
+    context: Option<SceneContext>,
     camera: Option<Camera>,
-    lights: Vec<Light>,
     environment: Option<EnvironmentMap>,
     atmosphere: Option<Atmosphere>,
 }
@@ -35,6 +33,7 @@ pub enum SceneBuildError {
     MissingCamera(String),
     MissingBVH(String),
     MissingLights(String),
+    MissingSceneContext(String),
 }
 
 impl SceneBuilder {
@@ -42,10 +41,8 @@ impl SceneBuilder {
         SceneBuilder {
             name: name.into(),
             accelerator: None,
-            materials: Vec::new(),
-            textures: Vec::new(),
+            context: None,
             camera: None,
-            lights: Vec::new(),
             environment: None,
             atmosphere: None
         }
@@ -61,14 +58,8 @@ impl SceneBuilder {
         self
     }
 
-    pub fn with_materials(mut self, materials: Vec<Material>, textures: Vec<Texture>) -> Self {
-        self.materials = materials;
-        self.textures = textures;
-        self
-    }
-
-    pub fn with_lights(mut self, lights: Vec<Light>) -> Self {
-        self.lights = lights;
+    pub fn with_context(mut self, context: SceneContext) -> Self {
+        self.context = Some(context);
         self
     }
 
@@ -90,7 +81,11 @@ impl SceneBuilder {
             SceneBuildError::MissingBVH("Scene is missing objects to render.".to_string())
         )?;
 
-        if self.environment.is_none() && self.lights.is_empty() && self.atmosphere.is_none() {
+        let context = self.context.ok_or(
+            SceneBuildError::MissingSceneContext("Scene is missing a SceneContext.".to_string())
+        )?;
+
+        if self.environment.is_none() && context.lights.is_empty() && self.atmosphere.is_none() {
             return Err(
                 SceneBuildError::MissingLights("Scene requires an atmosphere, environment map, or at least one light.".to_string())
             );
@@ -99,10 +94,10 @@ impl SceneBuilder {
         let scene = Scene {
             name: self.name,
             accelerator: accelerator,
-            materials: self.materials,
-            textures: self.textures,
+            materials: context.materials,
+            textures: context.textures,
             camera: camera,
-            lights: self.lights,
+            lights: context.lights,
             environment: self.environment,
             atmosphere: self.atmosphere
         };
@@ -110,6 +105,34 @@ impl SceneBuilder {
         Ok(scene)
     }
 }
+
+pub struct SceneContext {
+    pub materials: Vec<Material>,
+    pub textures: Vec<Texture>,
+    pub lights: Vec<Light>,
+}
+
+impl SceneContext {
+    pub fn new() -> SceneContext {
+        SceneContext { materials: Vec::new(), textures: Vec::new(), lights: Vec::new() }
+    }
+    pub fn add_texture(&mut self, texture: impl Into<Texture>) -> TextureId {
+        let id = TextureId(self.textures.len() as u32);
+        self.textures.push(texture.into());
+        id
+    }
+
+    pub fn add_material(&mut self, material: impl Into<Material>) -> MaterialId {
+        let id = MaterialId(self.materials.len() as u32);
+        self.materials.push(material.into());
+        id
+    }
+
+    pub fn add_light(&mut self, light: Light) {
+        self.lights.push(light);
+    }
+}
+
 
 
 #[cfg(test)]
@@ -122,16 +145,14 @@ mod tests {
     use crate::materials::Diffuse;
     use crate::sphere::Sphere;
     use crate::texture::Color;
-    use crate::{mat, tex};
 
     #[test]
     fn test_scene_missing_camera() {
         let mut objects = Vec::new();
-        let mut materials: Vec<Material> = Vec::new();
-        let mut textures: Vec<Texture> = Vec::new();
+        let mut scene_context = SceneContext::new();
 
-        let floor_id = tex!(textures, Color::new(0.5, 0.5, 0.52));
-        let floor_idx = mat!(materials, Diffuse::new(floor_id, 0.0));
+        let floor_id = scene_context.add_texture(Color::new(0.5, 0.5, 0.52));
+        let floor_idx = scene_context.add_material(Diffuse::new(floor_id, 0.0));
         objects.push_into(Sphere::new(Vec3A::new(0.0, -100.5, -1.0), 100.0, floor_idx));
 
         let bvh = BVH::new(&mut objects);
@@ -140,7 +161,7 @@ mod tests {
 
         let builder = SceneBuilder::new("Three Spheres")
             .with_accelerator(bvh)
-            .with_materials(materials, textures)
+            .with_context(scene_context)
             .with_environment(environment);
 
         let result = builder.build();
@@ -170,14 +191,13 @@ mod tests {
             .with_resolution(512, 512);
         let camera = Camera::new(&camera_options);
 
-        let materials: Vec<Material> = Vec::new();
-        let textures: Vec<Texture> = Vec::new();
+        let context = SceneContext::new();
 
         let environment = EnvironmentMap::new("extras/textures/dusk_1_puresky.exr", 1.0);
 
         let builder = SceneBuilder::new("Three Spheres")
             .with_camera(camera)
-            .with_materials(materials, textures)
+            .with_context(context)
             .with_environment(environment);
 
         let result = builder.build();
@@ -208,11 +228,10 @@ mod tests {
         let camera = Camera::new(&camera_options);
 
         let mut objects = Vec::new();
-        let mut materials: Vec<Material> = Vec::new();
-        let mut textures: Vec<Texture> = Vec::new();
+        let mut context = SceneContext::new();
 
-        let floor_id = tex!(textures, Color::new(0.5, 0.5, 0.52));
-        let floor_idx = mat!(materials, Diffuse::new(floor_id, 0.0));
+        let floor_id = context.add_texture(Color::new(0.5, 0.5, 0.52));
+        let floor_idx = context.add_material(Diffuse::new(floor_id, 0.0));
         objects.push_into(Sphere::new(Vec3A::new(0.0, -100.5, -1.0), 100.0, floor_idx));
 
         let bvh = BVH::new(&mut objects);
@@ -220,7 +239,7 @@ mod tests {
         let builder = SceneBuilder::new("Three Spheres")
             .with_camera(camera)
             .with_accelerator(bvh)
-            .with_materials(materials, textures);
+            .with_context(context);
 
         let result = builder.build();
 
