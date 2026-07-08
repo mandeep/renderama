@@ -475,17 +475,23 @@ impl Refractive {
     }
 }
 
-/// Emissive material is used to determine albedo of light sources.
-/// It does not control the light source's intensity.
+/// Emissive material controls the albedo and light intensity of primitives
+/// that require emission.
 #[derive(Clone)]
 pub struct Emissive {
-    pub emissive_color: TextureId
+    pub emissive_color: TextureId,
+    pub intensity: f32,
 }
 
 impl Emissive {
     /// Create a new Emissive material with the given Texture.
     pub fn new(emissive_color: TextureId) -> Emissive {
-        Emissive {emissive_color }
+        Emissive {emissive_color, intensity: 1.0 }
+    }
+
+    pub fn with_intensity(mut self, intensity: f32) -> Self {
+        self.intensity = intensity;
+        self
     }
 
     /// The Light type and primitives handle actual light physics so this material
@@ -498,7 +504,7 @@ impl Emissive {
     /// from the front.
     fn evaluate_emission(&self, ray: &Ray, hit: &HitResult, textures: &[Texture]) -> Vec3A {
         if hit.shading_normal.dot(ray.direction) < 0.0 {
-            textures[self.emissive_color.index()].sample_texture(hit.u, hit.v)
+            textures[self.emissive_color.index()].sample_texture(hit.u, hit.v) * self.intensity
         } else {
             Vec3A::ZERO
         }

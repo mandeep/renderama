@@ -26,13 +26,13 @@ impl LoadObjOptions {
         self
     }
 
-    pub fn with_overrides(mut self, material_overrides: Option<HashMap<String, Material>>) -> Self {
-        self.material_overrides = material_overrides;
+    pub fn with_overrides(mut self, material_overrides: HashMap<String, Material>) -> Self {
+        self.material_overrides = Some(material_overrides);
         self
     }
 
-    pub fn with_material(mut self, default_material: Option<Material>) -> Self {
-        self.default_material = default_material;
+    pub fn with_material(mut self, default_material: Material) -> Self {
+        self.default_material = Some(default_material);
         self
     }
 }

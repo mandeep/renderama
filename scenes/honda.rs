@@ -38,7 +38,7 @@ pub fn honda_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let car_paint_material = Plastic::new(car_paint_id, 0.04, 1.5).with_clearcoat(0.6, 0.025);
     material_overrides.insert_into("EXT_paint", car_paint_material);
     let obj_options = LoadObjOptions::new()
-        .with_overrides(Some(material_overrides));
+        .with_overrides(material_overrides);
 
     let meshes = load_obj_with_options("extras/models/honda/honda.obj", &mut materials, &mut textures, None, obj_options);
 
