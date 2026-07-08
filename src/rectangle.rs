@@ -5,7 +5,7 @@ use crate::aabb::AABB;
 use crate::extensions::PushInto;
 use crate::primitive::Primitive;
 use crate::materials::MaterialId;
-use crate::plane::{Axis, Bounds2D, Plane};
+use crate::plane::{Axis, Bounds2D, Orientation, Plane};
 use crate::ray::Ray;
 use crate::results::HitResult;
 
@@ -39,12 +39,12 @@ impl Rectangle {
         let xz_bounds = Bounds2D::new(p0.x..p1.x, p0.z..p1.z);
         let yz_bounds = Bounds2D::new(p0.y..p1.y, p0.z..p1.z);
 
-        primitives.push_into(Plane::new(Axis::XY, xy_bounds, p1.z, material_id));
-        primitives.push(Plane::new(Axis::XY, xy_bounds, p0.z, material_id).into_reversed());
-        primitives.push_into(Plane::new(Axis::XZ, xz_bounds, p1.y, material_id));
-        primitives.push(Plane::new(Axis::XZ, xz_bounds, p0.y, material_id).into_reversed());
-        primitives.push_into(Plane::new(Axis::YZ, yz_bounds, p1.x, material_id));
-        primitives.push(Plane::new(Axis::YZ, yz_bounds, p0.x, material_id).into_reversed());
+        primitives.push_into(Plane::new(Axis::XY, xy_bounds, p1.z, Orientation::Forward, material_id));
+        primitives.push_into(Plane::new(Axis::XY, xy_bounds, p0.z, Orientation::Reversed, material_id));
+        primitives.push_into(Plane::new(Axis::XZ, xz_bounds, p1.y, Orientation::Forward, material_id));
+        primitives.push_into(Plane::new(Axis::XZ, xz_bounds, p0.y, Orientation::Reversed, material_id));
+        primitives.push_into(Plane::new(Axis::YZ, yz_bounds, p1.x, Orientation::Forward, material_id));
+        primitives.push_into(Plane::new(Axis::YZ, yz_bounds, p0.x, Orientation::Reversed, material_id));
 
         Rectangle { p0, p1, primitives }
     }

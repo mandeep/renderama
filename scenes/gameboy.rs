@@ -6,7 +6,7 @@ use crate::environment::EnvironmentMap;
 use crate::extensions::{AddMaterial, AddTexture, PushInto};
 use crate::io::load_obj;
 use crate::materials::{Material, Plastic};
-use crate::plane::{Axis, Bounds2D, Plane};
+use crate::plane::{Axis, Bounds2D, Orientation, Plane};
 use crate::primitive::Primitive;
 use crate::scene::{Scene, SceneBuilder};
 use crate::texture::{Color, Texture};
@@ -46,7 +46,7 @@ pub fn gameboy_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let grey_id = textures.add_texture(Color::new(0.796, 0.776, 0.746));
     let grey = materials.add_material(Plastic::new(grey_id, 0.75, 1.50));
     // floor plane
-    objects.push_into(Plane::new(Axis::XZ, Bounds2D::new(-1000.0..1000.0, -1000.0..1000.0), -0.35, grey));
+    objects.push_into(Plane::new(Axis::XZ, Bounds2D::new(-1000.0..1000.0, -1000.0..1000.0), -0.35, Orientation::Forward, grey));
 
     let bvh = BVH::new(&mut objects);
 

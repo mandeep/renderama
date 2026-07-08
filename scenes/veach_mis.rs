@@ -3,9 +3,9 @@ use glam::Vec3A;
 use crate::bvh::BVH;
 use crate::camera::{Camera, CameraOptions};
 use crate::extensions::{AddLight, AddMaterial, AddTexture, PushInto};
-use crate::lights::Light;
+use crate::lights::{AreaLight, Light, PointLight};
 use crate::materials::{Diffuse, Emissive, Material, Reflective};
-use crate::plane::{Axis, Bounds2D, Plane};
+use crate::plane::{Axis, Bounds2D, Orientation, Plane};
 use crate::primitive::Primitive;
 use crate::rectangle::Rectangle;
 use crate::scene::{Scene, SceneBuilder};
@@ -41,14 +41,14 @@ pub fn veach_mis_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let grey = materials.add_material(Diffuse::new(grey_id, 0.0));
 
     // floor
-    objects.push_into(Plane::new(Axis::XZ, Bounds2D::new(-20.0..20.0, -5.0..25.0), 0.0, grey));
+    objects.push_into(Plane::new(Axis::XZ, Bounds2D::new(-20.0..20.0, -5.0..25.0), 0.0, Orientation::Forward, grey));
 
     // back wall
-    objects.push_into(Plane::new(Axis::XY, Bounds2D::new(-20.0..20.0, 0.0..15.0), 12.0, grey).into_reversed());
+    objects.push_into(Plane::new(Axis::XY, Bounds2D::new(-20.0..20.0, 0.0..15.0), 12.0, Orientation::Reversed, grey));
 
     // side walls, not sure if they do anything in this scene
-    objects.push_into(Plane::new(Axis::YZ, Bounds2D::new( 0.0..15.0, -5.0..25.0),-20.0, grey));
-    objects.push_into(Plane::new(Axis::YZ, Bounds2D::new( 0.0..15.0, -5.0..25.0), 20.0, grey).into_reversed());
+    objects.push_into(Plane::new(Axis::YZ, Bounds2D::new( 0.0..15.0, -5.0..25.0),-20.0, Orientation::Forward, grey));
+    objects.push_into(Plane::new(Axis::YZ, Bounds2D::new( 0.0..15.0, -5.0..25.0), 20.0, Orientation::Forward, grey));
 
     let silver = textures.add_texture(Color::new(0.75, 0.75, 0.75));
 
@@ -117,6 +117,7 @@ pub fn veach_mis_scene(width: Option<usize>, height: Option<usize>) -> Scene {
         Axis::YZ,
         Bounds2D::new(0.0..10.0, -5.0..20.0),
         -19.5,
+        Orientation::Forward,
         fill_mat,
     );
     objects.push_into(left_light_primitive.clone());
@@ -125,22 +126,23 @@ pub fn veach_mis_scene(width: Option<usize>, height: Option<usize>) -> Scene {
         Axis::YZ,
         Bounds2D::new(0.0..10.0, -5.0..20.0),
         19.5,
+        Orientation::Forward,
         fill_mat,
-    ).into_reversed();
+    );
     objects.push_into(right_light_primitive.clone());
 
     let bvh = BVH::new(&mut objects);
 
     for (light_x, roughness, intensity) in sphere_lights {
-        let light = Light::new(
+        let light = PointLight::from(
             Sphere::new(Vec3A::new(light_x, light_y, light_z), roughness, grey),
             Vec3A::splat(intensity),
         );
         lights.add_light(light);
     }
 
-    lights.add_light(Light::new(left_light_primitive, fill_color));
-    lights.add_light(Light::new(right_light_primitive, fill_color));
+    lights.add_light(AreaLight::from(left_light_primitive, fill_color));
+    lights.add_light(AreaLight::from(right_light_primitive, fill_color));
 
     SceneBuilder::new("Veach MIS")
         .with_accelerator(bvh)

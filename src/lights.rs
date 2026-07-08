@@ -1,104 +1,132 @@
-use std::sync::Arc;
-
 use glam::Vec3A;
 use rand_pcg::Pcg64Mcg;
 use rand::RngExt;
 
 use crate::bvh::BVH;
+use crate::materials::MaterialId;
 use crate::primitive::Primitive;
-use crate::plane::Plane;
+use crate::plane::{Axis, Bounds2D, Orientation, Plane};
 use crate::ray::Ray;
 use crate::sampling::uniform_sample_triangle;
 use crate::sphere::Sphere;
 use crate::triangle::Triangle;
 
-
-#[derive(Clone)]
-/// Enum that holds all primitives that can be used as a Light
-pub enum LightPrimitive {
-    MeshLight(MeshLight),
-    Plane(Plane),
-    Sphere(Sphere),
-}
-
 #[derive(Clone)]
 /// A light source used to add light emission in a scene
-pub struct Light {
-    pub primitive: LightPrimitive,
-    pub intensity: Vec3A,
-}
-
-macro_rules! impl_from_primitive {
-    ($($t:ty => $v:ident),*) => {
-        $(
-            impl From<$t> for LightPrimitive {
-                fn from(m: $t) -> Self {
-                    LightPrimitive::$v(m)
-                }
-            }
-        )*
-    };
-}
-
-impl_from_primitive!(
-    MeshLight => MeshLight,
-    Plane => Plane,
-    Sphere => Sphere
-);
-
-/// Provide easy conversion from Primitive to LightPrimitive.
-///
-/// This trait allows the caller to convert to LightPrimitive using
-/// the .into() method.
-impl From<Primitive> for LightPrimitive {
-    fn from(primitive: Primitive) -> Self {
-        match primitive {
-            Primitive::Plane(plane) => LightPrimitive::Plane(plane),
-            Primitive::Sphere(sphere) => LightPrimitive::Sphere(sphere),
-            Primitive::ReverseOrientation(primitive) => {
-                let inner_primitive = Arc::unwrap_or_clone(primitive);
-                LightPrimitive::from(inner_primitive)
-            },
-            _ => panic!("This primitive type cannot be used as a light source!"),
-        }
-    }
+pub enum Light {
+    Point(PointLight),
+    Area(AreaLight),
+    Mesh(MeshLight),
 }
 
 impl Light {
-    /// Create a new Light from the given primtive and intensity.
-    pub fn new(primitive: impl Into<LightPrimitive>, intensity: Vec3A) -> Light {
-        Light { primitive: primitive.into(), intensity }
-    }
-
-    /// Dispatch the weight evaluation to the primitive.
-    pub fn evaluate_sampling_weight(&self, ray: &Ray, rng: &mut Pcg64Mcg) -> f32 {
-        match &self.primitive {
-            LightPrimitive::MeshLight(mesh_light) => mesh_light.evaluate_sampling_weight(ray, rng),
-            LightPrimitive::Plane(plane) => plane.evaluate_sampling_weight(ray),
-            LightPrimitive::Sphere(sphere) => sphere.evaluate_sampling_weight(ray),
+    pub fn intensity(&self) -> Vec3A {
+        match self {
+            Light::Point(light) => light.intensity,
+            Light::Area(light) => light.intensity,
+            Light::Mesh(light) => light.intensity,
         }
     }
 
-    /// Dispatch the importance sampling to the primitive.
+    pub fn evaluate_sampling_weight(&self, ray: &Ray) -> f32 {
+        match self {
+            Light::Point(light) => light.evaluate_sampling_weight(ray),
+            Light::Area(light) => light.evaluate_sampling_weight(ray),
+            Light::Mesh(light) => light.evaluate_sampling_weight(ray),
+        }
+    }
+
     pub fn sample_direction_to_light(&self, origin: Vec3A, rng: &mut Pcg64Mcg) -> Vec3A {
-        match &self.primitive {
-            LightPrimitive::MeshLight(mesh_light) => mesh_light.sample_direction_to_light(origin, rng),
-            LightPrimitive::Plane(plane) => plane.sample_direction_to_light(origin, rng),
-            LightPrimitive::Sphere(sphere) => sphere.sample_direction_to_light(origin, rng),
+        match self {
+            Light::Point(light) => light.sample_direction_to_light(origin, rng),
+            Light::Area(light) => light.sample_direction_to_light(origin, rng),
+            Light::Mesh(light) => light.sample_direction_to_light(origin, rng),
         }
     }
 
-    /// Calculate the exact distance from the light source for the use with shadpw rays.
     pub fn calculate_distance_from(&self, light_distance: f32) -> f32 {
-        match &self.primitive {
-            LightPrimitive::MeshLight(_)
-            | LightPrimitive::Plane(_) => light_distance - 1e-3,
-            LightPrimitive::Sphere(sphere) => light_distance - sphere.radius.abs() - 1e-3,
+        match &self {
+            Light::Point(light) => light_distance - light.sphere.radius.abs() - 1e-3,
+            Light::Area(_) | Light::Mesh(_) => light_distance - 1e-3,
         }
     }
 }
 
-/// MeshLight is a light primitive used when loading emissives
+macro_rules! impl_from_light {
+    ($light:ty => $variant:ident) => {
+        impl From<$light> for Light {
+            fn from(light: $light) -> Self {
+                Light::$variant(light)
+            }
+        }
+    };
+}
+
+impl_from_light!(PointLight => Point);
+impl_from_light!(AreaLight => Area);
+impl_from_light!(MeshLight => Mesh);
+
+/// PointLight is a spherical light with light emitting in all directions
+///
+/// Typically, a PointLight is a single point modeled as a light source with
+/// a Delta distribution, however this implementation of a point light uses
+/// an underlying sphere with radius to better simulate realistic light sources.
+#[derive(Clone)]
+pub struct PointLight {
+    sphere: Sphere,
+    intensity: Vec3A,
+}
+
+impl PointLight {
+    pub fn new(center: Vec3A, radius: f32, material_id: MaterialId, intensity: Vec3A) -> PointLight {
+        let sphere = Sphere::new(center, radius, material_id);
+        PointLight { sphere, intensity }
+    }
+
+    pub fn from(sphere: Sphere, intensity: Vec3A) -> PointLight {
+        PointLight { sphere, intensity }
+    }
+
+    pub fn evaluate_sampling_weight(&self, ray: &Ray) -> f32 {
+        self.sphere.evaluate_sampling_weight(ray)
+    }
+
+    pub fn sample_direction_to_light(&self, origin: Vec3A, rng: &mut Pcg64Mcg) -> Vec3A {
+        self.sphere.sample_direction_to_light(origin, rng)
+    }
+}
+
+/// AreaLight is a plane emitting light from a single side of its surface
+///
+/// Some DCCs allow area lights to emit light from both surfaces, however here
+/// Orientation is used so that only a single side emits light.
+#[derive(Clone)]
+pub struct AreaLight {
+    plane: Plane,
+    intensity: Vec3A,
+}
+
+impl AreaLight {
+    pub fn new(axis: Axis, bounds: Bounds2D, offset: f32, orientation: Orientation, material_id: MaterialId, intensity: Vec3A) -> AreaLight {
+        let plane = Plane::new(axis, bounds, offset, orientation, material_id);
+        AreaLight { plane, intensity }
+    }
+
+    pub fn from(plane: Plane, intensity: Vec3A) -> AreaLight {
+        AreaLight { plane, intensity }
+    }
+
+    pub fn evaluate_sampling_weight(&self, ray: &Ray) -> f32 {
+        self.plane.evaluate_sampling_weight(ray)
+    }
+
+    pub fn sample_direction_to_light(&self, origin: Vec3A, rng: &mut Pcg64Mcg) -> Vec3A {
+        self.plane.sample_direction_to_light(origin, rng)
+
+    }
+}
+
+/// MeshLight is a light used when loading emissives
 /// from obj files.
 ///
 /// When loading objs, any mesh that contains an emissive material
@@ -109,12 +137,13 @@ pub struct MeshLight {
     triangles: Vec<Triangle>,
     cdf: Vec<f32>,
     total_area: f32,
+    intensity: Vec3A,
     accelerator: BVH,
 }
 
 impl MeshLight {
     /// Create a new MeshLight from the given triangles
-    pub fn new(triangles: Vec<Triangle>) -> Self {
+    pub fn new(triangles: Vec<Triangle>, intensity: Vec3A) -> MeshLight {
         let mut light_triangles = Vec::new();
         let mut cdf = Vec::new();
         let mut total_area = 0.0;
@@ -138,7 +167,7 @@ impl MeshLight {
 
         let accelerator = BVH::new(&mut geometries);
 
-        MeshLight { triangles: light_triangles, cdf, total_area, accelerator }
+        MeshLight { triangles: light_triangles, cdf, total_area, intensity, accelerator }
     }
 
     /// Sample a random triangle from the triangles vector
@@ -164,13 +193,16 @@ impl MeshLight {
     }
 
     /// Evaluate the sampling weight of this MeshLight
-    pub fn evaluate_sampling_weight(&self, ray: &Ray, rng: &mut Pcg64Mcg) -> f32 {
+    pub fn evaluate_sampling_weight(&self, ray: &Ray) -> f32 {
+        // because MeshLight only traverses Triangles we don't need the rng that is used
+        // for the hit method of Volume types
+        let mut local_rng = Pcg64Mcg::new(0xcafef00dd15ea5e5);
         // TODO: find a way to remove this accelerator call
-        let Some(hit) = self.accelerator.hit(ray, 1e-4, f32::INFINITY, rng) else {
+        let Some(hit) = self.accelerator.hit(ray, 1e-4, f32::INFINITY, &mut local_rng) else {
             return 0.0;
         };
 
-        let cos_light = hit.geometric_normal.dot(-ray.direction);
+        let cos_light = -ray.direction.dot(hit.geometric_normal);
 
         if cos_light <= 0.0 {
             return 0.0;

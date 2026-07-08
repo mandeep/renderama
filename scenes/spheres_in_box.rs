@@ -5,9 +5,9 @@ use rand_pcg::Pcg64Mcg;
 use crate::bvh::BVH;
 use crate::camera::{Camera, CameraOptions};
 use crate::extensions::{AddLight, AddMaterial, AddTexture, PushInto};
-use crate::lights::Light;
+use crate::lights::{AreaLight, Light};
 use crate::materials::{Diffuse, Emissive, Material, Reflective, Refractive, Volumetric};
-use crate::plane::{Axis, Bounds2D, Plane};
+use crate::plane::{Axis, Bounds2D, Orientation, Plane};
 use crate::primitive::Primitive;
 use crate::rectangle::Rectangle;
 use crate::scene::{Scene, SceneBuilder};
@@ -42,14 +42,16 @@ pub fn spheres_in_box_scene(width: Option<usize>, height: Option<usize>, rng: &m
     let mut textures: Vec<Texture> = Vec::new();
     let mut lights: Vec<Light> = Vec::new();
 
-    let white_id = textures.add_texture(Color::new(0.73, 0.73, 0.73));
-    let white = materials.add_material(Diffuse::new(white_id, 0.0));
+    let snow_id = textures.add_texture(Color::new(0.73, 0.73, 0.73));
+    let snow = materials.add_material(Diffuse::new(snow_id, 0.0));
     let red_id = textures.add_texture(Color::new(1.0, 0.10, 0.20));
     let red = materials.add_material(Diffuse::new(red_id, 0.0));
     let light_id = textures.add_texture(Color::new(7.0, 7.0, 7.0));
     let big_light = materials.add_material(Emissive::new(light_id));
-    let snow_id = textures.add_texture(Color::new(0.48, 0.83, 0.53));
-    let snow = materials.add_material(Diffuse::new(snow_id, 0.0));
+    let floor_id = textures.add_texture(Color::new(0.48, 0.83, 0.53));
+    let floor = materials.add_material(Diffuse::new(floor_id, 0.0));
+    let white_id = textures.add_texture(Color::new(1.0, 1.0, 1.0));
+    let white = materials.add_material(Diffuse::new(white_id, 0.0));
 
     let number_of_boxes = 20;
 
@@ -58,11 +60,11 @@ pub fn spheres_in_box_scene(width: Option<usize>, height: Option<usize>, rng: &m
             let w = 100.0;
             let p0 = Vec3A::new(-1000.0 + i as f32 * w, 0.0, -1000.0 + j as f32 * w);
             let p1 = p0 + Vec3A::new(w, 100.0 * (rng.random::<f32>() + 0.01), w);
-            objects.push_into(Rectangle::new(p0, p1, snow));
+            objects.push_into(Rectangle::new(p0, p1, floor));
         }
     }
 
-    objects.push_into(Plane::new(Axis::XZ, Bounds2D::new(123.0..423.0, 147.0..412.0), 554.0, big_light).into_reversed());
+    objects.push_into(Plane::new(Axis::XZ, Bounds2D::new(123.0..423.0, 147.0..412.0), 554.0, Orientation::Reversed, big_light));
 
     let sphere = Sphere::new(Vec3A::new(0.0, 0.0, 0.0), 1.0, red);
     let transformed_sphere = TransformedMesh::new(Vec3A::new(400.0, 400.0, 200.0), Vec3A::ZERO, Vec3A::splat(50.0), sphere);
@@ -112,14 +114,14 @@ pub fn spheres_in_box_scene(width: Option<usize>, height: Option<usize>, rng: &m
                                165.0 * rng.random::<f32>(),
                                165.0 * rng.random::<f32>());
 
-        let sphere = Sphere::new(center, 10.0, white);
+        let sphere = Sphere::new(center, 10.0, snow);
         let transformed_sphere = TransformedMesh::new(Vec3A::new(-100.0, 270.0, 395.0), Vec3A::new(0.0, 15.0, 0.0), Vec3A::ONE, sphere);
         objects.push_into(transformed_sphere);
     }
 
     let bvh = BVH::new(&mut objects);
-    let light_shape = Plane::new(Axis::XZ, Bounds2D::new(123.0..423.0, 147.0..412.0), 554.0, white);
-    lights.add_light(Light::new(light_shape, Vec3A::splat(7.0)));
+    let light_shape = Plane::new(Axis::XZ, Bounds2D::new(123.0..423.0, 147.0..412.0), 554.0, Orientation::Reversed, white);
+    lights.add_light(AreaLight::from(light_shape, Vec3A::splat(7.0)));
 
     SceneBuilder::new("Spheres in Box")
         .with_accelerator(bvh)

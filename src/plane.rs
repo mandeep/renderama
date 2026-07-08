@@ -1,22 +1,30 @@
 use std::f32;
-use std::sync::Arc;
 
 use glam::Vec3A;
 use rand_pcg::Pcg64Mcg;
 use rand::RngExt;
 
 use crate::aabb::AABB;
-use crate::primitive::Primitive;
 use crate::materials::MaterialId;
 use crate::ray::Ray;
 use crate::results::HitResult;
 
-#[derive(Clone)]
+#[derive(Copy, Clone)]
 /// The three axes a plane can be created on
 pub enum Axis {
     XY,
     YZ,
     XZ,
+}
+
+#[derive(Copy, Clone)]
+/// Orientation decides which direction the normal of the plane points in
+///
+/// Forward: the normal points in the positive direction of the offset (+X, +Y, or +Z)
+/// Reversed: the normal points in the negative direction of the offset (-X, -Y, or -Z)
+pub enum Orientation {
+    Forward,
+    Reversed,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -58,7 +66,9 @@ pub struct Plane {
     axis: Axis,
     bounds: Bounds2D,
     offset: f32,
+    orientation: Orientation,
     material_id: MaterialId,
+
 }
 
 impl Plane {
@@ -66,18 +76,12 @@ impl Plane {
     ///
     /// # Examples
     ///
-    /// Plane::new(Axis::YZ, Bounds2D::new(0.0..555.0, 0.0..555.0), 555.0, mat_idx)
+    /// Plane::new(Axis::YZ, Bounds2D::new(0.0..555.0, 0.0..555.0), 555.0, Orientation::Reversed, mat_idx)
     /// This creates a plane on the YZ axis that sits at 555.0 on the X axis. The first
     /// range shows 0.0 to 555.0 on the Y axis and the second range shows 0.0 to 555.0 on
-    /// the Z axis.
-    pub fn new(axis: Axis, bounds: Bounds2D, offset: f32, material_id: MaterialId) -> Plane {
-        Plane { axis, bounds, offset, material_id }
-    }
-
-    /// Convert the Plane into a Plane with its normal flipped so that
-    /// the plane can be used in the opposite orientation
-    pub fn into_reversed(self) -> Primitive {
-        Primitive::ReverseOrientation(Arc::new(Primitive::Plane(self)))
+    /// the Z axis. The orientation is Reversed as the normal points in the -X direction.
+    pub fn new(axis: Axis, bounds: Bounds2D, offset: f32, orientation: Orientation, material_id: MaterialId) -> Plane {
+        Plane { axis, bounds, offset, orientation, material_id }
     }
 
     /// Calculate ray-plane intersection with the given ray and positions.
@@ -101,7 +105,10 @@ impl Plane {
                     return None;
                 }
 
-                let normal = Vec3A::new(0.0, 0.0, 1.0);
+                let normal = match self.orientation {
+                    Orientation::Forward => Vec3A::new(0.0, 0.0, 1.0),
+                    Orientation::Reversed => Vec3A::new(0.0, 0.0, -1.0),
+                };
 
                 let u = (x - self.bounds.u_min) / (self.bounds.u_max - self.bounds.u_min);
                 let v = (y - self.bounds.v_min) / (self.bounds.v_max - self.bounds.v_min);
@@ -137,7 +144,10 @@ impl Plane {
                     return None;
                 }
 
-                let normal = Vec3A::new(1.0, 0.0, 0.0);
+                let normal = match self.orientation {
+                    Orientation::Forward => Vec3A::new(1.0, 0.0, 0.0),
+                    Orientation::Reversed => Vec3A::new(-1.0, 0.0, 0.0),
+                };
 
                 // mapping u to z and v to y so that the texture orients correctly
                 let u = (z - self.bounds.v_min) / (self.bounds.v_max - self.bounds.v_min);
@@ -174,7 +184,10 @@ impl Plane {
                     return None;
                 }
 
-                let normal = Vec3A::new(0.0, 1.0, 0.0);
+                let normal = match self.orientation {
+                    Orientation::Forward => Vec3A::new(0.0, 1.0, 0.0),
+                    Orientation::Reversed => Vec3A::new(0.0, -1.0, 0.0),
+                };
 
                 let u = (x - self.bounds.u_min) / (self.bounds.u_max - self.bounds.u_min);
                 let v = (z - self.bounds.v_min) / (self.bounds.v_max - self.bounds.v_min);
@@ -224,13 +237,13 @@ impl Plane {
     pub fn evaluate_sampling_weight(&self, ray: &Ray) -> f32 {
         // originally epsilon was 1e-2 but updated here to match value elsewhere
         if let Some(hit) = self.hit(ray, 1e-4, f32::MAX) {
-            let cosine = ray.direction.dot(hit.shading_normal) / ray.direction.length();
+            let cosine = -ray.direction.dot(hit.shading_normal);
             // confirm that the direction hits the surface from the front
             if cosine <= 0.0 { return 0.0; }
 
             // farther lights need a higher weight since they're hrader to hit.
             // larger planes are easier to hit randomly, so we weigh them lower
-            let distance_squared = hit.parameter * hit.parameter * ray.direction.length_squared();
+            let distance_squared = hit.parameter * hit.parameter;
             distance_squared / (cosine * self.bounds.area())
         } else {
             0.0
@@ -255,7 +268,6 @@ impl Plane {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -266,7 +278,7 @@ mod tests {
     #[test]
     fn test_plane_hit() {
         let bounds = Bounds2D::new(-1.0..1.0, -1.0..1.0);
-        let plane = Plane::new(Axis::XY, bounds, 5.0, MaterialId(0));
+        let plane = Plane::new(Axis::XY, bounds, 5.0, Orientation::Forward, MaterialId(0));
 
         let ray = Ray::new(Vec3A::new(0.0, 0.0, 0.0), Vec3A::new(0.0, 0.0, 1.0), 0.0);
 
@@ -281,7 +293,7 @@ mod tests {
     #[test]
     fn test_plane_miss() {
         let bounds = Bounds2D::new(-1.0..1.0, -1.0..1.0);
-        let plane = Plane::new(Axis::XY, bounds, 5.0, MaterialId(0));
+        let plane = Plane::new(Axis::XY, bounds, 5.0, Orientation::Forward, MaterialId(0));
 
         let ray = Ray::new(Vec3A::new(2.0, 2.0, 0.0), Vec3A::new(0.0, 0.0, 1.0), 0.0);
 
@@ -292,7 +304,7 @@ mod tests {
     #[test]
     fn test_plane_hit_parallel_ray_returns_none() {
         let bounds = Bounds2D::new(-1.0..1.0, -1.0..1.0);
-        let plane = Plane::new(Axis::XY, bounds, 0.0, MaterialId(0));
+        let plane = Plane::new(Axis::XY, bounds, 0.0, Orientation::Forward, MaterialId(0));
 
         let ray = Ray::new(Vec3A::new(0.0, 0.0, 0.0), Vec3A::new(1.0, 0.0, 0.0), 0.0);
 
@@ -303,7 +315,7 @@ mod tests {
     #[test]
     fn test_evaluate_sampling_weight_front_facing() {
         let bounds = Bounds2D::new(-1.0..1.0, -1.0..1.0);
-        let plane = Plane::new(Axis::XY, bounds, 5.0, MaterialId(0));
+        let plane = Plane::new(Axis::XY, bounds, 5.0, Orientation::Reversed, MaterialId(0));
 
         let ray = Ray::new(Vec3A::new(0.0, 0.0, 0.0), Vec3A::new(0.0, 0.0, 1.0), 0.0);
 
@@ -314,9 +326,9 @@ mod tests {
     #[test]
     fn test_evaluate_sampling_weight_back_facing() {
         let bounds = Bounds2D::new(-1.0..1.0, -1.0..1.0);
-        let plane = Plane::new(Axis::XY, bounds, 5.0, MaterialId(0));
+        let plane = Plane::new(Axis::XY, bounds, 5.0, Orientation::Forward, MaterialId(0));
 
-        let ray = Ray::new(Vec3A::new(0.0, 0.0, 10.0), Vec3A::new(0.0, 0.0, -1.0), 0.0);
+        let ray = Ray::new(Vec3A::new(0.0, 0.0, 0.0), Vec3A::new(0.0, 0.0, 1.0), 0.0);
 
         let weight = plane.evaluate_sampling_weight(&ray);
         assert_eq!(weight, 0.0);

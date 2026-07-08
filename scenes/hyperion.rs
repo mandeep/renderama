@@ -8,7 +8,7 @@ use crate::environment::EnvironmentMap;
 use crate::extensions::{AddMaterial, AddTexture, PushInto};
 use crate::io::load_obj;
 use crate::materials::{Diffuse, Material, Plastic, Reflective, Refractive, Volumetric};
-use crate::plane::{Axis, Bounds2D, Plane};
+use crate::plane::{Axis, Bounds2D, Orientation, Plane};
 use crate::primitive::Primitive;
 use crate::rectangle::Rectangle;
 use crate::scene::{Scene, SceneBuilder};
@@ -59,7 +59,7 @@ pub fn hyperion_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let pingpong_idx = materials.add_material(Plastic::new(pingpong_id, 0.60, 1.45).with_subsurface(0.40));
     let white_idx = materials.add_material(Plastic::new(white_id, 0.1, 1.45));
 
-    let floor_plane = Plane::new(Axis::XZ, Bounds2D::new(-50.0..50.0, -50.0..50.0), 0.0, floor_idx);
+    let floor_plane = Plane::new(Axis::XZ, Bounds2D::new(-50.0..50.0, -50.0..50.0), 0.0, Orientation::Forward, floor_idx);
     let platform = Rectangle::new(Vec3A::new(-3.5, 0.0, -4.0), Vec3A::new(3.5, 0.2, 0.5), platform_idx);
     let glass_sphere = Sphere::new(Vec3A::new(2.1, 0.60, -1.0), 0.4, glass_idx);
     let orange_sphere = Sphere::new(Vec3A::new(1.0, 0.54, -2.0), 0.35, orange_idx);

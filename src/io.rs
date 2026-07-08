@@ -173,10 +173,10 @@ pub fn load_obj_with_options(
             if let Material::Emissive(material) = &materials[current_material_id.index()] {
                 let emissive_scale = options.emissive_scale;
                 let intensity = textures[material.emissive_color.index()].sample_texture(0.5, 0.5) * emissive_scale;
-                let mesh_light = MeshLight::new(light_triangles);
 
                 if let Some(lights) = lights.as_deref_mut() {
-                    lights.add_light(Light::new(mesh_light, intensity));
+                    let mesh_light = MeshLight::new(light_triangles, intensity);
+                    lights.add_light(mesh_light);
                 }
             }
         }

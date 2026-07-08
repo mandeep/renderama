@@ -3,9 +3,9 @@ use glam::Vec3A;
 use crate::bvh::BVH;
 use crate::camera::{Camera, CameraOptions};
 use crate::extensions::{AddLight, AddMaterial, AddTexture, PushInto};
-use crate::lights::Light;
+use crate::lights::{AreaLight, Light};
 use crate::materials::{Emissive, Material, Reflective};
-use crate::plane::{Axis, Bounds2D, Plane};
+use crate::plane::{Axis, Bounds2D, Orientation, Plane};
 use crate::primitive::Primitive;
 use crate::scene::{Scene, SceneBuilder};
 use crate::sphere::Sphere;
@@ -49,8 +49,8 @@ pub fn energy_conservation_scene(width: Option<usize>, height: Option<usize>) ->
 
     let light_texture = textures.add_texture(Color::new(50.0, 50.0, 50.0));
     let light_material = materials.add_material(Emissive::new(light_texture));
-    let light_plane = Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 600.0, light_material);
-    lights.add_light(Light::new(light_plane, Vec3A::new(50.0, 50.0, 50.0)));
+    let light_plane = Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 600.0, Orientation::Reversed, light_material);
+    lights.add_light(AreaLight::from(light_plane, Vec3A::new(50.0, 50.0, 50.0)));
 
     SceneBuilder::new("Energy Conservation Test")
         .with_accelerator(bvh)

@@ -8,7 +8,7 @@ use crate::environment::EnvironmentMap;
 use crate::extensions::{AddMaterial, AddTexture, InsertInto, PushInto};
 use crate::io::{LoadObjOptions, load_obj_with_options};
 use crate::materials::{Material, Diffuse, Plastic};
-use crate::plane::{Axis, Bounds2D, Plane};
+use crate::plane::{Axis, Bounds2D, Orientation, Plane};
 use crate::primitive::Primitive;
 use crate::scene::{Scene, SceneBuilder};
 use crate::texture::{Color, Texture};
@@ -54,7 +54,7 @@ pub fn honda_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let grey_id = textures.add_texture(Color::new(0.05, 0.05, 0.05));
     let grey = materials.add_material(Diffuse::new(grey_id, 0.0));
     // floor plane
-    objects.push_into(Plane::new(Axis::XZ, Bounds2D::new(-1000.0..1000.0, -1000.0..1000.0), 0.0, grey));
+    objects.push_into(Plane::new(Axis::XZ, Bounds2D::new(-1000.0..1000.0, -1000.0..1000.0), 0.0, Orientation::Forward, grey));
 
     let bvh = BVH::new(&mut objects);
 
