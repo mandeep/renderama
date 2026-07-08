@@ -48,18 +48,26 @@ impl Default for LoadObjOptions {
 }
 
 /// Load an obj file with default options.
-pub fn load_obj(filepath: &str, materials: &mut Vec<Material>, textures: &mut Vec<Texture>, lights: Option<&mut Vec<Light>>) -> Vec<TriangleMesh> {
+///
+/// Lights requires a lifetime as now that it's a reference inside a trait,
+/// the compiler will not elide the lifetime.
+pub fn load_obj<'a>(
+    filepath: &str,
+    materials: &mut Vec<Material>,
+    textures: &mut Vec<Texture>,
+    lights: impl Into<Option<&'a mut Vec<Light>>>
+) -> Vec<TriangleMesh> {
     load_obj_with_options(filepath, materials, textures, lights, LoadObjOptions::default())
 }
 
 /// Load an obj file with its related mtl file.
 ///
 /// Moved the following code from the TriangleMesh::from method.
-pub fn load_obj_with_options(
+pub fn load_obj_with_options<'a>(
     filepath: &str,
     materials: &mut Vec<Material>,
     textures: &mut Vec<Texture>,
-    mut lights: Option<&mut Vec<Light>>,
+    lights: impl Into<Option<&'a mut Vec<Light>>>,
     options: LoadObjOptions,
 ) -> Vec<TriangleMesh> {
     let base_directory = std::path::Path::new(filepath)
@@ -103,6 +111,7 @@ pub fn load_obj_with_options(
     }
 
     let mut meshes: Vec<TriangleMesh> = Vec::new();
+    let mut lights = lights.into();
 
     for model in models {
         let mesh = &model.mesh;
@@ -169,6 +178,7 @@ pub fn load_obj_with_options(
             }
         }
 
+        // if lights is None then light_triangles will be empty
         if !light_triangles.is_empty() {
             if let Material::Emissive(material) = &materials[current_material_id.index()] {
                 let emissive_scale = options.emissive_scale;

@@ -38,7 +38,7 @@ pub fn backrooms_scene(width: Option<usize>, height: Option<usize>) -> Scene {
 
     let options = LoadObjOptions::new()
         .with_overrides(material_overrides);
-    let meshes = load_obj_with_options("extras/models/backrooms/backrooms.obj", &mut materials, &mut textures, Some(&mut lights), options);
+    let meshes = load_obj_with_options("extras/models/backrooms/backrooms.obj", &mut materials, &mut textures, &mut lights, options);
 
     // need to scale down the scene since it's larger in the obj than in the blend file
     let (translation, rotation, scale) = (Vec3A::ZERO, Vec3A::ZERO, Vec3A::splat(0.85));

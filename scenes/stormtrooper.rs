@@ -56,7 +56,7 @@ pub fn stormtrooper_scene(width: Option<usize>, height: Option<usize>) -> Scene 
     //     Plastic::new(Color::new(0.01, 0.01, 0.01), 1.0, 1.49)
     // );
 
-    let meshes = load_obj("extras/models/stormtrooper.obj", &mut materials, &mut textures, Some(&mut lights));
+    let meshes = load_obj("extras/models/stormtrooper.obj", &mut materials, &mut textures, &mut lights);
 
     for mesh in meshes {
         let transformed = TransformedMesh::from(mesh);

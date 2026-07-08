@@ -23,7 +23,7 @@ pub fn ocean_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let mut textures: Vec<Texture> = Vec::new();
     let mut lights: Vec<Light> = Vec::new();
 
-    let meshes = load_obj("extras/models/off_the_coast.obj", &mut materials, &mut textures, Some(&mut lights));
+    let meshes = load_obj("extras/models/off_the_coast.obj", &mut materials, &mut textures, &mut lights);
 
     for mesh in meshes {
         let transformed = TransformedMesh::from(mesh);
