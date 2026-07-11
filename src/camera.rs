@@ -1,8 +1,7 @@
 use std::fs;
 
 use glam::{EulerRot, Mat3A, Vec2, Vec3A};
-use rand_pcg::Pcg64Mcg;
-use rand::RngExt;
+use rand::{Rng, RngExt};
 use serde::Deserialize;
 
 use crate::ray::Ray;
@@ -330,7 +329,7 @@ impl Camera {
     }
 
     /// Generate the ray that is sent from the camera into the world
-    pub fn generate_ray(&self, s: f32, t: f32, rng: &mut Pcg64Mcg) -> Ray {
+    pub fn generate_ray(&self, s: f32, t: f32, rng: &mut impl Rng) -> Ray {
         let radius: Vec2 = self.lens_radius * pick_disk_point(rng);
         let offset: Vec3A = self.u * radius.x + self.v * radius.y;
         let time = if self.start_time == self.end_time {

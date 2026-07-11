@@ -2,7 +2,7 @@ use std::f32;
 use std::sync::Arc;
 
 use glam::{EulerRot, Mat4, Vec3A, Vec3};
-use rand_pcg::Pcg64Mcg;
+use rand::Rng;
 
 use crate::aabb::AABB;
 use crate::primitive::Primitive;
@@ -87,7 +87,7 @@ impl TransformedMesh {
     }
 
     /// Determine whether the TransformedMesh has been hit by the given ray.
-    pub fn hit(&self, ray: &Ray, start_distance: f32, end_distance: f32, rng: &mut Pcg64Mcg) -> Option<HitResult> {
+    pub fn hit(&self, ray: &Ray, start_distance: f32, end_distance: f32, rng: &mut impl Rng) -> Option<HitResult> {
         // transform the ray from world space into local space using the inverse transform
         let local_origin = self.inverse_transform.transform_point3(ray.origin.into());
         let local_direction = self.inverse_transform.transform_vector3(ray.direction.into());
@@ -119,7 +119,7 @@ impl TransformedMesh {
     /// Determine if the given ray hits anything inside the mesh
     ///
     /// Used in the BVH for early completion.
-    pub fn hits_anything(&self, ray: &Ray, start_distance: f32, end_distance: f32, rng: &mut Pcg64Mcg) -> bool {
+    pub fn hits_anything(&self, ray: &Ray, start_distance: f32, end_distance: f32, rng: &mut impl Rng) -> bool {
         let local_origin = self.inverse_transform.transform_point3(ray.origin.into());
         let local_direction = self.inverse_transform.transform_vector3(ray.direction.into());
 
@@ -207,7 +207,7 @@ impl MotionMesh {
         }
     }
 
-    pub fn hit(&self, ray: &Ray, start_distance: f32, end_distance: f32, rng: &mut Pcg64Mcg) -> Option<HitResult> {
+    pub fn hit(&self, ray: &Ray, start_distance: f32, end_distance: f32, rng: &mut impl Rng) -> Option<HitResult> {
         let time = if self.time1 > self.time0 {
             ((ray.time - self.time0) / (self.time1 - self.time0)).clamp(0.0, 1.0)
         } else {
@@ -245,7 +245,7 @@ impl MotionMesh {
         }
     }
 
-    pub fn hits_anything(&self, ray: &Ray, start_distance: f32, end_distance: f32, rng: &mut Pcg64Mcg) -> bool {
+    pub fn hits_anything(&self, ray: &Ray, start_distance: f32, end_distance: f32, rng: &mut impl Rng) -> bool {
         let time = if self.time1 > self.time0 {
             ((ray.time - self.time0) / (self.time1 - self.time0)).clamp(0.0, 1.0)
         } else {
@@ -408,6 +408,7 @@ mod tests {
     use glam::{Vec3A, Vec3};
     use crate::materials::MaterialId;
     use rand::SeedableRng;
+    use rand_pcg::Pcg64Mcg;
     use crate::ray::Ray;
     use crate::sphere::Sphere;
 

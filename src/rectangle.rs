@@ -1,5 +1,5 @@
 use glam::Vec3A;
-use rand_pcg::Pcg64Mcg;
+use rand::Rng;
 
 use crate::aabb::AABB;
 use crate::extensions::PushInto;
@@ -51,7 +51,7 @@ impl Rectangle {
 
     /// Iterate through each of the Plane primitives held in the primitives Vec and
     /// call their hit method. Return the closest hit if it exists.
-    pub fn hit(&self, ray: &Ray, position_min: f32, position_max: f32, rng: &mut Pcg64Mcg) -> Option<HitResult> {
+    pub fn hit(&self, ray: &Ray, position_min: f32, position_max: f32, rng: &mut impl Rng) -> Option<HitResult> {
         self.primitives
         .iter()
         .filter_map(|plane| plane.hit(ray, position_min, position_max, rng))
@@ -68,6 +68,8 @@ impl Rectangle {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rand_pcg::Pcg64Mcg;
+    use rand::SeedableRng;
 
     #[test]
     fn test_rectangle_setup() {
@@ -95,8 +97,6 @@ mod tests {
 
     #[test]
     fn test_rectangle_hit() {
-        use rand::SeedableRng;
-
         let p0 = Vec3A::ZERO;
         let p1 = Vec3A::ONE;
         let mat_idx = MaterialId(0);
@@ -109,8 +109,6 @@ mod tests {
 
     #[test]
     fn test_rectangle_miss() {
-        use rand::SeedableRng;
-
         let p0 = Vec3A::ZERO;
         let p1 = Vec3A::ONE;
         let mat_idx = MaterialId(0);

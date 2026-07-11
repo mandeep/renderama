@@ -1,7 +1,7 @@
 use std::f32;
 
 use glam::{Vec2, Vec3A};
-use rand_pcg::Pcg64Mcg;
+use rand::Rng;
 use tobj;
 
 use crate::aabb::AABB;
@@ -237,11 +237,11 @@ impl TriangleMesh {
         TriangleMesh::new(triangles)
     }
 
-    pub fn hit(&self, ray: &Ray, position_min: f32, position_max: f32, rng: &mut Pcg64Mcg) -> Option<HitResult> {
+    pub fn hit(&self, ray: &Ray, position_min: f32, position_max: f32, rng: &mut impl Rng) -> Option<HitResult> {
         self.accelerator.hit(ray, position_min, position_max, rng)
     }
 
-    pub fn hits_anything(&self, ray: &Ray, position_min: f32, position_max: f32, rng: &mut Pcg64Mcg) -> bool {
+    pub fn hits_anything(&self, ray: &Ray, position_min: f32, position_max: f32, rng: &mut impl Rng) -> bool {
         self.accelerator.hits_anything(ray, position_min, position_max, rng)
     }
 

@@ -2,8 +2,7 @@ use std::f32::consts::PI;
 
 use derive_more::IsVariant;
 use glam::Vec3A;
-use rand::RngExt;
-use rand_pcg::Pcg64Mcg;
+use rand::{Rng, RngExt};
 
 use crate::basis::OrthonormalBasis;
 use crate::ggx::{ggx_distribution, ggx_g1_masking, ggx_sample_vndf};
@@ -93,7 +92,7 @@ impl PDF {
     }
 
     /// Generate a new direction by sampling from the distribution.
-    pub fn pick_direction(&self, rng: &mut Pcg64Mcg) -> Vec3A {
+    pub fn pick_direction(&self, rng: &mut impl Rng) -> Vec3A {
         match self {
             PDF::Cosine { uvw } => {
                 uvw.local(&cosine_sample_hemisphere(rng))

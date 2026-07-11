@@ -1,4 +1,7 @@
 use std::collections::HashMap;
+use std::convert::Infallible;
+
+use rand::TryRng;
 
 use crate::lights::Light;
 use crate::materials::{Material, MaterialId};
@@ -58,5 +61,24 @@ pub trait AddLight {
 impl AddLight for Vec<Light> {
     fn add_light(&mut self, light: impl Into<Light>) {
         self.push(light.into());
+    }
+}
+
+pub struct DummyRng;
+
+impl TryRng for DummyRng {
+    type Error = Infallible;
+
+    fn try_next_u32(&mut self) -> Result<u32, Infallible> {
+        Ok(0)
+    }
+
+    fn try_next_u64(&mut self) -> Result<u64, Infallible> {
+        Ok(0)
+    }
+
+    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), Infallible> {
+        dst.fill(0);
+        Ok(())
     }
 }

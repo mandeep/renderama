@@ -15,7 +15,7 @@
 //!
 //! Sampling the GGX Distribution of Visible Normals
 //! Eric Heitz
-//! https://pdfs.semanticscholar.org/63bc/928467d760605cdbf77a25bb7c3ad957e40e.pdf 
+//! https://pdfs.semanticscholar.org/63bc/928467d760605cdbf77a25bb7c3ad957e40e.pdf
 //!
 //! Roughness Using Microfacet Theory
 //! Pharr et al.
@@ -24,8 +24,7 @@
 use std::f32::consts::PI;
 
 use glam::Vec3A;
-use rand::RngExt;
-use rand_pcg::Pcg64Mcg;
+use rand::{Rng, RngExt};
 
 use crate::basis::OrthonormalBasis;
 
@@ -109,7 +108,7 @@ pub fn ggx_height_correlated_geometry(cos_i: f32, cos_o: f32, alpha: f32) -> f32
 ///
 /// Reference: https://www.jcgt.org/published/0007/04/01/paper.pdf
 /// Full code implementation on page 10
-pub fn ggx_sample_vndf(normal: &Vec3A, wi: &Vec3A, alpha: &f32, rng: &mut Pcg64Mcg) -> Vec3A {
+pub fn ggx_sample_vndf(normal: &Vec3A, wi: &Vec3A, alpha: &f32, rng: &mut impl Rng) -> Vec3A {
     let uvw = OrthonormalBasis::new(&normal);
     // convert world to local
     let vh = Vec3A::new(wi.dot(uvw.u()), wi.dot(uvw.v()), wi.dot(uvw.w()));
@@ -222,7 +221,7 @@ mod tests {
         let mut rng = Pcg64Mcg::seed_from_u64(12345);
         let normal = Vec3A::Z;
 
-        let wi = Vec3A::new(0.0, 0.0, -1.0); 
+        let wi = Vec3A::new(0.0, 0.0, -1.0);
         let alpha = 0.5;
 
         let sampled_half_vector = ggx_sample_vndf(&normal, &wi, &alpha, &mut rng);

@@ -2,8 +2,7 @@ use std::f32;
 use std::sync::Arc;
 
 use glam::Vec3A;
-use rand::RngExt;
-use rand_pcg::Pcg64Mcg;
+use rand::{Rng, RngExt};
 
 use crate::aabb::AABB;
 use crate::primitive::Primitive;
@@ -24,7 +23,7 @@ impl Volume {
         Volume { density, boundary, material_id }
     }
 
-    pub fn hit(&self, ray: &Ray, start_distance: f32, end_distance: f32, rng: &mut Pcg64Mcg) -> Option<HitResult> {
+    pub fn hit(&self, ray: &Ray, start_distance: f32, end_distance: f32, rng: &mut impl Rng) -> Option<HitResult> {
         // Find both intersections of the ray with the volume's boundary.
         // We search the entire ray range (not just [start_distance, end_distance]) because
         // a ray origin inside the volume would miss the near boundary otherwise.

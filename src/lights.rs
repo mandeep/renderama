@@ -1,8 +1,8 @@
 use glam::Vec3A;
-use rand_pcg::Pcg64Mcg;
-use rand::RngExt;
+use rand::{Rng, RngExt};
 
 use crate::bvh::BVH;
+use crate::extensions::DummyRng;
 use crate::materials::MaterialId;
 use crate::primitive::Primitive;
 use crate::plane::{Axis, Bounds2D, Orientation, Plane};
@@ -36,7 +36,7 @@ impl Light {
         }
     }
 
-    pub fn sample_direction_to_light(&self, origin: Vec3A, rng: &mut Pcg64Mcg) -> Vec3A {
+    pub fn sample_direction_to_light(&self, origin: Vec3A, rng: &mut impl Rng) -> Vec3A {
         match self {
             Light::Point(light) => light.sample_direction_to_light(origin, rng),
             Light::Area(light) => light.sample_direction_to_light(origin, rng),
@@ -91,7 +91,7 @@ impl PointLight {
         self.sphere.evaluate_sampling_weight(ray)
     }
 
-    pub fn sample_direction_to_light(&self, origin: Vec3A, rng: &mut Pcg64Mcg) -> Vec3A {
+    pub fn sample_direction_to_light(&self, origin: Vec3A, rng: &mut impl Rng) -> Vec3A {
         self.sphere.sample_direction_to_light(origin, rng)
     }
 }
@@ -120,7 +120,7 @@ impl AreaLight {
         self.plane.evaluate_sampling_weight(ray)
     }
 
-    pub fn sample_direction_to_light(&self, origin: Vec3A, rng: &mut Pcg64Mcg) -> Vec3A {
+    pub fn sample_direction_to_light(&self, origin: Vec3A, rng: &mut impl Rng) -> Vec3A {
         self.plane.sample_direction_to_light(origin, rng)
 
     }
@@ -171,7 +171,7 @@ impl MeshLight {
     }
 
     /// Sample a random triangle from the triangles vector
-    fn sample_triangle(&self, rng: &mut Pcg64Mcg) -> &Triangle {
+    fn sample_triangle(&self, rng: &mut impl Rng) -> &Triangle {
         let target = rng.random::<f32>() * self.total_area;
 
         let index = self
@@ -183,7 +183,7 @@ impl MeshLight {
     }
 
     /// Sample the direction to this light source from the given origin
-    pub fn sample_direction_to_light(&self, origin: Vec3A, rng: &mut Pcg64Mcg) -> Vec3A {
+    pub fn sample_direction_to_light(&self, origin: Vec3A, rng: &mut impl Rng) -> Vec3A {
         let triangle = self.sample_triangle(rng);
         let barycentric = uniform_sample_triangle(rng);
 
@@ -196,9 +196,9 @@ impl MeshLight {
     pub fn evaluate_sampling_weight(&self, ray: &Ray) -> f32 {
         // because MeshLight only traverses Triangles we don't need the rng that is used
         // for the hit method of Volume types
-        let mut local_rng = Pcg64Mcg::new(0xcafef00dd15ea5e5);
+        let mut dummy_rng = DummyRng;
         // TODO: find a way to remove this accelerator call
-        let Some(hit) = self.accelerator.hit(ray, 1e-4, f32::INFINITY, &mut local_rng) else {
+        let Some(hit) = self.accelerator.hit(ray, 1e-4, f32::INFINITY, &mut dummy_rng) else {
             return 0.0;
         };
 

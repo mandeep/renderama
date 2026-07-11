@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use rand_pcg::Pcg64Mcg;
+use rand::Rng;
 
 use crate::aabb::AABB;
 use crate::plane::Plane;
@@ -29,7 +29,7 @@ pub enum Primitive {
 }
 
 impl Primitive {
-    pub fn hit(&self, ray: &Ray, start_distance: f32, end_distance: f32, rng: &mut Pcg64Mcg) -> Option<HitResult> {
+    pub fn hit(&self, ray: &Ray, start_distance: f32, end_distance: f32, rng: &mut impl Rng) -> Option<HitResult> {
         match self {
             Primitive::Plane(plane) => plane.hit(ray, start_distance, end_distance),
             Primitive::Rectangle(rectangle) => rectangle.hit(ray, start_distance, end_distance, rng),
@@ -51,7 +51,7 @@ impl Primitive {
         }
     }
 
-    pub fn hits_anything(&self, ray: &Ray, start_distance: f32, end_distance: f32, rng: &mut Pcg64Mcg) -> bool {
+    pub fn hits_anything(&self, ray: &Ray, start_distance: f32, end_distance: f32, rng: &mut impl Rng) -> bool {
         match self {
             Primitive::Plane(plane) => plane.hit(ray, start_distance, end_distance).is_some(),
             Primitive::Rectangle(rectangle) => rectangle.hit(ray, start_distance, end_distance, rng).is_some(),

@@ -1,5 +1,6 @@
 use clap::ValueEnum;
-use rand_pcg::Pcg64Mcg;
+
+use rand::Rng;
 use strum::{Display, IntoStaticStr};
 
 use crate::scene::Scene;
@@ -74,7 +75,7 @@ pub enum Scenes {
 }
 
 impl Scenes {
-    pub fn load(&self, width: Option<usize>, height: Option<usize>, rng: &mut Pcg64Mcg) -> Scene {
+    pub fn load(&self, width: Option<usize>, height: Option<usize>, rng: &mut impl Rng) -> Scene {
         match self {
             Scenes::Backrooms => backrooms_scene(width, height),
             Scenes::Batmobile => batmobile_scene(width, height),

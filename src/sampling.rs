@@ -1,8 +1,7 @@
 use std::f32::consts::{FRAC_PI_2, FRAC_PI_4, PI};
 
 use glam::{Vec2, Vec3A};
-use rand::RngExt;
-use rand_pcg::Pcg64Mcg;
+use rand::{Rng, RngExt};
 use rand_distr::StandardNormal;
 
 /// Pick a random point on the unit sphere
@@ -14,7 +13,7 @@ use rand_distr::StandardNormal;
 /// axis and the unit vector of this newly created vector is returned.
 ///
 /// Reference: http://mathworld.wolfram.com/SpherePointPicking.html
-pub fn pick_sphere_point(rng: &mut Pcg64Mcg) -> Vec3A {
+pub fn pick_sphere_point(rng: &mut impl Rng) -> Vec3A {
     let x: f32 = rng.sample(StandardNormal);
     let y: f32 = rng.sample(StandardNormal);
     let z: f32 = rng.sample(StandardNormal);
@@ -26,7 +25,7 @@ pub fn pick_sphere_point(rng: &mut Pcg64Mcg) -> Vec3A {
 ///
 /// References:
 /// https://www.pbr-book.org/3ed-2018/Monte_Carlo_Integration/2D_Sampling_with_Multidimensional_Transformations
-pub fn pick_disk_point(rng: &mut Pcg64Mcg) -> Vec2 {
+pub fn pick_disk_point(rng: &mut impl Rng) -> Vec2 {
     let u: f32 = rng.random_range(-1.0..1.0);
     let v: f32 = rng.random_range(-1.0..1.0);
 
@@ -49,7 +48,7 @@ pub fn pick_disk_point(rng: &mut Pcg64Mcg) -> Vec2 {
 ///
 /// Matches the cos_theta term in the rendering equation making
 /// it necessary for calculating the reflectance of Diffuse materials.
-pub fn cosine_sample_hemisphere(rng: &mut Pcg64Mcg) -> Vec3A {
+pub fn cosine_sample_hemisphere(rng: &mut impl Rng) -> Vec3A {
     let r1 = rng.random::<f32>();
     let r2 = rng.random::<f32>();
 
@@ -72,7 +71,7 @@ pub fn cosine_sample_hemisphere(rng: &mut Pcg64Mcg) -> Vec3A {
 /// Sample uniformly on a hemisphere.
 ///
 /// Useful when equal probability across a hemisphere is necessary.
-pub fn uniform_sample_hemisphere(rng: &mut Pcg64Mcg) -> Vec3A {
+pub fn uniform_sample_hemisphere(rng: &mut impl Rng) -> Vec3A {
     let u = rng.random::<f32>();
     let v = rng.random::<f32>();
 
@@ -90,7 +89,7 @@ pub fn uniform_sample_hemisphere(rng: &mut Pcg64Mcg) -> Vec3A {
 ///
 /// Useful when needing to sample directions for items that
 /// scatter/radiate in all directions equally. Volumes, lights, etc.
-pub fn uniform_sample_sphere(rng: &mut Pcg64Mcg) -> Vec3A {
+pub fn uniform_sample_sphere(rng: &mut impl Rng) -> Vec3A {
     let u = rng.random::<f32>();
     let v = rng.random::<f32>();
 
@@ -110,7 +109,7 @@ pub fn uniform_sample_sphere(rng: &mut Pcg64Mcg) -> Vec3A {
 /// the sun or other light sources.
 ///
 /// References: https://pbr-book.org/3ed-2018/Light_Transport_I_Surface_Reflection/Sampling_Light_Sources
-pub fn uniform_sample_cone(cos_theta_max: f32, rng: &mut Pcg64Mcg) -> Vec3A {
+pub fn uniform_sample_cone(cos_theta_max: f32, rng: &mut impl Rng) -> Vec3A {
     let r1 = rng.random::<f32>();
     let r2 = rng.random::<f32>();
     let cos_theta = 1.0 + r1 * (cos_theta_max - 1.0);
@@ -128,7 +127,7 @@ pub fn uniform_sample_cone(cos_theta_max: f32, rng: &mut Pcg64Mcg) -> Vec3A {
 ///
 /// References:
 /// https://pbr-book.org/4ed/Shapes/Triangle_Meshes#SampleUniformTriangle
-pub fn uniform_sample_triangle(rng: &mut Pcg64Mcg) -> Vec3A {
+pub fn uniform_sample_triangle(rng: &mut impl Rng) -> Vec3A {
     let r1 = rng.random::<f32>();
     let r2 = rng.random::<f32>();
 
@@ -150,6 +149,7 @@ pub fn uniform_sample_triangle(rng: &mut Pcg64Mcg) -> Vec3A {
 mod tests {
     use super::*;
     use rand::SeedableRng;
+    use rand_pcg::Pcg64Mcg;
     use glam::Vec3A;
 
     fn get_rng() -> Pcg64Mcg {

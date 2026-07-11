@@ -1,7 +1,7 @@
 use std::f32::consts::PI;
 
 use glam::Vec3A;
-use rand_pcg::Pcg64Mcg;
+use rand::Rng;
 
 use crate::aabb::AABB;
 use crate::basis::OrthonormalBasis;
@@ -129,7 +129,7 @@ impl Sphere {
     /// Sample a direction from the given point to the spherical light.
     ///
     /// origin is the offset point from the ray-primitive intersection test.
-    pub fn sample_direction_to_light(&self, origin: Vec3A, rng: &mut Pcg64Mcg) -> Vec3A {
+    pub fn sample_direction_to_light(&self, origin: Vec3A, rng: &mut impl Rng) -> Vec3A {
         let center = self.center;
         let to_center = center - origin;
         let distance_squared = to_center.length_squared();

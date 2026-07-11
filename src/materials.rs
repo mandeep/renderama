@@ -1,8 +1,7 @@
 use std::f32::consts::PI;
 
 use glam::Vec3A;
-use rand::RngExt;
-use rand_pcg::Pcg64Mcg;
+use rand::{Rng, RngExt};
 
 use crate::basis::OrthonormalBasis;
 use crate::ggx::{ggx_distribution, ggx_height_correlated_geometry, roughness_to_alpha};
@@ -70,7 +69,7 @@ impl_from_material!(
 
 impl Material {
     /// Generate the ScatterResult that tells the integrator how the material responds to sampling
-    pub fn generate_response(&self, ray: &Ray, hit: &HitResult, textures: &[Texture], rng: &mut Pcg64Mcg) -> Option<ScatterResult> {
+    pub fn generate_response(&self, ray: &Ray, hit: &HitResult, textures: &[Texture], rng: &mut impl Rng) -> Option<ScatterResult> {
         match self {
             Material::Diffuse(m) => m.generate_response(ray, hit, textures),
             Material::Emissive(m) => m.generate_response(ray, hit, rng),
@@ -432,7 +431,7 @@ impl Refractive {
     /// See Peter Shirley's Ray Tracing in One Weekend for an overview of refractive
     /// scattering and Section 10.3.2 in Mathematical and Computer Programming
     /// Techniques for Computer Graphics by Peter Comininos.
-    fn generate_response(&self, ray: &Ray, result: &HitResult, textures: &[Texture], rng: &mut Pcg64Mcg) -> Option<ScatterResult> {
+    fn generate_response(&self, ray: &Ray, result: &HitResult, textures: &[Texture], rng: &mut impl Rng) -> Option<ScatterResult> {
         // cache this result since it's used many times in this method
         let geometric_incident: f32 = ray.direction.dot(result.geometric_normal);
         let entering = geometric_incident < 0.0;
@@ -496,7 +495,7 @@ impl Emissive {
 
     /// The Light type and primitives handle actual light physics so this material
     /// will not generate a response.
-    fn generate_response(&self, _ray: &Ray, _result: &HitResult, _rng: &mut Pcg64Mcg) -> Option<ScatterResult> {
+    fn generate_response(&self, _ray: &Ray, _result: &HitResult, _rng: &mut impl Rng) -> Option<ScatterResult> {
         None
     }
 
@@ -526,7 +525,7 @@ impl Volumetric {
     }
 
     /// Volumetric materials generate a uniform response when hit no matter the ray's direction
-    fn generate_response(&self, ray: &Ray, result: &HitResult, textures: &[Texture], rng: &mut Pcg64Mcg) -> Option<ScatterResult> {
+    fn generate_response(&self, ray: &Ray, result: &HitResult, textures: &[Texture], rng: &mut impl Rng) -> Option<ScatterResult> {
         let scattered = Ray::new(result.point, pick_sphere_point(rng), ray.time);
         let contribution = textures[self.albedo.index()].sample_texture(result.u, result.v);
         let pdf = PDF::Uniform;

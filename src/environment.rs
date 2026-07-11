@@ -1,8 +1,7 @@
 use crate::f32::consts::PI;
 
 use glam::Vec3A;
-use rand_pcg::Pcg64Mcg;
-use rand::RngExt;
+use rand::{Rng, RngExt};
 
 /// Retrieve the relative luminance of a color in sRGB colorspace.
 ///
@@ -164,7 +163,7 @@ impl EnvironmentMap {
 
     /// Find areas of high luminance in the conditional_cdf and
     /// return the direction to that area.
-    pub fn sample_direction_to_light(&self, rng: &mut Pcg64Mcg) -> (Vec3A, Vec3A, f32) {
+    pub fn sample_direction_to_light(&self, rng: &mut impl Rng) -> (Vec3A, Vec3A, f32) {
         let u1 = rng.random::<f32>();
         let u2 = rng.random::<f32>();
 

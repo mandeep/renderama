@@ -1,8 +1,7 @@
 use std::f32;
 
 use glam::Vec3A;
-use rand_pcg::Pcg64Mcg;
-use rand::RngExt;
+use rand::{Rng, RngExt};
 
 use crate::aabb::AABB;
 use crate::materials::MaterialId;
@@ -254,7 +253,7 @@ impl Plane {
     /// surface hit to the light source.
     ///
     /// Used to send shadow rays directly to the light source.
-    pub fn sample_direction_to_light(&self, origin: Vec3A, rng: &mut Pcg64Mcg) -> Vec3A {
+    pub fn sample_direction_to_light(&self, origin: Vec3A, rng: &mut impl Rng) -> Vec3A {
         let u = self.bounds.u_min + rng.random::<f32>() * (self.bounds.u_max - self.bounds.u_min);
         let v = self.bounds.v_min + rng.random::<f32>() * (self.bounds.v_max - self.bounds.v_min);
 

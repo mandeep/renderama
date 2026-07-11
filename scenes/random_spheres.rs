@@ -1,6 +1,5 @@
 use glam::Vec3A;
-use rand::RngExt;
-use rand_pcg::Pcg64Mcg;
+use rand::{Rng, RngExt};
 
 use crate::bvh::BVH;
 use crate::camera::{Camera, CameraOptions};
@@ -14,7 +13,7 @@ use crate::texture::{Color, Texture};
 
 
 
-pub fn random_spheres_scene(width: Option<usize>, height: Option<usize>, rng: &mut Pcg64Mcg) -> Scene {
+pub fn random_spheres_scene(width: Option<usize>, height: Option<usize>, rng: &mut impl Rng) -> Scene {
     let origin = Vec3A::new(13.0, 2.0, 3.0);
     let lookat = Vec3A::new(0.0, 0.0, 0.0);
     let fov = 39.0;

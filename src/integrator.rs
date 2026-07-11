@@ -2,8 +2,7 @@ use std::f32;
 
 use clap::ValueEnum;
 use glam::Vec3A;
-use rand::RngExt;
-use rand_pcg::Pcg64Mcg;
+use rand::{Rng, RngExt};
 
 use crate::basis::OrthonormalBasis;
 use crate::lights::Light;
@@ -36,7 +35,7 @@ impl Integrator {
     }
 
     /// Dispatch the integrator chosen by the user in the command line interface
-    pub fn render_scene(&self, ray: Ray, scene: &Scene, rng: &mut Pcg64Mcg) -> Vec3A {
+    pub fn render_scene(&self, ray: Ray, scene: &Scene, rng: &mut impl Rng) -> Vec3A {
         match self {
             Integrator::Beauty => render_beauty(ray, &scene, rng),
             Integrator::Normals => render_normals(ray, &scene, rng),
@@ -49,7 +48,7 @@ impl Integrator {
 ///
 /// Typically used in debugging whether or not the geometry in
 /// the scene is setup correctly.
-pub fn render_normals(ray: Ray, scene: &Scene, rng: &mut Pcg64Mcg) -> Vec3A {
+pub fn render_normals(ray: Ray, scene: &Scene, rng: &mut impl Rng) -> Vec3A {
     if let Some(hit_result) = scene.accelerator.hit(&ray, 1e-4, f32::MAX, rng) {
         let normal = hit_result.shading_normal;
         0.5 * Vec3A::new(normal.x + 1.0, normal.y + 1.0, normal.z + 1.0)
@@ -70,7 +69,7 @@ pub fn render_normals(ray: Ray, scene: &Scene, rng: &mut Pcg64Mcg) -> Vec3A {
 /// https://github.com/mmp/pbrt-v3/blob/master/src/integrators/ao.cpp#L71
 /// https://rmanwiki-26.pixar.com/space/REN26/19661789/PxrOcclusion
 /// https://developer.nvidia.com/gpugems/gpugems/part-iii-materials/chapter-17-ambient-occlusion
-pub fn render_ambient_occlusion(ray: Ray, scene: &Scene, rng: &mut Pcg64Mcg) -> Vec3A {
+pub fn render_ambient_occlusion(ray: Ray, scene: &Scene, rng: &mut impl Rng) -> Vec3A {
     let mut color: f32 = 0.0;
 
     let Some(hit_result) = scene.accelerator.hit(&ray, 1e-4, f32::MAX, rng) else {
@@ -97,7 +96,7 @@ pub fn render_ambient_occlusion(ray: Ray, scene: &Scene, rng: &mut Pcg64Mcg) -> 
 /// A combination of BSDF sampling and many light sampling is used to provide
 /// physically correct results. Bounces are set to a default of 10 though russian
 /// roulette is applied after 3 bounces.
-pub fn render_beauty(mut ray: Ray, scene: &Scene, rng: &mut Pcg64Mcg) -> Vec3A {
+pub fn render_beauty(mut ray: Ray, scene: &Scene, rng: &mut impl Rng) -> Vec3A {
     let mut color = Vec3A::ZERO;
     let mut throughput = Vec3A::ONE;
     let mut previous_bounce = PreviousBounce::None;
@@ -235,7 +234,7 @@ fn evaluate_direct_lighting(
     scatter_result: &ScatterResult,
     scene: &Scene,
     throughput: &Vec3A,
-    rng: &mut Pcg64Mcg,
+    rng: &mut impl Rng,
 ) -> Vec3A {
     let mut direct_light = Vec3A::ZERO;
 
@@ -299,7 +298,7 @@ fn prepare_next_ray(
     material: &Material,
     textures: &[Texture],
     scatter_result: &ScatterResult,
-    rng: &mut Pcg64Mcg,
+    rng: &mut impl Rng,
 ) -> Option<(Ray, Vec3A, f32)> {
     let scattered_direction = scatter_result.sampling_strategy.pick_direction(rng);
     let material_weight = scatter_result.sampling_strategy.calculate_probability(scattered_direction);
@@ -325,7 +324,7 @@ fn prepare_next_ray(
 ///
 /// Reference:
 /// https://pbr-book.org/3ed-2018/Monte_Carlo_Integration/Russian_Roulette_and_Splitting
-fn apply_roulette(throughput: &Vec3A, rng: &mut Pcg64Mcg) -> Option<Vec3A> {
+fn apply_roulette(throughput: &Vec3A, rng: &mut impl Rng) -> Option<Vec3A> {
     let roulette_factor = (1.0 - throughput.max_element()).max(0.05);
 
     if rng.random::<f32>() < roulette_factor {
