@@ -4,6 +4,7 @@ use clap::ValueEnum;
 use glam::Vec3A;
 use rand::{Rng, RngExt};
 
+use crate::atmosphere::Atmosphere;
 use crate::basis::OrthonormalBasis;
 use crate::lights::Light;
 use crate::materials::Material;
@@ -51,10 +52,11 @@ impl Integrator {
 pub fn render_normals(ray: Ray, scene: &Scene, rng: &mut impl Rng) -> Vec3A {
     if let Some(hit_result) = scene.accelerator.hit(&ray, 1e-4, f32::MAX, rng) {
         let normal = hit_result.shading_normal;
+        // map normal from [-1, 1] to [0, 1]
         0.5 * Vec3A::new(normal.x + 1.0, normal.y + 1.0, normal.z + 1.0)
     } else {
-        let point = 0.5 * (ray.direction.y + 1.0);
-        (1.0 - point) * Vec3A::new(1.0, 1.0, 1.0) + point * Vec3A::new(0.5, 0.7, 1.0)
+        let atmosphere = Atmosphere::default();
+        atmosphere.compute_atmosphere_color(&ray.direction)
     }
 }
 
