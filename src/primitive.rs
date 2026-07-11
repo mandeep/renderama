@@ -22,7 +22,6 @@ pub enum Primitive {
     Sphere(Sphere),
     Triangle(Triangle),
     TriangleMesh(Arc<TriangleMesh>),
-    ReverseOrientation(Arc<Primitive>),
     TransformedMesh(Arc<TransformedMesh>),
     MotionMesh(Arc<MotionMesh>),
     Volume(Arc<Volume>)
@@ -32,19 +31,10 @@ impl Primitive {
     pub fn hit(&self, ray: &Ray, start_distance: f32, end_distance: f32, rng: &mut impl Rng) -> Option<HitResult> {
         match self {
             Primitive::Plane(plane) => plane.hit(ray, start_distance, end_distance),
-            Primitive::Rectangle(rectangle) => rectangle.hit(ray, start_distance, end_distance, rng),
+            Primitive::Rectangle(rectangle) => rectangle.hit(ray, start_distance, end_distance),
             Primitive::Sphere(sphere) => sphere.hit(ray, start_distance, end_distance),
             Primitive::Triangle(triangle) => triangle.hit(ray, start_distance, end_distance),
             Primitive::TriangleMesh(mesh) => mesh.hit(ray, start_distance, end_distance, rng),
-            Primitive::ReverseOrientation(primitive) => {
-                if let Some(mut hit_result) = primitive.hit(ray, start_distance, end_distance, rng) {
-                    hit_result.geometric_normal = -hit_result.geometric_normal;
-                    hit_result.shading_normal = -hit_result.shading_normal;
-                    Some(hit_result)
-                } else {
-                    None
-                }
-            },
             Primitive::TransformedMesh(mesh) => mesh.hit(ray, start_distance, end_distance, rng),
             Primitive::MotionMesh(mesh) => mesh.hit(ray, start_distance, end_distance, rng),
             Primitive::Volume(volume) => volume.hit(ray, start_distance, end_distance, rng)
@@ -54,11 +44,10 @@ impl Primitive {
     pub fn hits_anything(&self, ray: &Ray, start_distance: f32, end_distance: f32, rng: &mut impl Rng) -> bool {
         match self {
             Primitive::Plane(plane) => plane.hit(ray, start_distance, end_distance).is_some(),
-            Primitive::Rectangle(rectangle) => rectangle.hit(ray, start_distance, end_distance, rng).is_some(),
+            Primitive::Rectangle(rectangle) => rectangle.hit(ray, start_distance, end_distance).is_some(),
             Primitive::Sphere(sphere) => sphere.hit(ray, start_distance, end_distance).is_some(),
             Primitive::Triangle(triangle) => triangle.hits_anything(ray, start_distance, end_distance),
             Primitive::TriangleMesh(mesh) => mesh.hits_anything(ray, start_distance, end_distance, rng),
-            Primitive::ReverseOrientation(primitive) => primitive.hit(ray, start_distance, end_distance, rng).is_some(),
             Primitive::TransformedMesh(mesh) => mesh.hits_anything(ray, start_distance, end_distance, rng),
             Primitive::MotionMesh(mesh) => mesh.hits_anything(ray, start_distance, end_distance, rng),
             Primitive::Volume(volume) => volume.hit(ray, start_distance, end_distance, rng).is_some()
@@ -72,7 +61,6 @@ impl Primitive {
             Primitive::Sphere(sphere) => sphere.bounding_box(),
             Primitive::Triangle(triangle) => triangle.bounding_box(),
             Primitive::TriangleMesh(mesh) => mesh.bounding_box(),
-            Primitive::ReverseOrientation(primitive) => primitive.bounding_box(),
             Primitive::TransformedMesh(mesh) => mesh.bounding_box(),
             Primitive::MotionMesh(mesh) => mesh.bounding_box(),
             Primitive::Volume(volume) => volume.bounding_box(),

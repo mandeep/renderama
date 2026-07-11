@@ -1,9 +1,7 @@
 use glam::Vec3A;
-use rand::Rng;
 
 use crate::aabb::AABB;
 use crate::extensions::PushInto;
-use crate::primitive::Primitive;
 use crate::materials::MaterialId;
 use crate::plane::{Axis, Bounds2D, Orientation, Plane};
 use crate::ray::Ray;
@@ -15,7 +13,7 @@ use crate::results::HitResult;
 pub struct Rectangle {
     p0: Vec3A,
     p1: Vec3A,
-    primitives: Vec<Primitive>,
+    planes: Vec<Plane>,
 }
 
 impl Rectangle {
@@ -34,27 +32,27 @@ impl Rectangle {
     /// at both y = 0.0 and y = 200.0, and a YZ plane with y in [0.0, 200.0] and z in
     /// [0.0, 300.0] at x = 0.0 and x = 100.0.
     pub fn new(p0: Vec3A, p1: Vec3A, material_id: MaterialId) -> Rectangle {
-        let mut primitives: Vec<Primitive> = Vec::new();
+        let mut planes: Vec<Plane> = Vec::new();
         let xy_bounds = Bounds2D::new(p0.x..p1.x, p0.y..p1.y);
         let xz_bounds = Bounds2D::new(p0.x..p1.x, p0.z..p1.z);
         let yz_bounds = Bounds2D::new(p0.y..p1.y, p0.z..p1.z);
 
-        primitives.push_into(Plane::new(Axis::XY, xy_bounds, p1.z, Orientation::Forward, material_id));
-        primitives.push_into(Plane::new(Axis::XY, xy_bounds, p0.z, Orientation::Reversed, material_id));
-        primitives.push_into(Plane::new(Axis::XZ, xz_bounds, p1.y, Orientation::Forward, material_id));
-        primitives.push_into(Plane::new(Axis::XZ, xz_bounds, p0.y, Orientation::Reversed, material_id));
-        primitives.push_into(Plane::new(Axis::YZ, yz_bounds, p1.x, Orientation::Forward, material_id));
-        primitives.push_into(Plane::new(Axis::YZ, yz_bounds, p0.x, Orientation::Reversed, material_id));
+        planes.push_into(Plane::new(Axis::XY, xy_bounds, p1.z, Orientation::Forward, material_id));
+        planes.push_into(Plane::new(Axis::XY, xy_bounds, p0.z, Orientation::Reversed, material_id));
+        planes.push_into(Plane::new(Axis::XZ, xz_bounds, p1.y, Orientation::Forward, material_id));
+        planes.push_into(Plane::new(Axis::XZ, xz_bounds, p0.y, Orientation::Reversed, material_id));
+        planes.push_into(Plane::new(Axis::YZ, yz_bounds, p1.x, Orientation::Forward, material_id));
+        planes.push_into(Plane::new(Axis::YZ, yz_bounds, p0.x, Orientation::Reversed, material_id));
 
-        Rectangle { p0, p1, primitives }
+        Rectangle { p0, p1, planes }
     }
 
     /// Iterate through each of the Plane primitives held in the primitives Vec and
     /// call their hit method. Return the closest hit if it exists.
-    pub fn hit(&self, ray: &Ray, position_min: f32, position_max: f32, rng: &mut impl Rng) -> Option<HitResult> {
-        self.primitives
+    pub fn hit(&self, ray: &Ray, position_min: f32, position_max: f32) -> Option<HitResult> {
+        self.planes
         .iter()
-        .filter_map(|plane| plane.hit(ray, position_min, position_max, rng))
+        .filter_map(|plane| plane.hit(ray, position_min, position_max))
         .filter(|hit| hit.parameter.is_finite())
         .min_by(|a, b| a.parameter.partial_cmp(&b.parameter).unwrap())
     }
@@ -68,8 +66,6 @@ impl Rectangle {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rand_pcg::Pcg64Mcg;
-    use rand::SeedableRng;
 
     #[test]
     fn test_rectangle_setup() {
@@ -80,7 +76,7 @@ mod tests {
 
         assert_eq!(rectangle.p0, p0);
         assert_eq!(rectangle.p1, p1);
-        assert_eq!(rectangle.primitives.len(), 6);
+        assert_eq!(rectangle.planes.len(), 6);
     }
 
     #[test]
@@ -101,10 +97,9 @@ mod tests {
         let p1 = Vec3A::ONE;
         let mat_idx = MaterialId(0);
         let rectangle = Rectangle::new(p0, p1, mat_idx);
-        let mut rng = Pcg64Mcg::seed_from_u64(0);
 
         let ray = Ray::new(Vec3A::new(0.0, 0.0, 5.0), Vec3A::new(0.0, 0.0, -1.0), 0.0);
-        assert!(rectangle.hit(&ray, 0.0, f32::MAX, &mut rng).is_some());
+        assert!(rectangle.hit(&ray, 0.0, f32::MAX).is_some());
     }
 
     #[test]
@@ -113,9 +108,8 @@ mod tests {
         let p1 = Vec3A::ONE;
         let mat_idx = MaterialId(0);
         let rectangle = Rectangle::new(p0, p1, mat_idx);
-        let mut rng = Pcg64Mcg::seed_from_u64(0);
 
         let ray = Ray::new(Vec3A::new(0.0, 0.0, 5.0), Vec3A::new(0.0, 0.0, 1.0), 0.0);
-        assert!(rectangle.hit(&ray, 0.0, f32::MAX, &mut rng).is_none());
+        assert!(rectangle.hit(&ray, 0.0, f32::MAX).is_none());
     }
 }
