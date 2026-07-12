@@ -82,12 +82,13 @@ fn main() {
     let atomic_counter = Arc::new(AtomicU64::new(0));
     let cloned_counter = atomic_counter.clone();
 
-    thread::spawn(move || {
+    let progress_thread = thread::spawn(move || {
         while cloned_counter.load(Ordering::SeqCst) < (width * height) as u64 {
             let count = cloned_counter.load(Ordering::SeqCst);
             progress_bar.set(count);
             thread::sleep(Duration::from_millis(200));
         }
+        progress_bar.finish();
     });
 
     let mut pixels = vec![0.0f32; 3 * width * height];
@@ -130,6 +131,8 @@ fn main() {
         atomic_counter.fetch_add(1, Ordering::SeqCst);
     });
 
+    progress_thread.join().expect("Progress thread panicked during join.");
+
     let buffer: ImageBuffer<Rgb<f32>, Vec<f32>> = ImageBuffer::from_raw(width as u32, height as u32, pixels.clone()).unwrap();
 
     let timestamp = Local::now().format("%Y%m%d-%H%M%S").to_string();
@@ -138,7 +141,7 @@ fn main() {
 
     buffer.save(&output_filepath).unwrap();
 
-    println!("[{}] Finished rendering in {}. Render saved to {}.",
+    println!("\n[{}] Finished rendering in {}. Render saved to {}.",
             Local::now().format("%H:%M:%S"),
             format_time(rendering_time.elapsed()),
             &filepath,
