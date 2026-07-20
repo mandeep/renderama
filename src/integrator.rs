@@ -261,14 +261,15 @@ fn evaluate_direct_lighting(
                 let reflectance = material.compute_reflectance(&ray, &shadow_ray, &hit_result, &scene.textures);
                 let material_weight = scatter_result.sampling_strategy.calculate_probability(light_direction);
                 let weight = power_heuristic(light_weight, material_weight);
-                direct_light += (weight * throughput * light_source.intensity() * scatter_result.contribution * reflectance) / light_weight;
+                let contribution = scatter_result.contribution;
+                let intensity = light_source.intensity(&scene.textures);
+                direct_light += (weight * throughput * intensity * contribution * reflectance) / light_weight;
             }
         }
     }
 
     if let Some(environment) = &scene.environment {
-        let (environment_direction, environment_value, environment_weight) =
-            environment.sample_direction_to_light(rng);
+        let (environment_direction, environment_color, environment_weight) = environment.sample_direction_to_light(rng);
         if environment_weight > 1e-7 {
             let shadow_origin = find_offset_point(hit_result.point, hit_result.geometric_normal);
             let environment_shadow_ray = Ray::new(shadow_origin, environment_direction, ray.time);
@@ -276,12 +277,8 @@ fn evaluate_direct_lighting(
                 let material_weight = scatter_result.sampling_strategy.calculate_probability(environment_direction);
                 let reflectance = material.compute_reflectance(&ray, &environment_shadow_ray, &hit_result, &scene.textures);
                 let weight = power_heuristic(environment_weight, material_weight);
-                direct_light += (
-                    weight *
-                    throughput *
-                    environment_value *
-                    scatter_result.contribution *
-                    reflectance) / environment_weight;
+                let contribution = scatter_result.contribution;
+                direct_light += (weight * throughput * environment_color * contribution * reflectance) / environment_weight;
             }
         }
     }

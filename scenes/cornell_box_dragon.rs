@@ -59,7 +59,8 @@ pub fn cornell_box_dragon_scene(width: Option<usize>, height: Option<usize>) -> 
     let bvh = BVH::new(&mut objects);
 
     let light_shape = Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 554.0, Orientation::Reversed, white_id);
-    lights.add_light(AreaLight::from(light_shape, Vec3A::new(25.0, 25.0, 25.0)));
+    let light_intensity_id = textures.add_texture(Color::splat(25.0));
+    lights.add_light(AreaLight::from(light_shape, light_intensity_id));
 
     SceneBuilder::new("Cornell Box with Dragon")
         .with_accelerator(bvh)

@@ -479,17 +479,17 @@ impl Refractive {
 #[derive(Clone)]
 pub struct Emissive {
     pub emissive_color: TextureId,
-    pub intensity: f32,
+    pub intensity: Option<f32>,
 }
 
 impl Emissive {
     /// Create a new Emissive material with the given Texture.
     pub fn new(emissive_color: TextureId) -> Emissive {
-        Emissive {emissive_color, intensity: 1.0 }
+        Emissive {emissive_color, intensity: None }
     }
 
-    pub fn with_intensity(mut self, intensity: f32) -> Self {
-        self.intensity = intensity;
+    pub fn with_intensity(mut self, intensity: impl Into<Option<f32>>) -> Self {
+        self.intensity = intensity.into();
         self
     }
 
@@ -502,11 +502,11 @@ impl Emissive {
     /// Sample the texture of the material if the ray hits the surface
     /// from the front.
     fn evaluate_emission(&self, ray: &Ray, hit: &HitResult, textures: &[Texture]) -> Vec3A {
-        if hit.shading_normal.dot(ray.direction) < 0.0 {
-            textures[self.emissive_color.index()].sample_texture(hit.u, hit.v) * self.intensity
-        } else {
-            Vec3A::ZERO
+        if hit.shading_normal.dot(ray.direction) >= 0.0 {
+            return Vec3A::ZERO;
         }
+        let emission = textures[self.emissive_color.index()].sample_texture(hit.u, hit.v);
+        self.intensity.map_or(emission, |intensity| emission * intensity)
     }
 }
 

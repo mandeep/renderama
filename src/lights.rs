@@ -9,6 +9,7 @@ use crate::plane::{Axis, Bounds2D, Orientation, Plane};
 use crate::ray::Ray;
 use crate::sampling::uniform_sample_triangle;
 use crate::sphere::Sphere;
+use crate::texture::{Texture, TextureId};
 use crate::triangle::Triangle;
 
 #[derive(Clone)]
@@ -20,11 +21,11 @@ pub enum Light {
 }
 
 impl Light {
-    pub fn intensity(&self) -> Vec3A {
+    pub fn intensity(&self, textures: &[Texture]) -> Vec3A {
         match self {
-            Light::Point(light) => light.intensity,
-            Light::Area(light) => light.intensity,
-            Light::Mesh(light) => light.intensity,
+            Light::Point(light) => light.intensity(textures),
+            Light::Area(light) => light.intensity(textures),
+            Light::Mesh(light) => light.intensity(textures),
         }
     }
 
@@ -74,17 +75,22 @@ impl_from_light!(MeshLight => Mesh);
 #[derive(Clone)]
 pub struct PointLight {
     sphere: Sphere,
-    intensity: Vec3A,
+    intensity: TextureId,
 }
 
 impl PointLight {
-    pub fn new(center: Vec3A, radius: f32, material_id: MaterialId, intensity: Vec3A) -> PointLight {
+    pub fn new(center: Vec3A, radius: f32, material_id: MaterialId, intensity: TextureId) -> PointLight {
         let sphere = Sphere::new(center, radius, material_id);
         PointLight { sphere, intensity }
     }
 
-    pub fn from(sphere: Sphere, intensity: Vec3A) -> PointLight {
+    pub fn from(sphere: Sphere, intensity: TextureId) -> PointLight {
         PointLight { sphere, intensity }
+    }
+
+    pub fn intensity(&self, textures: &[Texture]) -> Vec3A {
+        let intensity = textures[self.intensity.index()].sample_texture(0.5, 0.5);
+        intensity
     }
 
     pub fn evaluate_sampling_weight(&self, ray: &Ray) -> f32 {
@@ -103,17 +109,22 @@ impl PointLight {
 #[derive(Clone)]
 pub struct AreaLight {
     plane: Plane,
-    intensity: Vec3A,
+    intensity: TextureId,
 }
 
 impl AreaLight {
-    pub fn new(axis: Axis, bounds: Bounds2D, offset: f32, orientation: Orientation, material_id: MaterialId, intensity: Vec3A) -> AreaLight {
+    pub fn new(axis: Axis, bounds: Bounds2D, offset: f32, orientation: Orientation, material_id: MaterialId, intensity: TextureId) -> AreaLight {
         let plane = Plane::new(axis, bounds, offset, orientation, material_id);
         AreaLight { plane, intensity }
     }
 
-    pub fn from(plane: Plane, intensity: Vec3A) -> AreaLight {
+    pub fn from(plane: Plane, intensity: TextureId) -> AreaLight {
         AreaLight { plane, intensity }
+    }
+
+    pub fn intensity(&self, textures: &[Texture]) -> Vec3A {
+        let intensity = textures[self.intensity.index()].sample_texture(0.5, 0.5);
+        intensity
     }
 
     pub fn evaluate_sampling_weight(&self, ray: &Ray) -> f32 {
@@ -137,13 +148,13 @@ pub struct MeshLight {
     triangles: Vec<Triangle>,
     cdf: Vec<f32>,
     total_area: f32,
-    intensity: Vec3A,
+    intensity: TextureId,
     accelerator: BVH,
 }
 
 impl MeshLight {
     /// Create a new MeshLight from the given triangles
-    pub fn new(triangles: Vec<Triangle>, intensity: Vec3A) -> MeshLight {
+    pub fn new(triangles: Vec<Triangle>, intensity: TextureId) -> MeshLight {
         let mut light_triangles = Vec::new();
         let mut cdf = Vec::new();
         let mut total_area = 0.0;
@@ -181,6 +192,12 @@ impl MeshLight {
 
         &self.triangles[index]
     }
+
+    pub fn intensity(&self, textures: &[Texture]) -> Vec3A {
+        let intensity = textures[self.intensity.index()].sample_texture(0.5, 0.5);
+        intensity
+    }
+
 
     /// Sample the direction to this light source from the given origin
     pub fn sample_direction_to_light(&self, origin: Vec3A, rng: &mut impl Rng) -> Vec3A {

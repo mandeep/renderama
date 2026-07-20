@@ -74,8 +74,9 @@ pub fn cornell_box_object_scene(width: Option<usize>, height: Option<usize>) -> 
     let bvh = BVH::new(&mut objects);
 
     let light_shape = Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 554.0, Orientation::Reversed, white_id);
-    let light_intensity = Vec3A::new(37.5, 27.0, 15.0);
-    lights.add_light(AreaLight::from(light_shape, light_intensity));
+    let light_intensity = Color::new(37.5, 27.0, 15.0);
+    let light_intensity_id = textures.add_texture(light_intensity);
+    lights.add_light(AreaLight::from(light_shape, light_intensity_id));
 
     SceneBuilder::new("Cornell Box with Multiple Objects")
         .with_accelerator(bvh)

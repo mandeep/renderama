@@ -183,9 +183,11 @@ pub fn load_obj_with_options<'a>(
             if let Material::Emissive(material) = &materials[current_material_id.index()] {
                 let emissive_scale = options.emissive_scale;
                 let intensity = textures[material.emissive_color.index()].sample_texture(0.5, 0.5) * emissive_scale;
+                let intensity_texture = Color::from(intensity);
+                let intensity_texture_id = textures.add_texture(intensity_texture);
 
                 if let Some(lights) = lights.as_deref_mut() {
-                    let mesh_light = MeshLight::new(light_triangles, intensity);
+                    let mesh_light = MeshLight::new(light_triangles, intensity_texture_id);
                     lights.add_light(mesh_light);
                 }
             }

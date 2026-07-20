@@ -77,7 +77,8 @@ pub fn cornell_box_uv_scene(width: Option<usize>, height: Option<usize>) -> Scen
     objects.push_into(TransformedMesh::new(Vec3A::new(265.0, 0.0, 295.0), Vec3A::new(0.0, 15.0, 0.0), Vec3A::splat(1.0), Rectangle::new(p0, p2, large_box_texture_id)));
 
     let light_shape = Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 554.98, Orientation::Reversed, light_material);
-    let light_intensity = Vec3A::new(50.0, 50.0, 50.0);
+    let light_intensity = Color::new(50.0, 50.0, 50.0);
+    let light_intensity_id = textures.add_texture(light_intensity);
 
     let fill_light_texture = textures.add_texture(Color::new(0.2, 0.2, 0.2));
     let fill_light_material = materials.add_material(Emissive::new(fill_light_texture));
@@ -85,7 +86,7 @@ pub fn cornell_box_uv_scene(width: Option<usize>, height: Option<usize>) -> Scen
 
     objects.push_into(fill_light_shape.clone());
 
-    lights.add_light(AreaLight::from(light_shape, light_intensity));
+    lights.add_light(AreaLight::from(light_shape, light_intensity_id));
 
     let bvh = BVH::new(&mut objects);
 

@@ -50,7 +50,8 @@ pub fn energy_conservation_scene(width: Option<usize>, height: Option<usize>) ->
     let light_texture = textures.add_texture(Color::new(50.0, 50.0, 50.0));
     let light_material = materials.add_material(Emissive::new(light_texture));
     let light_plane = Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 600.0, Orientation::Reversed, light_material);
-    lights.add_light(AreaLight::from(light_plane, Vec3A::new(50.0, 50.0, 50.0)));
+    let light_id = textures.add_texture(Color::splat(50.0));
+    lights.add_light(AreaLight::from(light_plane, light_id));
 
     SceneBuilder::new("Energy Conservation Test")
         .with_accelerator(bvh)

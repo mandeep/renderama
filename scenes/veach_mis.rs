@@ -111,7 +111,8 @@ pub fn veach_mis_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let fill_intensity = 0.005;
     let fill_tex = textures.add_texture(Color::new(fill_intensity, fill_intensity, fill_intensity));
     let fill_mat = materials.add_material(Emissive::new(fill_tex));
-    let fill_color = Vec3A::splat(fill_intensity);
+    let fill_color = Color::splat(fill_intensity);
+    let fill_color_id = textures.add_texture(fill_color);
 
     let left_light_primitive = Plane::new(
         Axis::YZ,
@@ -134,15 +135,16 @@ pub fn veach_mis_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let bvh = BVH::new(&mut objects);
 
     for (light_x, roughness, intensity) in sphere_lights {
+        let intensity_id = textures.add_texture(Color::splat(intensity));
         let light = PointLight::from(
             Sphere::new(Vec3A::new(light_x, light_y, light_z), roughness, grey),
-            Vec3A::splat(intensity),
+            intensity_id,
         );
         lights.add_light(light);
     }
 
-    lights.add_light(AreaLight::from(left_light_primitive, fill_color));
-    lights.add_light(AreaLight::from(right_light_primitive, fill_color));
+    lights.add_light(AreaLight::from(left_light_primitive, fill_color_id));
+    lights.add_light(AreaLight::from(right_light_primitive, fill_color_id));
 
     SceneBuilder::new("Veach MIS")
         .with_accelerator(bvh)

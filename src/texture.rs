@@ -83,6 +83,12 @@ impl Color {
     }
 }
 
+impl From<Vec3A> for Color {
+    fn from(vector: Vec3A) -> Color {
+        Color::new(vector.x, vector.y, vector.z)
+    }
+}
+
 #[derive(Clone)]
 /// ImageTexture is a struct for textures loaded from file
 pub struct ImageTexture {

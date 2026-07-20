@@ -65,7 +65,9 @@ pub fn cornell_box_bunny_scene(width: Option<usize>, height: Option<usize>) -> S
     let bvh = BVH::new(&mut objects);
 
     let light_shape = Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 554.0, Orientation::Reversed, white_id);
-    lights.add_light(AreaLight::from(light_shape, Vec3A::new(25.0, 18.0, 10.0)));
+    let light_intensity = Color::new(25.0, 18.0, 10.0);
+    let light_intensity_id = textures.add_texture(light_intensity);
+    lights.add_light(AreaLight::from(light_shape, light_intensity_id));
 
     SceneBuilder::new("Cornell Box with Bunny and Buddha")
         .with_accelerator(bvh)
