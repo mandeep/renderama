@@ -88,7 +88,7 @@ pub fn cornell_box_uv_scene(width: Option<usize>, height: Option<usize>) -> Scen
 
     lights.add_light(AreaLight::from(light_shape, light_intensity_id));
 
-    let bvh = BVH::new(&mut objects);
+    let bvh = BVH::new(objects);
 
     SceneBuilder::new("Cornell Box with UVs")
         .with_accelerator(bvh)

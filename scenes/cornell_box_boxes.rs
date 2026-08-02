@@ -58,7 +58,7 @@ pub fn cornell_box_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     objects.push_into(TransformedMesh::new(Vec3A::new(130.0, 0.0, 65.0), Vec3A::new(0.0, -18.0, 0.0), Vec3A::splat(1.0), Rectangle::new(p0, p1, white_id)));
     objects.push_into(TransformedMesh::new(Vec3A::new(265.0, 0.0, 295.0), Vec3A::new(0.0, 15.0, 0.0), Vec3A::splat(1.0), Rectangle::new(p0, p2, white_id)));
 
-    let bvh = BVH::new(&mut objects);
+    let bvh = BVH::new(objects);
 
     let light_shape = Plane::new(Axis::XZ, Bounds2D::new(213.0..343.0, 227.0..332.0), 554.0, Orientation::Reversed, white_id);
     let light_intensity = Color::new(25.0, 18.0, 10.0);

@@ -53,7 +53,7 @@ pub fn three_spheres_scene(width: Option<usize>, height: Option<usize>) -> Scene
     let floor_idx = materials.add_material(Diffuse::new(floor_id, 0.0));
     objects.push_into(Sphere::new(Vec3A::new(0.0, -100.5, -1.0), 100.0, floor_idx));
 
-    let bvh = BVH::new(&mut objects);
+    let bvh = BVH::new(objects);
 
     let environment = EnvironmentMap::new("extras/textures/dusk_1_puresky.exr", 1.0);
 

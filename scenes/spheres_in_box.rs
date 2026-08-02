@@ -118,7 +118,7 @@ pub fn spheres_in_box_scene(width: Option<usize>, height: Option<usize>, rng: &m
         objects.push_into(transformed_sphere);
     }
 
-    let bvh = BVH::new(&mut objects);
+    let bvh = BVH::new(objects);
     let light_shape = Plane::new(Axis::XZ, Bounds2D::new(123.0..423.0, 147.0..412.0), 554.0, Orientation::Reversed, white);
     let light_id = textures.add_texture(Color::splat(7.0));
     lights.add_light(AreaLight::from(light_shape, light_id));

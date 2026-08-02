@@ -39,7 +39,7 @@ pub fn subway_scene(width: Option<usize>, height: Option<usize>) -> Scene {
         objects.push_into(transformed);
     }
 
-    let bvh = BVH::new(&mut objects);
+    let bvh = BVH::new(objects);
 
     let environment = EnvironmentMap::new("extras/textures/dusk_1_puresky.exr", 1.0);
 

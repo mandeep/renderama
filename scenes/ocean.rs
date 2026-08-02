@@ -30,7 +30,7 @@ pub fn ocean_scene(width: Option<usize>, height: Option<usize>) -> Scene {
         objects.push_into(transformed);
     }
 
-    let bvh = BVH::new(&mut objects);
+    let bvh = BVH::new(objects);
 
     SceneBuilder::new("Off The Coast")
         .with_accelerator(bvh)

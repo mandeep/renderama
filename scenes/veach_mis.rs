@@ -132,7 +132,7 @@ pub fn veach_mis_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     );
     objects.push_into(right_light_primitive.clone());
 
-    let bvh = BVH::new(&mut objects);
+    let bvh = BVH::new(objects);
 
     for (light_x, roughness, intensity) in sphere_lights {
         let intensity_id = textures.add_texture(Color::splat(intensity));

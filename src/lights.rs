@@ -170,13 +170,13 @@ impl MeshLight {
         }
 
         // TODO: architect a way that we don't need to clone the triangles
-        let mut geometries: Vec<Primitive> = light_triangles
+        let geometries: Vec<Primitive> = light_triangles
             .iter()
             .cloned()
             .map(Primitive::Triangle)
             .collect();
 
-        let accelerator = BVH::new(&mut geometries);
+        let accelerator = BVH::new(geometries);
 
         MeshLight { triangles: light_triangles, cdf, total_area, intensity, accelerator }
     }

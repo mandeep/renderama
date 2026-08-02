@@ -47,11 +47,12 @@ struct InternalNode4 {
 }
 
 #[derive(Clone)]
-/// Store the primitive and AABB for the primitive at the leaf node.
-/// Used once we determine that BVH traversal has resulted in a hit.
+/// Store the AABB and index into BVH::primitives for the primitive at
+/// the leaf node. Used once we determine that BVH traversal has resulted
+/// in a hit.
 struct LeafNode {
     bbox: AABB,
-    primitive: Primitive,  // unboxed is fine here, leaves are rarely touched
+    primitive_index: u32,
 }
 
 
@@ -63,13 +64,15 @@ struct LeafNode {
 pub struct BVH {
     internals: Vec<InternalNode4>,
     leaves: Vec<LeafNode>,
+    primitives: Vec<Primitive>,
     root: u32,
     bbox: AABB, //root's bbox
 }
 
 /// Recursive binary tree used as an intermediate step to build the binary tree.
-/// Using Arc to store TreeNode's on the heap is okay here since this tree
-/// isn't used in traversal.
+/// Using Arc/Box to store TreeNode's on the heap is okay here since this tree
+/// isn't used in traversal. Leaves reference primitives by index into the
+/// original world slice rather than cloning them as we did in the past.
 enum TreeNode {
     Internal {
         bbox: AABB,
@@ -78,7 +81,7 @@ enum TreeNode {
     },
     Leaf {
         bbox: AABB,
-        primitive: Primitive,
+        index: u32,
     },
 }
 
@@ -95,31 +98,34 @@ impl TreeNode {
 /// heuristic (SAH). Fall back methods are provided if the number of primitives
 /// in the scene don't pass the threshold where the cost of computing SAH is
 /// necessary. Once built, this tree is then flattened for use with SIMD.
-fn build_tree(world: &mut Vec<Primitive>) -> TreeNode {
-    let n = world.len();
+///
+/// indices contains the index of the Primitive in the world allowing
+/// us to use less memory when building the tree.
+fn build_tree(world: &[Primitive], indices: &mut [u32]) -> TreeNode {
+    let n = indices.len();
 
     // compute the bounding box that contains all of the objects in the world
     // and their bounding boxes
-    let mut main_box = world[0].bounding_box().unwrap();
+    let mut main_box = world[indices[0] as usize].bounding_box().unwrap();
     for i in 1..n {
-        let new_box = world[i].bounding_box().unwrap();
+        let new_box = world[indices[i] as usize].bounding_box().unwrap();
         main_box = main_box.surrounding_box(&new_box);
     }
 
     if n == 1 {
         return TreeNode::Leaf {
             bbox: main_box,
-            primitive: world[0].clone(),
+            index: indices[0],
         };
     }
 
     if n == 2 {
-        let left_box = world[0].bounding_box().unwrap();
-        let right_box = world[1].bounding_box().unwrap();
+        let left_box = world[indices[0] as usize].bounding_box().unwrap();
+        let right_box = world[indices[1] as usize].bounding_box().unwrap();
         return TreeNode::Internal {
             bbox: main_box,
-            left: Box::new(TreeNode::Leaf { bbox: left_box, primitive: world[0].clone() }),
-            right: Box::new(TreeNode::Leaf { bbox: right_box, primitive: world[1].clone() }),
+            left: Box::new(TreeNode::Leaf { bbox: left_box, index: indices[0] }),
+            right: Box::new(TreeNode::Leaf { bbox: right_box, index: indices[1] }),
         };
     }
 
@@ -128,17 +134,17 @@ fn build_tree(world: &mut Vec<Primitive>) -> TreeNode {
     // this is the BVH leftover from Shirley's Ray Tracing series.
     if n <= 4 {
         let axis = main_box.longest_axis();
-        world.sort_by(|a, b| {
-            let centroid_a = centroid(a, axis);
-            let centroid_b = centroid(b, axis);
+        indices.sort_by(|&a, &b| {
+            let centroid_a = centroid(&world[a as usize], axis);
+            let centroid_b = centroid(&world[b as usize], axis);
             centroid_a.partial_cmp(&centroid_b).unwrap()
         });
 
-        // split off the world in two halves. right_objects takes half of the
-        // objects while world keeps the other half
-        let mut right_objects = world.split_off(n / 2);
-        let left = build_tree(world);
-        let right = build_tree(&mut right_objects);
+        // split the indices in two halves. right_indices takes half of the
+        // indices while indices keeps the other half
+        let (left_indices, right_indices) = indices.split_at_mut(n / 2);
+        let left = build_tree(world, left_indices);
+        let right = build_tree(world, right_indices);
 
         return TreeNode::Internal {
             bbox: main_box,
@@ -151,8 +157,8 @@ fn build_tree(world: &mut Vec<Primitive>) -> TreeNode {
 
     // compute the centroid of each bounding box.
     // using centroid's makes binning more stable
-    let centroids: Vec<Vec3A> = world.iter().map(|hit| {
-        let bbox = hit.bounding_box().unwrap();
+    let centroids: Vec<Vec3A> = indices.iter().map(|&i| {
+        let bbox = world[i as usize].bounding_box().unwrap();
         (bbox.minimum + bbox.maximum) * 0.5
     }).collect();
 
@@ -194,10 +200,10 @@ fn build_tree(world: &mut Vec<Primitive>) -> TreeNode {
             // update the bucket count for the bin and expand the bucket's
             // bounding box to include this object
             bucket_counts[bucket] += 1;
-            let obj_box = world[i].bounding_box().unwrap();
+            let object_box = world[indices[i] as usize].bounding_box().unwrap();
             bucket_boxes[bucket] = Some(match &bucket_boxes[bucket] {
-                Some(existing) => existing.surrounding_box(&obj_box),
-                None => obj_box,
+                Some(existing_box) => existing_box.surrounding_box(&object_box),
+                None => object_box,
             });
         }
 
@@ -259,29 +265,28 @@ fn build_tree(world: &mut Vec<Primitive>) -> TreeNode {
         bucket
     };
 
-    // now that we've calculated the best split we can subdivide the objects in
-    // the scene
-    let mut left_items = Vec::new();
-    let mut right_items = Vec::new();
+    // now that we've calculated the best split we can subdivide the indices.
+    let mut left_indices = Vec::with_capacity(n);
+    let mut right_indices = Vec::with_capacity(n);
     for i in 0..n {
-        let pos = axis_value(centroids[i], best_axis);
-        if (bucket_for(pos) as f32) < split_threshold {
-            left_items.push(world[i].clone());
+        let position = axis_value(centroids[i], best_axis);
+        if (bucket_for(position) as f32) < split_threshold {
+            left_indices.push(indices[i]);
         } else {
-            right_items.push(world[i].clone());
+            right_indices.push(indices[i]);
         }
     }
 
     // fallback to median split if everything ends up on one side of the split
-    if left_items.is_empty() || right_items.is_empty() {
-        world.sort_by(|a, b| {
-            let centroid_a = centroid(a, best_axis);
-            let centroid_b = centroid(b, best_axis);
+    if left_indices.is_empty() || right_indices.is_empty() {
+        indices.sort_by(|&a, &b| {
+            let centroid_a = centroid(&world[a as usize], best_axis);
+            let centroid_b = centroid(&world[b as usize], best_axis);
             centroid_a.partial_cmp(&centroid_b).unwrap()
         });
-        let mut right_objects = world.split_off(n / 2);
-        let left = build_tree(world);
-        let right = build_tree(&mut right_objects);
+        let (left_indices, right_indices) = indices.split_at_mut(n / 2);
+        let left = build_tree(world, left_indices);
+        let right = build_tree(world, right_indices);
         return TreeNode::Internal {
             bbox: main_box,
             left: Box::new(left),
@@ -289,8 +294,13 @@ fn build_tree(world: &mut Vec<Primitive>) -> TreeNode {
         };
     }
 
-    let left = build_tree(&mut left_items);
-    let right = build_tree(&mut right_items);
+    let split = left_indices.len();
+    indices[..split].copy_from_slice(&left_indices);
+    indices[split..].copy_from_slice(&right_indices);
+    let (left_indices, right_indices) = indices.split_at_mut(split);
+
+    let left = build_tree(world, left_indices);
+    let right = build_tree(world, right_indices);
 
     TreeNode::Internal {
         bbox: main_box,
@@ -338,11 +348,12 @@ fn flatten4(tree: &TreeNode, internals: &mut Vec<InternalNode4>, leaves: &mut Ve
     match tree {
         // push a leaf into the leaves vec and encode the leaf as a u32 index.
         // this index is stored in the children array
-        TreeNode::Leaf { bbox, primitive } => {
-            let index = leaves.len();
-            leaves.push(LeafNode { bbox: *bbox, primitive: primitive.clone() });
-            make_leaf_ref(index)
+        TreeNode::Leaf { bbox, index } => {
+            let leaf_index = leaves.len();
+            leaves.push(LeafNode { bbox: *bbox, primitive_index: *index });
+            make_leaf_ref(leaf_index)
         }
+
         // collect all children of the binary tree into the internals vec.
         // this is the step that converts from binary to 4-wide. the u32
         // index returned is the index into the internals vec.
@@ -390,20 +401,21 @@ fn centroid(hit: &Primitive, axis: usize) -> f32 {
 
 
 impl BVH {
-    pub fn new(world: &mut Vec<Primitive>) -> BVH {
+    pub fn new(world: Vec<Primitive>) -> BVH {
         if world.is_empty() {
             eprintln!("BVH contains no objects. Stopping render.");
             std::process::exit(0);
         }
 
-        let tree = build_tree(world);
+        let mut indices: Vec<u32> = (0..world.len() as u32).collect();
+        let tree = build_tree(&world, &mut indices);
         let bbox = *tree.bbox();
 
         let mut internals = Vec::new();
         let mut leaves = Vec::new();
         let root = flatten4(&tree, &mut internals, &mut leaves);
 
-        BVH { internals, leaves, root, bbox }
+        BVH { internals, leaves, primitives: world, root, bbox }
     }
 
     /// Traverse the BVH and return the closest hit.
@@ -435,7 +447,8 @@ impl BVH {
             if is_leaf(node_ref) {
                 let leaf = &self.leaves[leaf_index(node_ref)];
                 if leaf.bbox.hit(ray, start_distance, closest_distance) {
-                    if let Some(hit) = leaf.primitive.hit(ray, start_distance, closest_distance, rng) {
+                    let leaf_primitive = &self.primitives[leaf.primitive_index as usize];
+                    if let Some(hit) = leaf_primitive.hit(ray, start_distance, closest_distance, rng) {
                         if hit.parameter < closest_distance {
                             closest_distance = hit.parameter;
                             best_hit = Some(hit);
@@ -519,7 +532,8 @@ impl BVH {
             if is_leaf(node_ref) {
                 let leaf = &self.leaves[leaf_index(node_ref)];
                 if leaf.bbox.hit(ray, start_distance, end_distance) {
-                    if leaf.primitive.hits_anything(ray, start_distance, end_distance, rng) {
+                    let leaf_primitive = &self.primitives[leaf.primitive_index as usize];
+                    if leaf_primitive.hits_anything(ray, start_distance, end_distance, rng) {
                         return true;
                     }
                 }
@@ -580,8 +594,8 @@ mod tests {
     fn test_bvh_single_object_hit() {
         let mut rng = get_rng();
         let sphere = Sphere::new(Vec3A::new(0.0, 0.0, -10.0), 2.0, get_mat());
-        let mut world = vec![sphere.into()];
-        let bvh = BVH::new(&mut world);
+        let world = vec![sphere.into()];
+        let bvh = BVH::new(world);
 
         let ray = Ray::new(Vec3A::ZERO, Vec3A::new(0.0, 0.0, -1.0), 0.0);
         let hit = bvh.hit(&ray, 0.001, f32::MAX, &mut rng);
@@ -594,8 +608,8 @@ mod tests {
     fn test_bvh_single_object_miss() {
         let mut rng = get_rng();
         let sphere = Sphere::new(Vec3A::new(0.0, 0.0, -10.0), 2.0, get_mat());
-        let mut world = vec![sphere.into()];
-        let bvh = BVH::new(&mut world);
+        let world = vec![sphere.into()];
+        let bvh = BVH::new(world);
 
         let ray = Ray::new(Vec3A::ZERO, Vec3A::new(0.0, 1.0, 0.0), 0.0);
         let hit = bvh.hit(&ray, 0.001, f32::MAX, &mut rng);
@@ -610,8 +624,8 @@ mod tests {
         let sphere_front = Sphere::new(Vec3A::new(0.0, 0.0, -10.0), 2.0, get_mat());
         let sphere_back = Sphere::new(Vec3A::new(0.0, 0.0, -15.0), 4.0, get_mat());
 
-        let mut world = vec![sphere_back.into(), sphere_front.into()];
-        let bvh = BVH::new(&mut world);
+        let world = vec![sphere_back.into(), sphere_front.into()];
+        let bvh = BVH::new(world);
 
         let ray = Ray::new(Vec3A::ZERO, Vec3A::new(0.0, 0.0, -1.0), 0.0);
         let hit = bvh.hit(&ray, 0.001, f32::MAX, &mut rng);
@@ -625,8 +639,8 @@ mod tests {
         let mut rng = get_rng();
         let sphere1 = Sphere::new(Vec3A::new(-10.0, 0.0, -10.0), 2.0, get_mat());
         let sphere2 = Sphere::new(Vec3A::new(10.0, 0.0, -10.0), 2.0, get_mat());
-        let mut world = vec![sphere1.into(), sphere2.into()];
-        let bvh = BVH::new(&mut world);
+        let world = vec![sphere1.into(), sphere2.into()];
+        let bvh = BVH::new(world);
 
         let hit_ray = Ray::new(Vec3A::ZERO, Vec3A::new(10.0, 0.0, -10.0), 0.0);
         assert!(bvh.hits_anything(&hit_ray, 0.001, f32::MAX, &mut rng));
@@ -639,8 +653,8 @@ mod tests {
     fn test_bvh_distance_bounds() {
         let mut rng = get_rng();
         let sphere = Sphere::new(Vec3A::new(0.0, 0.0, 10.0), 1.0, get_mat());
-        let mut world = vec![sphere.into()];
-        let bvh = BVH::new(&mut world);
+        let world = vec![sphere.into()];
+        let bvh = BVH::new(world);
 
         let ray = Ray::new(Vec3A::ZERO, Vec3A::new(0.0, 0.0, 1.0), 0.0);
 

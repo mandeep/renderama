@@ -104,7 +104,7 @@ pub fn hyperion_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     objects.push_into(golf_ball);
     objects.push_into(orange_sphere_small);
 
-    let bvh = BVH::new(&mut objects);
+    let bvh = BVH::new(objects);
 
     let environment = EnvironmentMap::new("extras/textures/white_studio_03.exr", 0.6);
 

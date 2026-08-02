@@ -48,7 +48,7 @@ pub fn batmobile_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     // floor plane
     objects.push_into(Plane::new(Axis::XZ, Bounds2D::new(-1000.0..1000.0, -1000.0..1000.0), -0.4, Orientation::Forward, grey));
 
-    let bvh = BVH::new(&mut objects);
+    let bvh = BVH::new(objects);
 
     let environment = EnvironmentMap::new("extras/textures/pure_sky_05.exr", 1.0);
 

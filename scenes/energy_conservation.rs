@@ -45,7 +45,7 @@ pub fn energy_conservation_scene(width: Option<usize>, height: Option<usize>) ->
         objects.push_into(Sphere::new(Vec3A::new(x_pos, 278.0, 278.0), radius, mat_id));
     }
 
-    let bvh = BVH::new(&mut objects);
+    let bvh = BVH::new(objects);
 
     let light_texture = textures.add_texture(Color::new(50.0, 50.0, 50.0));
     let light_material = materials.add_material(Emissive::new(light_texture));

@@ -111,7 +111,7 @@ pub fn random_spheres_scene(width: Option<usize>, height: Option<usize>, rng: &m
                           1.0,
                           refl_idx));
 
-    let bvh = BVH::new(&mut objects);
+    let bvh = BVH::new(objects);
 
     SceneBuilder::new("Random Spheres")
         .with_accelerator(bvh)

@@ -40,7 +40,7 @@ pub fn dalek_scene(width: Option<usize>, height: Option<usize>) -> Scene {
         objects.push_into(transformed);
     }
 
-    let bvh = BVH::new(&mut objects);
+    let bvh = BVH::new(objects);
 
     let environment = EnvironmentMap::new("extras/textures/studio_01.exr", 1.0);
 

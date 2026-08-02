@@ -156,12 +156,12 @@ impl Triangle {
 
 impl TriangleMesh {
     pub fn new(triangles: Vec<Triangle>) -> TriangleMesh {
-        let mut geometries: Vec<Primitive> = triangles
+        let geometries: Vec<Primitive> = triangles
             .into_iter()
             .map(Primitive::Triangle)
             .collect();
 
-        let accelerator = BVH::new(&mut geometries);
+        let accelerator = BVH::new(geometries);
 
         TriangleMesh { accelerator }
     }

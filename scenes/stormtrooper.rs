@@ -63,7 +63,7 @@ pub fn stormtrooper_scene(width: Option<usize>, height: Option<usize>) -> Scene 
         objects.push_into(transformed);
     }
 
-    let bvh = BVH::new(&mut objects);
+    let bvh = BVH::new(objects);
 
     let environment = EnvironmentMap::new("extras/textures/car_studio_lighting.exr", 0.7);
 

@@ -56,7 +56,7 @@ pub fn honda_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     // floor plane
     objects.push_into(Plane::new(Axis::XZ, Bounds2D::new(-1000.0..1000.0, -1000.0..1000.0), 0.0, Orientation::Forward, grey));
 
-    let bvh = BVH::new(&mut objects);
+    let bvh = BVH::new(objects);
 
     let environment = EnvironmentMap::new("extras/textures/dusk_1_puresky.exr", 1.0);
 
