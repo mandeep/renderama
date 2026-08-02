@@ -26,7 +26,7 @@ pub enum Orientation {
     Reversed,
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy)]
 /// Bounds2D is a type that allows for a more intuitive approach for creating
 /// planes. u_min and u_max are the minimum and maximum on the first axis, and
 /// v_min and v_max are the minimum and maximum on the second axis of the plane.
