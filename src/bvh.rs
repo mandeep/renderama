@@ -20,6 +20,8 @@ use crate::results::HitResult;
 const NUM_BUCKETS: usize = 16;
 // build tree in parallel when number of primitives is greater than this arbitrary number
 const PARALLEL_BUILD_THRESHOLD: usize = 4096;
+// primitives to hold in a leaf in order to avoid internal node traversal
+const MAX_LEAF_SIZE: usize = 2;
 // leaf flag is used so that we don't have extra overhead.
 // if bit 31 is set then it's a leaf, otherwise it's an index into internals[].
 // this keeps branching at a minimum
@@ -49,12 +51,13 @@ struct InternalNode4 {
 }
 
 #[derive(Clone)]
-/// Store the AABB and index into BVH::primitives for the primitive at
+/// Store the AABB and indices into BVH::primitives for the primitives at
 /// the leaf node. Used once we determine that BVH traversal has resulted
 /// in a hit.
 struct LeafNode {
     bbox: AABB,
-    primitive_index: u32,
+    primitive_indices: [u32; MAX_LEAF_SIZE],
+    count: u8,
 }
 
 
@@ -83,7 +86,8 @@ enum TreeNode {
     },
     Leaf {
         bbox: AABB,
-        index: u32,
+        indices: [u32; MAX_LEAF_SIZE],
+        count: u8,
     },
 }
 
@@ -127,43 +131,15 @@ fn build_tree(world: &[Primitive], indices: &mut [u32]) -> TreeNode {
         main_box = main_box.surrounding_box(&new_box);
     }
 
-    if n == 1 {
+    // if we have two or less primitives in the scene,
+    // just return a leaf node with the primitives
+    if n <= MAX_LEAF_SIZE {
+        let mut leaf_indices = [0u32; MAX_LEAF_SIZE];
+        leaf_indices[..n].copy_from_slice(indices);
         return TreeNode::Leaf {
             bbox: main_box,
-            index: indices[0],
-        };
-    }
-
-    if n == 2 {
-        let left_box = world[indices[0] as usize].bounding_box().unwrap();
-        let right_box = world[indices[1] as usize].bounding_box().unwrap();
-        return TreeNode::Internal {
-            bbox: main_box,
-            left: Box::new(TreeNode::Leaf { bbox: left_box, index: indices[0] }),
-            right: Box::new(TreeNode::Leaf { bbox: right_box, index: indices[1] }),
-        };
-    }
-
-    // fall back to median split when not enough objects in scene.
-    // 4 objects here is just a randomly picked low number.
-    // this is the BVH leftover from Shirley's Ray Tracing series.
-    if n <= 4 {
-        let axis = main_box.longest_axis();
-        indices.sort_by(|&a, &b| {
-            let centroid_a = centroid(&world[a as usize], axis);
-            let centroid_b = centroid(&world[b as usize], axis);
-            centroid_a.partial_cmp(&centroid_b).unwrap()
-        });
-
-        // split the indices in two halves. right_indices takes half of the
-        // indices while indices keeps the other half
-        let (left_indices, right_indices) = indices.split_at_mut(n / 2);
-        let (left, right) = build_children(world, left_indices, right_indices);
-
-        return TreeNode::Internal {
-            bbox: main_box,
-            left: Box::new(left),
-            right: Box::new(right),
+            indices: leaf_indices,
+            count: n as u8,
         };
     }
 
@@ -360,9 +336,9 @@ fn flatten4(tree: &TreeNode, internals: &mut Vec<InternalNode4>, leaves: &mut Ve
     match tree {
         // push a leaf into the leaves vec and encode the leaf as a u32 index.
         // this index is stored in the children array
-        TreeNode::Leaf { bbox, index } => {
+        TreeNode::Leaf { bbox, indices, count } => {
             let leaf_index = leaves.len();
-            leaves.push(LeafNode { bbox: *bbox, primitive_index: *index });
+            leaves.push(LeafNode { bbox: *bbox, primitive_indices: *indices, count: *count });
             make_leaf_ref(leaf_index)
         }
 
@@ -476,11 +452,13 @@ impl BVH {
             if is_leaf(node_ref) {
                 let leaf = &self.leaves[leaf_index(node_ref)];
                 if leaf_bbox_hit(&leaf.bbox, ray, start_distance, closest_distance) {
-                    let leaf_primitive = &self.primitives[leaf.primitive_index as usize];
-                    if let Some(hit) = leaf_primitive.hit(ray, start_distance, closest_distance, rng) {
-                        if hit.parameter < closest_distance {
-                            closest_distance = hit.parameter;
-                            best_hit = Some(hit);
+                    for i in 0..leaf.count as usize {
+                        let leaf_primitive = &self.primitives[leaf.primitive_indices[i] as usize];
+                        if let Some(hit) = leaf_primitive.hit(ray, start_distance, closest_distance, rng) {
+                            if hit.parameter < closest_distance {
+                                closest_distance = hit.parameter;
+                                best_hit = Some(hit);
+                            }
                         }
                     }
                 }
@@ -561,9 +539,11 @@ impl BVH {
             if is_leaf(node_ref) {
                 let leaf = &self.leaves[leaf_index(node_ref)];
                 if leaf_bbox_hit(&leaf.bbox, ray, start_distance, end_distance) {
-                    let leaf_primitive = &self.primitives[leaf.primitive_index as usize];
-                    if leaf_primitive.hits_anything(ray, start_distance, end_distance, rng) {
-                        return true;
+                    for i in 0..leaf.count as usize {
+                        let leaf_primitive = &self.primitives[leaf.primitive_indices[i] as usize];
+                        if leaf_primitive.hits_anything(ray, start_distance, end_distance, rng) {
+                            return true;
+                        }
                     }
                 }
             } else {
