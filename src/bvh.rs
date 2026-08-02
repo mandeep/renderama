@@ -18,6 +18,8 @@ use crate::results::HitResult;
 
 // 16 is used as the number of buckets as it's a common number in BVH builds
 const NUM_BUCKETS: usize = 16;
+// build tree in parallel when number of primitives is greater than this arbitrary number
+const PARALLEL_BUILD_THRESHOLD: usize = 4096;
 // leaf flag is used so that we don't have extra overhead.
 // if bit 31 is set then it's a leaf, otherwise it's an index into internals[].
 // this keeps branching at a minimum
@@ -94,6 +96,19 @@ impl TreeNode {
     }
 }
 
+/// Build the two child subtrees in parallel when there are enough
+/// primitives between them to be worth the task-spawning overhead.
+fn build_children(world: &[Primitive], left_indices: &mut [u32], right_indices: &mut [u32]) -> (TreeNode, TreeNode) {
+    if left_indices.len() + right_indices.len() > PARALLEL_BUILD_THRESHOLD {
+        rayon::join(
+            || build_tree(world, left_indices),
+            || build_tree(world, right_indices),
+        )
+    } else {
+        (build_tree(world, left_indices), build_tree(world, right_indices))
+    }
+}
+
 /// Build a BVH using the binary tree node representation using the surface area
 /// heuristic (SAH). Fall back methods are provided if the number of primitives
 /// in the scene don't pass the threshold where the cost of computing SAH is
@@ -143,8 +158,7 @@ fn build_tree(world: &[Primitive], indices: &mut [u32]) -> TreeNode {
         // split the indices in two halves. right_indices takes half of the
         // indices while indices keeps the other half
         let (left_indices, right_indices) = indices.split_at_mut(n / 2);
-        let left = build_tree(world, left_indices);
-        let right = build_tree(world, right_indices);
+        let (left, right) = build_children(world, left_indices, right_indices);
 
         return TreeNode::Internal {
             bbox: main_box,
@@ -285,8 +299,7 @@ fn build_tree(world: &[Primitive], indices: &mut [u32]) -> TreeNode {
             centroid_a.partial_cmp(&centroid_b).unwrap()
         });
         let (left_indices, right_indices) = indices.split_at_mut(n / 2);
-        let left = build_tree(world, left_indices);
-        let right = build_tree(world, right_indices);
+        let (left, right) = build_children(world, left_indices, right_indices);
         return TreeNode::Internal {
             bbox: main_box,
             left: Box::new(left),
@@ -299,8 +312,7 @@ fn build_tree(world: &[Primitive], indices: &mut [u32]) -> TreeNode {
     indices[split..].copy_from_slice(&right_indices);
     let (left_indices, right_indices) = indices.split_at_mut(split);
 
-    let left = build_tree(world, left_indices);
-    let right = build_tree(world, right_indices);
+    let (left, right) = build_children(world, left_indices, right_indices);
 
     TreeNode::Internal {
         bbox: main_box,
@@ -384,6 +396,23 @@ fn flatten4(tree: &TreeNode, internals: &mut Vec<InternalNode4>, leaves: &mut Ve
     }
 }
 
+/// Test a leaf's bounding box against the ray.
+///
+/// Unlike AABB::hit, which ignores bounds so that Volume can
+/// search its full boundary range, this clamps so leaf traversal can reject
+/// primitives whose box falls outside the ray's valid range.
+///
+/// Code taken from AABB's hit method.
+fn leaf_bbox_hit(bbox: &AABB, ray: &Ray, start_distance: f32, end_distance: f32) -> bool {
+    let t0 = (bbox.minimum - ray.origin) * ray.inverse_direction;
+    let t1 = (bbox.maximum - ray.origin) * ray.inverse_direction;
+
+    let tmin = t0.min(t1).max_element().max(start_distance);
+    let tmax = t1.max(t0).min_element().min(end_distance);
+
+    tmin <= tmax
+}
+
 /// Index into a vector with the given axis
 fn axis_value(vector: Vec3A, axis: usize) -> f32 {
     match axis {
@@ -446,7 +475,7 @@ impl BVH {
 
             if is_leaf(node_ref) {
                 let leaf = &self.leaves[leaf_index(node_ref)];
-                if leaf.bbox.hit(ray, start_distance, closest_distance) {
+                if leaf_bbox_hit(&leaf.bbox, ray, start_distance, closest_distance) {
                     let leaf_primitive = &self.primitives[leaf.primitive_index as usize];
                     if let Some(hit) = leaf_primitive.hit(ray, start_distance, closest_distance, rng) {
                         if hit.parameter < closest_distance {
@@ -531,7 +560,7 @@ impl BVH {
 
             if is_leaf(node_ref) {
                 let leaf = &self.leaves[leaf_index(node_ref)];
-                if leaf.bbox.hit(ray, start_distance, end_distance) {
+                if leaf_bbox_hit(&leaf.bbox, ray, start_distance, end_distance) {
                     let leaf_primitive = &self.primitives[leaf.primitive_index as usize];
                     if leaf_primitive.hits_anything(ray, start_distance, end_distance, rng) {
                         return true;
