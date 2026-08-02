@@ -568,6 +568,10 @@ impl BVH {
     pub fn bounding_box(&self) -> Option<AABB> {
         Some(self.bbox)
     }
+
+    pub fn primitive(&self, index: usize) -> &Primitive {
+        &self.primitives[index]
+    }
 }
 
 

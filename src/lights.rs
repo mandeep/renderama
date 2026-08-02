@@ -145,7 +145,6 @@ impl AreaLight {
 /// and light sampling still occur for loaded meshes.
 #[derive(Clone)]
 pub struct MeshLight {
-    triangles: Vec<Triangle>,
     cdf: Vec<f32>,
     total_area: f32,
     intensity: TextureId,
@@ -169,28 +168,29 @@ impl MeshLight {
             }
         }
 
-        // TODO: architect a way that we don't need to clone the triangles
         let geometries: Vec<Primitive> = light_triangles
-            .iter()
-            .cloned()
+            .into_iter()
             .map(Primitive::Triangle)
             .collect();
 
         let accelerator = BVH::new(geometries);
 
-        MeshLight { triangles: light_triangles, cdf, total_area, intensity, accelerator }
+        MeshLight { cdf, total_area, intensity, accelerator }
     }
 
-    /// Sample a random triangle from the triangles vector
+    /// Sample a random triangle from the accelerator
     fn sample_triangle(&self, rng: &mut impl Rng) -> &Triangle {
         let target = rng.random::<f32>() * self.total_area;
 
         let index = self
             .cdf
             .partition_point(|&x| x < target)
-            .min(self.triangles.len() - 1);
+            .min(self.cdf.len() - 1);
 
-        &self.triangles[index]
+        match self.accelerator.primitive(index) {
+            Primitive::Triangle(triangle) => triangle,
+            _ => panic!("Found a Primitive other than Triangle inside the accelerator."),
+        }
     }
 
     pub fn intensity(&self, textures: &[Texture]) -> Vec3A {
