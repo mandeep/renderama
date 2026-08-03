@@ -109,7 +109,7 @@ pub fn ggx_height_correlated_geometry(cos_i: f32, cos_o: f32, alpha: f32) -> f32
 /// Reference: https://www.jcgt.org/published/0007/04/01/paper.pdf
 /// Full code implementation on page 10
 pub fn ggx_sample_vndf(normal: &Vec3A, wi: &Vec3A, alpha: &f32, rng: &mut impl Rng) -> Vec3A {
-    let uvw = OrthonormalBasis::new(&normal);
+    let uvw = OrthonormalBasis::new(normal);
     // convert world to local
     let vh = Vec3A::new(wi.dot(uvw.u()), wi.dot(uvw.v()), wi.dot(uvw.w()));
     if vh.z <= 0.0 {

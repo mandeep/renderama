@@ -171,10 +171,9 @@ pub fn load_obj_with_options<'a>(
             let triangle = Triangle::new(v0, v1, v2, n0, n1, n2, uv0, uv1, uv2, current_material_id);
             triangles.push(triangle);
 
-            if lights.is_some() {
-                if matches!(&materials[current_material_id.index()], Material::Emissive(_)) {
+            if lights.is_some()
+                && matches!(&materials[current_material_id.index()], Material::Emissive(_)) {
                     light_triangles.push(triangle);
-                }
             }
         }
 
@@ -220,10 +219,10 @@ fn map_mtl_to_material(material: &tobj::Material, textures: &mut Vec<Texture>, b
 
     // emissive material may have any illum # so we need to handle it first
     if ke.iter().sum::<f32>() > f32::EPSILON || map_ke.is_some() {
-        let emissive_color: Texture = if let Some(path) = map_ke {
-            let full_path = base_directory.join(path);
+        let emissive_color: Texture = if let Some(emissive_map) = map_ke {
+            let emissive_map_path = base_directory.join(emissive_map);
             // emissive texture map should be converted from srgb to linear
-            ImageTexture::srgb(full_path.to_str().unwrap(), Vec2::ONE).into()
+            ImageTexture::srgb(emissive_map_path.to_str().unwrap(), Vec2::ONE).into()
         } else {
             Color::new(ke[0], ke[1], ke[2]).into()
         };
@@ -255,26 +254,23 @@ fn map_mtl_to_material(material: &tobj::Material, textures: &mut Vec<Texture>, b
 
     let mut texture_map = TextureMap::new(albedo_texture_id);
 
-    if map_bump.is_some() {
-        let normal_path = map_bump.as_ref().unwrap();
-        let full_path = base_directory.join(normal_path);
-        let normal_map_texture: Texture = ImageTexture::linear(full_path.to_str().unwrap(), Vec2::ONE).into();
+    if let Some(normal_map) = map_bump {
+        let normal_map_path = base_directory.join(normal_map);
+        let normal_map_texture: Texture = ImageTexture::linear(normal_map_path.to_str().unwrap(), Vec2::ONE).into();
         let normal_map_id = textures.add_texture(normal_map_texture);
         texture_map = texture_map.with_normal(normal_map_id);
     }
 
-    if map_ns.is_some() {
-        let roughness_path = map_ns.as_ref().unwrap();
-        let full_path = base_directory.join(roughness_path);
-        let roughness_map_texture: Texture = ImageTexture::linear(full_path.to_str().unwrap(), Vec2::ONE).into();
+    if let Some(roughness_map) = map_ns {
+        let roughness_map_path = base_directory.join(roughness_map);
+        let roughness_map_texture: Texture = ImageTexture::linear(roughness_map_path.to_str().unwrap(), Vec2::ONE).into();
         let roughness_map_id = textures.add_texture(roughness_map_texture);
         texture_map = texture_map.with_roughness(roughness_map_id);
     }
 
-    if map_pm.is_some() {
-        let metallic_roughness_path = map_pm.as_ref().unwrap();
-        let full_path = base_directory.join(metallic_roughness_path);
-        let metallic_roughness_map_texture: Texture = ImageTexture::linear(full_path.to_str().unwrap(), Vec2::ONE).into();
+    if let Some(metallic_roughness_map) = map_pm {
+        let metallic_roughness_map_path = base_directory.join(metallic_roughness_map);
+        let metallic_roughness_map_texture: Texture = ImageTexture::linear(metallic_roughness_map_path.to_str().unwrap(), Vec2::ONE).into();
         let metallic_roughness_map_id = textures.add_texture(metallic_roughness_map_texture);
         texture_map = texture_map.with_metallic_roughness(metallic_roughness_map_id);
     }

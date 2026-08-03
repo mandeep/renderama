@@ -28,9 +28,9 @@ impl Volume {
         // We search the entire ray range (not just [start_distance, end_distance]) because
         // a ray origin inside the volume would miss the near boundary otherwise.
         // We then clamp against [start_distance, end_distance] below.
-        let Some(mut entry_hit) = self.boundary.hit(ray, f32::NEG_INFINITY, f32::INFINITY, rng) else { return None };
+        let mut entry_hit = self.boundary.hit(ray, f32::NEG_INFINITY, f32::INFINITY, rng)?;
         // a volume can be hit anywhere inside it, not just the surface like other geometry
-        let Some(mut exit_hit) = self.boundary.hit(ray, entry_hit.parameter + 1e-4, f32::INFINITY, rng) else { return None };
+        let mut exit_hit = self.boundary.hit(ray, entry_hit.parameter + 1e-4, f32::INFINITY, rng)?;
 
         if entry_hit.parameter < start_distance { entry_hit.parameter = start_distance };
         if exit_hit.parameter > end_distance { exit_hit.parameter = end_distance };

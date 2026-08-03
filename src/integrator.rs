@@ -38,9 +38,9 @@ impl Integrator {
     /// Dispatch the integrator chosen by the user in the command line interface
     pub fn render_scene(&self, ray: Ray, scene: &Scene, rng: &mut impl Rng) -> Vec3A {
         match self {
-            Integrator::Beauty => render_beauty(ray, &scene, rng),
-            Integrator::Normals => render_normals(ray, &scene, rng),
-            Integrator::AmbientOcclusion => render_ambient_occlusion(ray, &scene, rng),
+            Integrator::Beauty => render_beauty(ray, scene, rng),
+            Integrator::Normals => render_normals(ray, scene, rng),
+            Integrator::AmbientOcclusion => render_ambient_occlusion(ray, scene, rng),
         }
     }
 }
@@ -108,14 +108,14 @@ pub fn render_beauty(mut ray: Ray, scene: &Scene, rng: &mut impl Rng) -> Vec3A {
     for bounce in 0..=bounces {
         let Some(hit_result) = scene.accelerator.hit(&ray, 1e-4, f32::MAX, rng) else {
             color +=
-                evaluate_missed_ray(&ray, &previous_bounce, &scene, &throughput);
+                evaluate_missed_ray(&ray, &previous_bounce, scene, &throughput);
             break;
         };
 
         let material = &scene.materials[hit_result.material_id.index()];
 
         color += evaluate_emission(
-            &ray, &hit_result, &material, &scene.textures, &previous_bounce, &scene.lights, &throughput,
+            &ray, &hit_result, material, &scene.textures, &previous_bounce, &scene.lights, &throughput,
         );
 
         let Some(scatter_result) = material.generate_response(&ray, &hit_result, &scene.textures, rng) else { break };
@@ -126,9 +126,9 @@ pub fn render_beauty(mut ray: Ray, scene: &Scene, rng: &mut impl Rng) -> Vec3A {
             ray = scatter_result.scattered_ray;
             previous_bounce = PreviousBounce::Specular;
         } else {
-            color += evaluate_direct_lighting(&ray, &hit_result, &material, &scatter_result, &scene, &throughput, rng);
+            color += evaluate_direct_lighting(&ray, &hit_result, material, &scatter_result, scene, &throughput, rng);
 
-            let Some((next_ray, throughput_factor, weight)) = prepare_next_ray(&ray, &hit_result, &material, &scene.textures, &scatter_result, rng) else { break };
+            let Some((next_ray, throughput_factor, weight)) = prepare_next_ray(&ray, &hit_result, material, &scene.textures, &scatter_result, rng) else { break };
             throughput *= throughput_factor;
             ray = next_ray;
             previous_bounce = PreviousBounce::Diffuse(weight);
@@ -202,7 +202,7 @@ fn evaluate_emission(
 ) -> Vec3A {
     let mut color = Vec3A::ZERO;
 
-    let emission = material.evaluate_emission(&ray, &hit_result, &textures);
+    let emission = material.evaluate_emission(ray, hit_result, textures);
     if emission.length_squared() > 0.0 {
         match previous_bounce {
             PreviousBounce::Specular | PreviousBounce::None => {
@@ -258,7 +258,7 @@ fn evaluate_direct_lighting(
         if !scene.accelerator.hits_anything(&shadow_ray, 1e-3, end_distance, rng) {
             let light_weight = light_source.evaluate_sampling_weight(&shadow_ray);
             if light_weight > 1e-7 {
-                let reflectance = material.compute_reflectance(&ray, &shadow_ray, &hit_result, &scene.textures);
+                let reflectance = material.compute_reflectance(ray, &shadow_ray, hit_result, &scene.textures);
                 let material_weight = scatter_result.sampling_strategy.calculate_probability(light_direction);
                 let weight = power_heuristic(light_weight, material_weight);
                 let contribution = scatter_result.contribution;
@@ -275,7 +275,7 @@ fn evaluate_direct_lighting(
             let environment_shadow_ray = Ray::new(shadow_origin, environment_direction, ray.time);
             if !scene.accelerator.hits_anything(&environment_shadow_ray, 1e-3, f32::MAX, rng) {
                 let material_weight = scatter_result.sampling_strategy.calculate_probability(environment_direction);
-                let reflectance = material.compute_reflectance(&ray, &environment_shadow_ray, &hit_result, &scene.textures);
+                let reflectance = material.compute_reflectance(ray, &environment_shadow_ray, hit_result, &scene.textures);
                 let weight = power_heuristic(environment_weight, material_weight);
                 let contribution = scatter_result.contribution;
                 direct_light += (weight * throughput * environment_color * contribution * reflectance) / environment_weight;
@@ -305,7 +305,7 @@ fn prepare_next_ray(
 
     let offset_point = find_offset_point(hit_result.point, hit_result.geometric_normal);
     let scattered_ray = Ray::new(offset_point, scattered_direction, ray.time);
-    let reflectance = material.compute_reflectance(&ray, &scattered_ray, &hit_result, &textures);
+    let reflectance = material.compute_reflectance(ray, &scattered_ray, hit_result, textures);
 
     // if we're using a material with pre-weighted ggx vndf
     // then no need to compute the reflectance and weight

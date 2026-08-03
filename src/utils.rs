@@ -21,7 +21,7 @@ pub fn format_time(instant: Duration) -> String {
 /// undefined behavior:
 /// https://github.com/rust-lang/rust/issues/10184
 pub fn clamp_rgb(n: f32) -> f32 {
-    n.min(255.0).max(0.0)
+    n.clamp(0.0, 255.0)
 }
 
 /// Clamp a value between the lower bound and upper bound

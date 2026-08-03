@@ -54,7 +54,7 @@ impl TransformedMesh {
         let local_bbox = primitive.bounding_box().unwrap();
         let bbox = transform_aabb(&local_bbox, &forward_transform);
 
-        let primitive = Arc::new(primitive.into());
+        let primitive = Arc::new(primitive);
 
         TransformedMesh {
             inverse_transform,
@@ -372,8 +372,8 @@ fn transform_aabb(bbox: &AABB, transform: &Mat4) -> AABB {
     let mut new_max = first;
 
     // iterate through the rest of the corners and find the new min and max
-    for i in 1..8 {
-        let p = transform.transform_point3(corners[i]);
+    for corner in corners {
+        let p = transform.transform_point3(corner);
         new_min = new_min.min(p);
         new_max = new_max.max(p);
     }

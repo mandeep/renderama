@@ -374,10 +374,8 @@ fn flatten4(tree: &TreeNode, internals: &mut Vec<InternalNode4>, leaves: &mut Ve
             internals.push(InternalNode4::default()); // reserve slot before recursing
 
             let children = collect_children(tree);
-            let count = children.len() as u32;
 
-            let mut node = InternalNode4::default();
-            node.count = count;
+            let mut node = InternalNode4 {count: children.len() as u32, ..Default::default()};
 
             for (i, child) in children.iter().enumerate() {
                 let bbox = child.bbox();
