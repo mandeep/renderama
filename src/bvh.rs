@@ -97,7 +97,7 @@ impl TreeNode {
 }
 
 /// Build the two child subtrees in parallel when there are enough
-/// primitives between them to be worth the task-spawning overhead.
+/// primitives between them to be worth spawning tasks with Rayon.
 fn build_children(world: &[Primitive], left_indices: &mut [u32], right_indices: &mut [u32]) -> (TreeNode, TreeNode) {
     if left_indices.len() + right_indices.len() > PARALLEL_BUILD_THRESHOLD {
         rayon::join(
@@ -396,11 +396,8 @@ fn flatten4(tree: &TreeNode, internals: &mut Vec<InternalNode4>, leaves: &mut Ve
 
 /// Test a leaf's bounding box against the ray.
 ///
-/// Unlike AABB::hit, which ignores bounds so that Volume can
-/// search its full boundary range, this clamps so leaf traversal can reject
-/// primitives whose box falls outside the ray's valid range.
-///
-/// Code taken from AABB's hit method.
+/// Code taken from AABB's hit method with start_distance and end_distance
+/// actually used.
 fn leaf_bbox_hit(bbox: &AABB, ray: &Ray, start_distance: f32, end_distance: f32) -> bool {
     let t0 = (bbox.minimum - ray.origin) * ray.inverse_direction;
     let t1 = (bbox.maximum - ray.origin) * ray.inverse_direction;
