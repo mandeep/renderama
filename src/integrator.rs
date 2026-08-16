@@ -107,8 +107,7 @@ pub fn render_beauty(mut ray: Ray, scene: &Scene, rng: &mut impl Rng) -> Vec3A {
 
     for bounce in 0..=bounces {
         let Some(hit_result) = scene.accelerator.hit(&ray, 1e-4, f32::MAX, rng) else {
-            color +=
-                evaluate_missed_ray(&ray, &previous_bounce, scene, &throughput);
+            color += evaluate_missed_ray(&ray, &previous_bounce, scene, &throughput);
             break;
         };
 
@@ -162,14 +161,13 @@ fn evaluate_missed_ray(
     throughput: &Vec3A
 ) -> Vec3A {
     if let Some(environment) = &scene.environment {
-        let (environment_response, environment_weight) =
-            environment.evaluate_sampling_weight(&ray.direction);
-        let mut contribution = throughput * environment_response;
+        let environment_sample = environment.evaluate_sampling_weight(&ray.direction);
+        let mut contribution = throughput * environment_sample.radiance;
 
         match previous_bounce {
             PreviousBounce::Diffuse(previous_weight) => {
-                if environment_weight > 0.0 {
-                        let weight = power_heuristic(*previous_weight, environment_weight);
+                if environment_sample.weight > 0.0 {
+                        let weight = power_heuristic(*previous_weight, environment_sample.weight);
                         contribution *= weight;
                 };
             },
@@ -270,16 +268,16 @@ fn evaluate_direct_lighting(
     }
 
     if let Some(environment) = &scene.environment {
-        let (environment_direction, environment_color, environment_weight) = environment.sample_direction_to_light(rng);
-        if environment_weight > 1e-7 {
+        let environment_sample = environment.sample_direction_and_radiance(rng);
+        if environment_sample.weight > 1e-7 {
             let shadow_origin = find_offset_point(hit_result.point, hit_result.geometric_normal);
-            let environment_shadow_ray = Ray::new(shadow_origin, environment_direction, ray.time);
+            let environment_shadow_ray = Ray::new(shadow_origin, environment_sample.direction, ray.time);
             if !scene.accelerator.hits_anything(&environment_shadow_ray, 1e-3, f32::MAX, rng) {
-                let material_weight = scatter_result.sampling_strategy.calculate_probability(environment_direction);
+                let material_weight = scatter_result.sampling_strategy.calculate_probability(environment_sample.direction);
                 let reflectance = material.compute_reflectance(ray, &environment_shadow_ray, hit_result, &scene.textures);
-                let weight = power_heuristic(environment_weight, material_weight);
+                let weight = power_heuristic(environment_sample.weight, material_weight);
                 let contribution = scatter_result.contribution;
-                direct_light += (weight * throughput * environment_color * contribution * reflectance) / environment_weight;
+                direct_light += (weight * throughput * environment_sample.radiance * contribution * reflectance) / environment_sample.weight;
             }
         }
     }

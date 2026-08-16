@@ -48,6 +48,12 @@ pub struct EnvironmentMap {
     intensity: f32,
 }
 
+pub struct EnvironmentLightSample {
+    pub direction: Vec3A,
+    pub radiance: Vec3A,
+    pub weight: f32,
+}
+
 impl EnvironmentMap {
     /// Create a new EnvironmentMap from the image at the given path.
     pub fn new(filename: &str, intensity: f32) -> EnvironmentMap {
@@ -138,9 +144,9 @@ impl EnvironmentMap {
     ///
     /// After converting the direction into spherical UV coordinates,
     /// we retrieve the luminance and compute the weight of that luminance.
-    pub fn evaluate_sampling_weight(&self, direction: &Vec3A) -> (Vec3A, f32) {
+    pub fn evaluate_sampling_weight(&self, direction: &Vec3A) -> EnvironmentLightSample {
         if self.total_weight <= 0.0 {
-            return (Vec3A::ZERO, 0.0);
+            return EnvironmentLightSample { direction: Vec3A::ZERO, radiance: Vec3A::ZERO, weight: 0.0 };
         }
 
         let u = 0.5 + direction.z.atan2(direction.x) / (2.0 * PI);
@@ -158,12 +164,12 @@ impl EnvironmentMap {
 
         let weight = luminance * self.width as f32 * self.height as f32 / (self.total_weight * 2.0 * PI * PI);
 
-        (pixel * self.intensity, weight)
+        EnvironmentLightSample { direction: Vec3A::ZERO, weight: weight, radiance: (pixel * self.intensity) }
     }
 
     /// Find areas of high luminance in the conditional_cdf and
     /// return the direction to that area.
-    pub fn sample_direction_to_light(&self, rng: &mut impl Rng) -> (Vec3A, Vec3A, f32) {
+    pub fn sample_direction_and_radiance(&self, rng: &mut impl Rng) -> EnvironmentLightSample {
         let u1 = rng.random::<f32>();
         let u2 = rng.random::<f32>();
 
@@ -190,7 +196,7 @@ impl EnvironmentMap {
         let direction = Vec3A::new(cos_el * cos_phi, sin_el, cos_el * sin_phi);
 
         let pixel = self.pixels[j * self.width + i];
-        let color = pixel * self.intensity;
+        let radiance = pixel * self.intensity;
 
         // since we're working in the solid angle domain we need to transform
         // p(i, j) to p(w).
@@ -198,6 +204,6 @@ impl EnvironmentMap {
         let luminance = luminance(pixel.x, pixel.y, pixel.z);
         let weight = luminance * self.width as f32 * self.height as f32 / (self.total_weight * 2.0 * PI * PI);
 
-        (direction, color, weight)
+        EnvironmentLightSample { direction, radiance, weight }
     }
 }
