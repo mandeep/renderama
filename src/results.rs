@@ -2,7 +2,7 @@ use glam::Vec3A;
 
 use crate::materials::MaterialId;
 use crate::pdf::{DirectionSample, PDF, ScatteringType};
-use crate::ray::{find_offset_point, Ray};
+use crate::ray::Ray;
 
 
 /// HitResult contains all of the information that tells us how a
@@ -63,24 +63,17 @@ impl HitResult {
     }
 
     /// Orient the geometric normal toward an outgoing direction.
-    ///
-    /// This is used to offset scattered rays onto the side of the surface
-    /// they are traveling toward, including rays transmitted through it.
-    pub fn find_offset_normal(&self, direction: &Vec3A) -> Vec3A {
-        if direction.dot(self.geometric_normal) >= 0.0 {
-            self.geometric_normal
-        } else {
-            -self.geometric_normal
-        }
-    }
-
-    pub fn find_offset_point(&self, sample: &DirectionSample) -> Vec3A {
-        let offset_normal = match sample.scattering_type {
-            ScatteringType::Transmission => self.find_offset_normal(&sample.direction),
+    pub fn find_offset_normal(&self, sample: &DirectionSample) -> Vec3A {
+        match sample.scattering_type {
+            ScatteringType::Transmission => {
+                if sample.direction.dot(self.geometric_normal) >= 0.0 {
+                    self.geometric_normal
+                } else {
+                    -self.geometric_normal
+                }
+            }
             ScatteringType::Reflection | ScatteringType::Volume => self.geometric_normal,
-        };
-
-        find_offset_point(self.point, offset_normal)
+        }
     }
 }
 
