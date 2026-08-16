@@ -105,11 +105,11 @@ impl Material {
     }
 
     /// Compute the manner in which the material reflects/absorbs light
-    pub fn compute_reflectance(&self, ray: &Ray, scattered: &Ray, hit: &HitResult, textures: &[Texture], scattering_type: ScatteringType) -> Vec3A {
+    pub fn compute_reflectance(&self, ray: &Ray, scattered: &Ray, hit: &HitResult, textures: &[Texture], scattering_type: impl Into<Option<ScatteringType>>) -> Vec3A {
         match self {
             Material::Diffuse(m) => m.compute_reflectance(ray, scattered, hit),
             Material::Emissive(_) => Vec3A::ZERO,
-            Material::Plastic(m) => m.compute_reflectance(ray, scattered, hit, textures, scattering_type),
+            Material::Plastic(m) => m.compute_reflectance(ray, scattered, hit, textures, scattering_type.into()),
             Material::Reflective(m) => m.compute_reflectance(ray, scattered, hit, textures),
             Material::Refractive(_) => Vec3A::ZERO,
             Material::Volumetric(_) => Vec3A::splat(1.0 / (4.0 * PI)),
@@ -672,7 +672,7 @@ impl Plastic {
     }
 
     /// Compute how the Plastic material handles reflectance.
-    fn compute_reflectance(&self, ray: &Ray, scattered: &Ray, result: &HitResult, textures: &[Texture], scattering_type: ScatteringType) -> Vec3A {
+    fn compute_reflectance(&self, ray: &Ray, scattered: &Ray, result: &HitResult, textures: &[Texture], scattering_type: Option<ScatteringType>) -> Vec3A {
         let wi = -ray.direction;
         let wo = scattered.direction;
 
@@ -688,7 +688,13 @@ impl Plastic {
             return Vec3A::ZERO;
         }
 
-        if matches!(scattering_type, ScatteringType::Transmission) {
+        let transmitted = match scattering_type {
+            Some(ScatteringType::Transmission) => true,
+            Some(ScatteringType::Reflection | ScatteringType::Volume) => false,
+            None => geometric_normal.dot(wo) <= 0.0,
+        };
+
+        if transmitted {
             let cos_o = -n.dot(wo);
             if cos_o <= 0.0 {
                 return Vec3A::ZERO;
@@ -700,7 +706,7 @@ impl Plastic {
             return albedo * (self.diffuse_transmission * cos_o / PI) * coat_transmittance;
         }
 
-        if !matches!(scattering_type, ScatteringType::Reflection) || geometric_normal.dot(wo) <= 0.0 {
+        if geometric_normal.dot(wo) <= 0.0 {
             return Vec3A::ZERO;
         }
 

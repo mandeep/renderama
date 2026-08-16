@@ -74,15 +74,6 @@ impl HitResult {
         }
     }
 
-    pub fn classify_direction(&self, incoming_direction: &Vec3A, outgoing_direction: &Vec3A) -> ScatteringType {
-        let (geometric_normal, _) = self.face_forward_normals(incoming_direction);
-        if geometric_normal.dot(*outgoing_direction) >= 0.0 {
-            ScatteringType::Reflection
-        } else {
-            ScatteringType::Transmission
-        }
-    }
-
     pub fn find_offset_point(&self, sample: &DirectionSample) -> Vec3A {
         let offset_normal = match sample.scattering_type {
             ScatteringType::Transmission => self.find_offset_normal(&sample.direction),
