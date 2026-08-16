@@ -298,11 +298,12 @@ fn prepare_next_ray(
     scatter_result: &ScatterResult,
     rng: &mut impl Rng,
 ) -> Option<(Ray, Vec3A, f32)> {
-    let scattered_direction = scatter_result.sampling_strategy.pick_direction(rng);
+    let direction_sample = scatter_result.sampling_strategy.pick_direction(rng);
+    let scattered_direction = direction_sample.direction;
     let material_weight = scatter_result.sampling_strategy.calculate_probability(scattered_direction);
     if material_weight <= 0.0 { return None; }
 
-    let offset_point = find_offset_point(hit_result.point, hit_result.geometric_normal);
+    let offset_point = hit_result.find_offset_point(&direction_sample);
     let scattered_ray = Ray::new(offset_point, scattered_direction, ray.time);
     let reflectance = material.compute_reflectance(ray, &scattered_ray, hit_result, textures);
 

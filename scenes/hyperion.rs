@@ -54,9 +54,17 @@ pub fn hyperion_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     let dark_metal_idx = materials.add_material(Reflective::new(dark_metal_id, 0.10));
     let platform_idx = materials.add_material(Diffuse::new(platform_id, 0.0));
     let orange_idx = materials.add_material(Plastic::new(orange_id, 0.20, 1.5));
-    let orange_rough_idx = materials.add_material(Plastic::new(orange_rough_id, 0.25, 1.5).with_subsurface(0.80));
+    let orange_rough_idx = materials.add_material(
+        Plastic::new(orange_rough_id, 0.25, 1.5)
+        .with_subsurface(0.80)
+        .with_diffuse_transmission(0.35)
+    );
     let marble_vol_idx = materials.add_material(Volumetric::new(marble_vol_id));
-    let pingpong_idx = materials.add_material(Plastic::new(pingpong_id, 0.60, 1.45).with_subsurface(0.40));
+    let pingpong_idx = materials.add_material(
+        Plastic::new(pingpong_id, 0.40, 1.45)
+            .with_subsurface(0.40)
+            .with_diffuse_transmission(0.20)
+    );
     let white_idx = materials.add_material(Plastic::new(white_id, 0.1, 1.45));
 
     let floor_plane = Plane::new(Axis::XZ, Bounds2D::new(-50.0..50.0, -50.0..50.0), 0.0, Orientation::Forward, floor_idx);

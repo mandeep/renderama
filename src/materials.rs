@@ -558,6 +558,7 @@ pub struct Plastic {
     pub roughness: f32,
     pub ior: f32,
     pub subsurface: f32,
+    pub diffuse_transmission: f32,
     pub clearcoat: f32,
     pub clearcoat_roughness: f32,
     pub texture_map: TextureMap
@@ -572,13 +573,19 @@ impl Plastic {
     pub fn new(albedo: TextureId, roughness: f32, ior: f32) -> Plastic {
         let texture_map = TextureMap::new(albedo);
         let subsurface = 0.0;
+        let diffuse_transmission = 0.0;
         let clearcoat = 0.0;
         let clearcoat_roughness = 0.025;
-        Plastic { roughness, ior, subsurface, clearcoat, clearcoat_roughness, texture_map }
+        Plastic { roughness, ior, subsurface, diffuse_transmission, clearcoat, clearcoat_roughness, texture_map }
     }
 
     pub fn with_subsurface(mut self, subsurface: f32) -> Self {
         self.subsurface = subsurface;
+        self
+    }
+
+    pub fn with_diffuse_transmission(mut self, diffuse_transmission: f32) -> Self {
+        self.diffuse_transmission = diffuse_transmission.clamp(0.0, 1.0);
         self
     }
 
@@ -643,6 +650,8 @@ impl Plastic {
 
         let remaining = 1.0 - clearcoat_weight;
         let specular_weight = remaining * fresnel;
+        let diffuse_weight = (remaining - specular_weight).max(0.0);
+        let transmission_weight = diffuse_weight * self.diffuse_transmission;
 
         let offset_point = find_offset_point(result.point, geometric_normal);
         let scattered_ray = Ray::new(offset_point, ray.direction, ray.time);
@@ -655,6 +664,7 @@ impl Plastic {
             clearcoat_alpha,
             specular_weight,
             clearcoat_weight,
+            transmission_weight,
         };
 
         Some(ScatterResult::new(scattered_ray, Vec3A::ONE, pdf))
@@ -666,16 +676,31 @@ impl Plastic {
         let wo = scattered.direction;
 
         let (geometric_normal, shading_normal) = result.face_forward_normals(&ray.direction);
-        if geometric_normal.dot(wi) <= 0.0 || geometric_normal.dot(wo) <= 0.0 {
+        if geometric_normal.dot(wi) <= 0.0 {
             return Vec3A::ZERO;
         }
 
         let n = self.get_mapped_normal(result, shading_normal, textures);
 
         let cos_i = n.dot(wi);
-        let cos_o = n.dot(wo);
+        if cos_i <= 0.0 {
+            return Vec3A::ZERO;
+        }
 
-        if cos_i <= 0.0 || cos_o <= 0.0 {
+        if geometric_normal.dot(wo) <= 0.0 {
+            let cos_o = -n.dot(wo);
+            if cos_o <= 0.0 {
+                return Vec3A::ZERO;
+            }
+
+            let albedo = textures[self.texture_map.color.index()].sample_texture(result.u, result.v);
+            let clearcoat_fresnel = schlick_from_ior(cos_i, self.ior);
+            let coat_transmittance = 1.0 - self.clearcoat * clearcoat_fresnel;
+            return albedo * (self.diffuse_transmission * cos_o / PI) * coat_transmittance;
+        }
+
+        let cos_o = n.dot(wo);
+        if cos_o <= 0.0 {
             return Vec3A::ZERO;
         }
 
@@ -733,7 +758,9 @@ impl Plastic {
         let blended_diffuse = (1.0 - self.subsurface) * base_diffuse + self.subsurface * subsurface_approximation;
 
         let albedo = textures[self.texture_map.color.index()].sample_texture(result.u, result.v);
-        let diffuse = albedo * (blended_diffuse * cos_o / PI) * coat_transmittance;
+        let diffuse = albedo
+            * ((1.0 - self.diffuse_transmission) * blended_diffuse * cos_o / PI)
+            * coat_transmittance;
 
         specular + diffuse + clearcoat
     }

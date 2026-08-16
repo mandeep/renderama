@@ -45,10 +45,24 @@ pub enum PDF {
         specular_weight: f32,
         clearcoat_alpha: f32,
         clearcoat_weight: f32,
+        transmission_weight: f32,
     },
     Delta,
     GGX { wi: Vec3A, normal: Vec3A, alpha: f32 },
     Uniform,
+}
+
+#[derive(Clone, Copy)]
+pub enum ScatteringType {
+    Reflection,
+    Transmission,
+    Volume,
+}
+
+#[derive(Clone, Copy)]
+pub struct DirectionSample {
+    pub direction: Vec3A,
+    pub scattering_type: ScatteringType,
 }
 
 impl PDF {
@@ -59,13 +73,18 @@ impl PDF {
                 let cosine = direction.dot(uvw.w());
                 if cosine > 0.0 { cosine / PI } else { 0.0 }
             },
-            PDF::Composite { uvw, wi, normal, alpha, specular_weight, clearcoat_alpha, clearcoat_weight } => {
+            PDF::Composite { uvw, wi, normal, alpha, specular_weight, clearcoat_alpha, clearcoat_weight, transmission_weight } => {
                 let diffuse_pdf = PDF::Cosine { uvw: *uvw }.calculate_probability(direction);
+                let transmission_uvw = OrthonormalBasis::new(&-*normal);
+                let transmission_pdf = PDF::Cosine { uvw: transmission_uvw }.calculate_probability(direction);
                 let specular_pdf = PDF::GGX { wi: *wi, normal: *normal, alpha: *alpha }.calculate_probability(direction);
                 let clearcoat_pdf = PDF::GGX { wi: *wi, normal: *normal, alpha: *clearcoat_alpha }.calculate_probability(direction);
 
-                let diffuse_weight = (1.0 - *specular_weight - *clearcoat_weight).max(0.0);
-                (*clearcoat_weight * clearcoat_pdf) + (*specular_weight * specular_pdf) + (diffuse_weight * diffuse_pdf)
+                let diffuse_weight = (1.0 - *specular_weight - *clearcoat_weight - *transmission_weight).max(0.0);
+                (*clearcoat_weight * clearcoat_pdf)
+                    + (*specular_weight * specular_pdf)
+                    + (*transmission_weight * transmission_pdf)
+                    + (diffuse_weight * diffuse_pdf)
             }
             PDF::Delta => panic!("Delta PDF has no meaningful probability."),
             PDF::GGX { wi, normal, alpha } => {
@@ -92,17 +111,23 @@ impl PDF {
     }
 
     /// Generate a new direction by sampling from the distribution.
-    pub fn pick_direction(&self, rng: &mut impl Rng) -> Vec3A {
+    pub fn pick_direction(&self, rng: &mut impl Rng) -> DirectionSample {
         match self {
             PDF::Cosine { uvw } => {
-                uvw.local(&cosine_sample_hemisphere(rng))
+                DirectionSample {
+                    direction: uvw.local(&cosine_sample_hemisphere(rng)),
+                    scattering_type: ScatteringType::Reflection,
+                }
             },
-            PDF::Composite { uvw, wi, normal, alpha, specular_weight, clearcoat_alpha, clearcoat_weight } => {
+            PDF::Composite { uvw, wi, normal, alpha, specular_weight, clearcoat_alpha, clearcoat_weight, transmission_weight } => {
                 let u = rng.random::<f32>();
                     if u < *clearcoat_weight {
                         PDF::GGX { wi: *wi, normal: *normal, alpha: *clearcoat_alpha }.pick_direction(rng)
                     } else if u < *clearcoat_weight + *specular_weight {
                         PDF::GGX { wi: *wi, normal: *normal, alpha: *alpha }.pick_direction(rng)
+                    } else if u < *clearcoat_weight + *specular_weight + *transmission_weight {
+                        let sample = PDF::Cosine { uvw: OrthonormalBasis::new(&-*normal) }.pick_direction(rng);
+                        DirectionSample { scattering_type: ScatteringType::Transmission, ..sample }
                     } else {
                         PDF::Cosine { uvw: *uvw }.pick_direction(rng)
                     }
@@ -115,16 +140,25 @@ impl PDF {
                 // errors, then we discard the sampled normal and use the macrosurface normal
                 let wi_dot_h = wi.dot(h);
                 if wi_dot_h <= 0.0 {
-                    return *normal;
+                    return DirectionSample {
+                        direction: *normal,
+                        scattering_type: ScatteringType::Reflection,
+                    };
                 }
 
                 // we reflect wi across h to obtain the outgoing vector wo
                 // wi is negative since the reflect function expects the vectors to point
                 // towards the surface when we model it here as pointing away from the surface
                 // https://www.cs.cornell.edu/~srm/publications/EGSR07-btdf.pdf equation (39)
-                reflect(-wi, h)
+                DirectionSample {
+                    direction: reflect(-wi, h),
+                    scattering_type: ScatteringType::Reflection,
+                }
             },
-            PDF::Uniform => pick_sphere_point(rng),
+            PDF::Uniform => DirectionSample {
+                direction: pick_sphere_point(rng),
+                scattering_type: ScatteringType::Volume,
+            },
         }
     }
 }
