@@ -61,7 +61,7 @@ pub fn hyperion_scene(width: Option<usize>, height: Option<usize>) -> Scene {
     );
     let marble_vol_idx = materials.add_material(Volumetric::new(marble_vol_id));
     let pingpong_idx = materials.add_material(
-        Plastic::new(pingpong_id, 0.40, 1.45)
+        Plastic::new(pingpong_id, 0.60, 1.45)
             .with_subsurface(0.40)
             .with_diffuse_transmission(0.20)
     );
