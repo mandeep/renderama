@@ -5,7 +5,7 @@ use rand::{Rng, RngExt};
 
 use crate::basis::OrthonormalBasis;
 use crate::ggx::{ggx_distribution, ggx_height_correlated_geometry, roughness_to_alpha};
-use crate::pdf::PDF;
+use crate::pdf::{PDF, ScatteringType};
 use crate::ray::{find_offset_point, Ray};
 use crate::results::{HitResult, ScatterResult};
 use crate::sampling::pick_sphere_point;
@@ -105,16 +105,17 @@ impl Material {
     }
 
     /// Compute the manner in which the material reflects/absorbs light
-    pub fn compute_reflectance(&self, ray: &Ray, scattered: &Ray, hit: &HitResult, textures: &[Texture]) -> Vec3A {
+    pub fn compute_reflectance(&self, ray: &Ray, scattered: &Ray, hit: &HitResult, textures: &[Texture], scattering_type: ScatteringType) -> Vec3A {
         match self {
             Material::Diffuse(m) => m.compute_reflectance(ray, scattered, hit),
             Material::Emissive(_) => Vec3A::ZERO,
-            Material::Plastic(m) => m.compute_reflectance(ray, scattered, hit, textures),
+            Material::Plastic(m) => m.compute_reflectance(ray, scattered, hit, textures, scattering_type),
             Material::Reflective(m) => m.compute_reflectance(ray, scattered, hit, textures),
             Material::Refractive(_) => Vec3A::ZERO,
             Material::Volumetric(_) => Vec3A::splat(1.0 / (4.0 * PI)),
         }
     }
+
 }
 
 #[derive(Clone, Copy)]
@@ -671,7 +672,7 @@ impl Plastic {
     }
 
     /// Compute how the Plastic material handles reflectance.
-    fn compute_reflectance(&self, ray: &Ray, scattered: &Ray, result: &HitResult, textures: &[Texture]) -> Vec3A {
+    fn compute_reflectance(&self, ray: &Ray, scattered: &Ray, result: &HitResult, textures: &[Texture], scattering_type: ScatteringType) -> Vec3A {
         let wi = -ray.direction;
         let wo = scattered.direction;
 
@@ -687,7 +688,7 @@ impl Plastic {
             return Vec3A::ZERO;
         }
 
-        if geometric_normal.dot(wo) <= 0.0 {
+        if matches!(scattering_type, ScatteringType::Transmission) {
             let cos_o = -n.dot(wo);
             if cos_o <= 0.0 {
                 return Vec3A::ZERO;
@@ -697,6 +698,10 @@ impl Plastic {
             let clearcoat_fresnel = schlick_from_ior(cos_i, self.ior);
             let coat_transmittance = 1.0 - self.clearcoat * clearcoat_fresnel;
             return albedo * (self.diffuse_transmission * cos_o / PI) * coat_transmittance;
+        }
+
+        if !matches!(scattering_type, ScatteringType::Reflection) || geometric_normal.dot(wo) <= 0.0 {
+            return Vec3A::ZERO;
         }
 
         let cos_o = n.dot(wo);

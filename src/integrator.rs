@@ -257,7 +257,8 @@ fn evaluate_direct_lighting(
         if !scene.accelerator.hits_anything(&shadow_ray, 1e-3, end_distance, rng) {
             let light_weight = light_source.evaluate_sampling_weight(&shadow_ray);
             if light_weight > 1e-7 {
-                let reflectance = material.compute_reflectance(ray, &shadow_ray, hit_result, &scene.textures);
+                let scattering_type = hit_result.classify_direction(&ray.direction, &shadow_ray.direction);
+                let reflectance = material.compute_reflectance(ray, &shadow_ray, hit_result, &scene.textures, scattering_type);
                 let material_weight = scatter_result.sampling_strategy.calculate_probability(light_direction);
                 let weight = power_heuristic(light_weight, material_weight);
                 let contribution = scatter_result.contribution;
@@ -274,7 +275,8 @@ fn evaluate_direct_lighting(
             let environment_shadow_ray = Ray::new(shadow_origin, environment_sample.direction, ray.time);
             if !scene.accelerator.hits_anything(&environment_shadow_ray, 1e-3, f32::MAX, rng) {
                 let material_weight = scatter_result.sampling_strategy.calculate_probability(environment_sample.direction);
-                let reflectance = material.compute_reflectance(ray, &environment_shadow_ray, hit_result, &scene.textures);
+                let scattering_type = hit_result.classify_direction(&ray.direction, &environment_shadow_ray.direction);
+                let reflectance = material.compute_reflectance(ray, &environment_shadow_ray, hit_result, &scene.textures, scattering_type);
                 let weight = power_heuristic(environment_sample.weight, material_weight);
                 let contribution = scatter_result.contribution;
                 direct_light += (weight * throughput * environment_sample.radiance * contribution * reflectance) / environment_sample.weight;
@@ -305,7 +307,7 @@ fn prepare_next_ray(
 
     let offset_point = hit_result.find_offset_point(&direction_sample);
     let scattered_ray = Ray::new(offset_point, scattered_direction, ray.time);
-    let reflectance = material.compute_reflectance(ray, &scattered_ray, hit_result, textures);
+    let reflectance = material.compute_reflectance(ray, &scattered_ray, hit_result, textures, direction_sample.scattering_type);
 
     // if we're using a material with pre-weighted ggx vndf
     // then no need to compute the reflectance and weight
