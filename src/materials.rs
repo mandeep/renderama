@@ -92,6 +92,18 @@ impl Material {
         }
     }
 
+    /// Evaluate emitted radiance at the given UV coordinates
+    pub fn evaluate_emission_at_uv(&self, u: f32, v: f32, textures: &[Texture]) -> Vec3A {
+        match self {
+            Material::Emissive(m) => m.evaluate_emission_at_uv(u, v, textures),
+            Material::Diffuse(_)
+            | Material::Plastic(_)
+            | Material::Reflective(_)
+            | Material::Refractive(_)
+            | Material::Volumetric(_) => Vec3A::ZERO
+        }
+    }
+
     /// Compute the manner in which the material reflects/absorbs light
     pub fn compute_reflectance(&self, ray: &Ray, scattered: &Ray, hit: &HitResult, textures: &[Texture]) -> Vec3A {
         match self {
@@ -505,7 +517,13 @@ impl Emissive {
         if hit.shading_normal.dot(ray.direction) >= 0.0 {
             return Vec3A::ZERO;
         }
-        let emission = textures[self.emissive_color.index()].sample_texture(hit.u, hit.v);
+
+        self.evaluate_emission_at_uv(hit.u, hit.v, textures)
+    }
+
+    /// Evaluate the emission of the material at the given UV coordinates.
+    fn evaluate_emission_at_uv(&self, u: f32, v: f32, textures: &[Texture]) -> Vec3A {
+        let emission = textures[self.emissive_color.index()].sample_texture(u, v);
         self.intensity.map_or(emission, |intensity| emission * intensity)
     }
 }

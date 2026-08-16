@@ -3,7 +3,7 @@ use rand::{Rng, RngExt};
 
 use crate::bvh::BVH;
 use crate::extensions::DummyRng;
-use crate::materials::MaterialId;
+use crate::materials::{Material, MaterialId};
 use crate::primitive::Primitive;
 use crate::plane::{Axis, Bounds2D, Orientation, Plane};
 use crate::ray::Ray;
@@ -20,15 +20,13 @@ pub enum Light {
     Mesh(MeshLight),
 }
 
-impl Light {
-    pub fn intensity(&self, textures: &[Texture]) -> Vec3A {
-        match self {
-            Light::Point(light) => light.intensity(textures),
-            Light::Area(light) => light.intensity(textures),
-            Light::Mesh(light) => light.intensity(textures),
-        }
-    }
+#[derive(Clone, Copy)]
+pub struct LightSample {
+    pub direction: Vec3A,
+    pub radiance: Vec3A,
+}
 
+impl Light {
     pub fn evaluate_sampling_weight(&self, ray: &Ray) -> f32 {
         match self {
             Light::Point(light) => light.evaluate_sampling_weight(ray),
@@ -37,11 +35,17 @@ impl Light {
         }
     }
 
-    pub fn sample_direction_to_light(&self, origin: Vec3A, rng: &mut impl Rng) -> Vec3A {
+    pub fn sample_direction_and_radiance(&self, origin: Vec3A, materials: &[Material], textures: &[Texture], rng: &mut impl Rng) -> LightSample {
         match self {
-            Light::Point(light) => light.sample_direction_to_light(origin, rng),
-            Light::Area(light) => light.sample_direction_to_light(origin, rng),
-            Light::Mesh(light) => light.sample_direction_to_light(origin, rng),
+            Light::Point(light) => LightSample {
+                direction: light.sample_direction_to_light(origin, rng),
+                radiance: light.intensity(textures),
+            },
+            Light::Area(light) => LightSample {
+                direction: light.sample_direction_to_light(origin, rng),
+                radiance: light.intensity(textures),
+            },
+            Light::Mesh(light) => light.sample_direction_and_radiance(origin, materials, textures, rng),
         }
     }
 
@@ -147,13 +151,13 @@ impl AreaLight {
 pub struct MeshLight {
     cdf: Vec<f32>,
     total_area: f32,
-    intensity: TextureId,
+    material_id: MaterialId,
     accelerator: BVH,
 }
 
 impl MeshLight {
     /// Create a new MeshLight from the given triangles
-    pub fn new(triangles: Vec<Triangle>, intensity: TextureId) -> MeshLight {
+    pub fn new(triangles: Vec<Triangle>, material_id: MaterialId) -> MeshLight {
         let mut light_triangles = Vec::new();
         let mut cdf = Vec::new();
         let mut total_area = 0.0;
@@ -175,7 +179,7 @@ impl MeshLight {
 
         let accelerator = BVH::new(geometries);
 
-        MeshLight { cdf, total_area, intensity, accelerator }
+        MeshLight { cdf, total_area, material_id, accelerator }
     }
 
     /// Sample a random triangle from the accelerator
@@ -193,20 +197,16 @@ impl MeshLight {
         }
     }
 
-    pub fn intensity(&self, textures: &[Texture]) -> Vec3A {
-        let intensity = textures[self.intensity.index()].sample_texture(0.5, 0.5);
-        intensity
-    }
-
-
-    /// Sample the direction to this light source from the given origin
-    pub fn sample_direction_to_light(&self, origin: Vec3A, rng: &mut impl Rng) -> Vec3A {
+    /// Sample a point on the light and evaluate its material at that point's UV.
+    pub fn sample_direction_and_radiance(&self, origin: Vec3A, materials: &[Material], textures: &[Texture], rng: &mut impl Rng) -> LightSample {
         let triangle = self.sample_triangle(rng);
         let barycentric = uniform_sample_triangle(rng);
 
         let point_on_light = triangle.interpolate_position(barycentric);
+        let uv = triangle.interpolate_uv(barycentric);
+        let radiance = materials[self.material_id.index()].evaluate_emission_at_uv(uv.x, uv.y, textures);
 
-        point_on_light - origin
+        LightSample { direction: point_on_light - origin, radiance}
     }
 
     /// Evaluate the sampling weight of this MeshLight

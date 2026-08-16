@@ -94,7 +94,7 @@ pub fn load_obj_with_options<'a>(
 
     if let Ok(obj_materials) = obj_material_list {
         for material in obj_materials {
-            let new_material = match &options.material_overrides {
+            let mapped_material = match &options.material_overrides {
                 Some(overrides) => {
                     if let Some(override_material) = overrides.get(&material.name) {
                         override_material.clone()
@@ -103,6 +103,14 @@ pub fn load_obj_with_options<'a>(
                     }
                 },
                 None => map_mtl_to_material(&material, textures, base_directory),
+            };
+
+             let new_material = match mapped_material {
+                Material::Emissive(emissive) => {
+                    let intensity = emissive.intensity.unwrap_or(1.0) * options.emissive_scale;
+                    emissive.with_intensity(intensity).into()
+                }
+                material => material,
             };
 
             let mat_id = materials.add_material(new_material);
@@ -179,16 +187,9 @@ pub fn load_obj_with_options<'a>(
 
         // if lights is None then light_triangles will be empty
         if !light_triangles.is_empty() {
-            if let Material::Emissive(material) = &materials[current_material_id.index()] {
-                let emissive_scale = options.emissive_scale;
-                let intensity = textures[material.emissive_color.index()].sample_texture(0.5, 0.5) * emissive_scale;
-                let intensity_texture = Color::from(intensity);
-                let intensity_texture_id = textures.add_texture(intensity_texture);
-
-                if let Some(lights) = lights.as_deref_mut() {
-                    let mesh_light = MeshLight::new(light_triangles, intensity_texture_id);
-                    lights.add_light(mesh_light);
-                }
+            if let Some(lights) = lights.as_deref_mut() {
+                let mesh_light = MeshLight::new(light_triangles, current_material_id);
+                lights.add_light(mesh_light);
             }
         }
 

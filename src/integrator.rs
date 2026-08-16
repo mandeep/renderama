@@ -248,7 +248,8 @@ fn evaluate_direct_lighting(
     let shadow_origin = find_offset_point(hit_result.point, hit_result.geometric_normal);
 
     for light_source in &scene.lights {
-        let light_direction_vector = light_source.sample_direction_to_light(shadow_origin, rng);
+        let light_sample = light_source.sample_direction_and_radiance(shadow_origin, &scene.materials, &scene.textures, rng);
+        let light_direction_vector = light_sample.direction;
         let light_distance = light_direction_vector.length();
         let light_direction = light_direction_vector.normalize();
 
@@ -262,7 +263,7 @@ fn evaluate_direct_lighting(
                 let material_weight = scatter_result.sampling_strategy.calculate_probability(light_direction);
                 let weight = power_heuristic(light_weight, material_weight);
                 let contribution = scatter_result.contribution;
-                let intensity = light_source.intensity(&scene.textures);
+                let intensity = light_sample.radiance;
                 direct_light += (weight * throughput * intensity * contribution * reflectance) / light_weight;
             }
         }

@@ -58,6 +58,10 @@ impl Triangle {
         point.x * self.v0 + point.y * self.v1 + point.z * self.v2
     }
 
+    pub fn interpolate_uv(&self, point: Vec3A) -> Vec2 {
+        point.x * self.uv0 + point.y * self.uv1 + point.z * self.uv2
+    }
+
     /// Determine whether or not a ray hits the triangle
     ///
     /// Reference:
@@ -291,5 +295,13 @@ mod tests {
 
         let ray_away = Ray::new(Vec3A::new(0.0, 0.0, 2.0), Vec3A::new(0.0, 0.0, 1.0), 0.0);
         assert!(triangle.hit(&ray_away, 0.001, 100.0).is_none());
+    }
+
+    #[test]
+    fn test_interpolate_uv() {
+        let triangle = create_test_triangle();
+        let uv = triangle.interpolate_uv(Vec3A::new(0.25, 0.25, 0.5));
+
+        assert_eq!(uv, Vec2::new(0.25, 0.5));
     }
 }
